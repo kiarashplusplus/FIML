@@ -5075,12 +5075,12 @@ FIML is now **operational and production-ready** with:
   
 The roadmap ahead includes:  
   
-3. **Stateful sessions** with persistent memory  
-5. **Real-time event intelligence** via watchdogs  
-6. **Multi-platform distribution** (ChatGPT GPT, Expo apps, Telegram bots)  
-8. **Self-updating schemas** for long-term maintenance  
-9. **Multi-market & multi-language support**  
-10. **Open plugin ecosystem** for extensibility  
+- **Stateful sessions** with persistent memory  
+- **Real-time event intelligence** via watchdogs  
+- **Multi-platform distribution** (ChatGPT GPT, Expo apps, Telegram bots)  
+- **Self-updating schemas** for long-term maintenance  
+- **Multi-market & multi-language support**  
+- **Open plugin ecosystem** for extensibility  
   
 FIML is already the **universal financial intelligence interface** for AI agents and developers—trusted, transparent, and ready to use.  
   
