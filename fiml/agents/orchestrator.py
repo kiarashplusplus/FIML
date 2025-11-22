@@ -45,12 +45,21 @@ class AgentOrchestrator:
             return
 
         try:
-            # Initialize Ray
+            # Initialize Ray with timeout to prevent blocking
             if not ray.is_initialized():
-                ray.init(
-                    address=settings.ray_address,
-                    ignore_reinit_error=True,
+                # Run Ray initialization in a thread pool with timeout
+                loop = asyncio.get_event_loop()
+                init_task = loop.run_in_executor(
+                    None,
+                    lambda: ray.init(
+                        address=settings.ray_address,
+                        ignore_reinit_error=True,
+                        _node_ip_address="0.0.0.0",
+                    )
                 )
+                
+                # Wait up to 10 seconds for Ray to connect
+                await asyncio.wait_for(init_task, timeout=10.0)
 
             # Spawn worker pool
             self.workers = {
@@ -69,9 +78,12 @@ class AgentOrchestrator:
                 total_workers=sum(len(w) for w in self.workers.values()),
             )
 
+        except asyncio.TimeoutError:
+            logger.warning("Ray initialization timed out - orchestrator will run in degraded mode")
+            self.initialized = False
         except Exception as e:
-            logger.error(f"Failed to initialize orchestrator: {e}")
-            raise
+            logger.warning(f"Failed to initialize orchestrator (non-critical): {e}")
+            self.initialized = False
 
     async def shutdown(self) -> None:
         """Shutdown Ray and workers"""
