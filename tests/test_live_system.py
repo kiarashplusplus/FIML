@@ -51,7 +51,7 @@ class TestLiveProviders:
             assert len(health_statuses) > 0
             
             for provider_name, health in health_statuses.items():
-                assert hasattr(health, "provider_name") or hasattr(health, "is_healthy")
+                assert health.provider_name is not None
                 assert health.is_healthy is not None
                 
         finally:
