@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Redis for testing (L1 Cache)
+  redis-test:
+    image: redis:7-alpine
+    container_name: fiml-redis-test
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly no --save ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - fiml-test-network
+
+  # PostgreSQL for testing (L2 Cache)
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: fiml-postgres-test
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=fiml_test
+      - POSTGRES_USER=fiml_test
+      - POSTGRES_PASSWORD=fiml_test_password
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fiml_test -d fiml_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - fiml-test-network
+    tmpfs:
+      - /var/lib/postgresql/data
+
+networks:
+  fiml-test-network:
+    driver: bridge

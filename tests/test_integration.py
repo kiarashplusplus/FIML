@@ -49,13 +49,10 @@ class TestCacheManager:
     @pytest.mark.asyncio
     async def test_cache_manager_initialization(self):
         """Test cache manager init"""
-        try:
-            await cache_manager.initialize()
-            stats = await cache_manager.get_stats()
-            assert "l1" in stats
-            await cache_manager.shutdown()
-        except Exception as e:
-            pytest.skip(f"Cache not available: {e}")
+        await cache_manager.initialize()
+        stats = await cache_manager.get_stats()
+        assert "l1" in stats
+        await cache_manager.shutdown()
 
 
 class TestFKDSLParser:

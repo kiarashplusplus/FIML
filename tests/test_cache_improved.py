@@ -312,53 +312,45 @@ class TestIntegrationWithServices:
         """Test actual L1 cache latency (when Redis is available)"""
         cache = L1Cache()
         
-        try:
-            await cache.initialize()
-            
-            # Measure SET latency
-            start = time.perf_counter()
-            await cache.set("latency_test", {"data": "value"}, ttl_seconds=60)
-            set_latency_ms = (time.perf_counter() - start) * 1000
-            
-            # Measure GET latency
-            start = time.perf_counter()
-            result = await cache.get("latency_test")
-            get_latency_ms = (time.perf_counter() - start) * 1000
-            
-            await cache.shutdown()
-            
-            # Log latencies
-            print(f"\nL1 SET latency: {set_latency_ms:.2f}ms")
-            print(f"L1 GET latency: {get_latency_ms:.2f}ms")
-            
-            # Verify result
-            assert result is not None
-            assert result["data"] == "value"
-            
-            # Verify latencies are reasonable (should be under 100ms for L1)
-            # Note: In production with proper Redis, should be 10-100ms
-            
-        except Exception as e:
-            pytest.skip(f"Redis not available: {e}")
+        await cache.initialize()
+        
+        # Measure SET latency
+        start = time.perf_counter()
+        await cache.set("latency_test", {"data": "value"}, ttl_seconds=60)
+        set_latency_ms = (time.perf_counter() - start) * 1000
+        
+        # Measure GET latency
+        start = time.perf_counter()
+        result = await cache.get("latency_test")
+        get_latency_ms = (time.perf_counter() - start) * 1000
+        
+        await cache.shutdown()
+        
+        # Log latencies
+        print(f"\nL1 SET latency: {set_latency_ms:.2f}ms")
+        print(f"L1 GET latency: {get_latency_ms:.2f}ms")
+        
+        # Verify result
+        assert result is not None
+        assert result["data"] == "value"
+        
+        # Verify latencies are reasonable (should be under 100ms for L1)
+        # Note: In production with proper Redis, should be 10-100ms
 
     @pytest.mark.asyncio
     async def test_cache_warming_integration(self):
         """Test cache warming with actual services (when available)"""
-        try:
-            await cache_manager.initialize()
-            
-            # Get small set of assets
-            warmer = CacheWarmer()
-            assets = warmer.get_assets_to_warm()[:5]  # Just 5 assets for test
-            
-            # Warm cache
-            result = await cache_warmer.warm_cache(assets=assets)
-            
-            await cache_manager.shutdown()
-            
-            # Verify warming completed
-            assert result["status"] == "completed"
-            assert result["total_assets"] == 5
-            
-        except Exception as e:
-            pytest.skip(f"Cache services not available: {e}")
+        await cache_manager.initialize()
+        
+        # Get small set of assets
+        warmer = CacheWarmer()
+        assets = warmer.get_assets_to_warm()[:5]  # Just 5 assets for test
+        
+        # Warm cache
+        result = await cache_warmer.warm_cache(assets=assets)
+        
+        await cache_manager.shutdown()
+        
+        # Verify warming completed
+        assert result["status"] == "completed"
+        assert result["total_assets"] == 5

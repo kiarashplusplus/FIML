@@ -2,8 +2,34 @@
 Test configuration for FIML
 """
 
+import os
+import subprocess
+import time
 import pytest
+import redis
+import psycopg2
 from fiml.core.config import Settings
+
+
+# Set environment variables BEFORE any imports happen
+os.environ["POSTGRES_HOST"] = "localhost"
+os.environ["POSTGRES_PORT"] = "5432"
+os.environ["POSTGRES_DB"] = "fiml_test"
+os.environ["POSTGRES_USER"] = "fiml_test"
+os.environ["POSTGRES_PASSWORD"] = "fiml_test_password"
+os.environ["REDIS_HOST"] = "localhost"
+os.environ["REDIS_PORT"] = "6379"
+os.environ["FIML_ENV"] = "test"
+
+
+def pytest_configure(config):
+    """Pytest configuration hook - runs before test collection"""
+    # Clear settings cache to ensure our environment variables are used
+    from fiml.core import config as config_module
+    if hasattr(config_module, 'get_settings'):
+        config_module.get_settings.cache_clear()
+        # Reload global settings
+        config_module.settings = config_module.get_settings()
 
 
 def pytest_addoption(parser):
@@ -14,15 +40,122 @@ def pytest_addoption(parser):
         default=False,
         help="Run tests that require Redis/PostgreSQL cache backends"
     )
+    parser.addoption(
+        "--no-docker",
+        action="store_true",
+        default=False,
+        help="Skip Docker container startup (assume services are already running)"
+    )
+
+
+def is_redis_ready(host="localhost", port=6379, max_retries=30):
+    """Check if Redis is ready"""
+    for i in range(max_retries):
+        try:
+            r = redis.Redis(host=host, port=port, socket_connect_timeout=1)
+            r.ping()
+            return True
+        except (redis.ConnectionError, redis.TimeoutError):
+            if i < max_retries - 1:
+                time.sleep(1)
+    return False
+
+
+def is_postgres_ready(host="localhost", port=5432, max_retries=30):
+    """Check if PostgreSQL is ready"""
+    for i in range(max_retries):
+        try:
+            conn = psycopg2.connect(
+                host=host,
+                port=port,
+                database="fiml_test",
+                user="fiml_test",
+                password="fiml_test_password",
+                connect_timeout=1
+            )
+            conn.close()
+            return True
+        except psycopg2.OperationalError:
+            if i < max_retries - 1:
+                time.sleep(1)
+    return False
+
+
+@pytest.fixture(scope="session", autouse=True)
+def docker_services(request):
+    """Start Docker services for testing"""
+    no_docker = request.config.getoption("--no-docker")
+    
+    if no_docker:
+        # Assume services are already running
+        if not is_redis_ready():
+            pytest.exit("Redis is not available. Please start Redis or remove --no-docker flag.")
+        if not is_postgres_ready():
+            pytest.exit("PostgreSQL is not available. Please start PostgreSQL or remove --no-docker flag.")
+        yield
+        return
+    
+    # Check if docker is available
+    try:
+        subprocess.run(["docker", "--version"], check=True, capture_output=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pytest.exit("Docker is not available. Install Docker or use --no-docker flag.")
+    
+    # Get the project root directory
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    compose_file = os.path.join(project_root, "docker-compose.test.yml")
+    
+    if not os.path.exists(compose_file):
+        pytest.exit(f"docker-compose.test.yml not found at {compose_file}")
+    
+    # Start services
+    print("\n🐳 Starting test containers (Redis & PostgreSQL)...")
+    subprocess.run(
+        ["docker-compose", "-f", compose_file, "up", "-d"],
+        cwd=project_root,
+        check=True,
+        capture_output=True
+    )
+    
+    # Wait for services to be ready
+    print("⏳ Waiting for Redis to be ready...")
+    if not is_redis_ready():
+        subprocess.run(["docker-compose", "-f", compose_file, "down", "-v"], cwd=project_root)
+        pytest.exit("Redis failed to start within timeout period")
+    print("✅ Redis is ready")
+    
+    print("⏳ Waiting for PostgreSQL to be ready...")
+    if not is_postgres_ready():
+        subprocess.run(["docker-compose", "-f", compose_file, "down", "-v"], cwd=project_root)
+        pytest.exit("PostgreSQL failed to start within timeout period")
+    print("✅ PostgreSQL is ready")
+    
+    print("✅ All test services are ready\n")
+    
+    yield
+    
+    # Teardown: stop and remove containers
+    print("\n🧹 Cleaning up test containers...")
+    subprocess.run(
+        ["docker-compose", "-f", compose_file, "down", "-v"],
+        cwd=project_root,
+        capture_output=True
+    )
+    print("✅ Test containers cleaned up\n")
 
 
 @pytest.fixture
 def test_settings():
     """Test settings fixture"""
     return Settings(
-        fiml_env="development",
+        fiml_env="test",
         redis_host="localhost",
+        redis_port=6379,
         postgres_host="localhost",
+        postgres_port=5432,
+        postgres_db="fiml_test",
+        postgres_user="fiml_test",
+        postgres_password="fiml_test_password",
         enable_compliance_checks=False,
         enable_rate_limiting=False,
     )
