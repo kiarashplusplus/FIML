@@ -2,11 +2,13 @@
 Cache Manager - Coordinates L1 and L2 caches
 """
 
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, List
 
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.l2_cache import l2_cache
+from fiml.cache.utils import calculate_percentile
 from fiml.core.config import settings
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, DataType
@@ -24,22 +26,38 @@ class CacheManager:
     3. If hit in L2, populate L1
     4. If miss in both, return None
     5. On write, update both L1 and L2
+    
+    Features:
+    - Latency tracking for L1 and L2 operations
+    - Hit rate measurement
+    - Eviction statistics
     """
 
     def __init__(self):
         self.l1 = l1_cache
         self.l2 = l2_cache
+        self._initialized = False
+        
+        # Metrics tracking
+        self._l1_hits = 0
+        self._l1_misses = 0
+        self._l2_hits = 0
+        self._l2_misses = 0
+        self._l1_latencies: List[float] = []
+        self._l2_latencies: List[float] = []
 
     async def initialize(self) -> None:
         """Initialize both cache layers"""
         await self.l1.initialize()
         await self.l2.initialize()
+        self._initialized = True
         logger.info("Cache manager initialized")
 
     async def shutdown(self) -> None:
         """Shutdown both cache layers"""
         await self.l1.shutdown()
         await self.l2.shutdown()
+        self._initialized = False
         logger.info("Cache manager shutdown")
 
     async def get_price(
@@ -150,13 +168,120 @@ class CacheManager:
         return deleted
 
     async def get_stats(self) -> Dict[str, Any]:
-        """Get combined cache statistics"""
+        """
+        Get combined cache statistics with performance metrics
+        
+        Returns:
+            Comprehensive statistics including hit rates and latencies
+        """
         l1_stats = await self.l1.get_stats()
         
+        # Calculate hit rates
+        total_l1_ops = self._l1_hits + self._l1_misses
+        l1_hit_rate = (self._l1_hits / total_l1_ops * 100) if total_l1_ops > 0 else 0.0
+        
+        total_l2_ops = self._l2_hits + self._l2_misses
+        l2_hit_rate = (self._l2_hits / total_l2_ops * 100) if total_l2_ops > 0 else 0.0
+        
+        # Calculate average latencies
+        avg_l1_latency = sum(self._l1_latencies) / len(self._l1_latencies) if self._l1_latencies else 0.0
+        avg_l2_latency = sum(self._l2_latencies) / len(self._l2_latencies) if self._l2_latencies else 0.0
+        
+        # Calculate percentiles for L1 latency
+        l1_p50 = calculate_percentile(self._l1_latencies, 50)
+        l1_p95 = calculate_percentile(self._l1_latencies, 95)
+        l1_p99 = calculate_percentile(self._l1_latencies, 99)
+        
         return {
-            "l1": l1_stats,
-            "l2": {"status": "initialized" if self.l2._initialized else "not_initialized"},
+            "l1": {
+                **l1_stats,
+                "hits": self._l1_hits,
+                "misses": self._l1_misses,
+                "hit_rate_percent": round(l1_hit_rate, 2),
+                "avg_latency_ms": round(avg_l1_latency, 2),
+                "p50_latency_ms": round(l1_p50, 2),
+                "p95_latency_ms": round(l1_p95, 2),
+                "p99_latency_ms": round(l1_p99, 2),
+            },
+            "l2": {
+                "status": "initialized" if self.l2._initialized else "not_initialized",
+                "hits": self._l2_hits,
+                "misses": self._l2_misses,
+                "hit_rate_percent": round(l2_hit_rate, 2),
+                "avg_latency_ms": round(avg_l2_latency, 2),
+            },
+            "overall": {
+                "total_requests": total_l1_ops,
+                "l1_hit_rate": round(l1_hit_rate, 2),
+                "l2_hit_rate": round(l2_hit_rate, 2),
+            }
         }
+
+    def _track_l1_latency(self, latency_ms: float) -> None:
+        """Track L1 latency (keep last 1000 measurements)"""
+        self._l1_latencies.append(latency_ms)
+        if len(self._l1_latencies) > 1000:
+            self._l1_latencies.pop(0)
+
+    def _track_l2_latency(self, latency_ms: float) -> None:
+        """Track L2 latency (keep last 1000 measurements)"""
+        self._l2_latencies.append(latency_ms)
+        if len(self._l2_latencies) > 1000:
+            self._l2_latencies.pop(0)
+
+    async def get(self, key: str) -> Optional[Any]:
+        """
+        Get value from cache with latency tracking
+        
+        Args:
+            key: Cache key
+            
+        Returns:
+            Cached value or None
+        """
+        # Try L1 first
+        start = time.perf_counter()
+        value = await self.l1.get(key)
+        l1_latency_ms = (time.perf_counter() - start) * 1000
+        self._track_l1_latency(l1_latency_ms)
+        
+        if value is not None:
+            self._l1_hits += 1
+            return value
+        
+        self._l1_misses += 1
+        return None
+
+    async def set(self, key: str, value: Any, ttl_seconds: Optional[int] = None) -> bool:
+        """
+        Set value in cache with latency tracking
+        
+        Args:
+            key: Cache key
+            value: Value to cache
+            ttl_seconds: Time to live
+            
+        Returns:
+            True if successful
+        """
+        start = time.perf_counter()
+        success = await self.l1.set(key, value, ttl_seconds)
+        l1_latency_ms = (time.perf_counter() - start) * 1000
+        self._track_l1_latency(l1_latency_ms)
+        
+        return success
+
+    async def delete(self, key: str) -> bool:
+        """Delete key from cache"""
+        return await self.l1.delete(key)
+
+    async def exists(self, key: str) -> bool:
+        """Check if key exists in cache"""
+        return await self.l1.exists(key)
+
+    async def clear_pattern(self, pattern: str) -> int:
+        """Clear keys matching pattern"""
+        return await self.l1.clear_pattern(pattern)
 
     def _get_ttl(self, data_type: DataType) -> int:
         """Get TTL for data type"""
@@ -185,11 +310,17 @@ class CacheManager:
         # Build cache keys for all assets
         l1_keys = [self.l1.build_key("price", asset.symbol, provider or "any") for asset in assets]
         
-        # Try L1 batch get
+        # Try L1 batch get with latency tracking
+        start = time.perf_counter()
         results = await self.l1.get_many(l1_keys)
+        l1_latency_ms = (time.perf_counter() - start) * 1000
+        self._track_l1_latency(l1_latency_ms)
         
         hits = sum(1 for r in results if r is not None)
-        logger.debug(f"Batch price lookup", total=len(assets), l1_hits=hits)
+        self._l1_hits += hits
+        self._l1_misses += (len(results) - hits)
+        
+        logger.debug(f"Batch price lookup", total=len(assets), l1_hits=hits, latency_ms=f"{l1_latency_ms:.2f}")
         
         return results
 

@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     enable_derivatives: bool = False
     enable_predictive_cache: bool = True
     enable_real_time_events: bool = True
+    enable_cache_warming: bool = True
+    enable_cache_eviction: bool = True
 
     # MCP Protocol
     mcp_protocol: Literal["stdio", "sse", "websocket"] = "stdio"
@@ -102,6 +104,13 @@ class Settings(BaseSettings):
     cache_ttl_technical: int = 300  # 5 minutes
     cache_ttl_news: int = 600  # 10 minutes
     cache_ttl_macro: int = 86400  # 24 hours
+
+    # Cache Optimization Settings
+    cache_warming_enabled: bool = True
+    cache_warming_interval_seconds: int = 300  # 5 minutes
+    cache_eviction_policy: Literal["lru", "lfu", "ttl", "fifo"] = "lru"
+    cache_max_tracked_entries: int = 10000
+    cache_memory_pressure_threshold: float = 0.9  # 90%
 
     # Security
     secret_key: str = "your-secret-key-change-in-production"
