@@ -26,13 +26,16 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy requirements
-COPY pyproject.toml /tmp/
-WORKDIR /tmp
+# Set working directory
+WORKDIR /tmp/build
+
+# Copy project files needed for installation
+COPY pyproject.toml README.md ./
+COPY fiml ./fiml
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -e .
+    pip install --no-cache-dir .
 
 # Stage 2: Runtime stage
 FROM python:3.11-slim
