@@ -17,11 +17,11 @@ jobs:
           - 6379:6379
       
       postgres:
-        image: timescale/timescaledb:latest-pg16
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: fiml_test
-          POSTGRES_USER: fiml
-          POSTGRES_PASSWORD: fiml_password
+          POSTGRES_USER: fiml_test
+          POSTGRES_PASSWORD: fiml_test_password
         ports:
           - 5432:5432
         options: >-
@@ -88,10 +88,10 @@ jobs:
           REDIS_HOST: localhost
           POSTGRES_HOST: localhost
           POSTGRES_DB: fiml_test
-          POSTGRES_USER: fiml
-          POSTGRES_PASSWORD: fiml_password
+          POSTGRES_USER: fiml_test
+          POSTGRES_PASSWORD: fiml_test_password
         run: |
-          pytest -v --cov=fiml --cov-report=xml --cov-report=term
+          pytest -v --cov=fiml --cov-report=xml --cov-report=term --no-docker
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
