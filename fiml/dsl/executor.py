@@ -229,6 +229,13 @@ class FKDSLExecutor:
             progress=internal_info.completed_steps / max(internal_info.total_steps, 1) if internal_info.total_steps > 0 else 0.0,
             created_at=internal_info.created_at,
             updated_at=internal_info.completed_at or internal_info.started_at or internal_info.created_at,
+            query=internal_info.query,
+            completed_steps=internal_info.completed_steps,
+            total_steps=internal_info.total_steps,
+            started_at=internal_info.started_at,
+            completed_at=internal_info.completed_at,
+            result=internal_info.result,
+            error=internal_info.error,
         )
 
     async def execute_sync(self, plan: ExecutionPlan) -> Dict[str, Any]:

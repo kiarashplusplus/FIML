@@ -3,7 +3,7 @@ Compliance Framework - Disclaimer Generation
 """
 
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from fiml.compliance.router import Region
 from fiml.core.logging import get_logger
@@ -164,7 +164,7 @@ class DisclaimerGenerator:
     def generate(
         self,
         asset_class: AssetClass,
-        region: Region = Region.US,
+        region: Union[Region, str] = Region.US,
         include_general: bool = True,
     ) -> str:
         """
@@ -183,7 +183,8 @@ class DisclaimerGenerator:
         disclaimers = []
 
         # Get region-specific templates
-        region_templates = self.templates.get(region.value, self.templates["GLOBAL"])
+        region_value = region.value if isinstance(region, Region) else region
+        region_templates = self.templates.get(region_value, self.templates["GLOBAL"])
 
         # Add general disclaimer
         if include_general:
