@@ -3,6 +3,7 @@ Cache Manager - Coordinates L1 and L2 caches
 """
 
 import time
+from datetime import timezone
 from typing import Any, Dict, List, Optional
 
 from fiml.cache.l1_cache import l1_cache
@@ -227,6 +228,19 @@ class CacheManager:
         self._l2_latencies.append(latency_ms)
         if len(self._l2_latencies) > 1000:
             self._l2_latencies.pop(0)
+
+    def _calculate_percentile(self, values: List[float], percentile: int) -> float:
+        """
+        Calculate percentile value from a list of numbers
+        
+        Args:
+            values: List of numeric values
+            percentile: Percentile to calculate (0-100)
+            
+        Returns:
+            Percentile value
+        """
+        return calculate_percentile(values, percentile)
 
     async def get(self, key: str) -> Optional[Any]:
         """

@@ -202,6 +202,11 @@ class ArbitrationPlan(BaseModel):
     estimated_latency_ms: int
     timeout_ms: int = 5000
 
+    @property
+    def providers(self) -> List[str]:
+        """Get all providers in the plan (primary + fallbacks)"""
+        return [self.primary_provider] + self.fallback_providers
+
 
 class ProviderHealth(BaseModel):
     """Provider health metrics"""

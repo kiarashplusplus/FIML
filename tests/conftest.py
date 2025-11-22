@@ -6,6 +6,16 @@ import pytest
 from fiml.core.config import Settings
 
 
+def pytest_addoption(parser):
+    """Add custom command-line options"""
+    parser.addoption(
+        "--run-cache-tests",
+        action="store_true",
+        default=False,
+        help="Run tests that require Redis/PostgreSQL cache backends"
+    )
+
+
 @pytest.fixture
 def test_settings():
     """Test settings fixture"""
@@ -31,3 +41,4 @@ def mock_asset():
         exchange="NASDAQ",
         currency="USD",
     )
+

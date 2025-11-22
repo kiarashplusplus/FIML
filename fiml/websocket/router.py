@@ -23,7 +23,7 @@ websocket_router = APIRouter()
 
 
 @websocket_router.websocket("/stream")
-async def websocket_stream_endpoint(websocket: WebSocket):
+async def websocket_stream_endpoint(websocket: WebSocket) -> None:
     """
     Main WebSocket streaming endpoint
 
@@ -130,7 +130,7 @@ async def websocket_stream_endpoint(websocket: WebSocket):
 
 
 @websocket_router.websocket("/prices/{symbols}")
-async def websocket_prices_endpoint(websocket: WebSocket, symbols: str):
+async def websocket_prices_endpoint(websocket: WebSocket, symbols: str) -> None:
     """
     Simplified price streaming endpoint
 

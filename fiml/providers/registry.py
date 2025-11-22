@@ -150,6 +150,18 @@ class ProviderRegistry:
 
         return compatible_providers
 
+    def get_provider(self, provider_name: str) -> Optional[BaseProvider]:
+        """
+        Get a specific provider by name
+
+        Args:
+            provider_name: Name of the provider
+
+        Returns:
+            Provider instance or None if not found
+        """
+        return self.providers.get(provider_name)
+
     async def get_provider_health(self, provider_name: str) -> Optional[ProviderHealth]:
         """Get health status of a specific provider"""
         provider = self.providers.get(provider_name)

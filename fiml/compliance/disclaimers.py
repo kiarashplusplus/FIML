@@ -202,6 +202,17 @@ class DisclaimerGenerator:
         # Combine disclaimers
         return "\n\n".join(disclaimers)
 
+    # Alias for backward compatibility
+    def generate_disclaimer(
+        self,
+        asset_class: AssetClass,
+        region: Region = Region.US,
+        include_general: bool = True,
+        language: str = "en",
+    ) -> str:
+        """Alias for generate() method"""
+        return self.generate(asset_class, region, include_general)
+
     def generate_multi_asset(
         self,
         asset_classes: List[AssetClass],

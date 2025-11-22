@@ -60,12 +60,12 @@ class Subscription:
         self.last_update = datetime.now(timezone.utc)
         self._task: asyncio.Task | None = None
 
-    def start_streaming(self, callback):
+    def start_streaming(self, callback) -> None:
         """Start the streaming task"""
         if self._task is None or self._task.done():
             self._task = asyncio.create_task(callback(self))
 
-    def stop_streaming(self):
+    def stop_streaming(self) -> None:
         """Stop the streaming task"""
         if self._task and not self._task.done():
             self._task.cancel()
@@ -114,7 +114,7 @@ class WebSocketManager:
 
         return connection_id
 
-    async def disconnect(self, websocket: WebSocket, connection_id: str):
+    async def disconnect(self, websocket: WebSocket, connection_id: str) -> None:
         """Handle WebSocket disconnection"""
         # Cancel all subscriptions for this connection
         if connection_id in self.subscriptions:
@@ -194,7 +194,7 @@ class WebSocketManager:
 
     async def unsubscribe(
         self, websocket: WebSocket, connection_id: str, request: UnsubscribeRequest
-    ):
+    ) -> None:
         """Handle unsubscribe request"""
         if connection_id not in self.subscriptions:
             return
@@ -231,7 +231,7 @@ class WebSocketManager:
             symbols=request.symbols,
         )
 
-    async def send_error(self, websocket: WebSocket, error_code: str, message: str):
+    async def send_error(self, websocket: WebSocket, error_code: str, message: str) -> None:
         """Send error message to client"""
         error = WebSocketError(error_code=error_code, message=message)
         try:
@@ -239,7 +239,7 @@ class WebSocketManager:
         except Exception as e:
             logger.error(f"Failed to send error message: {e}")
 
-    async def _send_heartbeats(self, websocket: WebSocket, connection_id: str):
+    async def _send_heartbeats(self, websocket: WebSocket, connection_id: str) -> None:
         """Send periodic heartbeat messages"""
         try:
             while True:
@@ -261,7 +261,7 @@ class WebSocketManager:
         except Exception as e:
             logger.error(f"Heartbeat error: {e}", connection_id=connection_id)
 
-    async def _stream_prices(self, subscription: Subscription):
+    async def _stream_prices(self, subscription: Subscription) -> None:
         """
         Stream real-time price updates
 
@@ -342,7 +342,7 @@ class WebSocketManager:
         except Exception as e:
             logger.error(f"Fatal error in price streaming: {e}")
 
-    async def _stream_ohlcv(self, subscription: Subscription):
+    async def _stream_ohlcv(self, subscription: Subscription) -> None:
         """
         Stream real-time OHLCV (candlestick) updates
 
@@ -420,7 +420,7 @@ class WebSocketManager:
         except Exception as e:
             logger.error(f"Fatal error in OHLCV streaming: {e}")
 
-    async def _stream_multi_asset(self, subscription: Subscription):
+    async def _stream_multi_asset(self, subscription: Subscription) -> None:
         """
         Stream multiple assets simultaneously
 

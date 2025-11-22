@@ -32,7 +32,9 @@ class MCPToolResponse(BaseModel):
     """MCP tool response schema"""
 
     content: list[Dict[str, Any]]
-    is_error: bool = False
+    isError: bool = Field(default=False, alias="is_error")
+
+    model_config = {"populate_by_name": True}
 
 
 # Tool Schemas for MCP Discovery
@@ -192,5 +194,5 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
     except Exception as e:
         logger.exception("Error executing MCP tool", tool=request.name, error=str(e))
         return MCPToolResponse(
-            content=[{"type": "text", "text": f"Error: {str(e)}"}], is_error=True
+            content=[{"type": "text", "text": f"Error: {str(e)}"}], isError=True
         )

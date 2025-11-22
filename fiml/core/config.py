@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     )
 
     # Server Configuration
-    fiml_env: Literal["development", "staging", "production"] = "development"
+    fiml_env: Literal["development", "staging", "production", "test"] = "development"
     fiml_host: str = "0.0.0.0"
     fiml_port: int = 8000
     fiml_log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
@@ -126,8 +126,8 @@ class Settings(BaseSettings):
     @field_validator("fiml_env")
     @classmethod
     def validate_environment(cls, v: str) -> str:
-        if v not in ["development", "staging", "production"]:
-            raise ValueError("fiml_env must be development, staging, or production")
+        if v not in ["development", "staging", "production", "test"]:
+            raise ValueError("fiml_env must be development, staging, production, or test")
         return v
 
     @property
