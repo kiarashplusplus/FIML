@@ -46,15 +46,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install TA-Lib
+      - name: Install TA-Lib dependencies
         run: |
-          wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-          tar -xzf ta-lib-0.4.0-src.tar.gz
-          cd ta-lib/
-          ./configure --prefix=/usr
-          make
-          sudo make install
-          cd ..
+          # Try to install TA-Lib from Ubuntu packages first (more reliable)
+          sudo apt-get update
+          sudo apt-get install -y libta-lib0 libta-lib-dev || true
+          
+          # If Ubuntu package installation fails, download from GitHub mirror
+          if [ ! -f /usr/lib/libta_lib.so ]; then
+            echo "Installing TA-Lib from source (GitHub mirror)"
+            wget https://github.com/TA-Lib/ta-lib/releases/download/v0.4.0/ta-lib-0.4.0-src.tar.gz
+            tar -xzf ta-lib-0.4.0-src.tar.gz
+            cd ta-lib/
+            ./configure --prefix=/usr
+            make
+            sudo make install
+            cd ..
+          fi
 
       - name: Install dependencies
         run: |

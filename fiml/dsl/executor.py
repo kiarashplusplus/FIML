@@ -7,12 +7,29 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
+from pydantic import BaseModel, Field
+
 from fiml.core.exceptions import FKDSLExecutionError
 from fiml.core.logging import get_logger
 from fiml.core.models import TaskInfo, TaskStatus
 from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType
 
 logger = get_logger(__name__)
+
+
+class ExecutionTaskInfo(BaseModel):
+    """Internal task execution tracking"""
+    
+    task_id: str
+    status: TaskStatus
+    query: str
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    total_steps: int = 0
+    completed_steps: int = 0
+    result: Optional[Any] = None
+    error: Optional[str] = None
 
 
 class TaskExecutor:
@@ -114,7 +131,7 @@ class FKDSLExecutor:
 
     def __init__(self):
         self.task_executor = TaskExecutor()
-        self.active_executions: Dict[str, TaskInfo] = {}
+        self.active_executions: Dict[str, ExecutionTaskInfo] = {}
 
     async def execute_async(self, plan: ExecutionPlan) -> str:
         """
@@ -128,11 +145,10 @@ class FKDSLExecutor:
         """
         task_id = str(uuid4())
 
-        task_info = TaskInfo(
+        task_info = ExecutionTaskInfo(
             task_id=task_id,
             status=TaskStatus.PENDING,
             query=plan.query,
-            created_at=datetime.utcnow(),
             total_steps=len(plan.tasks),
             completed_steps=0,
         )
@@ -200,7 +216,20 @@ class FKDSLExecutor:
 
     def get_task_status(self, task_id: str) -> Optional[TaskInfo]:
         """Get execution status"""
-        return self.active_executions.get(task_id)
+        internal_info = self.active_executions.get(task_id)
+        if internal_info is None:
+            return None
+        
+        # Convert internal info to TaskInfo
+        return TaskInfo(
+            id=internal_info.task_id,
+            type="dsl_execution",
+            status=internal_info.status,
+            resource_url=f"/api/tasks/{task_id}",
+            progress=internal_info.completed_steps / max(internal_info.total_steps, 1) if internal_info.total_steps > 0 else 0.0,
+            created_at=internal_info.created_at,
+            updated_at=internal_info.completed_at or internal_info.started_at or internal_info.created_at,
+        )
 
     async def execute_sync(self, plan: ExecutionPlan) -> Dict[str, Any]:
         """Execute plan synchronously and return results"""
@@ -208,15 +237,16 @@ class FKDSLExecutor:
 
         # Wait for completion
         while True:
-            task_info = self.get_task_status(task_id)
-            if task_info.status in [TaskStatus.COMPLETED, TaskStatus.FAILED]:
+            internal_info = self.active_executions.get(task_id)
+            if internal_info and internal_info.status in [TaskStatus.COMPLETED, TaskStatus.FAILED]:
                 break
             await asyncio.sleep(0.1)
 
-        if task_info.status == TaskStatus.FAILED:
-            raise FKDSLExecutionError(task_info.error)
+        internal_info = self.active_executions.get(task_id)
+        if internal_info.status == TaskStatus.FAILED:
+            raise FKDSLExecutionError(internal_info.error)
 
-        return task_info.result
+        return internal_info.result if internal_info.result else {}
 
 
 # Global executor instance
