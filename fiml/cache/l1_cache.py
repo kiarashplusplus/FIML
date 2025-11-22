@@ -4,8 +4,8 @@ Target: 10-100ms latency
 """
 
 import json
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional, List
 
 import redis.asyncio as redis
 
@@ -221,6 +221,87 @@ class L1Cache:
     def build_key(self, *parts: str) -> str:
         """Build cache key from parts"""
         return ":".join(str(part) for part in parts)
+
+    async def get_many(self, keys: List[str]) -> List[Optional[Any]]:
+        """
+        Get multiple values from cache in a single operation (pipeline optimization)
+        
+        Args:
+            keys: List of cache keys
+            
+        Returns:
+            List of cached values (None for missing keys)
+        """
+        if not self._initialized:
+            raise CacheError("L1 cache not initialized")
+
+        if not keys:
+            return []
+
+        try:
+            # Use pipeline for batch get operations
+            async with self._redis.pipeline() as pipe:
+                for key in keys:
+                    pipe.get(key)
+                values = await pipe.execute()
+            
+            results = []
+            for key, value in zip(keys, values):
+                if value:
+                    try:
+                        results.append(json.loads(value))
+                        logger.debug("L1 cache hit", key=key)
+                    except Exception as e:
+                        logger.error(f"L1 cache parse error: {e}", key=key)
+                        results.append(None)
+                else:
+                    logger.debug("L1 cache miss", key=key)
+                    results.append(None)
+            
+            return results
+                
+        except Exception as e:
+            logger.error(f"L1 cache get_many error: {e}")
+            return [None] * len(keys)
+
+    async def set_many(self, items: List[tuple[str, Any, Optional[int]]]) -> int:
+        """
+        Set multiple values in cache in a single operation (pipeline optimization)
+        
+        Args:
+            items: List of (key, value, ttl_seconds) tuples
+            
+        Returns:
+            Number of successfully set items
+        """
+        if not self._initialized:
+            raise CacheError("L1 cache not initialized")
+
+        if not items:
+            return 0
+
+        try:
+            # Use pipeline for batch set operations
+            async with self._redis.pipeline() as pipe:
+                for key, value, ttl_seconds in items:
+                    try:
+                        serialized = json.dumps(value, default=str)
+                        if ttl_seconds:
+                            pipe.setex(key, ttl_seconds, serialized)
+                        else:
+                            pipe.set(key, serialized)
+                    except Exception as e:
+                        logger.error(f"L1 cache serialization error: {e}", key=key)
+                
+                results = await pipe.execute()
+            
+            success_count = sum(1 for r in results if r)
+            logger.debug("L1 cache set_many", total=len(items), success=success_count)
+            return success_count
+            
+        except Exception as e:
+            logger.error(f"L1 cache set_many error: {e}")
+            return 0
 
 
 # Global L1 cache instance
