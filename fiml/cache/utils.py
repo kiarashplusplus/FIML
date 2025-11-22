@@ -10,11 +10,11 @@ from typing import List
 def calculate_percentile(data: List[float], percentile: int) -> float:
     """
     Calculate percentile from data list
-    
+
     Args:
         data: List of numeric values
         percentile: Percentile to calculate (0-100)
-        
+
     Returns:
         Percentile value
     """

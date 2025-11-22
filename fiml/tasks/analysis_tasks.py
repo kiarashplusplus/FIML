@@ -2,10 +2,10 @@
 Analysis and orchestration tasks
 """
 
-from typing import Dict, Optional
+from typing import Optional
 
 from fiml.core.logging import get_logger
-from fiml.core.models import AnalysisDepth, Asset, AssetType, Market
+from fiml.core.models import Asset, AssetType, Market
 from fiml.tasks.celery import celery_app
 
 logger = get_logger(__name__)
@@ -20,13 +20,13 @@ def run_deep_analysis(
 ) -> dict:
     """
     Run deep analysis on an asset using multi-agent orchestration
-    
+
     Args:
         symbol: Asset symbol
         asset_type: Type of asset
         market: Market/exchange
         analysis_depth: Depth of analysis
-        
+
     Returns:
         Dict with analysis results
     """
@@ -37,15 +37,15 @@ def run_deep_analysis(
         market=market,
         depth=analysis_depth,
     )
-    
+
     try:
         # Create asset
-        asset = Asset(
+        Asset(
             symbol=symbol,
             asset_type=AssetType(asset_type),
             market=Market(market),
         )
-        
+
         # This would orchestrate multi-agent analysis
         # For now, return a placeholder
         return {
@@ -55,7 +55,7 @@ def run_deep_analysis(
             "message": f"Deep analysis completed for {symbol}",
             "task_id": run_deep_analysis.request.id,
         }
-        
+
     except Exception as e:
         logger.error(f"Error running deep analysis: {e}")
         return {
@@ -69,15 +69,15 @@ def run_deep_analysis(
 def run_scheduled_analysis(portfolio_id: Optional[str] = None) -> dict:
     """
     Run scheduled analysis for portfolio or watchlist
-    
+
     Args:
         portfolio_id: Optional portfolio ID
-        
+
     Returns:
         Dict with analysis results
     """
     logger.info("Running scheduled analysis", portfolio_id=portfolio_id)
-    
+
     try:
         # This would run analysis on a portfolio or watchlist
         # For now, return a placeholder
@@ -87,7 +87,7 @@ def run_scheduled_analysis(portfolio_id: Optional[str] = None) -> dict:
             "message": "Scheduled analysis completed",
             "task_id": run_scheduled_analysis.request.id,
         }
-        
+
     except Exception as e:
         logger.error(f"Error running scheduled analysis: {e}")
         return {

@@ -5,9 +5,7 @@ MCP Tool Implementations
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fiml.agents.orchestrator import agent_orchestrator
 from fiml.arbitration.engine import arbitration_engine
-from fiml.cache.manager import cache_manager
 from fiml.core.logging import get_logger
 from fiml.core.models import (
     AnalysisDepth,
@@ -25,7 +23,6 @@ from fiml.core.models import (
 from fiml.dsl.executor import fk_dsl_executor
 from fiml.dsl.parser import fk_dsl_parser
 from fiml.dsl.planner import execution_planner
-from fiml.providers import provider_registry
 
 logger = get_logger(__name__)
 
@@ -48,14 +45,13 @@ async def search_by_symbol(
     logger.info(
         "search_by_symbol called", symbol=symbol, market=market, depth=depth, language=language
     )
-    
-    from fiml.arbitration.engine import arbitration_engine
-    from fiml.compliance.router import compliance_router, Region
-    from fiml.compliance.disclaimers import disclaimer_generator, AssetClass
-    
+
+    from fiml.compliance.disclaimers import AssetClass, disclaimer_generator
+    from fiml.compliance.router import Region, compliance_router
+
     # Create asset object
     asset = Asset(symbol=symbol.upper(), asset_type=AssetType.EQUITY)
-    
+
     # Compliance check
     compliance_check = await compliance_router.check_compliance(
         request_type="price_query",
@@ -63,7 +59,7 @@ async def search_by_symbol(
         region=Region.US,  # Default to US, should be from user context
         user_query=None,
     )
-    
+
     if not compliance_check.passed:
         # Return compliance error
         return SearchBySymbolResponse(
@@ -98,7 +94,7 @@ async def search_by_symbol(
                 source_count=0,
             ),
         )
-    
+
     try:
         # Fetch price data via arbitration engine
         plan = await arbitration_engine.arbitrate_request(
@@ -106,15 +102,15 @@ async def search_by_symbol(
             data_type=DataType.PRICE,
             user_region="US",
         )
-        
+
         # Execute the plan
         response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
-        
+
         # Extract data from response
         data = response.data if response else {}
-        
+
         task_id = f"analysis-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
-        
+
         cached_data = CachedData(
             price=data.get("price", 0.0),
             change=data.get("change", 0.0),
@@ -125,7 +121,7 @@ async def search_by_symbol(
             ttl=300,  # 5 minutes
             confidence=response.confidence if response else 0.0,
         )
-        
+
         task_info = TaskInfo(
             id=task_id,
             type="equity_analysis",
@@ -134,21 +130,21 @@ async def search_by_symbol(
             estimated_completion=datetime.now(timezone.utc) + timedelta(seconds=5),
             progress=0.0,
         )
-        
+
         data_lineage = DataLineage(
             providers=[response.provider] if response else [],
             arbitration_score=plan.estimated_latency_ms / 10.0 if plan else 0.0,
             conflict_resolved=False,
             source_count=1,
         )
-        
+
         # Generate disclaimer
         disclaimer = disclaimer_generator.generate(
             asset_class=AssetClass.EQUITY,
             region=Region.US,
             include_general=True,
         )
-        
+
         return SearchBySymbolResponse(
             symbol=symbol.upper(),
             name=data.get("name", f"{symbol.upper()} Inc."),
@@ -160,13 +156,13 @@ async def search_by_symbol(
             disclaimer=disclaimer,
             data_lineage=data_lineage,
         )
-        
+
     except Exception as e:
         logger.error(f"Error fetching data for {symbol}: {e}")
-        
+
         # Return error response with disclaimer
         task_id = f"analysis-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
-        
+
         return SearchBySymbolResponse(
             symbol=symbol.upper(),
             name=f"{symbol.upper()}",
@@ -225,15 +221,14 @@ async def search_by_coin(
         depth=depth,
         language=language,
     )
-    
-    from fiml.arbitration.engine import arbitration_engine
-    from fiml.compliance.router import compliance_router, Region
-    from fiml.compliance.disclaimers import disclaimer_generator, AssetClass
-    
+
+    from fiml.compliance.disclaimers import AssetClass, disclaimer_generator
+    from fiml.compliance.router import Region, compliance_router
+
     # Create asset object with pair format
     crypto_symbol = f"{symbol.upper()}/{pair.upper()}"
     asset = Asset(symbol=crypto_symbol, asset_type=AssetType.CRYPTO)
-    
+
     # Compliance check
     compliance_check = await compliance_router.check_compliance(
         request_type="price_query",
@@ -241,7 +236,7 @@ async def search_by_coin(
         region=Region.US,
         user_query=None,
     )
-    
+
     if not compliance_check.passed:
         # Return compliance error
         return SearchByCoinResponse(
@@ -276,7 +271,7 @@ async def search_by_coin(
                 source_count=0,
             ),
         )
-    
+
     try:
         # Fetch price data via arbitration engine
         plan = await arbitration_engine.arbitrate_request(
@@ -284,15 +279,15 @@ async def search_by_coin(
             data_type=DataType.PRICE,
             user_region="US",
         )
-        
+
         # Execute the plan
         response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
-        
+
         # Extract data from response
         data = response.data if response else {}
-        
+
         task_id = f"crypto-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
-        
+
         cached_data = CachedData(
             price=data.get("price", 0.0),
             change=data.get("change", 0.0),
@@ -303,7 +298,7 @@ async def search_by_coin(
             ttl=30,  # 30 seconds for crypto (more volatile)
             confidence=response.confidence if response else 0.0,
         )
-        
+
         task_info = TaskInfo(
             id=task_id,
             type="crypto_analysis",
@@ -312,21 +307,21 @@ async def search_by_coin(
             estimated_completion=datetime.now(timezone.utc) + timedelta(seconds=3),
             progress=0.0,
         )
-        
+
         data_lineage = DataLineage(
             providers=[response.provider] if response else [],
             arbitration_score=plan.estimated_latency_ms / 10.0 if plan else 0.0,
             conflict_resolved=False,
             source_count=1,
         )
-        
+
         # Generate disclaimer for crypto
         disclaimer = disclaimer_generator.generate(
             asset_class=AssetClass.CRYPTO,
             region=Region.US,
             include_general=True,
         )
-        
+
         # Extract crypto-specific metrics
         crypto_metrics = {
             "dominance": data.get("dominance", 0.0),
@@ -336,7 +331,7 @@ async def search_by_coin(
             "high_24h": data.get("high_24h", data.get("high", 0.0)),
             "low_24h": data.get("low_24h", data.get("low", 0.0)),
         }
-        
+
         return SearchByCoinResponse(
             symbol=symbol.upper(),
             name=data.get("name", symbol.upper()),
@@ -348,13 +343,13 @@ async def search_by_coin(
             disclaimer=disclaimer,
             data_lineage=data_lineage,
         )
-        
+
     except Exception as e:
         logger.error(f"Error fetching crypto data for {symbol}: {e}")
-        
+
         # Return error response with disclaimer
         task_id = f"crypto-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
-        
+
         return SearchByCoinResponse(
             symbol=symbol.upper(),
             name=symbol.upper(),
@@ -404,7 +399,7 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
 
     # Get status from executor
     task_info = fk_dsl_executor.get_task_status(task_id)
-    
+
     if task_info:
         return {
             "id": task_info.task_id,
@@ -419,7 +414,7 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
             "result": task_info.result,
             "error": task_info.error,
         }
-    
+
     return {
         "id": task_id,
         "status": "not_found",
@@ -443,14 +438,14 @@ async def execute_fk_dsl(query: str, async_execution: bool = True) -> dict:
     try:
         # Parse query
         parsed = fk_dsl_parser.parse(query)
-        
+
         # Create execution plan
         plan = execution_planner.plan(parsed, query)
-        
+
         if async_execution:
             # Start async execution
             task_id = await fk_dsl_executor.execute_async(plan)
-            
+
             return {
                 "task_id": task_id,
                 "query": query,
@@ -461,13 +456,13 @@ async def execute_fk_dsl(query: str, async_execution: bool = True) -> dict:
         else:
             # Execute synchronously
             result = await fk_dsl_executor.execute_sync(plan)
-            
+
             return {
                 "query": query,
                 "status": "completed",
                 "result": result,
             }
-        
+
     except Exception as e:
         logger.error(f"DSL execution failed: {e}", query=query)
         return {

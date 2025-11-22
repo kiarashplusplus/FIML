@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class FundamentalsWorker(BaseWorker):
     """
     Analyzes fundamental financial data
-    
+
     Capabilities:
     - P/E, EPS, ROE analysis
     - Revenue and earnings trends
@@ -28,7 +28,7 @@ class FundamentalsWorker(BaseWorker):
 
     async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze fundamentals"""
-        self.logger.info(f"Analyzing fundamentals", asset=asset.symbol)
+        self.logger.info("Analyzing fundamentals", asset=asset.symbol)
 
         # Mock implementation - would fetch from providers
         await asyncio.sleep(0.5)
@@ -53,7 +53,7 @@ class FundamentalsWorker(BaseWorker):
 class TechnicalWorker(BaseWorker):
     """
     Performs technical analysis
-    
+
     Capabilities:
     - RSI, MACD, Bollinger Bands
     - Moving averages (SMA, EMA)
@@ -63,7 +63,7 @@ class TechnicalWorker(BaseWorker):
 
     async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze technicals"""
-        self.logger.info(f"Analyzing technicals", asset=asset.symbol)
+        self.logger.info("Analyzing technicals", asset=asset.symbol)
 
         await asyncio.sleep(0.4)
 
@@ -88,7 +88,7 @@ class TechnicalWorker(BaseWorker):
 class MacroWorker(BaseWorker):
     """
     Analyzes macroeconomic factors
-    
+
     Capabilities:
     - Interest rates, inflation
     - GDP, unemployment
@@ -98,7 +98,7 @@ class MacroWorker(BaseWorker):
 
     async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze macro conditions"""
-        self.logger.info(f"Analyzing macro", asset=asset.symbol)
+        self.logger.info("Analyzing macro", asset=asset.symbol)
 
         await asyncio.sleep(0.3)
 
@@ -121,7 +121,7 @@ class MacroWorker(BaseWorker):
 class SentimentWorker(BaseWorker):
     """
     Analyzes market sentiment
-    
+
     Capabilities:
     - News sentiment analysis
     - Social media buzz
@@ -131,7 +131,7 @@ class SentimentWorker(BaseWorker):
 
     async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze sentiment"""
-        self.logger.info(f"Analyzing sentiment", asset=asset.symbol)
+        self.logger.info("Analyzing sentiment", asset=asset.symbol)
 
         await asyncio.sleep(0.35)
 
@@ -154,7 +154,7 @@ class SentimentWorker(BaseWorker):
 class CorrelationWorker(BaseWorker):
     """
     Analyzes asset correlations
-    
+
     Capabilities:
     - Price correlations
     - Sector correlations
@@ -164,7 +164,7 @@ class CorrelationWorker(BaseWorker):
 
     async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze correlations"""
-        self.logger.info(f"Analyzing correlations", asset=asset.symbol)
+        self.logger.info("Analyzing correlations", asset=asset.symbol)
 
         await asyncio.sleep(0.25)
 
@@ -186,7 +186,7 @@ class CorrelationWorker(BaseWorker):
 class RiskWorker(BaseWorker):
     """
     Performs risk analysis
-    
+
     Capabilities:
     - VaR (Value at Risk)
     - Sharpe ratio
@@ -196,7 +196,7 @@ class RiskWorker(BaseWorker):
 
     async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze risk"""
-        self.logger.info(f"Analyzing risk", asset=asset.symbol)
+        self.logger.info("Analyzing risk", asset=asset.symbol)
 
         await asyncio.sleep(0.3)
 
@@ -219,7 +219,7 @@ class RiskWorker(BaseWorker):
 class NewsWorker(BaseWorker):
     """
     Fetches and analyzes news
-    
+
     Capabilities:
     - News aggregation
     - Event detection
@@ -229,7 +229,7 @@ class NewsWorker(BaseWorker):
 
     async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Fetch and analyze news"""
-        self.logger.info(f"Analyzing news", asset=asset.symbol)
+        self.logger.info("Analyzing news", asset=asset.symbol)
 
         await asyncio.sleep(0.4)
 

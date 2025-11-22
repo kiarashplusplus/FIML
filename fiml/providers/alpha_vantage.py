@@ -2,14 +2,14 @@
 Alpha Vantage Provider Implementation
 """
 
-from datetime import datetime, timezone
-from typing import Dict, Optional, Any
 import asyncio
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 import aiohttp
 
 from fiml.core.config import settings
-from fiml.core.exceptions import ProviderError, ProviderTimeoutError, ProviderRateLimitError
+from fiml.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider, ProviderConfig, ProviderResponse
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 class AlphaVantageProvider(BaseProvider):
     """
     Alpha Vantage data provider
-    
+
     Provides:
     - Real-time and historical equity data
     - Fundamental data (earnings, financial statements)
@@ -46,10 +46,10 @@ class AlphaVantageProvider(BaseProvider):
     async def initialize(self) -> None:
         """Initialize Alpha Vantage provider"""
         logger.info("Initializing Alpha Vantage provider")
-        
+
         if not self.config.api_key:
             raise ProviderError("Alpha Vantage API key not configured")
-        
+
         self._session = aiohttp.ClientSession()
         self._is_initialized = True
         logger.info("Alpha Vantage provider initialized successfully")
@@ -64,13 +64,13 @@ class AlphaVantageProvider(BaseProvider):
     async def _check_rate_limit(self) -> None:
         """Check and enforce rate limits"""
         now = datetime.now(timezone.utc)
-        
+
         # Remove timestamps older than 1 minute
         self._request_timestamps = [
             ts for ts in self._request_timestamps
             if (now - ts).total_seconds() < 60
         ]
-        
+
         # Check if we've exceeded the rate limit
         if len(self._request_timestamps) >= self.config.rate_limit_per_minute:
             wait_time = 60 - (now - self._request_timestamps[0]).total_seconds()
@@ -85,11 +85,11 @@ class AlphaVantageProvider(BaseProvider):
         """Make API request to Alpha Vantage"""
         if not self._session:
             raise ProviderError("Provider not initialized")
-        
+
         await self._check_rate_limit()
-        
+
         params["apikey"] = self.config.api_key
-        
+
         try:
             async with self._session.get(
                 self.BASE_URL,
@@ -98,25 +98,25 @@ class AlphaVantageProvider(BaseProvider):
             ) as response:
                 self._request_timestamps.append(datetime.now(timezone.utc))
                 self._record_request()
-                
+
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Check for API errors
                     if "Error Message" in data:
                         raise ProviderError(f"Alpha Vantage error: {data['Error Message']}")
-                    
+
                     if "Note" in data:
                         # Rate limit message
                         raise ProviderRateLimitError(
                             "Alpha Vantage rate limit exceeded",
                             retry_after=60
                         )
-                    
+
                     return data
                 else:
                     raise ProviderError(f"HTTP {response.status}: {await response.text()}")
-                    
+
         except asyncio.TimeoutError:
             self._record_error()
             raise ProviderTimeoutError(f"Request timeout after {self.config.timeout_seconds}s")
@@ -127,20 +127,20 @@ class AlphaVantageProvider(BaseProvider):
     async def fetch_price(self, asset: Asset) -> ProviderResponse:
         """Fetch current price from Alpha Vantage"""
         logger.info(f"Fetching price for {asset.symbol} from Alpha Vantage")
-        
+
         try:
             params = {
                 "function": "GLOBAL_QUOTE",
                 "symbol": asset.symbol,
             }
-            
+
             response_data = await self._make_request(params)
-            
+
             quote = response_data.get("Global Quote", {})
-            
+
             if not quote:
                 raise ProviderError(f"No quote data available for {asset.symbol}")
-            
+
             data = {
                 "price": float(quote.get("05. price", 0.0)),
                 "change": float(quote.get("09. change", 0.0)),
@@ -152,7 +152,7 @@ class AlphaVantageProvider(BaseProvider):
                 "low": float(quote.get("04. low", 0.0)),
                 "latest_trading_day": quote.get("07. latest trading day", ""),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -167,7 +167,7 @@ class AlphaVantageProvider(BaseProvider):
                     "function": "GLOBAL_QUOTE",
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -180,7 +180,7 @@ class AlphaVantageProvider(BaseProvider):
     ) -> ProviderResponse:
         """Fetch OHLCV data from Alpha Vantage"""
         logger.info(f"Fetching OHLCV for {asset.symbol} from Alpha Vantage")
-        
+
         try:
             # Map timeframe to Alpha Vantage function
             if timeframe == "1d":
@@ -192,30 +192,30 @@ class AlphaVantageProvider(BaseProvider):
             else:
                 function = "TIME_SERIES_DAILY"
                 outputsize = "compact"
-            
+
             params = {
                 "function": function,
                 "symbol": asset.symbol,
                 "outputsize": outputsize,
             }
-            
+
             if function == "TIME_SERIES_INTRADAY":
                 params["interval"] = "60min"
-            
+
             response_data = await self._make_request(params)
-            
+
             # Extract time series data
             time_series_key = None
             for key in response_data.keys():
                 if "Time Series" in key:
                     time_series_key = key
                     break
-            
+
             if not time_series_key:
                 raise ProviderError(f"No time series data available for {asset.symbol}")
-            
+
             time_series = response_data[time_series_key]
-            
+
             # Convert to standard format
             ohlcv_data = []
             for timestamp, values in list(time_series.items())[:limit]:
@@ -227,13 +227,13 @@ class AlphaVantageProvider(BaseProvider):
                     "close": float(values.get("4. close", 0.0)),
                     "volume": int(values.get("5. volume", 0)),
                 })
-            
+
             data = {
                 "ohlcv": ohlcv_data,
                 "timeframe": timeframe,
                 "count": len(ohlcv_data),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -248,7 +248,7 @@ class AlphaVantageProvider(BaseProvider):
                     "function": function,
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -259,18 +259,18 @@ class AlphaVantageProvider(BaseProvider):
     async def fetch_fundamentals(self, asset: Asset) -> ProviderResponse:
         """Fetch fundamental data from Alpha Vantage"""
         logger.info(f"Fetching fundamentals for {asset.symbol} from Alpha Vantage")
-        
+
         try:
             params = {
                 "function": "OVERVIEW",
                 "symbol": asset.symbol,
             }
-            
+
             response_data = await self._make_request(params)
-            
+
             if not response_data or "Symbol" not in response_data:
                 raise ProviderError(f"No fundamental data available for {asset.symbol}")
-            
+
             # Extract key fundamentals
             data = {
                 "symbol": response_data.get("Symbol", ""),
@@ -303,7 +303,7 @@ class AlphaVantageProvider(BaseProvider):
                 "shares_outstanding": int(response_data.get("SharesOutstanding", 0)),
                 "beta": float(response_data.get("Beta", 0.0) or 0.0),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -318,7 +318,7 @@ class AlphaVantageProvider(BaseProvider):
                     "function": "OVERVIEW",
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -329,18 +329,18 @@ class AlphaVantageProvider(BaseProvider):
     async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
         """Fetch news articles from Alpha Vantage"""
         logger.info(f"Fetching news for {asset.symbol} from Alpha Vantage")
-        
+
         try:
             params = {
                 "function": "NEWS_SENTIMENT",
                 "tickers": asset.symbol,
                 "limit": str(limit),
             }
-            
+
             response_data = await self._make_request(params)
-            
+
             feed = response_data.get("feed", [])
-            
+
             articles = []
             for article in feed[:limit]:
                 articles.append({
@@ -351,7 +351,7 @@ class AlphaVantageProvider(BaseProvider):
                     "summary": article.get("summary", ""),
                     "sentiment": float(article.get("overall_sentiment_score", 0.0)),
                 })
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -366,7 +366,7 @@ class AlphaVantageProvider(BaseProvider):
                     "function": "NEWS_SENTIMENT",
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -385,7 +385,7 @@ class AlphaVantageProvider(BaseProvider):
             # Simple health check - fetch a known symbol
             test_asset = Asset(symbol="IBM", asset_type=AssetType.EQUITY)
             await self.fetch_price(test_asset)
-            
+
             return ProviderHealth(
                 provider_name=self.name,
                 is_healthy=True,

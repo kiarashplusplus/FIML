@@ -19,7 +19,6 @@ from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, DataType, Market
 from fiml.websocket.models import (
     HeartbeatMessage,
-    MessageType,
     OHLCVUpdate,
     PriceUpdate,
     StreamMessage,

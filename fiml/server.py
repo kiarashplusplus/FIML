@@ -51,16 +51,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Shutdown
     logger.info("Shutting down FIML server")
-    
+
     try:
         from fiml.agents.orchestrator import agent_orchestrator
         if agent_orchestrator.initialized:
             await agent_orchestrator.shutdown()
     except:
         pass
-    
+
     await provider_registry.shutdown()
-    
+
     try:
         from fiml.cache.manager import cache_manager
         await cache_manager.shutdown()

@@ -2,14 +2,13 @@
 CCXT Cryptocurrency Provider Implementation
 """
 
-from datetime import datetime, timezone
-from typing import Dict, Optional, Any, List
 import asyncio
+from datetime import datetime, timezone
+from typing import List, Optional
 
 import ccxt.async_support as ccxt
 
-from fiml.core.config import settings
-from fiml.core.exceptions import ProviderError, ProviderTimeoutError, ProviderRateLimitError
+from fiml.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider, ProviderConfig, ProviderResponse
@@ -20,7 +19,7 @@ logger = get_logger(__name__)
 class CCXTProvider(BaseProvider):
     """
     CCXT Cryptocurrency Provider
-    
+
     Provides unified access to 100+ cryptocurrency exchanges:
     - Real-time price data
     - OHLCV data
@@ -44,7 +43,7 @@ class CCXTProvider(BaseProvider):
     async def initialize(self) -> None:
         """Initialize CCXT provider"""
         logger.info(f"Initializing CCXT provider with exchange: {self.exchange_id}")
-        
+
         try:
             # Create exchange instance
             exchange_class = getattr(ccxt, self.exchange_id)
@@ -52,13 +51,13 @@ class CCXTProvider(BaseProvider):
                 'enableRateLimit': True,
                 'timeout': self.config.timeout_seconds * 1000,  # milliseconds
             })
-            
+
             # Load markets
             await self._exchange.load_markets()
-            
+
             self._is_initialized = True
             logger.info(f"CCXT provider initialized with {len(self._exchange.markets)} markets")
-            
+
         except Exception as e:
             raise ProviderError(f"Failed to initialize CCXT with {self.exchange_id}: {e}")
 
@@ -74,7 +73,7 @@ class CCXTProvider(BaseProvider):
         # If asset already has pair format, use it
         if "/" in asset.symbol:
             return asset.symbol
-        
+
         # Default to USDT pair for major coins
         return f"{asset.symbol.upper()}/USDT"
 
@@ -82,19 +81,19 @@ class CCXTProvider(BaseProvider):
         """Fetch current price from exchange"""
         if not self._exchange:
             raise ProviderError("Provider not initialized")
-        
+
         self._record_request()
         logger.info(f"Fetching price for {asset.symbol} from {self.exchange_id}")
-        
+
         try:
             symbol = self._normalize_symbol(asset)
-            
+
             # Fetch ticker data
             ticker = await self._exchange.fetch_ticker(symbol)
-            
+
             if not ticker:
                 raise ProviderError(f"No ticker data for {symbol}")
-            
+
             data = {
                 "price": float(ticker.get("last", 0.0)),
                 "bid": float(ticker.get("bid", 0.0)),
@@ -112,7 +111,7 @@ class CCXTProvider(BaseProvider):
                 "symbol": symbol,
                 "info": ticker.get("info", {}),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -128,12 +127,12 @@ class CCXTProvider(BaseProvider):
                     "symbol": symbol,
                 },
             )
-            
+
         except ccxt.RateLimitExceeded as e:
             self._record_error()
             logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
             raise ProviderRateLimitError(
-                f"Exchange rate limit exceeded",
+                "Exchange rate limit exceeded",
                 retry_after=60
             )
         except ccxt.NetworkError as e:
@@ -155,13 +154,13 @@ class CCXTProvider(BaseProvider):
         """Fetch OHLCV data from exchange"""
         if not self._exchange:
             raise ProviderError("Provider not initialized")
-        
+
         self._record_request()
         logger.info(f"Fetching OHLCV for {asset.symbol} from {self.exchange_id}")
-        
+
         try:
             symbol = self._normalize_symbol(asset)
-            
+
             # Map timeframe to CCXT format
             timeframe_map = {
                 "1m": "1m",
@@ -173,17 +172,17 @@ class CCXTProvider(BaseProvider):
                 "1w": "1w",
             }
             ccxt_timeframe = timeframe_map.get(timeframe, "1d")
-            
+
             # Fetch OHLCV data
             ohlcv = await self._exchange.fetch_ohlcv(
                 symbol,
                 timeframe=ccxt_timeframe,
                 limit=limit
             )
-            
+
             if not ohlcv:
                 raise ProviderError(f"No OHLCV data for {symbol}")
-            
+
             # Convert to standard format
             ohlcv_data = []
             for candle in ohlcv:
@@ -196,14 +195,14 @@ class CCXTProvider(BaseProvider):
                     "close": float(candle[4]),
                     "volume": float(candle[5]),
                 })
-            
+
             data = {
                 "ohlcv": ohlcv_data,
                 "timeframe": timeframe,
                 "count": len(ohlcv_data),
                 "symbol": symbol,
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -220,12 +219,12 @@ class CCXTProvider(BaseProvider):
                     "timeframe": ccxt_timeframe,
                 },
             )
-            
+
         except ccxt.RateLimitExceeded as e:
             self._record_error()
             logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
             raise ProviderRateLimitError(
-                f"Exchange rate limit exceeded",
+                "Exchange rate limit exceeded",
                 retry_after=60
             )
         except ccxt.NetworkError as e:
@@ -244,7 +243,7 @@ class CCXTProvider(BaseProvider):
     async def fetch_fundamentals(self, asset: Asset) -> ProviderResponse:
         """
         Fetch cryptocurrency fundamentals
-        
+
         Note: Traditional fundamentals don't apply to crypto, but we can provide:
         - Market cap
         - Circulating supply
@@ -254,19 +253,19 @@ class CCXTProvider(BaseProvider):
         """
         if not self._exchange:
             raise ProviderError("Provider not initialized")
-        
+
         self._record_request()
         logger.info(f"Fetching crypto metrics for {asset.symbol} from {self.exchange_id}")
-        
+
         try:
             symbol = self._normalize_symbol(asset)
-            
+
             # Fetch ticker for basic metrics
             ticker = await self._exchange.fetch_ticker(symbol)
-            
+
             # Get market info
             market = self._exchange.market(symbol)
-            
+
             data = {
                 "symbol": symbol,
                 "base": market.get("base", ""),
@@ -294,7 +293,7 @@ class CCXTProvider(BaseProvider):
                 "max_amount": float(market.get("limits", {}).get("amount", {}).get("max", 0.0) or 0.0),
                 "min_cost": float(market.get("limits", {}).get("cost", {}).get("min", 0.0) or 0.0),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -310,12 +309,12 @@ class CCXTProvider(BaseProvider):
                     "symbol": symbol,
                 },
             )
-            
+
         except ccxt.RateLimitExceeded as e:
             self._record_error()
             logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
             raise ProviderRateLimitError(
-                f"Exchange rate limit exceeded",
+                "Exchange rate limit exceeded",
                 retry_after=60
             )
         except ccxt.NetworkError as e:
@@ -334,12 +333,12 @@ class CCXTProvider(BaseProvider):
     async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
         """
         Fetch news for cryptocurrency
-        
+
         Note: Most CCXT exchanges don't provide news directly.
         This is a placeholder that could integrate with crypto news APIs.
         """
         logger.info(f"News fetch not supported by CCXT exchanges for {asset.symbol}")
-        
+
         # Return empty news response
         return ProviderResponse(
             provider=self.name,
@@ -362,10 +361,10 @@ class CCXTProvider(BaseProvider):
         # CCXT supports crypto assets
         if asset.asset_type != AssetType.CRYPTO:
             return False
-        
+
         if not self._exchange:
             return False
-        
+
         # Check if symbol is in exchange markets
         try:
             symbol = self._normalize_symbol(asset)
@@ -385,7 +384,7 @@ class CCXTProvider(BaseProvider):
                 test_asset = Asset(symbol="BTC/USDT", asset_type=AssetType.CRYPTO)
                 await self.fetch_price(test_asset)
                 is_healthy = True
-            
+
             return ProviderHealth(
                 provider_name=self.name,
                 is_healthy=is_healthy,
@@ -419,7 +418,7 @@ class CCXTProvider(BaseProvider):
                 test_asset = Asset(symbol="BTC/USDT", asset_type=AssetType.CRYPTO)
                 await self.fetch_price(test_asset)
                 is_healthy = True
-            
+
             return ProviderHealth(
                 provider=self.name,
                 is_healthy=is_healthy,
@@ -451,43 +450,43 @@ class CCXTProvider(BaseProvider):
 class CCXTMultiExchangeProvider:
     """
     Manager for multiple CCXT exchanges
-    
+
     Provides access to multiple exchanges and can aggregate data
     """
-    
+
     def __init__(self, exchanges: List[str] = None):
         if exchanges is None:
             exchanges = ["binance", "coinbase", "kraken"]
-        
+
         self.exchanges = {
             exchange_id: CCXTProvider(exchange_id)
             for exchange_id in exchanges
         }
-    
+
     async def initialize_all(self) -> None:
         """Initialize all exchanges"""
         await asyncio.gather(*[
             provider.initialize()
             for provider in self.exchanges.values()
         ])
-    
+
     async def shutdown_all(self) -> None:
         """Shutdown all exchanges"""
         await asyncio.gather(*[
             provider.shutdown()
             for provider in self.exchanges.values()
         ])
-    
+
     async def fetch_price_from_all(self, asset: Asset) -> List[ProviderResponse]:
         """Fetch price from all exchanges"""
         results = await asyncio.gather(*[
             provider.fetch_price(asset)
             for provider in self.exchanges.values()
         ], return_exceptions=True)
-        
+
         # Filter out errors
         return [r for r in results if isinstance(r, ProviderResponse)]
-    
+
     def get_provider(self, exchange_id: str) -> Optional[CCXTProvider]:
         """Get specific exchange provider"""
         return self.exchanges.get(exchange_id)

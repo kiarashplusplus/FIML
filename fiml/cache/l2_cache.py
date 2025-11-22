@@ -3,7 +3,6 @@ L2 Cache - PostgreSQL + TimescaleDB Persistent Cache
 Target: 300-700ms latency
 """
 
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
@@ -20,7 +19,7 @@ logger = get_logger(__name__)
 class L2Cache:
     """
     PostgreSQL + TimescaleDB L2 cache for persistent data
-    
+
     Features:
     - 300-700ms latency target
     - Time-series optimized with TimescaleDB
@@ -81,12 +80,12 @@ class L2Cache:
     ) -> Optional[Dict[str, Any]]:
         """
         Get recent price from cache
-        
+
         Args:
             asset_id: Asset ID
             provider: Specific provider (optional)
             time_range_minutes: How far back to look
-            
+
         Returns:
             Price data or None
         """
@@ -152,10 +151,10 @@ class L2Cache:
         try:
             async with self._session_maker() as session:
                 query = text("""
-                    INSERT INTO price_cache 
-                    (time, asset_id, provider, price, change, change_percent, 
+                    INSERT INTO price_cache
+                    (time, asset_id, provider, price, change, change_percent,
                      volume, confidence, metadata)
-                    VALUES (NOW(), :asset_id, :provider, :price, :change, 
+                    VALUES (NOW(), :asset_id, :provider, :price, :change,
                             :change_percent, :volume, :confidence, :metadata)
                 """)
 
@@ -195,7 +194,7 @@ class L2Cache:
         try:
             async with self._session_maker() as session:
                 query = text("""
-                    SELECT time, asset_id, provider, open, high, low, close, 
+                    SELECT time, asset_id, provider, open, high, low, close,
                            volume, timeframe
                     FROM ohlcv_cache
                     WHERE asset_id = :asset_id
@@ -289,11 +288,11 @@ class L2Cache:
             async with self._session_maker() as session:
                 # Upsert using ON CONFLICT
                 query = text("""
-                    INSERT INTO fundamentals_cache 
+                    INSERT INTO fundamentals_cache
                     (asset_id, provider, data, timestamp, ttl_seconds)
                     VALUES (:asset_id, :provider, :data, NOW(), :ttl_seconds)
                     ON CONFLICT (asset_id, provider)
-                    DO UPDATE SET 
+                    DO UPDATE SET
                         data = EXCLUDED.data,
                         timestamp = EXCLUDED.timestamp,
                         ttl_seconds = EXCLUDED.ttl_seconds
@@ -333,7 +332,7 @@ class L2Cache:
                 await session.commit()
 
                 deleted = result.rowcount
-                logger.info(f"L2 cache cleanup", deleted=deleted)
+                logger.info("L2 cache cleanup", deleted=deleted)
                 return deleted
 
         except Exception as e:

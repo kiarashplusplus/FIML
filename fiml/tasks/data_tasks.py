@@ -2,11 +2,10 @@
 Data fetching and caching tasks
 """
 
-import asyncio
-from typing import List, Optional
+from typing import Optional
 
 from fiml.core.logging import get_logger
-from fiml.core.models import Asset, AssetType, DataType
+from fiml.core.models import Asset, AssetType
 from fiml.providers import provider_registry
 from fiml.tasks.celery import celery_app
 
@@ -22,13 +21,13 @@ def fetch_historical_data(
 ) -> dict:
     """
     Fetch historical data for an asset
-    
+
     Args:
         symbol: Asset symbol
         asset_type: Type of asset (stock, crypto, etc.)
         start_date: Start date (ISO format)
         end_date: End date (ISO format)
-        
+
     Returns:
         Dict with status and data
     """
@@ -39,15 +38,15 @@ def fetch_historical_data(
         start_date=start_date,
         end_date=end_date,
     )
-    
+
     try:
         # Create asset
-        asset = Asset(
+        Asset(
             symbol=symbol,
             asset_type=AssetType(asset_type),
             market="US",
         )
-        
+
         # This would call the provider registry to fetch data
         # For now, return a placeholder
         return {
@@ -55,7 +54,7 @@ def fetch_historical_data(
             "symbol": symbol,
             "message": f"Historical data fetch queued for {symbol}",
         }
-        
+
     except Exception as e:
         logger.error(f"Error fetching historical data: {e}")
         return {
@@ -69,15 +68,15 @@ def fetch_historical_data(
 def refresh_cache(top_n: int = 100) -> dict:
     """
     Refresh cache for most frequently accessed assets
-    
+
     Args:
         top_n: Number of top assets to refresh
-        
+
     Returns:
         Dict with status and count
     """
     logger.info("Refreshing cache", top_n=top_n)
-    
+
     try:
         # This would refresh the cache for the most accessed items
         # For now, return a placeholder
@@ -86,7 +85,7 @@ def refresh_cache(top_n: int = 100) -> dict:
             "refreshed": top_n,
             "message": f"Cache refresh completed for {top_n} items",
         }
-        
+
     except Exception as e:
         logger.error(f"Error refreshing cache: {e}")
         return {
@@ -99,23 +98,23 @@ def refresh_cache(top_n: int = 100) -> dict:
 def update_provider_health() -> dict:
     """
     Update health metrics for all providers
-    
+
     Returns:
         Dict with status and provider count
     """
     logger.info("Updating provider health metrics")
-    
+
     try:
         # This would ping all providers and update their health status
         # For now, return a placeholder
         provider_count = len(provider_registry.providers)
-        
+
         return {
             "status": "success",
             "providers_checked": provider_count,
             "message": f"Health check completed for {provider_count} providers",
         }
-        
+
     except Exception as e:
         logger.error(f"Error updating provider health: {e}")
         return {

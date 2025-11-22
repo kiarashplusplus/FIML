@@ -3,12 +3,10 @@ Yahoo Finance Provider Implementation
 """
 
 from datetime import datetime, timezone
-from typing import Optional
 
 import yfinance as yf
 
-from fiml.core.config import settings
-from fiml.core.exceptions import ProviderError, ProviderTimeoutError
+from fiml.core.exceptions import ProviderError
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider, ProviderConfig, ProviderResponse

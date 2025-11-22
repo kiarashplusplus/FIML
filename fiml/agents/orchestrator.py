@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 class AgentOrchestrator:
     """
     Orchestrates multiple specialized agents for comprehensive analysis
-    
+
     Architecture:
     - Parallel execution of independent agents
     - Result aggregation and synthesis
@@ -57,7 +57,7 @@ class AgentOrchestrator:
                         _node_ip_address="0.0.0.0",
                     )
                 )
-                
+
                 # Wait up to 10 seconds for Ray to connect
                 await asyncio.wait_for(init_task, timeout=10.0)
 
@@ -99,11 +99,11 @@ class AgentOrchestrator:
     ) -> Dict[str, Any]:
         """
         Run comprehensive analysis on an asset
-        
+
         Args:
             asset: Asset to analyze
             agents: Specific agents to run (None = all)
-            
+
         Returns:
             Aggregated analysis results
         """
@@ -114,7 +114,7 @@ class AgentOrchestrator:
         if agents is None:
             agents = list(self.workers.keys())
 
-        logger.info(f"Starting multi-agent analysis", asset=asset.symbol, agents=agents)
+        logger.info("Starting multi-agent analysis", asset=asset.symbol, agents=agents)
 
         # Schedule tasks
         tasks = []
@@ -139,7 +139,7 @@ class AgentOrchestrator:
         aggregate = self._aggregate_results(results)
 
         logger.info(
-            f"Multi-agent analysis complete",
+            "Multi-agent analysis complete",
             asset=asset.symbol,
             agents_completed=len(results),
             overall_score=aggregate.get("overall_score"),
@@ -163,7 +163,7 @@ class AgentOrchestrator:
     def _aggregate_results(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """
         Aggregate results from multiple agents
-        
+
         Returns overall score and recommendations
         """
         scores = []

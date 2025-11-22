@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 class ExecutionTaskInfo(BaseModel):
     """Internal task execution tracking"""
-    
+
     task_id: str
     status: TaskStatus
     query: str
@@ -41,15 +41,15 @@ class TaskExecutor:
     async def execute(self, task: ExecutionTask, context: Dict[str, Any]) -> Any:
         """
         Execute a single task
-        
+
         Args:
             task: Task to execute
             context: Shared execution context with results from dependencies
-            
+
         Returns:
             Task result
         """
-        logger.debug(f"Executing task", task_id=task.id, type=task.type.value)
+        logger.debug("Executing task", task_id=task.id, type=task.type.value)
 
         try:
             if task.type == TaskType.FETCH_PRICE:
@@ -121,7 +121,7 @@ class TaskExecutor:
 class FKDSLExecutor:
     """
     Executes FK-DSL queries using DAG-based execution
-    
+
     Features:
     - Parallel task execution
     - Dependency management
@@ -136,10 +136,10 @@ class FKDSLExecutor:
     async def execute_async(self, plan: ExecutionPlan) -> str:
         """
         Start async execution of plan
-        
+
         Args:
             plan: Execution plan
-            
+
         Returns:
             Task ID for tracking
         """
@@ -158,7 +158,7 @@ class FKDSLExecutor:
         # Execute in background
         asyncio.create_task(self._execute_plan(task_id, plan))
 
-        logger.info(f"Async execution started", task_id=task_id, query=plan.query[:50])
+        logger.info("Async execution started", task_id=task_id, query=plan.query[:50])
         return task_id
 
     async def _execute_plan(self, task_id: str, plan: ExecutionPlan) -> None:
@@ -191,7 +191,7 @@ class FKDSLExecutor:
                 task_results = await asyncio.gather(*tasks, return_exceptions=True)
 
                 # Store results
-                for task, result in zip(executable, task_results):
+                for task, result in zip(executable, task_results, strict=False):
                     if isinstance(result, Exception):
                         raise result
                     results[task.id] = result
@@ -206,7 +206,7 @@ class FKDSLExecutor:
             task_info.result = results
             task_info.completed_at = datetime.now(timezone.utc)
 
-            logger.info(f"Execution completed", task_id=task_id)
+            logger.info("Execution completed", task_id=task_id)
 
         except Exception as e:
             task_info.status = TaskStatus.FAILED
@@ -219,7 +219,7 @@ class FKDSLExecutor:
         internal_info = self.active_executions.get(task_id)
         if internal_info is None:
             return None
-        
+
         # Convert internal info to TaskInfo
         return TaskInfo(
             id=internal_info.task_id,

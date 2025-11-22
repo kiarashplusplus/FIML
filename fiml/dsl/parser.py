@@ -2,9 +2,9 @@
 FK-DSL Parser using Lark Grammar
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from lark import Lark, Transformer, Tree, v_args
+from lark import Lark, Transformer, v_args
 
 from fiml.core.exceptions import FKDSLParseError
 from fiml.core.logging import get_logger
@@ -20,7 +20,7 @@ FK_DSL_GRAMMAR = r"""
          | compare_query
          | track_query
          | get_query
-    
+
     find_query: "FIND" asset_spec "WITH" condition_list
     analyze_query: "ANALYZE" asset_spec "FOR" analysis_type
     compare_query: "COMPARE" asset_list "BY" metric_list
@@ -28,7 +28,7 @@ FK_DSL_GRAMMAR = r"""
     get_query: "GET" data_request
 
     asset_spec: asset_filter ("IN" market)?
-    
+
     asset_filter: symbol
                 | sector
                 | "TOP" INT "BY" metric
@@ -40,7 +40,7 @@ FK_DSL_GRAMMAR = r"""
     market: CNAME
 
     condition_list: condition ("AND" condition)*
-    
+
     condition: metric COMPARATOR value
              | metric "BETWEEN" value "AND" value
              | metric "ABOVE" metric
@@ -59,9 +59,9 @@ FK_DSL_GRAMMAR = r"""
                 | "CHANGE"
 
     fundamental_metric: "PE" | "EPS" | "ROE" | "DEBT" | "REVENUE" | "GROWTH"
-    
+
     technical_metric: "RSI" | "MACD" | "SMA" INT | "EMA" INT | "STOCH" | "ATR"
-    
+
     sentiment_metric: "SENTIMENT" | "BUZZ" | "NEWS_SCORE"
 
     analysis_type: "TECHNICALS"
@@ -84,7 +84,7 @@ FK_DSL_GRAMMAR = r"""
     timeframe: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1w"
 
     COMPARATOR: ">" | "<" | ">=" | "<=" | "=" | "!="
-    
+
     value: NUMBER | ESCAPED_STRING
 
     %import common.CNAME
@@ -102,25 +102,25 @@ class FKDSLTransformer(Transformer):
 
     def query(self, q):
         return q
-    
+
     def find_query(self, asset_spec, condition_list):
         return {"type": "FIND", "args": [asset_spec, condition_list]}
-    
+
     def analyze_query(self, asset_spec, analysis_type):
         return {"type": "ANALYZE", "args": [asset_spec, analysis_type]}
-    
+
     def compare_query(self, asset_list, metric_list):
         return {"type": "COMPARE", "args": [asset_list, metric_list]}
-    
+
     def track_query(self, asset_spec, condition_list):
         return {"type": "TRACK", "args": [asset_spec, condition_list]}
-    
+
     def get_query(self, data_request):
         return {"type": "GET", "args": [data_request]}
 
     def asset_spec(self, asset_filter, market=None):
         return {"filter": asset_filter, "market": market}
-    
+
     def asset_filter(self, *args):
         """Handle asset filter - could be symbol, sector, top/bottom, or all"""
         if args:
@@ -196,7 +196,7 @@ class FKDSLTransformer(Transformer):
 
     def metric_list(self, *metrics):
         return list(metrics)
-    
+
     def data_request(self, *args):
         """Handle data request queries"""
         return {"type": "data_request", "args": args}
@@ -205,9 +205,9 @@ class FKDSLTransformer(Transformer):
 class FKDSLParser:
     """
     FK-DSL Parser
-    
+
     Parses Financial Knowledge DSL queries into execution plans
-    
+
     Examples:
         FIND AAPL WITH PRICE > 150 AND RSI < 30
         ANALYZE AAPL FOR TECHNICALS
@@ -222,13 +222,13 @@ class FKDSLParser:
     def parse(self, query: str) -> Dict[str, Any]:
         """
         Parse DSL query string into execution plan
-        
+
         Args:
             query: FK-DSL query string
-            
+
         Returns:
             Parsed execution plan dict
-            
+
         Raises:
             FKDSLParseError: If query is invalid
         """

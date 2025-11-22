@@ -3,7 +3,6 @@ Mock Provider for Testing
 """
 
 from datetime import datetime, timezone
-from typing import Dict
 
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider, ProviderConfig, ProviderResponse

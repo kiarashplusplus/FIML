@@ -8,13 +8,12 @@ Intelligently routes data requests to optimal providers with:
 - Weighted data merging
 """
 
-import asyncio
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 
-from fiml.core.exceptions import NoProviderAvailableError, ProviderError
+from fiml.core.exceptions import NoProviderAvailableError
 from fiml.core.logging import get_logger
 from fiml.core.models import (
     ArbitrationPlan,
@@ -173,7 +172,7 @@ class DataArbitrationEngine:
 
             except Exception as e:
                 logger.warning(
-                    f"Provider failed, falling back",
+                    "Provider failed, falling back",
                     provider=provider.name,
                     error=str(e),
                     fallback_available=i < len(providers) - 1,

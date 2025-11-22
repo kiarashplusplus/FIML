@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 from fiml.core.config import settings
 from fiml.core.exceptions import NoProviderAvailableError
 from fiml.core.logging import get_logger
-from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
+from fiml.core.models import Asset, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider
 from fiml.providers.mock_provider import MockProvider
 from fiml.providers.yahoo_finance import YahooFinanceProvider
@@ -59,13 +59,13 @@ class ProviderRegistry:
 
         # Register providers based on configuration and availability
         providers_to_register = []
-        
+
         # Always register mock provider for testing
         providers_to_register.append(MockProvider())
-        
+
         # Register Yahoo Finance (free, no API key needed)
         providers_to_register.append(YahooFinanceProvider())
-        
+
         # Register Alpha Vantage if API key is configured
         if ALPHA_VANTAGE_AVAILABLE and settings.alpha_vantage_api_key:
             try:
@@ -73,7 +73,7 @@ class ProviderRegistry:
                 logger.info("Alpha Vantage provider will be registered")
             except Exception as e:
                 logger.warning(f"Could not create Alpha Vantage provider: {e}")
-        
+
         # Register FMP if API key is configured
         if FMP_AVAILABLE and settings.fmp_api_key:
             try:
@@ -81,7 +81,7 @@ class ProviderRegistry:
                 logger.info("FMP provider will be registered")
             except Exception as e:
                 logger.warning(f"Could not create FMP provider: {e}")
-        
+
         # Register CCXT for crypto (uses Binance by default, no API key needed for public data)
         if CCXT_AVAILABLE:
             try:

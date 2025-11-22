@@ -45,7 +45,7 @@ class ExecutionPlan:
     query: str
     tasks: List[ExecutionTask] = field(default_factory=list)
     root_task_ids: List[str] = field(default_factory=list)
-    
+
     def add_task(self, task: ExecutionTask) -> str:
         """Add task to plan"""
         self.tasks.append(task)
@@ -93,7 +93,7 @@ class ExecutionPlan:
 class ExecutionPlanner:
     """
     Converts parsed DSL into executable DAG plan
-    
+
     Responsibilities:
     - Build task dependency graph
     - Optimize execution order
@@ -106,11 +106,11 @@ class ExecutionPlanner:
     def plan(self, parsed_query: Dict[str, Any], query_str: str) -> ExecutionPlan:
         """
         Create execution plan from parsed query
-        
+
         Args:
             parsed_query: Output from FKDSLParser
             query_str: Original query string
-            
+
         Returns:
             ExecutionPlan with tasks and dependencies
         """
@@ -129,7 +129,7 @@ class ExecutionPlanner:
         else:
             logger.warning(f"Unknown query type: {query_type}")
 
-        logger.info(f"Execution plan created", tasks=len(plan.tasks), query=query_str[:50])
+        logger.info("Execution plan created", tasks=len(plan.tasks), query=query_str[:50])
         return plan
 
     def _plan_find(self, plan: ExecutionPlan, parsed: Dict[str, Any]) -> None:

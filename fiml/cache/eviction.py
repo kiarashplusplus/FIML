@@ -10,9 +10,8 @@ Implements intelligent cache eviction strategies:
 
 import time
 from collections import OrderedDict
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from fiml.core.logging import get_logger
 
@@ -33,7 +32,7 @@ class EvictionPolicy(str, Enum):
 class EvictionTracker:
     """
     Tracks access patterns for intelligent cache eviction
-    
+
     Features:
     - Access time tracking (LRU)
     - Access frequency tracking (LFU)
@@ -44,13 +43,13 @@ class EvictionTracker:
     def __init__(self, policy: EvictionPolicy = EvictionPolicy.LRU, max_entries: int = 10000):
         self.policy = policy
         self.max_entries = max_entries
-        
+
         # LRU tracking - OrderedDict maintains insertion/access order
         self._lru_tracker: OrderedDict[str, float] = OrderedDict()
-        
+
         # LFU tracking - access counts
         self._lfu_tracker: Dict[str, int] = {}
-        
+
         # Statistics
         self._evictions = 0
         self._total_accesses = 0
@@ -58,30 +57,30 @@ class EvictionTracker:
     def track_access(self, key: str) -> None:
         """
         Track cache key access for eviction policy
-        
+
         Args:
             key: Cache key that was accessed
         """
         self._total_accesses += 1
         current_time = time.time()
-        
+
         if self.policy == EvictionPolicy.LRU:
             # Move to end (most recently used)
             if key in self._lru_tracker:
                 del self._lru_tracker[key]
             self._lru_tracker[key] = current_time
-            
+
             # Limit size
             if len(self._lru_tracker) > self.max_entries:
                 # Remove oldest
                 oldest_key = next(iter(self._lru_tracker))
                 del self._lru_tracker[oldest_key]
                 self._evictions += 1
-        
+
         elif self.policy == EvictionPolicy.LFU:
             # Increment access count
             self._lfu_tracker[key] = self._lfu_tracker.get(key, 0) + 1
-            
+
             # Limit size by removing least frequently used
             if len(self._lfu_tracker) > self.max_entries:
                 # Find key with minimum access count
@@ -92,12 +91,12 @@ class EvictionTracker:
     def should_evict(self, current_size: int, max_size: int, threshold: Optional[float] = None) -> bool:
         """
         Determine if eviction should occur based on memory pressure
-        
+
         Args:
             current_size: Current cache size
             max_size: Maximum cache size
             threshold: Memory pressure threshold (0.0-1.0), defaults to 0.9
-            
+
         Returns:
             True if eviction should occur
         """
@@ -108,10 +107,10 @@ class EvictionTracker:
     def get_eviction_candidates(self, count: int = 10) -> List[str]:
         """
         Get list of cache keys that are candidates for eviction
-        
+
         Args:
             count: Number of candidates to return
-            
+
         Returns:
             List of cache keys to evict
         """
@@ -119,32 +118,32 @@ class EvictionTracker:
             # Return oldest accessed keys
             candidates = list(self._lru_tracker.keys())[:count]
             return candidates
-        
+
         elif self.policy == EvictionPolicy.LFU:
             # Return least frequently accessed keys
             sorted_keys = sorted(self._lfu_tracker.items(), key=lambda x: x[1])
             candidates = [key for key, _ in sorted_keys[:count]]
             return candidates
-        
+
         return []
 
     def remove_key(self, key: str) -> None:
         """
         Remove key from tracking
-        
+
         Args:
             key: Cache key to remove
         """
         if key in self._lru_tracker:
             del self._lru_tracker[key]
-        
+
         if key in self._lfu_tracker:
             del self._lfu_tracker[key]
 
     def get_stats(self) -> Dict[str, Any]:
         """
         Get eviction tracker statistics
-        
+
         Returns:
             Statistics dictionary
         """
@@ -159,10 +158,10 @@ class EvictionTracker:
     def get_access_info(self, key: str) -> Optional[Dict[str, Any]]:
         """
         Get access information for a specific key
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Access information or None
         """
@@ -172,13 +171,13 @@ class EvictionTracker:
                     "last_access_time": self._lru_tracker[key],
                     "age_seconds": time.time() - self._lru_tracker[key]
                 }
-        
+
         elif self.policy == EvictionPolicy.LFU:
             if key in self._lfu_tracker:
                 return {
                     "access_count": self._lfu_tracker[key]
                 }
-        
+
         return None
 
     def clear(self) -> None:

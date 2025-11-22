@@ -2,14 +2,14 @@
 Financial Modeling Prep (FMP) Provider Implementation
 """
 
-from datetime import datetime, timezone
-from typing import Dict, Optional, Any, List
 import asyncio
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 import aiohttp
 
 from fiml.core.config import settings
-from fiml.core.exceptions import ProviderError, ProviderTimeoutError, ProviderRateLimitError
+from fiml.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider, ProviderConfig, ProviderResponse
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 class FMPProvider(BaseProvider):
     """
     Financial Modeling Prep (FMP) data provider
-    
+
     Provides:
     - Real-time and historical equity data
     - Financial statements (income, balance sheet, cash flow)
@@ -47,10 +47,10 @@ class FMPProvider(BaseProvider):
     async def initialize(self) -> None:
         """Initialize FMP provider"""
         logger.info("Initializing FMP provider")
-        
+
         if not self.config.api_key:
             raise ProviderError("FMP API key not configured")
-        
+
         self._session = aiohttp.ClientSession()
         self._is_initialized = True
         logger.info("FMP provider initialized successfully")
@@ -65,13 +65,13 @@ class FMPProvider(BaseProvider):
     async def _check_rate_limit(self) -> None:
         """Check and enforce rate limits"""
         now = datetime.now(timezone.utc)
-        
+
         # Remove timestamps older than 1 minute
         self._request_timestamps = [
             ts for ts in self._request_timestamps
             if (now - ts).total_seconds() < 60
         ]
-        
+
         # Check if we've exceeded the rate limit
         if len(self._request_timestamps) >= self.config.rate_limit_per_minute:
             wait_time = 60 - (now - self._request_timestamps[0]).total_seconds()
@@ -86,16 +86,16 @@ class FMPProvider(BaseProvider):
         """Make API request to FMP"""
         if not self._session:
             raise ProviderError("Provider not initialized")
-        
+
         await self._check_rate_limit()
-        
+
         url = f"{self.BASE_URL}/{endpoint}"
-        
+
         if params is None:
             params = {}
-        
+
         params["apikey"] = self.config.api_key
-        
+
         try:
             async with self._session.get(
                 url,
@@ -104,14 +104,14 @@ class FMPProvider(BaseProvider):
             ) as response:
                 self._request_timestamps.append(datetime.now(timezone.utc))
                 self._record_request()
-                
+
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Check for API errors
                     if isinstance(data, dict) and "Error Message" in data:
                         raise ProviderError(f"FMP error: {data['Error Message']}")
-                    
+
                     return data
                 elif response.status == 429:
                     raise ProviderRateLimitError(
@@ -120,7 +120,7 @@ class FMPProvider(BaseProvider):
                     )
                 else:
                     raise ProviderError(f"HTTP {response.status}: {await response.text()}")
-                    
+
         except asyncio.TimeoutError:
             self._record_error()
             raise ProviderTimeoutError(f"Request timeout after {self.config.timeout_seconds}s")
@@ -131,16 +131,16 @@ class FMPProvider(BaseProvider):
     async def fetch_price(self, asset: Asset) -> ProviderResponse:
         """Fetch current price from FMP"""
         logger.info(f"Fetching price for {asset.symbol} from FMP")
-        
+
         try:
             endpoint = f"quote/{asset.symbol}"
             response_data = await self._make_request(endpoint)
-            
+
             if not response_data or len(response_data) == 0:
                 raise ProviderError(f"No quote data available for {asset.symbol}")
-            
+
             quote = response_data[0]
-            
+
             data = {
                 "price": float(quote.get("price", 0.0)),
                 "change": float(quote.get("change", 0.0)),
@@ -156,7 +156,7 @@ class FMPProvider(BaseProvider):
                 "shares_outstanding": int(quote.get("sharesOutstanding", 0)),
                 "timestamp": quote.get("timestamp", 0),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -171,7 +171,7 @@ class FMPProvider(BaseProvider):
                     "endpoint": "quote",
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -184,11 +184,11 @@ class FMPProvider(BaseProvider):
     ) -> ProviderResponse:
         """Fetch OHLCV data from FMP"""
         logger.info(f"Fetching OHLCV for {asset.symbol} from FMP")
-        
+
         try:
             endpoint = f"historical-price-full/{asset.symbol}"
             params = {}
-            
+
             if timeframe == "1d":
                 # Daily data
                 pass
@@ -197,19 +197,19 @@ class FMPProvider(BaseProvider):
                 endpoint = f"historical-chart/1hour/{asset.symbol}"
             elif timeframe == "5min":
                 endpoint = f"historical-chart/5min/{asset.symbol}"
-            
+
             response_data = await self._make_request(endpoint, params)
-            
+
             # Extract historical data
             historical = []
             if "historical" in response_data:
                 historical = response_data["historical"][:limit]
             elif isinstance(response_data, list):
                 historical = response_data[:limit]
-            
+
             if not historical:
                 raise ProviderError(f"No historical data available for {asset.symbol}")
-            
+
             # Convert to standard format
             ohlcv_data = []
             for candle in historical:
@@ -221,13 +221,13 @@ class FMPProvider(BaseProvider):
                     "close": float(candle.get("close", 0.0)),
                     "volume": int(candle.get("volume", 0)),
                 })
-            
+
             data = {
                 "ohlcv": ohlcv_data,
                 "timeframe": timeframe,
                 "count": len(ohlcv_data),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -242,7 +242,7 @@ class FMPProvider(BaseProvider):
                     "endpoint": endpoint,
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -253,23 +253,23 @@ class FMPProvider(BaseProvider):
     async def fetch_fundamentals(self, asset: Asset) -> ProviderResponse:
         """Fetch fundamental data from FMP"""
         logger.info(f"Fetching fundamentals for {asset.symbol} from FMP")
-        
+
         try:
             # Fetch company profile
             profile_endpoint = f"profile/{asset.symbol}"
             profile_data = await self._make_request(profile_endpoint)
-            
+
             if not profile_data or len(profile_data) == 0:
                 raise ProviderError(f"No profile data available for {asset.symbol}")
-            
+
             profile = profile_data[0]
-            
+
             # Fetch key metrics
             metrics_endpoint = f"key-metrics/{asset.symbol}"
             metrics_data = await self._make_request(metrics_endpoint)
-            
+
             metrics = metrics_data[0] if metrics_data else {}
-            
+
             # Combine data
             data = {
                 "symbol": profile.get("symbol", ""),
@@ -311,7 +311,7 @@ class FMPProvider(BaseProvider):
                 "operating_profit_margin": float(metrics.get("operatingProfitMargin", 0.0) or 0.0),
                 "net_profit_margin": float(metrics.get("netProfitMargin", 0.0) or 0.0),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -326,7 +326,7 @@ class FMPProvider(BaseProvider):
                     "endpoints": ["profile", "key-metrics"],
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -337,19 +337,19 @@ class FMPProvider(BaseProvider):
     async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
         """Fetch news articles from FMP"""
         logger.info(f"Fetching news for {asset.symbol} from FMP")
-        
+
         try:
-            endpoint = f"stock_news"
+            endpoint = "stock_news"
             params = {
                 "tickers": asset.symbol,
                 "limit": str(limit),
             }
-            
+
             response_data = await self._make_request(endpoint, params)
-            
+
             if not response_data:
                 raise ProviderError(f"No news data available for {asset.symbol}")
-            
+
             articles = []
             for article in response_data[:limit]:
                 articles.append({
@@ -360,7 +360,7 @@ class FMPProvider(BaseProvider):
                     "text": article.get("text", ""),
                     "sentiment": 0.5,  # FMP doesn't provide sentiment directly
                 })
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -375,7 +375,7 @@ class FMPProvider(BaseProvider):
                     "endpoint": "stock_news",
                 },
             )
-            
+
         except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
             raise
         except Exception as e:
@@ -394,7 +394,7 @@ class FMPProvider(BaseProvider):
             # Simple health check - fetch a known symbol
             test_asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
             await self.fetch_price(test_asset)
-            
+
             return ProviderHealth(
                 provider_name=self.name,
                 is_healthy=True,

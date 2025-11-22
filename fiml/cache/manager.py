@@ -3,8 +3,7 @@ Cache Manager - Coordinates L1 and L2 caches
 """
 
 import time
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
 
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.l2_cache import l2_cache
@@ -19,14 +18,14 @@ logger = get_logger(__name__)
 class CacheManager:
     """
     Coordinates L1 (Redis) and L2 (PostgreSQL) caches
-    
+
     Strategy:
     1. Check L1 first (10-100ms)
     2. If miss, check L2 (300-700ms)
     3. If hit in L2, populate L1
     4. If miss in both, return None
     5. On write, update both L1 and L2
-    
+
     Features:
     - Latency tracking for L1 and L2 operations
     - Hit rate measurement
@@ -37,7 +36,7 @@ class CacheManager:
         self.l1 = l1_cache
         self.l2 = l2_cache
         self._initialized = False
-        
+
         # Metrics tracking
         self._l1_hits = 0
         self._l1_misses = 0
@@ -65,11 +64,11 @@ class CacheManager:
     ) -> Optional[Dict[str, Any]]:
         """
         Get price with L1 -> L2 fallback
-        
+
         Args:
             asset: Asset to query
             provider: Specific provider (optional)
-            
+
         Returns:
             Price data or None
         """
@@ -101,12 +100,12 @@ class CacheManager:
     ) -> bool:
         """
         Set price in both caches
-        
+
         Args:
             asset: Asset
             provider: Provider name
             price_data: Price data dictionary
-            
+
         Returns:
             True if successful
         """
@@ -164,34 +163,34 @@ class CacheManager:
         """Invalidate all cached data for an asset"""
         pattern = f"*:{asset.symbol}:*"
         deleted = await self.l1.clear_pattern(pattern)
-        logger.info(f"Invalidated cache for asset", asset=asset.symbol, deleted=deleted)
+        logger.info("Invalidated cache for asset", asset=asset.symbol, deleted=deleted)
         return deleted
 
     async def get_stats(self) -> Dict[str, Any]:
         """
         Get combined cache statistics with performance metrics
-        
+
         Returns:
             Comprehensive statistics including hit rates and latencies
         """
         l1_stats = await self.l1.get_stats()
-        
+
         # Calculate hit rates
         total_l1_ops = self._l1_hits + self._l1_misses
         l1_hit_rate = (self._l1_hits / total_l1_ops * 100) if total_l1_ops > 0 else 0.0
-        
+
         total_l2_ops = self._l2_hits + self._l2_misses
         l2_hit_rate = (self._l2_hits / total_l2_ops * 100) if total_l2_ops > 0 else 0.0
-        
+
         # Calculate average latencies
         avg_l1_latency = sum(self._l1_latencies) / len(self._l1_latencies) if self._l1_latencies else 0.0
         avg_l2_latency = sum(self._l2_latencies) / len(self._l2_latencies) if self._l2_latencies else 0.0
-        
+
         # Calculate percentiles for L1 latency
         l1_p50 = calculate_percentile(self._l1_latencies, 50)
         l1_p95 = calculate_percentile(self._l1_latencies, 95)
         l1_p99 = calculate_percentile(self._l1_latencies, 99)
-        
+
         return {
             "l1": {
                 **l1_stats,
@@ -232,10 +231,10 @@ class CacheManager:
     async def get(self, key: str) -> Optional[Any]:
         """
         Get value from cache with latency tracking
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value or None
         """
@@ -244,23 +243,23 @@ class CacheManager:
         value = await self.l1.get(key)
         l1_latency_ms = (time.perf_counter() - start) * 1000
         self._track_l1_latency(l1_latency_ms)
-        
+
         if value is not None:
             self._l1_hits += 1
             return value
-        
+
         self._l1_misses += 1
         return None
 
     async def set(self, key: str, value: Any, ttl_seconds: Optional[int] = None) -> bool:
         """
         Set value in cache with latency tracking
-        
+
         Args:
             key: Cache key
             value: Value to cache
             ttl_seconds: Time to live
-            
+
         Returns:
             True if successful
         """
@@ -268,7 +267,7 @@ class CacheManager:
         success = await self.l1.set(key, value, ttl_seconds)
         l1_latency_ms = (time.perf_counter() - start) * 1000
         self._track_l1_latency(l1_latency_ms)
-        
+
         return success
 
     async def delete(self, key: str) -> bool:
@@ -299,29 +298,29 @@ class CacheManager:
     ) -> List[Optional[Dict[str, Any]]]:
         """
         Get multiple prices with L1 cache batch optimization
-        
+
         Args:
             assets: List of assets to query
             provider: Specific provider (optional)
-            
+
         Returns:
             List of price data (None for misses)
         """
         # Build cache keys for all assets
         l1_keys = [self.l1.build_key("price", asset.symbol, provider or "any") for asset in assets]
-        
+
         # Try L1 batch get with latency tracking
         start = time.perf_counter()
         results = await self.l1.get_many(l1_keys)
         l1_latency_ms = (time.perf_counter() - start) * 1000
         self._track_l1_latency(l1_latency_ms)
-        
+
         hits = sum(1 for r in results if r is not None)
         self._l1_hits += hits
         self._l1_misses += (len(results) - hits)
-        
-        logger.debug(f"Batch price lookup", total=len(assets), l1_hits=hits, latency_ms=f"{l1_latency_ms:.2f}")
-        
+
+        logger.debug("Batch price lookup", total=len(assets), l1_hits=hits, latency_ms=f"{l1_latency_ms:.2f}")
+
         return results
 
     async def set_prices_batch(
@@ -330,24 +329,24 @@ class CacheManager:
     ) -> int:
         """
         Set multiple prices in L1 cache using batch optimization
-        
+
         Args:
             items: List of (asset, provider, price_data) tuples
-            
+
         Returns:
             Number of successfully cached items
         """
         ttl = self._get_ttl(DataType.PRICE)
-        
+
         # Build cache items
         cache_items = [
             (self.l1.build_key("price", asset.symbol, provider), price_data, ttl)
             for asset, provider, price_data in items
         ]
-        
+
         # Batch set in L1
         success_count = await self.l1.set_many(cache_items)
-        
+
         logger.debug("Batch price set", total=len(items), success=success_count)
         return success_count
 

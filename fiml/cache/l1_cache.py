@@ -4,8 +4,7 @@ Target: 10-100ms latency
 """
 
 import json
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, List
+from typing import Any, List, Optional
 
 import redis.asyncio as redis
 
@@ -19,7 +18,7 @@ logger = get_logger(__name__)
 class L1Cache:
     """
     Redis-based L1 cache for ultra-fast data access
-    
+
     Features:
     - 10-100ms latency target
     - Automatic TTL management
@@ -47,13 +46,13 @@ class L1Cache:
                 max_connections=settings.redis_max_connections,
                 socket_timeout=settings.redis_socket_timeout,
             )
-            
+
             # Test connection
             await self._redis.ping()
-            
+
             self._initialized = True
             logger.info("L1 cache initialized", host=settings.redis_host, port=settings.redis_port)
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize L1 cache: {e}")
             raise CacheError(f"L1 cache initialization failed: {e}")
@@ -68,10 +67,10 @@ class L1Cache:
     async def get(self, key: str) -> Optional[Any]:
         """
         Get value from cache
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value or None if not found
         """
@@ -86,25 +85,25 @@ class L1Cache:
             else:
                 logger.debug("L1 cache miss", key=key)
                 return None
-                
+
         except Exception as e:
             logger.error(f"L1 cache get error: {e}", key=key)
             return None
 
     async def set(
-        self, 
-        key: str, 
-        value: Any, 
+        self,
+        key: str,
+        value: Any,
         ttl_seconds: Optional[int] = None
     ) -> bool:
         """
         Set value in cache with optional TTL
-        
+
         Args:
             key: Cache key
             value: Value to cache (must be JSON serializable)
             ttl_seconds: Time to live in seconds
-            
+
         Returns:
             True if successful
         """
@@ -113,15 +112,15 @@ class L1Cache:
 
         try:
             serialized = json.dumps(value, default=str)
-            
+
             if ttl_seconds:
                 await self._redis.setex(key, ttl_seconds, serialized)
             else:
                 await self._redis.set(key, serialized)
-            
+
             logger.debug("L1 cache set", key=key, ttl=ttl_seconds)
             return True
-            
+
         except Exception as e:
             logger.error(f"L1 cache set error: {e}", key=key)
             return False
@@ -135,7 +134,7 @@ class L1Cache:
             result = await self._redis.delete(key)
             logger.debug("L1 cache delete", key=key, deleted=bool(result))
             return bool(result)
-            
+
         except Exception as e:
             logger.error(f"L1 cache delete error: {e}", key=key)
             return False
@@ -166,10 +165,10 @@ class L1Cache:
     async def clear_pattern(self, pattern: str) -> int:
         """
         Delete all keys matching pattern
-        
+
         Args:
             pattern: Redis pattern (e.g., "price:*")
-            
+
         Returns:
             Number of keys deleted
         """
@@ -180,13 +179,13 @@ class L1Cache:
             keys = []
             async for key in self._redis.scan_iter(match=pattern):
                 keys.append(key)
-            
+
             if keys:
                 deleted = await self._redis.delete(*keys)
-                logger.info(f"L1 cache cleared pattern", pattern=pattern, count=deleted)
+                logger.info("L1 cache cleared pattern", pattern=pattern, count=deleted)
                 return deleted
             return 0
-            
+
         except Exception as e:
             logger.error(f"L1 cache clear_pattern error: {e}", pattern=pattern)
             return 0
@@ -225,10 +224,10 @@ class L1Cache:
     async def get_many(self, keys: List[str]) -> List[Optional[Any]]:
         """
         Get multiple values from cache in a single operation (pipeline optimization)
-        
+
         Args:
             keys: List of cache keys
-            
+
         Returns:
             List of cached values (None for missing keys)
         """
@@ -244,9 +243,9 @@ class L1Cache:
                 for key in keys:
                     pipe.get(key)
                 values = await pipe.execute()
-            
+
             results = []
-            for key, value in zip(keys, values):
+            for key, value in zip(keys, values, strict=False):
                 if value:
                     try:
                         results.append(json.loads(value))
@@ -257,9 +256,9 @@ class L1Cache:
                 else:
                     logger.debug("L1 cache miss", key=key)
                     results.append(None)
-            
+
             return results
-                
+
         except Exception as e:
             logger.error(f"L1 cache get_many error: {e}")
             return [None] * len(keys)
@@ -267,10 +266,10 @@ class L1Cache:
     async def set_many(self, items: List[tuple[str, Any, Optional[int]]]) -> int:
         """
         Set multiple values in cache in a single operation (pipeline optimization)
-        
+
         Args:
             items: List of (key, value, ttl_seconds) tuples
-            
+
         Returns:
             Number of successfully set items
         """
@@ -292,13 +291,13 @@ class L1Cache:
                             pipe.set(key, serialized)
                     except Exception as e:
                         logger.error(f"L1 cache serialization error: {e}", key=key)
-                
+
                 results = await pipe.execute()
-            
+
             success_count = sum(1 for r in results if r)
             logger.debug("L1 cache set_many", total=len(items), success=success_count)
             return success_count
-            
+
         except Exception as e:
             logger.error(f"L1 cache set_many error: {e}")
             return 0

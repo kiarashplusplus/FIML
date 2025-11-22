@@ -2,10 +2,8 @@
 Compliance Framework - Disclaimer Generation
 """
 
-from typing import Dict, List, Optional
 from enum import Enum
-
-from pydantic import BaseModel
+from typing import Dict, List
 
 from fiml.compliance.router import Region
 from fiml.core.logging import get_logger
@@ -28,14 +26,14 @@ class AssetClass(str, Enum):
 class DisclaimerGenerator:
     """
     Generate appropriate disclaimers based on region and asset type
-    
+
     Ensures all financial information is properly disclaimed according
     to regional regulations.
     """
-    
+
     def __init__(self):
         self.templates = self._initialize_templates()
-    
+
     def _initialize_templates(self) -> Dict[str, Dict[str, str]]:
         """Initialize disclaimer templates by region and asset class"""
         return {
@@ -162,7 +160,7 @@ class DisclaimerGenerator:
                 ),
             },
         }
-    
+
     def generate(
         self,
         asset_class: AssetClass,
@@ -171,39 +169,39 @@ class DisclaimerGenerator:
     ) -> str:
         """
         Generate appropriate disclaimer
-        
+
         Args:
             asset_class: Type of asset
             region: User's region
             include_general: Whether to include general disclaimer
-            
+
         Returns:
             Formatted disclaimer text
         """
         logger.debug(f"Generating disclaimer for {asset_class} in {region}")
-        
+
         disclaimers = []
-        
+
         # Get region-specific templates
         region_templates = self.templates.get(region.value, self.templates["GLOBAL"])
-        
+
         # Add general disclaimer
         if include_general:
             general = region_templates.get("general", self.templates["GLOBAL"]["general"])
             disclaimers.append(general)
-        
+
         # Add asset-specific disclaimer
         asset_specific = region_templates.get(
             asset_class.value,
             self.templates["GLOBAL"].get(asset_class.value, "")
         )
-        
+
         if asset_specific:
             disclaimers.append(asset_specific)
-        
+
         # Combine disclaimers
         return "\n\n".join(disclaimers)
-    
+
     def generate_multi_asset(
         self,
         asset_classes: List[AssetClass],
@@ -211,21 +209,21 @@ class DisclaimerGenerator:
     ) -> str:
         """
         Generate disclaimer for multiple asset classes
-        
+
         Args:
             asset_classes: List of asset types in response
             region: User's region
-            
+
         Returns:
             Combined disclaimer text
         """
         disclaimers = []
-        
+
         # Always include general disclaimer
         region_templates = self.templates.get(region.value, self.templates["GLOBAL"])
         general = region_templates.get("general", self.templates["GLOBAL"]["general"])
         disclaimers.append(general)
-        
+
         # Add specific disclaimers for each asset class
         for asset_class in set(asset_classes):  # Remove duplicates
             asset_specific = region_templates.get(
@@ -234,9 +232,9 @@ class DisclaimerGenerator:
             )
             if asset_specific and asset_specific not in disclaimers:
                 disclaimers.append(asset_specific)
-        
+
         return "\n\n".join(disclaimers)
-    
+
     def get_risk_warning(
         self,
         asset_class: AssetClass,
@@ -244,11 +242,11 @@ class DisclaimerGenerator:
     ) -> str:
         """
         Get a short risk warning (for inline use)
-        
+
         Args:
             asset_class: Type of asset
             region: User's region
-            
+
         Returns:
             Brief risk warning
         """
@@ -259,16 +257,16 @@ class DisclaimerGenerator:
             AssetClass.FOREX: "⚠️ Forex trading carries substantial risk of loss.",
             AssetClass.COMMODITY: "Commodity investments are volatile and may result in losses.",
         }
-        
+
         return warnings.get(asset_class, "Investment involves risk.")
-    
+
     def get_compliance_footer(self, region: Region = Region.US) -> str:
         """
         Get compliance footer for display at bottom of all responses
-        
+
         Args:
             region: User's region
-            
+
         Returns:
             Compliance footer text
         """
@@ -291,7 +289,7 @@ class DisclaimerGenerator:
                 "FIML provides financial data and information only, not personalized advice."
             ),
         }
-        
+
         return footers.get(region.value, footers["GLOBAL"])
 
 

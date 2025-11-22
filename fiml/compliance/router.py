@@ -2,14 +2,14 @@
 Compliance Framework - Regional Compliance Routing
 """
 
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
-from datetime import datetime, timezone
 
 from pydantic import BaseModel
 
-from fiml.core.logging import get_logger
 from fiml.core.config import settings
+from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -58,14 +58,14 @@ class ComplianceCheck(BaseModel):
 class ComplianceRouter:
     """
     Routes requests through regional compliance checks
-    
+
     Ensures all responses comply with regional financial regulations
     """
-    
+
     def __init__(self, default_region: Region = Region.US):
         self.default_region = default_region
         self.rules: Dict[Region, List[ComplianceRule]] = self._initialize_rules()
-        
+
     def _initialize_rules(self) -> Dict[Region, List[ComplianceRule]]:
         """Initialize compliance rules by region"""
         rules = {
@@ -157,9 +157,9 @@ class ComplianceRouter:
                 ),
             ],
         }
-        
+
         return rules
-    
+
     async def check_compliance(
         self,
         request_type: str,
@@ -169,30 +169,30 @@ class ComplianceRouter:
     ) -> ComplianceCheck:
         """
         Check if request complies with regional regulations
-        
+
         Args:
             request_type: Type of request (e.g., "price_query", "analysis", "recommendation")
             asset_type: Type of asset (e.g., "equity", "crypto", "derivative")
             region: User's region
             user_query: Original user query (for advice detection)
-            
+
         Returns:
             ComplianceCheck with pass/fail and required actions
         """
         if region is None:
             region = self.default_region
-        
+
         logger.info(f"Running compliance check for {request_type} in {region}")
-        
+
         # Get rules for region
         regional_rules = self.rules.get(region, []) + self.rules.get(Region.GLOBAL, [])
-        
+
         warnings = []
         restrictions = []
         required_disclaimers = []
         rules_applied = []
         passed = True
-        
+
         # Check for investment advice
         if user_query and self._contains_advice_request(user_query):
             passed = False
@@ -201,27 +201,27 @@ class ComplianceRouter:
                 "not personalized investment recommendations."
             )
             rules_applied.append(f"{region}-ADVICE-BLOCK")
-        
+
         # Apply regional rules
         for rule in regional_rules:
             if not rule.enabled:
                 continue
-                
+
             rules_applied.append(rule.rule_id)
-            
+
             if rule.rule_type == "restriction":
                 if self._should_restrict(rule, asset_type, request_type):
                     restrictions.append(rule.description)
                     if rule.severity == "critical":
                         passed = False
-                        
+
             elif rule.rule_type == "warning":
                 if self._should_warn(rule, asset_type, request_type):
                     warnings.append(rule.description)
-                    
+
             elif rule.rule_type == "disclosure":
                 required_disclaimers.append(rule.rule_id)
-        
+
         return ComplianceCheck(
             passed=passed,
             region=region,
@@ -235,7 +235,7 @@ class ComplianceRouter:
                 "asset_type": asset_type,
             }
         )
-    
+
     def _contains_advice_request(self, query: str) -> bool:
         """Detect if query is requesting investment advice"""
         advice_keywords = [
@@ -250,31 +250,31 @@ class ComplianceRouter:
             "tell me what to",
             "is this a good investment",
         ]
-        
+
         query_lower = query.lower()
         return any(keyword in query_lower for keyword in advice_keywords)
-    
+
     def _should_restrict(self, rule: ComplianceRule, asset_type: str, request_type: str) -> bool:
         """Determine if rule should trigger restriction"""
         # Crypto warnings in certain regions
         if "crypto" in rule.description.lower() and asset_type.lower() == "crypto":
             return True
-        
+
         # Derivative warnings
         if "derivative" in rule.description.lower() and "derivative" in asset_type.lower():
             return True
-        
+
         return False
-    
+
     def _should_warn(self, rule: ComplianceRule, asset_type: str, request_type: str) -> bool:
         """Determine if rule should trigger warning"""
         # High-risk asset warnings
         if asset_type.lower() in ["crypto", "derivative", "option", "futures"]:
             if "risk" in rule.description.lower():
                 return True
-        
+
         return False
-    
+
     def get_regional_restrictions(self, region: Region) -> List[str]:
         """Get all restrictions for a region"""
         rules = self.rules.get(region, [])
@@ -283,7 +283,7 @@ class ComplianceRouter:
             for rule in rules
             if rule.rule_type == "restriction" and rule.enabled
         ]
-    
+
     def is_region_supported(self, region: str) -> bool:
         """Check if region is supported"""
         try:
