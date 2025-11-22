@@ -75,7 +75,7 @@ FIML/
 ├── DEPLOYMENT.md                  # Deployment guide
 ├── docker-compose.yml             # Docker Compose configuration
 ├── Dockerfile                     # Multi-stage Dockerfile
-├── LICENSE                        # MIT License
+├── LICENSE                        # Apache 2.0 License
 ├── Makefile                       # Development commands
 ├── pyproject.toml                 # Python project configuration
 └── README.md                      # Project README
