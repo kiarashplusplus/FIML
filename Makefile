@@ -1,4 +1,4 @@
-.PHONY: help install dev build up down logs test lint format clean
+.PHONY: help install dev build up down logs test lint format clean benchmark
 
 help:
 	@echo "FIML - Financial Intelligence Meta-Layer"
@@ -11,6 +11,7 @@ help:
 	@echo "  make down         Stop all services"
 	@echo "  make logs         View logs"
 	@echo "  make test         Run tests"
+	@echo "  make benchmark    Run performance benchmarks"
 	@echo "  make lint         Run linters"
 	@echo "  make format       Format code"
 	@echo "  make clean        Clean build artifacts"
@@ -37,6 +38,15 @@ logs:
 
 test:
 	pytest -v --cov=fiml --cov-report=html --cov-report=term
+
+benchmark:
+	pytest benchmarks/ --benchmark-only --benchmark-verbose
+
+benchmark-save:
+	pytest benchmarks/ --benchmark-only --benchmark-autosave
+
+benchmark-compare:
+	pytest benchmarks/ --benchmark-only --benchmark-compare
 
 lint:
 	ruff check fiml/
