@@ -23,9 +23,9 @@ class TestL1Cache:
             
             await cache.shutdown()
             assert not cache._initialized
-        except Exception:
+        except (ConnectionError, OSError, Exception) as e:
             # Redis not available - skip test
-            pytest.skip("Redis not available")
+            pytest.skip(f"Redis not available: {e}")
 
     @pytest.mark.asyncio
     async def test_l1_cache_operations(self):

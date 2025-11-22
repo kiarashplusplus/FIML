@@ -108,7 +108,7 @@ class TestMCPTools:
         
         # First create a task
         result = await execute_fk_dsl(query="GET PRICE FOR AAPL")
-        task_id = result.get("id")  # TaskInfo uses 'id' not 'task_id'
+        task_id = result.get("id")  # Get task ID from result
         
         if task_id:
             # Get its status
