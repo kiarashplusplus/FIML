@@ -15,6 +15,7 @@ from fiml.core.exceptions import FIMLException
 from fiml.core.logging import get_logger
 from fiml.mcp.router import mcp_router
 from fiml.providers import provider_registry
+from fiml.websocket.router import websocket_router
 
 logger = get_logger(__name__)
 
@@ -93,6 +94,9 @@ app.mount("/metrics", metrics_app)
 
 # Include MCP router
 app.include_router(mcp_router, prefix="/mcp", tags=["mcp"])
+
+# Include WebSocket router
+app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 
 @app.get("/health")

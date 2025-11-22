@@ -19,6 +19,7 @@ FIML is an MCP (Model Context Protocol) server that provides intelligent financi
 - **📊 FK-DSL Parser**: Complete Lark-based grammar for financial queries
 - **🤖 Agent Framework**: Ray-based multi-agent orchestration (with version compatibility note)
 - **🔧 MCP Server**: FastAPI-based server with 4 working MCP tools
+- **🌐 WebSocket Streaming**: Real-time price and OHLCV data streaming
 - **📦 Production Ready**: All services running via Docker Compose
 - **🧪 Test Suite**: 169 tests (140 passing) - comprehensive coverage
 - **💰 Live Data**: Real-time stock prices (AAPL, TSLA, etc.) via providers
@@ -26,6 +27,9 @@ FIML is an MCP (Model Context Protocol) server that provides intelligent financi
 - **📊 Monitoring**: Prometheus + Grafana dashboards operational
 
 ### 🔄 Recently Added
+- **Real-time WebSocket Streaming**: Live price and OHLCV data via WebSocket
+- **WebSocket Manager**: Connection lifecycle, subscriptions, and broadcasting
+- **Multi-Asset Streaming**: Stream multiple symbols simultaneously
 - **E2E API Tests**: 16 comprehensive endpoint tests
 - **Live System Tests**: 12 integration tests with real services
 - **Compliance Framework**: Regional restrictions and disclaimers
@@ -126,6 +130,86 @@ make format
 ```
 
 ## 📖 Usage
+
+### Real-time WebSocket Streaming
+
+FIML provides WebSocket endpoints for real-time financial data streaming, using the same arbitration engine and provider stack as the REST API.
+
+#### Quick Start - Simple Price Streaming
+
+```python
+import asyncio
+import websockets
+import json
+
+async def stream_prices():
+    uri = "ws://localhost:8000/ws/prices/AAPL,GOOGL,MSFT"
+    
+    async with websockets.connect(uri) as websocket:
+        # Auto-subscribed to price updates
+        print("Connected and streaming...")
+        
+        while True:
+            message = await websocket.recv()
+            data = json.loads(message)
+            
+            if data["type"] == "data":
+                for update in data["data"]:
+                    print(f"{update['symbol']}: ${update['price']:.2f} "
+                          f"({update['change_percent']:+.2f}%)")
+
+asyncio.run(stream_prices())
+```
+
+#### Advanced - Full Control WebSocket
+
+```python
+async def advanced_streaming():
+    uri = "ws://localhost:8000/ws/stream"
+    
+    async with websockets.connect(uri) as websocket:
+        # Subscribe to price stream
+        subscription = {
+            "type": "subscribe",
+            "stream_type": "price",
+            "symbols": ["AAPL", "TSLA"],
+            "asset_type": "equity",
+            "market": "US",
+            "interval_ms": 1000,  # Update every second
+            "data_type": "price"
+        }
+        
+        await websocket.send(json.dumps(subscription))
+        
+        # Receive subscription acknowledgment
+        ack = await websocket.recv()
+        print(f"Subscribed: {ack}")
+        
+        # Stream data
+        while True:
+            message = await websocket.recv()
+            data = json.loads(message)
+            
+            if data["type"] == "data":
+                # Process real-time updates
+                for update in data["data"]:
+                    print(f"Price update: {update}")
+```
+
+#### WebSocket Features
+
+- **Real-time Price Updates**: Stream live prices with configurable intervals (100ms - 60s)
+- **OHLCV Candlesticks**: Real-time candlestick data for technical analysis
+- **Multi-Asset Support**: Subscribe to up to 50 symbols simultaneously
+- **Auto-Reconnection**: Built-in heartbeat and connection management
+- **Provider Integration**: Uses arbitration engine for optimal data sources
+- **Error Handling**: Graceful error reporting and recovery
+
+See [examples/websocket_streaming.py](examples/websocket_streaming.py) for complete examples including:
+- Simple price streaming
+- Multi-stream subscriptions (price + OHLCV)
+- Portfolio monitoring
+- Auto-reconnection handling
 
 ### MCP Tools
 
@@ -246,6 +330,7 @@ Access monitoring dashboards (when Docker services are running):
 - **API Documentation**: http://localhost:8000/docs
 - **API Health**: http://localhost:8000/health
 - **Prometheus Metrics**: http://localhost:8000/metrics
+- **WebSocket Connections**: http://localhost:8000/ws/connections
 - **Grafana Dashboards**: http://localhost:3000 (admin/admin)
 - **Prometheus UI**: http://localhost:9091
 - **Ray Dashboard**: http://localhost:8265
@@ -318,9 +403,10 @@ Once running, access interactive API docs at:
 - [x] Live system validation
 - [x] Compliance framework (regional restrictions, disclaimers)
 - [x] Error handling and retry logic
+- [x] Real-time WebSocket streaming for prices and OHLCV data
 
 ### 🚧 Phase 2 (Q1 2026) - Enhancement & Scale
-- [ ] Real-time WebSocket streaming
+- [ ] Advanced WebSocket features (trade streaming, order book depth)
 - [ ] Advanced multi-agent workflows
 - [ ] Narrative generation engine
 - [ ] Cache warming and predictive optimization
