@@ -108,7 +108,7 @@ async def search_by_symbol(
         )
         
         # Execute the plan
-        response = await data_arbitration_engine.execute_plan(plan, asset, DataType.PRICE)
+        response = await data_arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
         
         # Extract data from response
         data = response.data if response else {}
@@ -286,7 +286,7 @@ async def search_by_coin(
         )
         
         # Execute the plan
-        response = await data_arbitration_engine.execute_plan(plan, asset, DataType.PRICE)
+        response = await data_arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
         
         # Extract data from response
         data = response.data if response else {}
