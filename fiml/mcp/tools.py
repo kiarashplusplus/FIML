@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timedelta
 
 from fiml.agents.orchestrator import agent_orchestrator
-from fiml.arbitration.engine import arbitration_engine as data_arbitration_engine
+from fiml.arbitration.engine import arbitration_engine
 from fiml.cache.manager import cache_manager
 from fiml.core.logging import get_logger
 from fiml.core.models import (
@@ -49,7 +49,7 @@ async def search_by_symbol(
         "search_by_symbol called", symbol=symbol, market=market, depth=depth, language=language
     )
     
-    from fiml.arbitration.engine import data_arbitration_engine
+    from fiml.arbitration.engine import arbitration_engine
     from fiml.compliance.router import compliance_router, Region
     from fiml.compliance.disclaimers import disclaimer_generator, AssetClass
     
@@ -101,14 +101,14 @@ async def search_by_symbol(
     
     try:
         # Fetch price data via arbitration engine
-        plan = await data_arbitration_engine.arbitrate_request(
+        plan = await arbitration_engine.arbitrate_request(
             asset=asset,
             data_type=DataType.PRICE,
             user_region="US",
         )
         
         # Execute the plan
-        response = await data_arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
+        response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
         
         # Extract data from response
         data = response.data if response else {}
@@ -226,7 +226,7 @@ async def search_by_coin(
         language=language,
     )
     
-    from fiml.arbitration.engine import data_arbitration_engine
+    from fiml.arbitration.engine import arbitration_engine
     from fiml.compliance.router import compliance_router, Region
     from fiml.compliance.disclaimers import disclaimer_generator, AssetClass
     
@@ -279,14 +279,14 @@ async def search_by_coin(
     
     try:
         # Fetch price data via arbitration engine
-        plan = await data_arbitration_engine.arbitrate_request(
+        plan = await arbitration_engine.arbitrate_request(
             asset=asset,
             data_type=DataType.PRICE,
             user_region="US",
         )
         
         # Execute the plan
-        response = await data_arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
+        response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
         
         # Extract data from response
         data = response.data if response else {}
