@@ -4,7 +4,6 @@ Target: 10-100ms latency
 """
 
 import json
-from datetime import timezone
 from typing import Any, List, Optional
 
 import redis.asyncio as redis

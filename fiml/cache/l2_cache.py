@@ -3,7 +3,6 @@ L2 Cache - PostgreSQL + TimescaleDB Persistent Cache
 Target: 300-700ms latency
 """
 
-from datetime import timezone
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text

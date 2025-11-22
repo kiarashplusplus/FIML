@@ -3,7 +3,6 @@ Cache Manager - Coordinates L1 and L2 caches
 """
 
 import time
-from datetime import timezone
 from typing import Any, Dict, List, Optional
 
 from fiml.cache.l1_cache import l1_cache
@@ -232,11 +231,11 @@ class CacheManager:
     def _calculate_percentile(self, values: List[float], percentile: int) -> float:
         """
         Calculate percentile value from a list of numbers
-        
+
         Args:
             values: List of numeric values
             percentile: Percentile to calculate (0-100)
-            
+
         Returns:
             Percentile value
         """
