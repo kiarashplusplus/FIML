@@ -3,8 +3,7 @@ Performance benchmarks for Core FIML Components
 """
 
 import pytest
-from datetime import datetime
-from fiml.core.models import Asset, AssetType, Market, DataType
+from fiml.core.models import Asset, AssetType, Market
 
 
 class TestCoreModelBenchmarks:
