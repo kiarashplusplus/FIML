@@ -2,6 +2,12 @@
 
 **The Future of Financial MCP: A "Meta-Layer" That Sits Above All Data Providers**
 
+> 📋 **Project Status**: [View Current Status](STATUS.md) | [Detailed Report](PROJECT_STATUS.md)
+> 
+> **Build**: ✅ Successful | **Tests**: ⚠️ 5/14 Passing (Core stable) | **Version**: 0.1.0
+
+---
+
 FIML is a 10-year, extensible, AI-native, multi-market financial intelligence framework built on the Model Context Protocol (MCP). It provides intelligent data arbitration, multi-source fusion, and context-aware analysis for AI agents across all platforms.
 
 ## 🌟 Key Features

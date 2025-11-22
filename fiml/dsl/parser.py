@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from lark import Lark, Transformer, Tree, v_args
 
-from fiml.core.exceptions import DSLParseError
+from fiml.core.exceptions import FKDSLParseError
 from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -189,7 +189,7 @@ class FKDSLParser:
             Parsed execution plan dict
             
         Raises:
-            DSLParseError: If query is invalid
+            FKDSLParseError: If query is invalid
         """
         try:
             # Remove extra whitespace
@@ -206,14 +206,14 @@ class FKDSLParser:
 
         except Exception as e:
             logger.error(f"DSL parse error: {e}", query=query)
-            raise DSLParseError(f"Failed to parse DSL query: {e}")
+            raise FKDSLParseError(f"Failed to parse DSL query: {e}")
 
     def validate(self, query: str) -> bool:
         """Validate DSL query syntax"""
         try:
             self.parse(query)
             return True
-        except DSLParseError:
+        except FKDSLParseError:
             return False
 
 

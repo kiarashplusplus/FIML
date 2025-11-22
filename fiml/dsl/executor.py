@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
-from fiml.core.exceptions import DSLExecutionError
+from fiml.core.exceptions import FKDSLExecutionError
 from fiml.core.logging import get_logger
 from fiml.core.models import TaskInfo, TaskStatus
 from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType
@@ -55,7 +55,7 @@ class TaskExecutor:
 
         except Exception as e:
             logger.error(f"Task execution failed: {e}", task_id=task.id)
-            raise DSLExecutionError(f"Task {task.id} failed: {e}")
+            raise FKDSLExecutionError(f"Task {task.id} failed: {e}")
 
     async def _fetch_price(self, task: ExecutionTask, context: Dict) -> Dict[str, Any]:
         """Fetch price data"""
@@ -163,7 +163,7 @@ class FKDSLExecutor:
 
                 if not executable:
                     if len(completed) < len(plan.tasks):
-                        raise DSLExecutionError("Circular dependency detected")
+                        raise FKDSLExecutionError("Circular dependency detected")
                     break
 
                 # Execute in parallel
@@ -214,7 +214,7 @@ class FKDSLExecutor:
             await asyncio.sleep(0.1)
 
         if task_info.status == TaskStatus.FAILED:
-            raise DSLExecutionError(task_info.error)
+            raise FKDSLExecutionError(task_info.error)
 
         return task_info.result
 
