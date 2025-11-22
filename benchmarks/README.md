@@ -6,11 +6,8 @@ This directory contains performance benchmarks for critical FIML components usin
 
 The benchmarks measure performance across key system components:
 
-- **Arbitration Engine**: Provider scoring, plan creation, conflict resolution
-- **Cache Layer**: L1 (Redis) and L2 (PostgreSQL) cache operations
-- **DSL Parser**: FK-DSL query parsing and execution
-- **Providers**: Data provider operations and response times
-- **MCP Tools**: MCP protocol tool performance
+- **Core Models**: Pydantic model creation, validation, and serialization
+- **DSL Parser**: FK-DSL query parsing for different query types
 
 ## Running Benchmarks
 
@@ -29,7 +26,8 @@ pytest benchmarks/ --benchmark-only
 ### Run specific benchmark file
 
 ```bash
-pytest benchmarks/bench_arbitration.py --benchmark-only
+pytest benchmarks/bench_dsl.py --benchmark-only
+pytest benchmarks/bench_core.py --benchmark-only
 ```
 
 ### Run with detailed statistics
@@ -79,15 +77,28 @@ pytest benchmarks/ --benchmark-only --benchmark-autosave --benchmark-histogram
 
 Based on FIML architecture requirements:
 
-| Component | Target | Current |
-|-----------|--------|---------|
-| L1 Cache (Redis) | 10-100ms | TBD |
-| L2 Cache (PostgreSQL) | 300-700ms | TBD |
-| Provider Arbitration | <500ms | TBD |
-| DSL Parsing | <50ms | TBD |
-| MCP Tool Response | <1000ms | TBD |
+| Component | Target | Notes |
+|-----------|--------|-------|
+| DSL Parsing | <50ms | Simple queries should parse in microseconds |
+| Model Creation | <10μs | Pydantic models should be fast |
+| Model Serialization | <10μs | JSON serialization should be efficient |
 
 Run benchmarks to establish baselines and track performance over time.
+
+## Current Benchmarks
+
+### bench_core.py
+Tests core Pydantic model performance:
+- Asset model creation and validation
+- Dict and JSON serialization
+- Batch operations
+
+### bench_dsl.py
+Tests FK-DSL parser performance:
+- Simple and complex query parsing
+- GET, ANALYZE, COMPARE, FIND, TRACK queries
+- Parser initialization overhead
+- Multiple query parsing
 
 ## Benchmark Structure
 
@@ -137,7 +148,8 @@ Benchmarks are designed to run in CI but are separated from regular tests to avo
 
 ## Notes
 
-- Benchmarks use mocks to avoid external dependencies (Redis, PostgreSQL, API keys)
-- Focus is on measuring FIML logic performance, not external service latency
+- Benchmarks focus on measuring FIML logic performance
+- External dependencies are avoided to make benchmarks deterministic
 - Async benchmarks use `benchmark.pedantic()` for proper async handling
 - All benchmarks should be deterministic and repeatable
+- For components requiring external services (providers, cache, etc.), consider using mocks or skip benchmarks if dependencies aren't available

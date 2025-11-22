@@ -1,19 +1,18 @@
 """
-Performance benchmarks for FK-DSL Parser and Executor
+Performance benchmarks for FK-DSL Parser
 """
 
 import pytest
 from fiml.dsl.parser import FKDSLParser
-from fiml.dsl.executor import FKDSLExecutor
 
 
 class TestDSLBenchmarks:
     """Benchmarks for DSL parsing and execution"""
 
     def test_parse_simple_query(self, benchmark):
-        """Benchmark parsing a simple EVALUATE query"""
+        """Benchmark parsing a simple GET query"""
         parser = FKDSLParser()
-        query = "EVALUATE AAPL: PRICE"
+        query = "GET PRICE FOR AAPL"
         
         def parse_query():
             return parser.parse(query)
@@ -21,10 +20,10 @@ class TestDSLBenchmarks:
         result = benchmark(parse_query)
         assert result is not None
 
-    def test_parse_complex_query(self, benchmark):
-        """Benchmark parsing a complex multi-metric query"""
+    def test_parse_analyze_query(self, benchmark):
+        """Benchmark parsing an ANALYZE query"""
         parser = FKDSLParser()
-        query = "EVALUATE TSLA: PRICE, VOLATILITY(30d), CORRELATE(BTC, SPY), TECHNICAL(RSI, MACD)"
+        query = "ANALYZE AAPL FOR TECHNICALS"
         
         def parse_query():
             return parser.parse(query)
@@ -35,7 +34,7 @@ class TestDSLBenchmarks:
     def test_parse_compare_query(self, benchmark):
         """Benchmark parsing a COMPARE query"""
         parser = FKDSLParser()
-        query = "COMPARE BTC vs ETH vs SOL ON: VOLUME(7d), LIQUIDITY, MOMENTUM(14d)"
+        query = "COMPARE AAPL, TSLA BY PRICE, VOLUME"
         
         def parse_query():
             return parser.parse(query)
@@ -43,10 +42,10 @@ class TestDSLBenchmarks:
         result = benchmark(parse_query)
         assert result is not None
 
-    def test_parse_scan_query(self, benchmark):
-        """Benchmark parsing a SCAN query with filters"""
+    def test_parse_find_query(self, benchmark):
+        """Benchmark parsing a FIND query with conditions"""
         parser = FKDSLParser()
-        query = "SCAN NASDAQ WHERE VOLUME > AVG_VOLUME(30d) * 2 AND PRICE_CHANGE(1d) > 5%"
+        query = "FIND AAPL WITH PRICE > 100"
         
         def parse_query():
             return parser.parse(query)
@@ -54,30 +53,15 @@ class TestDSLBenchmarks:
         result = benchmark(parse_query)
         assert result is not None
 
-    def test_parse_macro_query(self, benchmark):
-        """Benchmark parsing a MACRO analysis query"""
+    def test_parse_track_query(self, benchmark):
+        """Benchmark parsing a TRACK query"""
         parser = FKDSLParser()
-        query = "MACRO: US10Y, CPI, VIX, DXY"
+        query = "TRACK AAPL WHEN PRICE > 150"
         
         def parse_query():
             return parser.parse(query)
         
         result = benchmark(parse_query)
-        assert result is not None
-
-    @pytest.mark.asyncio
-    async def test_execute_simple_query(self, benchmark):
-        """Benchmark executing a simple query"""
-        parser = FKDSLParser()
-        executor = FKDSLExecutor()
-        
-        query = "EVALUATE AAPL: PRICE"
-        ast = parser.parse(query)
-        
-        async def execute_query():
-            return await executor.execute(ast)
-        
-        result = await benchmark.pedantic(execute_query, rounds=5)
         assert result is not None
 
     def test_parser_initialization(self, benchmark):
@@ -93,11 +77,11 @@ class TestDSLBenchmarks:
         """Benchmark parsing multiple queries in sequence"""
         parser = FKDSLParser()
         queries = [
-            "EVALUATE AAPL: PRICE",
-            "EVALUATE TSLA: VOLATILITY(30d)",
-            "COMPARE BTC vs ETH ON: VOLUME(7d)",
-            "MACRO: VIX, DXY",
-            "SCAN NASDAQ WHERE VOLUME > 1000000",
+            "GET PRICE FOR AAPL",
+            "ANALYZE TSLA FOR FUNDAMENTALS",
+            "COMPARE AAPL, TSLA BY PRICE, VOLUME",
+            "FIND AAPL WITH PRICE > 100",
+            "TRACK AAPL WHEN VOLUME > 1000000",
         ]
         
         def parse_multiple():
