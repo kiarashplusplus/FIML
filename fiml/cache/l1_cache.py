@@ -26,7 +26,7 @@ class L1Cache:
     - Connection pooling
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._redis: Optional[redis.Redis] = None
         self._initialized = False
 
@@ -81,7 +81,8 @@ class L1Cache:
             value = await self._redis.get(key)
             if value:
                 logger.debug("L1 cache hit", key=key)
-                return json.loads(value)
+                result: Any = json.loads(value)
+                return result
             else:
                 logger.debug("L1 cache miss", key=key)
                 return None
@@ -183,7 +184,7 @@ class L1Cache:
             if keys:
                 deleted = await self._redis.delete(*keys)
                 logger.info("L1 cache cleared pattern", pattern=pattern, count=deleted)
-                return deleted
+                return int(deleted) if deleted else 0
             return 0
 
         except Exception as e:

@@ -6,8 +6,12 @@ Target: 300-700ms latency
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from fiml.core.config import settings
 from fiml.core.exceptions import CacheError
@@ -27,9 +31,9 @@ class L2Cache:
     - Historical data queries
     """
 
-    def __init__(self):
-        self._engine = None
-        self._session_maker = None
+    def __init__(self) -> None:
+        self._engine: Optional[AsyncEngine] = None
+        self._session_maker: Optional[async_sessionmaker[AsyncSession]] = None
         self._initialized = False
 
     async def initialize(self) -> None:
@@ -48,9 +52,8 @@ class L2Cache:
             )
 
             # Create session maker
-            self._session_maker = sessionmaker(
+            self._session_maker = async_sessionmaker(
                 self._engine,
-                class_=AsyncSession,
                 expire_on_commit=False,
             )
 
@@ -89,7 +92,7 @@ class L2Cache:
         Returns:
             Price data or None
         """
-        if not self._initialized:
+        if not self._initialized or self._session_maker is None:
             raise CacheError("L2 cache not initialized")
 
         try:
@@ -145,7 +148,7 @@ class L2Cache:
         metadata: Optional[Dict] = None,
     ) -> bool:
         """Insert price data into cache"""
-        if not self._initialized:
+        if not self._initialized or self._session_maker is None:
             raise CacheError("L2 cache not initialized")
 
         try:
@@ -188,7 +191,7 @@ class L2Cache:
         provider: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Get OHLCV data from cache"""
-        if not self._initialized:
+        if not self._initialized or self._session_maker is None:
             raise CacheError("L2 cache not initialized")
 
         try:
@@ -238,7 +241,7 @@ class L2Cache:
         self, asset_id: int, provider: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """Get fundamentals from cache"""
-        if not self._initialized:
+        if not self._initialized or self._session_maker is None:
             raise CacheError("L2 cache not initialized")
 
         try:
@@ -281,7 +284,7 @@ class L2Cache:
         ttl_seconds: int = 3600,
     ) -> bool:
         """Insert/update fundamentals in cache"""
-        if not self._initialized:
+        if not self._initialized or self._session_maker is None:
             raise CacheError("L2 cache not initialized")
 
         try:
@@ -318,7 +321,7 @@ class L2Cache:
 
     async def cleanup_expired(self) -> int:
         """Remove expired data (called by scheduled task)"""
-        if not self._initialized:
+        if not self._initialized or self._session_maker is None:
             raise CacheError("L2 cache not initialized")
 
         try:
@@ -331,13 +334,252 @@ class L2Cache:
                 result = await session.execute(query)
                 await session.commit()
 
-                deleted = result.rowcount
+                deleted = int(result.rowcount) if result.rowcount else 0  # type: ignore[attr-defined]
                 logger.info("L2 cache cleanup", deleted=deleted)
                 return deleted
 
         except Exception as e:
             logger.error(f"L2 cache cleanup error: {e}")
             return 0
+
+    async def set(self, key: str, value: Any, ttl_seconds: Optional[int] = None) -> bool:
+        """
+        Generic set method for key-value storage
+
+        Args:
+            key: Cache key
+            value: Value to store
+            ttl_seconds: Time to live in seconds
+
+        Returns:
+            True if successful
+        """
+        if not self._initialized or self._session_maker is None:
+            raise CacheError("L2 cache not initialized")
+
+        try:
+            async with self._session_maker() as session:
+                # Use generic cache table for key-value storage
+                query = text("""
+                    INSERT INTO generic_cache
+                    (key, value, timestamp, ttl_seconds)
+                    VALUES (:key, :value, NOW(), :ttl_seconds)
+                    ON CONFLICT (key)
+                    DO UPDATE SET
+                        value = EXCLUDED.value,
+                        timestamp = EXCLUDED.timestamp,
+                        ttl_seconds = EXCLUDED.ttl_seconds
+                """)
+
+                await session.execute(
+                    query,
+                    {
+                        "key": key,
+                        "value": value,
+                        "ttl_seconds": ttl_seconds or 3600,
+                    },
+                )
+
+                await session.commit()
+                logger.debug("L2 cache set", key=key)
+                return True
+
+        except Exception as e:
+            logger.error(f"L2 cache set error: {e}", key=key)
+            return False
+
+    async def get(self, key: str) -> Optional[Any]:
+        """
+        Generic get method for key-value retrieval
+
+        Args:
+            key: Cache key
+
+        Returns:
+            Cached value or None
+        """
+        if not self._initialized or self._session_maker is None:
+            raise CacheError("L2 cache not initialized")
+
+        try:
+            async with self._session_maker() as session:
+                query = text("""
+                    SELECT value
+                    FROM generic_cache
+                    WHERE key = :key
+                        AND timestamp >= NOW() - INTERVAL '1 second' * ttl_seconds
+                    LIMIT 1
+                """)
+
+                result = await session.execute(query, {"key": key})
+                row = result.fetchone()
+
+                if row:
+                    return row[0]
+                return None
+
+        except Exception as e:
+            logger.error(f"L2 cache get error: {e}", key=key)
+            return None
+
+    async def delete(self, key: str) -> bool:
+        """
+        Delete a key from cache
+
+        Args:
+            key: Cache key
+
+        Returns:
+            True if successful
+        """
+        if not self._initialized or self._session_maker is None:
+            raise CacheError("L2 cache not initialized")
+
+        try:
+            async with self._session_maker() as session:
+                query = text("""
+                    DELETE FROM generic_cache
+                    WHERE key = :key
+                """)
+
+                result = await session.execute(query, {"key": key})
+                await session.commit()
+
+                deleted = bool(result.rowcount) if result.rowcount else False  # type: ignore[attr-defined]
+                logger.debug("L2 cache delete", key=key, deleted=deleted)
+                return deleted
+
+        except Exception as e:
+            logger.error(f"L2 cache delete error: {e}", key=key)
+            return False
+
+    async def exists(self, key: str) -> bool:
+        """
+        Check if key exists in cache
+
+        Args:
+            key: Cache key
+
+        Returns:
+            True if key exists and is not expired
+        """
+        if not self._initialized or self._session_maker is None:
+            raise CacheError("L2 cache not initialized")
+
+        try:
+            async with self._session_maker() as session:
+                query = text("""
+                    SELECT 1
+                    FROM generic_cache
+                    WHERE key = :key
+                        AND timestamp >= NOW() - INTERVAL '1 second' * ttl_seconds
+                    LIMIT 1
+                """)
+
+                result = await session.execute(query, {"key": key})
+                return result.fetchone() is not None
+
+        except Exception as e:
+            logger.error(f"L2 cache exists error: {e}", key=key)
+            return False
+
+    async def clear(self) -> int:
+        """
+        Clear all cache entries
+
+        Returns:
+            Number of entries deleted
+        """
+        if not self._initialized or self._session_maker is None:
+            raise CacheError("L2 cache not initialized")
+
+        try:
+            async with self._session_maker() as session:
+                query = text("DELETE FROM generic_cache")
+                result = await session.execute(query)
+                await session.commit()
+
+                deleted = int(result.rowcount) if result.rowcount else 0  # type: ignore[attr-defined]
+                logger.info("L2 cache cleared", deleted=deleted)
+                return deleted
+
+        except Exception as e:
+            logger.error(f"L2 cache clear error: {e}")
+            return 0
+
+    async def clear_pattern(self, pattern: str) -> int:
+        """
+        Clear cache entries matching a pattern
+
+        Args:
+            pattern: SQL LIKE pattern (e.g., 'price:%')
+
+        Returns:
+            Number of entries deleted
+        """
+        if not self._initialized or self._session_maker is None:
+            raise CacheError("L2 cache not initialized")
+
+        try:
+            async with self._session_maker() as session:
+                query = text("""
+                    DELETE FROM generic_cache
+                    WHERE key LIKE :pattern
+                """)
+
+                result = await session.execute(query, {"pattern": pattern})
+                await session.commit()
+
+                deleted = int(result.rowcount) if result.rowcount else 0  # type: ignore[attr-defined]
+                logger.info("L2 cache pattern cleared", pattern=pattern, deleted=deleted)
+                return deleted
+
+        except Exception as e:
+            logger.error(f"L2 cache clear_pattern error: {e}", pattern=pattern)
+            return 0
+
+    async def get_stats(self) -> Dict[str, Any]:
+        """
+        Get L2 cache statistics
+
+        Returns:
+            Statistics dictionary
+        """
+        if not self._initialized or self._session_maker is None:
+            return {
+                "status": "not_initialized",
+                "entries": 0,
+            }
+
+        try:
+            async with self._session_maker() as session:
+                # Count total entries
+                count_query = text("SELECT COUNT(*) FROM generic_cache")
+                count_result = await session.execute(count_query)
+                total_entries = count_result.scalar() or 0
+
+                # Count expired entries
+                expired_query = text("""
+                    SELECT COUNT(*)
+                    FROM generic_cache
+                    WHERE timestamp < NOW() - INTERVAL '1 second' * ttl_seconds
+                """)
+                expired_result = await session.execute(expired_query)
+                expired_entries = expired_result.scalar() or 0
+
+                return {
+                    "status": "initialized",
+                    "total_entries": total_entries,
+                    "expired_entries": expired_entries,
+                    "active_entries": total_entries - expired_entries,
+                }
+
+        except Exception as e:
+            logger.error(f"L2 cache get_stats error: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+            }
 
 
 # Global L2 cache instance

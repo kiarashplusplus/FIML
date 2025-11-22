@@ -77,6 +77,16 @@ CREATE TABLE IF NOT EXISTS fundamentals_cache (
 
 CREATE INDEX idx_fundamentals_timestamp ON fundamentals_cache(timestamp);
 
+-- Generic cache for key-value storage
+CREATE TABLE IF NOT EXISTS generic_cache (
+    key VARCHAR(255) PRIMARY KEY,
+    value JSONB NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ttl_seconds INTEGER DEFAULT 3600
+);
+
+CREATE INDEX idx_generic_cache_timestamp ON generic_cache(timestamp);
+
 -- Tasks table
 CREATE TABLE IF NOT EXISTS tasks (
     id UUID PRIMARY KEY,

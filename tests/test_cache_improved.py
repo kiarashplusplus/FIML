@@ -11,7 +11,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fiml.cache.l1_cache import L1Cache
-from fiml.cache.manager import CacheManager
+from fiml.cache.manager import CacheManager, cache_manager
 from fiml.cache.warmer import CacheWarmer, cache_warmer
 from fiml.cache.eviction import EvictionTracker, EvictionPolicy
 from fiml.core.models import Asset, AssetType, Market

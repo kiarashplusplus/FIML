@@ -3,7 +3,7 @@ Cache Manager - Coordinates L1 and L2 caches
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.l2_cache import l2_cache
@@ -32,7 +32,7 @@ class CacheManager:
     - Eviction statistics
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.l1 = l1_cache
         self.l2 = l2_cache
         self._initialized = False
@@ -79,7 +79,7 @@ class CacheManager:
         l1_result = await self.l1.get(l1_key)
         if l1_result:
             logger.debug("Price from L1 cache", asset=asset.symbol)
-            return l1_result
+            return dict(l1_result) if isinstance(l1_result, dict) else l1_result
 
         # Try L2
         # Note: Would need asset_id lookup first in production
@@ -120,7 +120,7 @@ class CacheManager:
         # l2_success = await self.l2.set_price(asset_id, provider, ...)
 
         logger.debug("Price cached", asset=asset.symbol, provider=provider, l1=l1_success)
-        return l1_success
+        return bool(l1_success)
 
     async def get_fundamentals(
         self, asset: Asset, provider: Optional[str] = None
@@ -132,7 +132,7 @@ class CacheManager:
         l1_result = await self.l1.get(l1_key)
         if l1_result:
             logger.debug("Fundamentals from L1 cache", asset=asset.symbol)
-            return l1_result
+            return dict(l1_result) if isinstance(l1_result, dict) else l1_result
 
         # Try L2
         logger.debug("Fundamentals L1 miss, trying L2", asset=asset.symbol)
@@ -157,14 +157,14 @@ class CacheManager:
         # In production: await self.l2.set_fundamentals(asset_id, provider, data, ttl)
 
         logger.debug("Fundamentals cached", asset=asset.symbol, provider=provider)
-        return l1_success
+        return bool(l1_success)
 
     async def invalidate_asset(self, asset: Asset) -> int:
         """Invalidate all cached data for an asset"""
         pattern = f"*:{asset.symbol}:*"
         deleted = await self.l1.clear_pattern(pattern)
         logger.info("Invalidated cache for asset", asset=asset.symbol, deleted=deleted)
-        return deleted
+        return int(deleted) if deleted else 0
 
     async def get_stats(self) -> Dict[str, Any]:
         """
@@ -281,19 +281,22 @@ class CacheManager:
         l1_latency_ms = (time.perf_counter() - start) * 1000
         self._track_l1_latency(l1_latency_ms)
 
-        return success
+        return bool(success)
 
     async def delete(self, key: str) -> bool:
         """Delete key from cache"""
-        return await self.l1.delete(key)
+        result = await self.l1.delete(key)
+        return bool(result)
 
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache"""
-        return await self.l1.exists(key)
+        result = await self.l1.exists(key)
+        return bool(result)
 
     async def clear_pattern(self, pattern: str) -> int:
         """Clear keys matching pattern"""
-        return await self.l1.clear_pattern(pattern)
+        result = await self.l1.clear_pattern(pattern)
+        return int(result) if result else 0
 
     def _get_ttl(self, data_type: DataType) -> int:
         """Get TTL for data type"""
@@ -334,7 +337,9 @@ class CacheManager:
 
         logger.debug("Batch price lookup", total=len(assets), l1_hits=hits, latency_ms=f"{l1_latency_ms:.2f}")
 
-        return results
+        # Ensure proper typing for return value
+        typed_results: List[Optional[Dict[str, Any]]] = [dict(r) if isinstance(r, dict) else r for r in results]
+        return typed_results
 
     async def set_prices_batch(
         self,
@@ -352,7 +357,7 @@ class CacheManager:
         ttl = self._get_ttl(DataType.PRICE)
 
         # Build cache items
-        cache_items = [
+        cache_items: List[Tuple[str, Any, Optional[int]]] = [
             (self.l1.build_key("price", asset.symbol, provider), price_data, ttl)
             for asset, provider, price_data in items
         ]
@@ -361,7 +366,7 @@ class CacheManager:
         success_count = await self.l1.set_many(cache_items)
 
         logger.debug("Batch price set", total=len(items), success=success_count)
-        return success_count
+        return int(success_count) if success_count else 0
 
 
 # Global cache manager instance

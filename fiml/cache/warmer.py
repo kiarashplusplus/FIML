@@ -27,7 +27,7 @@ class CacheWarmer:
     - Performance metrics tracking
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._warming_in_progress = False
         self._last_warm_time: Optional[datetime] = None
         self._warm_count = 0
