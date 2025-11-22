@@ -678,7 +678,7 @@ make lint
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and module structure
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment guide for production
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
-- **[LICENSE](LICENSE)** - MIT License
+- **[LICENSE](LICENSE)** - Apache 2.0 License
 
 ---
 
@@ -705,7 +705,7 @@ make lint
 
 ## 📄 License
 
-MIT License - See [LICENSE](LICENSE) file for details.
+Apache 2.0 License - See [LICENSE](LICENSE) file for details.
 
 ---
 

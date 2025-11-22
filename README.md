@@ -436,7 +436,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details
+Apache 2.0 License - see [LICENSE](LICENSE) for details
 
 ## 🙏 Acknowledgments
 

@@ -2,10 +2,10 @@
 name = "fiml"
 version = "0.1.0"
 description = "Financial Intelligence Meta-Layer - AI-Native Multi-Market Financial Framework"
-authors = [{name = "FIML Team"}]
+authors = [{name = "Kiarash Adl"}]
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = "Apache-2.0"
 
 dependencies = [
     # Core MCP & Web Framework
