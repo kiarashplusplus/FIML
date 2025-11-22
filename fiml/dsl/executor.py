@@ -3,7 +3,7 @@ FK-DSL Executor - Executes planned tasks
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
@@ -25,7 +25,7 @@ class ExecutionTaskInfo(BaseModel):
     query: str
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     total_steps: int = 0
     completed_steps: int = 0
     result: Optional[Any] = None
@@ -165,7 +165,7 @@ class FKDSLExecutor:
         """Execute plan DAG"""
         task_info = self.active_executions[task_id]
         task_info.status = TaskStatus.RUNNING
-        task_info.started_at = datetime.utcnow()
+        task_info.started_at = datetime.now(timezone.utc)
 
         completed: Set[str] = set()
         results: Dict[str, Any] = {}
@@ -204,14 +204,14 @@ class FKDSLExecutor:
             # Success
             task_info.status = TaskStatus.COMPLETED
             task_info.result = results
-            task_info.completed_at = datetime.utcnow()
+            task_info.completed_at = datetime.now(timezone.utc)
 
             logger.info(f"Execution completed", task_id=task_id)
 
         except Exception as e:
             task_info.status = TaskStatus.FAILED
             task_info.error = str(e)
-            task_info.completed_at = datetime.utcnow()
+            task_info.completed_at = datetime.now(timezone.utc)
             logger.error(f"Execution failed: {e}", task_id=task_id)
 
     def get_task_status(self, task_id: str) -> Optional[TaskInfo]:

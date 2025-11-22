@@ -3,7 +3,7 @@ MCP Tool Implementations
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fiml.agents.orchestrator import agent_orchestrator
 from fiml.arbitration.engine import arbitration_engine
@@ -76,8 +76,8 @@ async def search_by_symbol(
                 price=0.0,
                 change=0.0,
                 change_percent=0.0,
-                as_of=datetime.utcnow(),
-                last_updated=datetime.utcnow(),
+                as_of=datetime.now(timezone.utc),
+                last_updated=datetime.now(timezone.utc),
                 source="compliance_blocked",
                 ttl=0,
                 confidence=0.0,
@@ -87,7 +87,7 @@ async def search_by_symbol(
                 type="equity_analysis",
                 status=TaskStatus.FAILED,
                 resource_url="",
-                estimated_completion=datetime.utcnow(),
+                estimated_completion=datetime.now(timezone.utc),
                 progress=0.0,
             ),
             disclaimer="\n".join(compliance_check.restrictions),
@@ -119,8 +119,8 @@ async def search_by_symbol(
             price=data.get("price", 0.0),
             change=data.get("change", 0.0),
             change_percent=data.get("change_percent", 0.0),
-            as_of=datetime.utcnow(),
-            last_updated=datetime.utcnow(),
+            as_of=datetime.now(timezone.utc),
+            last_updated=datetime.now(timezone.utc),
             source=response.provider if response else "unknown",
             ttl=300,  # 5 minutes
             confidence=response.confidence if response else 0.0,
@@ -131,7 +131,7 @@ async def search_by_symbol(
             type="equity_analysis",
             status=TaskStatus.PENDING,
             resource_url=f"mcp://task/{task_id}",
-            estimated_completion=datetime.utcnow() + timedelta(seconds=5),
+            estimated_completion=datetime.now(timezone.utc) + timedelta(seconds=5),
             progress=0.0,
         )
         
@@ -177,8 +177,8 @@ async def search_by_symbol(
                 price=0.0,
                 change=0.0,
                 change_percent=0.0,
-                as_of=datetime.utcnow(),
-                last_updated=datetime.utcnow(),
+                as_of=datetime.now(timezone.utc),
+                last_updated=datetime.now(timezone.utc),
                 source="error",
                 ttl=0,
                 confidence=0.0,
@@ -188,7 +188,7 @@ async def search_by_symbol(
                 type="equity_analysis",
                 status=TaskStatus.FAILED,
                 resource_url=f"mcp://task/{task_id}",
-                estimated_completion=datetime.utcnow(),
+                estimated_completion=datetime.now(timezone.utc),
                 progress=0.0,
             ),
             disclaimer=f"Error fetching data: {str(e)}",
@@ -253,8 +253,8 @@ async def search_by_coin(
                 price=0.0,
                 change=0.0,
                 change_percent=0.0,
-                as_of=datetime.utcnow(),
-                last_updated=datetime.utcnow(),
+                as_of=datetime.now(timezone.utc),
+                last_updated=datetime.now(timezone.utc),
                 source="compliance_blocked",
                 ttl=0,
                 confidence=0.0,
@@ -265,7 +265,7 @@ async def search_by_coin(
                 type="crypto_analysis",
                 status=TaskStatus.FAILED,
                 resource_url="",
-                estimated_completion=datetime.utcnow(),
+                estimated_completion=datetime.now(timezone.utc),
                 progress=0.0,
             ),
             disclaimer="\n".join(compliance_check.restrictions),
@@ -297,8 +297,8 @@ async def search_by_coin(
             price=data.get("price", 0.0),
             change=data.get("change", 0.0),
             change_percent=data.get("change_percent", 0.0),
-            as_of=datetime.utcnow(),
-            last_updated=datetime.utcnow(),
+            as_of=datetime.now(timezone.utc),
+            last_updated=datetime.now(timezone.utc),
             source=response.provider if response else "unknown",
             ttl=30,  # 30 seconds for crypto (more volatile)
             confidence=response.confidence if response else 0.0,
@@ -309,7 +309,7 @@ async def search_by_coin(
             type="crypto_analysis",
             status=TaskStatus.PENDING,
             resource_url=f"mcp://task/{task_id}",
-            estimated_completion=datetime.utcnow() + timedelta(seconds=3),
+            estimated_completion=datetime.now(timezone.utc) + timedelta(seconds=3),
             progress=0.0,
         )
         
@@ -364,8 +364,8 @@ async def search_by_coin(
                 price=0.0,
                 change=0.0,
                 change_percent=0.0,
-                as_of=datetime.utcnow(),
-                last_updated=datetime.utcnow(),
+                as_of=datetime.now(timezone.utc),
+                last_updated=datetime.now(timezone.utc),
                 source="error",
                 ttl=0,
                 confidence=0.0,
@@ -376,7 +376,7 @@ async def search_by_coin(
                 type="crypto_analysis",
                 status=TaskStatus.FAILED,
                 resource_url=f"mcp://task/{task_id}",
-                estimated_completion=datetime.utcnow(),
+                estimated_completion=datetime.now(timezone.utc),
                 progress=0.0,
             ),
             disclaimer=f"Error fetching data: {str(e)}",

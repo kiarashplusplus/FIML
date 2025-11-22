@@ -4,7 +4,7 @@ Tests for Phase 2 Providers: Alpha Vantage, FMP, and CCXT
 
 import pytest
 from unittest.mock import AsyncMock, Mock, patch
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fiml.core.models import Asset, AssetType, DataType
 from fiml.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError
@@ -74,7 +74,7 @@ class TestAlphaVantageProvider:
         await provider.initialize()
         
         # Simulate rate limit by adding many recent requests
-        provider._request_timestamps = [datetime.utcnow() for _ in range(5)]
+        provider._request_timestamps = [datetime.now(timezone.utc) for _ in range(5)]
         
         # Should raise rate limit error
         with pytest.raises(ProviderRateLimitError):

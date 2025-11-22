@@ -9,7 +9,7 @@ Intelligently routes data requests to optimal providers with:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 import numpy as np
@@ -237,7 +237,7 @@ class DataArbitrationEngine:
         """
         # Freshness score
         last_update = await provider.get_last_update(asset, data_type)
-        age_seconds = (datetime.utcnow() - last_update).total_seconds()
+        age_seconds = (datetime.now(timezone.utc) - last_update).total_seconds()
         freshness_score = max(0, 100 * (1 - age_seconds / max_staleness_seconds))
 
         # Latency score
@@ -326,7 +326,7 @@ class DataArbitrationEngine:
             asset=responses[0].asset,
             data_type=DataType.PRICE,
             data=merged_data,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=True,
             confidence=agreement_confidence,
@@ -362,7 +362,7 @@ class DataArbitrationEngine:
             asset=responses[0].asset,
             data_type=DataType.OHLCV,
             data=merged_data,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=True,
             confidence=0.95,
@@ -389,7 +389,7 @@ class DataArbitrationEngine:
             asset=responses[0].asset,
             data_type=DataType.FUNDAMENTALS,
             data=merged_data,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=True,
             confidence=0.90,

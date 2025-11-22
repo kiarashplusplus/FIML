@@ -2,8 +2,8 @@
 Cache Manager - Coordinates L1 and L2 caches
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional, List
 
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.l2_cache import l2_cache
@@ -168,6 +168,57 @@ class CacheManager:
             DataType.MACRO: settings.cache_ttl_macro,
         }
         return ttl_map.get(data_type, 300)
+
+    async def get_prices_batch(
+        self, assets: List[Asset], provider: Optional[str] = None
+    ) -> List[Optional[Dict[str, Any]]]:
+        """
+        Get multiple prices with L1 cache batch optimization
+        
+        Args:
+            assets: List of assets to query
+            provider: Specific provider (optional)
+            
+        Returns:
+            List of price data (None for misses)
+        """
+        # Build cache keys for all assets
+        l1_keys = [self.l1.build_key("price", asset.symbol, provider or "any") for asset in assets]
+        
+        # Try L1 batch get
+        results = await self.l1.get_many(l1_keys)
+        
+        hits = sum(1 for r in results if r is not None)
+        logger.debug(f"Batch price lookup", total=len(assets), l1_hits=hits)
+        
+        return results
+
+    async def set_prices_batch(
+        self,
+        items: List[tuple[Asset, str, Dict[str, Any]]],
+    ) -> int:
+        """
+        Set multiple prices in L1 cache using batch optimization
+        
+        Args:
+            items: List of (asset, provider, price_data) tuples
+            
+        Returns:
+            Number of successfully cached items
+        """
+        ttl = self._get_ttl(DataType.PRICE)
+        
+        # Build cache items
+        cache_items = [
+            (self.l1.build_key("price", asset.symbol, provider), price_data, ttl)
+            for asset, provider, price_data in items
+        ]
+        
+        # Batch set in L1
+        success_count = await self.l1.set_many(cache_items)
+        
+        logger.debug("Batch price set", total=len(items), success=success_count)
+        return success_count
 
 
 # Global cache manager instance

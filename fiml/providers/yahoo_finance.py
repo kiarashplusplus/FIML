@@ -2,7 +2,7 @@
 Yahoo Finance Provider Implementation
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import yfinance as yf
@@ -70,7 +70,7 @@ class YahooFinanceProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.PRICE,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.95,
@@ -122,7 +122,7 @@ class YahooFinanceProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.OHLCV,
                 data={"candles": candles, "timeframe": timeframe},
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.95,
@@ -165,7 +165,7 @@ class YahooFinanceProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.FUNDAMENTALS,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.90,
@@ -201,7 +201,7 @@ class YahooFinanceProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.NEWS,
                 data={"articles": articles},
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.85,
@@ -226,6 +226,6 @@ class YahooFinanceProvider(BaseProvider):
             uptime_percent=await self.get_uptime_24h(),
             avg_latency_ms=150.0,  # Yahoo Finance is generally fast
             success_rate=await self.get_success_rate(),
-            last_check=datetime.utcnow(),
+            last_check=datetime.now(timezone.utc),
             error_count_24h=self._error_count,
         )

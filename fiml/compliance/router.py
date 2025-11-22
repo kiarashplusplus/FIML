@@ -4,7 +4,7 @@ Compliance Framework - Regional Compliance Routing
 
 from enum import Enum
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pydantic import BaseModel
 
@@ -230,7 +230,7 @@ class ComplianceRouter:
             restrictions=restrictions,
             required_disclaimers=required_disclaimers,
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "request_type": request_type,
                 "asset_type": asset_type,
             }

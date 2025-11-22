@@ -2,7 +2,7 @@
 CCXT Cryptocurrency Provider Implementation
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional, Any, List
 import asyncio
 
@@ -107,8 +107,8 @@ class CCXTProvider(BaseProvider):
                 "quote_volume": float(ticker.get("quoteVolume", 0.0)),
                 "change": float(ticker.get("change", 0.0) or 0.0),
                 "change_percent": float(ticker.get("percentage", 0.0) or 0.0),
-                "timestamp": ticker.get("timestamp", datetime.utcnow().timestamp() * 1000),
-                "datetime": ticker.get("datetime", datetime.utcnow().isoformat()),
+                "timestamp": ticker.get("timestamp", datetime.now(timezone.utc).timestamp() * 1000),
+                "datetime": ticker.get("datetime", datetime.now(timezone.utc).isoformat()),
                 "symbol": symbol,
                 "info": ticker.get("info", {}),
             }
@@ -118,7 +118,7 @@ class CCXTProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.PRICE,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.99,  # High confidence for real-time crypto data
@@ -209,7 +209,7 @@ class CCXTProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.OHLCV,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.99,
@@ -300,7 +300,7 @@ class CCXTProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.FUNDAMENTALS,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.95,
@@ -346,7 +346,7 @@ class CCXTProvider(BaseProvider):
             asset=asset,
             data_type=DataType.NEWS,
             data={"articles": []},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=False,
             confidence=0.0,
@@ -392,7 +392,7 @@ class CCXTProvider(BaseProvider):
                 uptime_percent=0.99,
                 avg_latency_ms=50.0,  # Crypto exchanges are typically fast
                 success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(timezone.utc),
                 error_count_24h=self._error_count,
             )
         except Exception as e:
@@ -403,7 +403,7 @@ class CCXTProvider(BaseProvider):
                 uptime_percent=0.0,
                 avg_latency_ms=0.0,
                 success_rate=0.0,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(timezone.utc),
                 error_count_24h=self._error_count,
             )
 
@@ -425,7 +425,7 @@ class CCXTProvider(BaseProvider):
                 is_healthy=is_healthy,
                 latency_ms=50,  # Crypto exchanges are typically fast
                 error_rate=self._error_count / max(self._request_count, 1),
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(timezone.utc),
             )
         except Exception as e:
             logger.error(f"CCXT health check failed for {self.exchange_id}: {e}")
@@ -434,14 +434,14 @@ class CCXTProvider(BaseProvider):
                 is_healthy=False,
                 latency_ms=0,
                 error_rate=1.0,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(timezone.utc),
                 error_message=str(e),
             )
 
     def _record_request(self) -> None:
         """Record a successful request"""
         self._request_count += 1
-        self._last_request_time = datetime.utcnow()
+        self._last_request_time = datetime.now(timezone.utc)
 
     def _record_error(self) -> None:
         """Record an error"""

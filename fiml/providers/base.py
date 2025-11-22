@@ -3,7 +3,7 @@ Base Provider Interface
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
@@ -103,7 +103,7 @@ class BaseProvider(ABC):
     async def get_last_update(self, asset: Asset, data_type: DataType) -> datetime:
         """Get timestamp of last successful update"""
         # TODO: Implement actual tracking
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
     async def get_completeness(self, data_type: DataType) -> float:
         """Get data completeness score (0.0 - 1.0)"""
@@ -124,7 +124,7 @@ class BaseProvider(ABC):
     def _record_request(self) -> None:
         """Record a request"""
         self._request_count += 1
-        self._last_request_time = datetime.utcnow()
+        self._last_request_time = datetime.now(timezone.utc)
 
     def _record_error(self) -> None:
         """Record an error"""
