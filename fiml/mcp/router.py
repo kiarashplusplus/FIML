@@ -32,9 +32,7 @@ class MCPToolResponse(BaseModel):
     """MCP tool response schema"""
 
     content: list[Dict[str, Any]]
-    isError: bool = Field(default=False, alias="is_error")
-
-    model_config = {"populate_by_name": True}
+    isError: bool = Field(default=False)
 
 
 # Tool Schemas for MCP Discovery
