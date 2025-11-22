@@ -5,14 +5,37 @@ Provider Registry - Manages all data providers
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from fiml.core.config import settings
 from fiml.core.exceptions import NoProviderAvailableError
 from fiml.core.logging import get_logger
-from fiml.core.models import Asset, DataType, ProviderHealth
+from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider
 from fiml.providers.mock_provider import MockProvider
 from fiml.providers.yahoo_finance import YahooFinanceProvider
 
 logger = get_logger(__name__)
+
+# Import new providers conditionally
+try:
+    from fiml.providers.alpha_vantage import AlphaVantageProvider
+    ALPHA_VANTAGE_AVAILABLE = True
+except ImportError:
+    ALPHA_VANTAGE_AVAILABLE = False
+    logger.warning("Alpha Vantage provider not available")
+
+try:
+    from fiml.providers.fmp import FMPProvider
+    FMP_AVAILABLE = True
+except ImportError:
+    FMP_AVAILABLE = False
+    logger.warning("FMP provider not available")
+
+try:
+    from fiml.providers.ccxt_provider import CCXTProvider
+    CCXT_AVAILABLE = True
+except ImportError:
+    CCXT_AVAILABLE = False
+    logger.warning("CCXT provider not available")
 
 
 class ProviderRegistry:
@@ -34,12 +57,38 @@ class ProviderRegistry:
 
         logger.info("Initializing provider registry")
 
-        # Register providers
-        # TODO: Add more providers based on configuration
-        providers_to_register = [
-            MockProvider(),
-            YahooFinanceProvider(),
-        ]
+        # Register providers based on configuration and availability
+        providers_to_register = []
+        
+        # Always register mock provider for testing
+        providers_to_register.append(MockProvider())
+        
+        # Register Yahoo Finance (free, no API key needed)
+        providers_to_register.append(YahooFinanceProvider())
+        
+        # Register Alpha Vantage if API key is configured
+        if ALPHA_VANTAGE_AVAILABLE and settings.alpha_vantage_api_key:
+            try:
+                providers_to_register.append(AlphaVantageProvider(settings.alpha_vantage_api_key))
+                logger.info("Alpha Vantage provider will be registered")
+            except Exception as e:
+                logger.warning(f"Could not create Alpha Vantage provider: {e}")
+        
+        # Register FMP if API key is configured
+        if FMP_AVAILABLE and settings.fmp_api_key:
+            try:
+                providers_to_register.append(FMPProvider(settings.fmp_api_key))
+                logger.info("FMP provider will be registered")
+            except Exception as e:
+                logger.warning(f"Could not create FMP provider: {e}")
+        
+        # Register CCXT for crypto (uses Binance by default, no API key needed for public data)
+        if CCXT_AVAILABLE:
+            try:
+                providers_to_register.append(CCXTProvider("binance"))
+                logger.info("CCXT Binance provider will be registered")
+            except Exception as e:
+                logger.warning(f"Could not create CCXT provider: {e}")
 
         for provider in providers_to_register:
             try:
