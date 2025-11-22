@@ -74,7 +74,7 @@ class TestDSLBenchmarks:
         assert result is not None
 
     def test_parse_multiple_queries(self, benchmark):
-        """Benchmark parsing multiple queries in sequence with parser reuse"""
+        """Benchmark parsing multiple queries including parser initialization"""
         queries = [
             "GET PRICE FOR AAPL",
             "ANALYZE TSLA FOR FUNDAMENTALS",
@@ -84,7 +84,7 @@ class TestDSLBenchmarks:
         ]
         
         def parse_multiple():
-            # Create parser inside to ensure consistent benchmarking
+            # Parser creation included to measure total overhead
             parser = FKDSLParser()
             results = []
             for query in queries:
@@ -93,3 +93,14 @@ class TestDSLBenchmarks:
         
         results = benchmark(parse_multiple)
         assert len(results) == 5
+
+    def test_parse_with_reused_parser(self, benchmark):
+        """Benchmark query parsing with parser reuse (excludes initialization)"""
+        parser = FKDSLParser()
+        query = "GET PRICE FOR AAPL"
+        
+        def parse_query():
+            return parser.parse(query)
+        
+        result = benchmark(parse_query)
+        assert result is not None

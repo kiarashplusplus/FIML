@@ -32,17 +32,20 @@ This document contains baseline performance measurements for FIML core component
 
 | Test | Min (μs) | Mean (μs) | Median (μs) | Ops/sec |
 |------|----------|-----------|-------------|---------|
-| Parse simple query | 51.77 | 54.38 | 53.30 | 18,389 |
-| Parse analyze query | 63.80 | 67.41 | 65.80 | 14,835 |
-| Parse compare query | 121.31 | 126.93 | 124.60 | 7,878 |
-| Parse find query | 95.21 | 99.38 | 97.32 | 10,062 |
-| Parse track query | 94.24 | 99.47 | 97.34 | 10,053 |
-| Parser initialization | 27,135.59 | 29,575.74 | 27,527.18 | 34 |
-| Parse multiple (5 queries) | 28,050.41 | 29,890.44 | 28,304.23 | 33 |
+| Parse with reused parser | 50.50 | 53.55 | 52.45 | 18,674 |
+| Parse simple query | 51.80 | 54.53 | 53.39 | 18,338 |
+| Parse analyze query | 65.35 | 68.44 | 67.08 | 14,611 |
+| Parse compare query | 121.44 | 126.71 | 124.52 | 7,892 |
+| Parse find query | 95.70 | 100.26 | 98.38 | 9,974 |
+| Parse track query | 95.45 | 100.13 | 97.97 | 9,987 |
+| Parser initialization | 27,240.45 | 29,573.33 | 27,601.73 | 34 |
+| Parse multiple (5 queries) | 28,309.07 | 30,109.77 | 28,573.90 | 33 |
 
 **Key Insights:**
 - Simple queries parse in ~54 microseconds
 - Complex queries (COMPARE) take ~127 microseconds
+- Parser reuse eliminates ~29ms initialization overhead
+- Reusing parser provides identical performance to fresh parser for single queries
 - Parser initialization is expensive (~29ms one-time cost)
 - Multiple query parsing includes parser initialization overhead
 - Lark-based grammar provides good performance for DSL parsing
