@@ -214,22 +214,9 @@ class FKDSLExecutor:
             task_info.completed_at = datetime.now(timezone.utc)
             logger.error(f"Execution failed: {e}", task_id=task_id)
 
-    def get_task_status(self, task_id: str) -> Optional[TaskInfo]:
+    def get_task_status(self, task_id: str) -> Optional[ExecutionTaskInfo]:
         """Get execution status"""
-        internal_info = self.active_executions.get(task_id)
-        if internal_info is None:
-            return None
-
-        # Convert internal info to TaskInfo
-        return TaskInfo(
-            id=internal_info.task_id,
-            type="dsl_execution",
-            status=internal_info.status,
-            resource_url=f"/api/tasks/{task_id}",
-            progress=internal_info.completed_steps / max(internal_info.total_steps, 1) if internal_info.total_steps > 0 else 0.0,
-            created_at=internal_info.created_at,
-            updated_at=internal_info.completed_at or internal_info.started_at or internal_info.created_at,
-        )
+        return self.active_executions.get(task_id)
 
     async def execute_sync(self, plan: ExecutionPlan) -> Dict[str, Any]:
         """Execute plan synchronously and return results"""

@@ -10,9 +10,11 @@ from typing import Dict
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from fiml.core.logging import get_logger
+from fiml.core.models import AssetType, DataType, Market
 from fiml.websocket.manager import websocket_manager
 from fiml.websocket.models import (
     MessageType,
+    StreamType,
     SubscriptionRequest,
     UnsubscribeRequest,
 )
@@ -88,15 +90,15 @@ async def websocket_stream_endpoint(websocket: WebSocket) -> None:
                 elif message_type == MessageType.UNSUBSCRIBE:
                     # Handle unsubscribe request
                     try:
-                        request = UnsubscribeRequest(**message)
-                        await websocket_manager.unsubscribe(websocket, connection_id, request)
+                        unsub_request = UnsubscribeRequest(**message)
+                        await websocket_manager.unsubscribe(websocket, connection_id, unsub_request)
 
                         # Send acknowledgment
                         await websocket.send_json(
                             {
                                 "type": "unsubscribe_ack",
-                                "stream_type": request.stream_type,
-                                "symbols": request.symbols,
+                                "stream_type": unsub_request.stream_type,
+                                "symbols": unsub_request.symbols,
                             }
                         )
 
@@ -146,12 +148,12 @@ async def websocket_prices_endpoint(websocket: WebSocket, symbols: str) -> None:
 
         # Auto-subscribe to price stream
         request = SubscriptionRequest(
-            stream_type="price",
+            stream_type=StreamType.PRICE,
             symbols=symbol_list,
-            asset_type="equity",
-            market="US",
+            asset_type=AssetType.EQUITY,
+            market=Market.US,
             interval_ms=1000,
-            data_type="price",
+            data_type=DataType.PRICE,
         )
 
         response = await websocket_manager.subscribe(websocket, connection_id, request)

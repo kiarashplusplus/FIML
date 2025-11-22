@@ -183,7 +183,8 @@ class DisclaimerGenerator:
         disclaimers = []
 
         # Get region-specific templates
-        region_templates = self.templates.get(region.value, self.templates["GLOBAL"])
+        region_value = region.value if isinstance(region, Region) else region
+        region_templates = self.templates.get(region_value, self.templates["GLOBAL"])
 
         # Add general disclaimer
         if include_general:

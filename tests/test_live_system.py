@@ -50,9 +50,9 @@ class TestLiveProviders:
             
             assert len(health_statuses) > 0
             
-            for health in health_statuses:
-                assert "provider_name" in health or "provider" in health
-                assert "is_healthy" in health
+            for provider_name, health in health_statuses.items():
+                assert hasattr(health, "provider_name") or hasattr(health, "is_healthy")
+                assert health.is_healthy is not None
                 
         finally:
             await provider_registry.shutdown()
@@ -327,10 +327,11 @@ class TestLiveCompliance:
     async def test_disclaimer_generation(self):
         """Test disclaimer generation"""
         from fiml.compliance.disclaimers import disclaimer_generator, AssetClass
+        from fiml.compliance.router import Region
         
         disclaimer = disclaimer_generator.generate_disclaimer(
             asset_class=AssetClass.EQUITY,
-            region="US",
+            region=Region.US,
             language="en"
         )
         
