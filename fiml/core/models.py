@@ -141,7 +141,7 @@ class TaskInfo(BaseModel):
     progress: Optional[float] = Field(None, ge=0, le=1)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    
+
     # DSL execution tracking fields
     query: Optional[str] = None
     completed_steps: Optional[int] = None

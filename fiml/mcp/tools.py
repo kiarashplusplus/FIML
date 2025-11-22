@@ -405,7 +405,7 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
         completed = task_info.completed_steps or 0
         total = task_info.total_steps or 1
         progress = completed / total if total > 0 else 0.0
-        
+
         return {
             "id": task_info.id,
             "status": task_info.status.value,
