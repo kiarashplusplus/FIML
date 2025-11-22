@@ -105,6 +105,12 @@ class ValidationError(FIMLException):
     pass
 
 
+class DataQualityError(FIMLException):
+    """Data quality errors"""
+
+    pass
+
+
 class AuthenticationError(FIMLException):
     """Authentication errors"""
 
