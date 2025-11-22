@@ -2,7 +2,7 @@
 Alpha Vantage Provider Implementation
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional, Any
 import asyncio
 
@@ -63,7 +63,7 @@ class AlphaVantageProvider(BaseProvider):
 
     async def _check_rate_limit(self) -> None:
         """Check and enforce rate limits"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # Remove timestamps older than 1 minute
         self._request_timestamps = [
@@ -96,7 +96,7 @@ class AlphaVantageProvider(BaseProvider):
                 params=params,
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
-                self._request_timestamps.append(datetime.utcnow())
+                self._request_timestamps.append(datetime.now(timezone.utc))
                 self._record_request()
                 
                 if response.status == 200:
@@ -158,7 +158,7 @@ class AlphaVantageProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.PRICE,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.98,
@@ -239,7 +239,7 @@ class AlphaVantageProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.OHLCV,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.98,
@@ -309,7 +309,7 @@ class AlphaVantageProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.FUNDAMENTALS,
                 data=data,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.95,
@@ -357,7 +357,7 @@ class AlphaVantageProvider(BaseProvider):
                 asset=asset,
                 data_type=DataType.NEWS,
                 data={"articles": articles},
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 is_valid=True,
                 is_fresh=True,
                 confidence=0.90,
@@ -392,7 +392,7 @@ class AlphaVantageProvider(BaseProvider):
                 uptime_percent=0.99,
                 avg_latency_ms=100.0,
                 success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(timezone.utc),
                 error_count_24h=self._error_count,
             )
         except Exception as e:
@@ -403,14 +403,14 @@ class AlphaVantageProvider(BaseProvider):
                 uptime_percent=0.0,
                 avg_latency_ms=0.0,
                 success_rate=0.0,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(timezone.utc),
                 error_count_24h=self._error_count,
             )
 
     def _record_request(self) -> None:
         """Record a successful request"""
         self._request_count += 1
-        self._last_request_time = datetime.utcnow()
+        self._last_request_time = datetime.now(timezone.utc)
 
     def _record_error(self) -> None:
         """Record an error"""

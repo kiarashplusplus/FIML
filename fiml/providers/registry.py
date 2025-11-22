@@ -2,7 +2,7 @@
 Provider Registry - Manages all data providers
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from fiml.core.config import settings
@@ -166,7 +166,7 @@ class ProviderRegistry:
                 uptime_percent=0.0,
                 avg_latency_ms=0.0,
                 success_rate=0.0,
-                last_check=datetime.utcnow(),
+                last_check=datetime.now(timezone.utc),
                 error_count_24h=1,
             )
 

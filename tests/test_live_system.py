@@ -7,7 +7,7 @@ They require Docker containers to be running.
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fiml.core.models import Asset, AssetType, DataType, Market
 from fiml.providers.registry import provider_registry
@@ -128,7 +128,7 @@ class TestLiveCache:
             await cache_manager.initialize()
             
             key = "test:live:cache:key"
-            value = {"price": 100.0, "timestamp": datetime.utcnow().isoformat()}
+            value = {"price": 100.0, "timestamp": datetime.now(timezone.utc).isoformat()}
             
             # Set value
             await cache_manager.set(key, value, ttl=60)

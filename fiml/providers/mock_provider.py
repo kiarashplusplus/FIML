@@ -2,7 +2,7 @@
 Mock Provider for Testing
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
@@ -51,7 +51,7 @@ class MockProvider(BaseProvider):
                 "change_percent": -1.48,
                 "volume": 1000000,
             },
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=True,
             confidence=1.0,
@@ -67,7 +67,7 @@ class MockProvider(BaseProvider):
         # Generate synthetic OHLCV data
         mock_candles = [
             {
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
                 "open": 100.0,
                 "high": 105.0,
                 "low": 98.0,
@@ -82,7 +82,7 @@ class MockProvider(BaseProvider):
             asset=asset,
             data_type=DataType.OHLCV,
             data={"candles": mock_candles, "timeframe": timeframe},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=True,
             confidence=1.0,
@@ -107,7 +107,7 @@ class MockProvider(BaseProvider):
             asset=asset,
             data_type=DataType.FUNDAMENTALS,
             data=mock_fundamentals,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=True,
             confidence=1.0,
@@ -121,7 +121,7 @@ class MockProvider(BaseProvider):
             {
                 "title": f"Mock news article {i}",
                 "url": f"https://example.com/news/{i}",
-                "published_at": datetime.utcnow(),
+                "published_at": datetime.now(timezone.utc),
                 "sentiment": 0.5,
             }
             for i in range(limit)
@@ -132,7 +132,7 @@ class MockProvider(BaseProvider):
             asset=asset,
             data_type=DataType.NEWS,
             data={"articles": mock_news},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             is_valid=True,
             is_fresh=True,
             confidence=0.8,
@@ -150,6 +150,6 @@ class MockProvider(BaseProvider):
             uptime_percent=1.0,
             avg_latency_ms=10.0,
             success_rate=await self.get_success_rate(),
-            last_check=datetime.utcnow(),
+            last_check=datetime.now(timezone.utc),
             error_count_24h=0,
         )
