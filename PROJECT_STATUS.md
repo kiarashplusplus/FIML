@@ -455,11 +455,14 @@ fiml/
 8. **Deployment** - Docker, Kubernetes, CI/CD all configured
 
 ### ⚠️ Partially Implemented (Needs Real Data Integration)
+
+**Legend**: ✅ = Complete | ⚠️ = Needs work | 📋 = Planned
+
 1. **MCP Tools** - Defined but return mock data in some cases
-   - `search-by-symbol` ✅ Defined, ⚠️ Returns mock
-   - `search-by-coin` ✅ Defined, ⚠️ Returns mock
-   - `get-task-status` ✅ Defined, ⚠️ Needs persistence
-   - `execute-fk-dsl` ✅ Defined, ⚠️ Needs full integration
+   - `search-by-symbol` - ✅ Defined, ⚠️ Returns mock
+   - `search-by-coin` - ✅ Defined, ⚠️ Returns mock
+   - `get-task-status` - ✅ Defined, ⚠️ Needs persistence
+   - `execute-fk-dsl` - ✅ Defined, ⚠️ Needs full integration
 2. **Multi-Agent System** - Structure complete, agent logic partial
 3. **Task Management** - Framework ready, persistence needed
 
