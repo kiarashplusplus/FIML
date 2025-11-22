@@ -15,11 +15,17 @@ logger = get_logger(__name__)
 FK_DSL_GRAMMAR = r"""
     ?start: query
 
-    query: "FIND" asset_spec "WITH" condition_list
-         | "ANALYZE" asset_spec "FOR" analysis_type
-         | "COMPARE" asset_list "BY" metric_list
-         | "TRACK" asset_spec "WHEN" condition_list
-         | "GET" data_request
+    query: find_query
+         | analyze_query
+         | compare_query
+         | track_query
+         | get_query
+    
+    find_query: "FIND" asset_spec "WITH" condition_list
+    analyze_query: "ANALYZE" asset_spec "FOR" analysis_type
+    compare_query: "COMPARE" asset_list "BY" metric_list
+    track_query: "TRACK" asset_spec "WHEN" condition_list
+    get_query: "GET" data_request
 
     asset_spec: asset_filter ("IN" market)?
     
@@ -94,12 +100,32 @@ FK_DSL_GRAMMAR = r"""
 class FKDSLTransformer(Transformer):
     """Transform parsed tree into execution plan"""
 
-    def query(self, *args):
-        query_type = args[0]
-        return {"type": query_type, "args": args[1:]}
+    def query(self, q):
+        return q
+    
+    def find_query(self, asset_spec, condition_list):
+        return {"type": "FIND", "args": [asset_spec, condition_list]}
+    
+    def analyze_query(self, asset_spec, analysis_type):
+        return {"type": "ANALYZE", "args": [asset_spec, analysis_type]}
+    
+    def compare_query(self, asset_list, metric_list):
+        return {"type": "COMPARE", "args": [asset_list, metric_list]}
+    
+    def track_query(self, asset_spec, condition_list):
+        return {"type": "TRACK", "args": [asset_spec, condition_list]}
+    
+    def get_query(self, data_request):
+        return {"type": "GET", "args": [data_request]}
 
     def asset_spec(self, asset_filter, market=None):
         return {"filter": asset_filter, "market": market}
+    
+    def asset_filter(self, *args):
+        """Handle asset filter - could be symbol, sector, top/bottom, or all"""
+        if args:
+            return args[0]
+        return None
 
     def symbol(self, name):
         return {"type": "symbol", "value": str(name)}
@@ -128,19 +154,28 @@ class FKDSLTransformer(Transformer):
     def metric(self, m):
         return m
 
-    def price_metric(self, name):
-        return {"category": "price", "name": str(name).lower()}
+    # These are called by the parser with tree nodes
+    def price_metric(self, *args):
+        if args:
+            return {"category": "price", "name": str(args[0]).lower()}
+        return {"category": "price", "name": "unknown"}
 
-    def fundamental_metric(self, name):
-        return {"category": "fundamental", "name": str(name).lower()}
+    def fundamental_metric(self, *args):
+        if args:
+            return {"category": "fundamental", "name": str(args[0]).lower()}
+        return {"category": "fundamental", "name": "unknown"}
 
     def technical_metric(self, *args):
         if len(args) == 2:  # SMA 20, EMA 50
             return {"category": "technical", "name": str(args[0]).lower(), "period": int(args[1])}
-        return {"category": "technical", "name": str(args[0]).lower()}
+        elif len(args) == 1:
+            return {"category": "technical", "name": str(args[0]).lower()}
+        return {"category": "technical", "name": "unknown"}
 
-    def sentiment_metric(self, name):
-        return {"category": "sentiment", "name": str(name).lower()}
+    def sentiment_metric(self, *args):
+        if args:
+            return {"category": "sentiment", "name": str(args[0]).lower()}
+        return {"category": "sentiment", "name": "unknown"}
 
     def value(self, v):
         try:
@@ -151,14 +186,20 @@ class FKDSLTransformer(Transformer):
     def condition_list(self, *conditions):
         return list(conditions)
 
-    def analysis_type(self, atype):
-        return str(atype).lower()
+    def analysis_type(self, *args):
+        if args:
+            return str(args[0]).lower()
+        return "unknown"
 
     def asset_list(self, *assets):
         return list(assets)
 
     def metric_list(self, *metrics):
         return list(metrics)
+    
+    def data_request(self, *args):
+        """Handle data request queries"""
+        return {"type": "data_request", "args": args}
 
 
 class FKDSLParser:
