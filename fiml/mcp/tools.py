@@ -402,10 +402,10 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
 
     if task_info:
         return {
-            "id": task_info.task_id,
+            "id": task_info.id,
             "status": task_info.status.value,
             "query": task_info.query,
-            "progress": task_info.completed_steps / task_info.total_steps if task_info.total_steps > 0 else 0.0,
+            "progress": (task_info.completed_steps or 0) / (task_info.total_steps or 1) if (task_info.total_steps or 0) > 0 else 0.0,
             "completed_steps": task_info.completed_steps,
             "total_steps": task_info.total_steps,
             "created_at": task_info.created_at.isoformat() if task_info.created_at else None,
