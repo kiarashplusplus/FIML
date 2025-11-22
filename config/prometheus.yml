@@ -1,0 +1,56 @@
+"""
+Prometheus monitoring configuration
+"""
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'fiml-production'
+    environment: 'production'
+
+scrape_configs:
+  # FIML Server metrics
+  - job_name: 'fiml-server'
+    static_configs:
+      - targets: ['fiml-server:9090']
+        labels:
+          service: 'fiml-server'
+
+  # PostgreSQL metrics (if postgres_exporter is added)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'postgres'
+
+  # Redis metrics (if redis_exporter is added)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'redis'
+
+  # Ray metrics
+  - job_name: 'ray'
+    static_configs:
+      - targets: ['ray-head:8265']
+        labels:
+          service: 'ray'
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'node'
+
+# Alerting rules
+rule_files:
+  - '/etc/prometheus/alerts/*.yml'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']

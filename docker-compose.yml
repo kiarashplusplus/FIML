@@ -1,0 +1,196 @@
+version: '3.8'
+
+services:
+  # FIML MCP Server
+  fiml-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fiml-server
+    ports:
+      - "8000:8000"
+      - "9090:9090"
+    environment:
+      - FIML_ENV=development
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - RAY_ADDRESS=ray-head:6379
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres
+      - kafka
+      - ray-head
+    volumes:
+      - ./fiml:/app/fiml
+      - ./logs:/app/logs
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  # Redis (L1 Cache)
+  redis:
+    image: redis:7-alpine
+    container_name: fiml-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  # PostgreSQL + TimescaleDB (L2 Cache)
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: fiml-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=fiml
+      - POSTGRES_USER=fiml
+      - POSTGRES_PASSWORD=fiml_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  # Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: fiml-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: fiml-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  # Ray Head Node
+  ray-head:
+    image: rayproject/ray:2.9.0-py311
+    container_name: fiml-ray-head
+    command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --block
+    ports:
+      - "6379:6379"
+      - "8265:8265"  # Ray dashboard
+    volumes:
+      - ./fiml:/app/fiml
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  # Ray Worker Nodes
+  ray-worker:
+    image: rayproject/ray:2.9.0-py311
+    command: ray start --address=ray-head:6379 --block
+    depends_on:
+      - ray-head
+    volumes:
+      - ./fiml:/app/fiml
+    networks:
+      - fiml-network
+    deploy:
+      replicas: 2
+    restart: unless-stopped
+
+  # Celery Worker
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A fiml.tasks.celery worker --loglevel=info --concurrency=4
+    depends_on:
+      - redis
+      - postgres
+    env_file:
+      - .env
+    volumes:
+      - ./fiml:/app/fiml
+    networks:
+      - fiml-network
+    deploy:
+      replicas: 2
+    restart: unless-stopped
+
+  # Celery Beat (Scheduler)
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A fiml.tasks.celery beat --loglevel=info
+    depends_on:
+      - redis
+      - celery-worker
+    env_file:
+      - .env
+    volumes:
+      - ./fiml:/app/fiml
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: fiml-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fiml-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+networks:
+  fiml-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
