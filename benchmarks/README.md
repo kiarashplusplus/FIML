@@ -93,6 +93,16 @@ Tests core Pydantic model performance:
 - Dict and JSON serialization
 - Batch operations
 
+### bench_cache.py
+Tests cache system performance (requires Redis):
+- **L1 Cache Latency** - Single GET/SET operations (target: 10-100ms)
+- **L2 Cache Latency** - Database operations (target: 300-700ms)
+- **Concurrent Performance** - 100 and 1000 concurrent reads
+- **Hit Rate Measurement** - Mixed hits/misses scenarios
+- **Batch Operations** - Cache manager batch price retrieval
+
+Requirements: Redis on localhost:6379, PostgreSQL on localhost:5432
+
 ### bench_dsl.py
 Tests FK-DSL parser performance:
 - Simple and complex query parsing
