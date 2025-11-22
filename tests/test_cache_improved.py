@@ -5,6 +5,8 @@ Tests work both with and without Redis/PostgreSQL services
 """
 
 import asyncio
+import random
+import time
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -314,7 +316,6 @@ class TestIntegrationWithServices:
             await cache.initialize()
             
             # Measure SET latency
-            import time
             start = time.perf_counter()
             await cache.set("latency_test", {"data": "value"}, ttl_seconds=60)
             set_latency_ms = (time.perf_counter() - start) * 1000

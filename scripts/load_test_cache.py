@@ -16,6 +16,7 @@ import statistics
 
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.manager import cache_manager
+from fiml.cache.utils import calculate_percentile
 from fiml.core.models import Asset, AssetType, Market
 
 
@@ -80,8 +81,8 @@ class CacheLoadTester:
             "total_time_ms": total_time * 1000,
             "avg_latency_ms": statistics.mean(latencies),
             "median_latency_ms": statistics.median(latencies),
-            "p95_latency_ms": self._percentile(latencies, 95),
-            "p99_latency_ms": self._percentile(latencies, 99),
+            "p95_latency_ms": calculate_percentile(latencies, 95),
+            "p99_latency_ms": calculate_percentile(latencies, 99),
             "min_latency_ms": min(latencies),
             "max_latency_ms": max(latencies),
             "requests_per_second": num_requests / total_time,
@@ -129,8 +130,8 @@ class CacheLoadTester:
             "total_time_ms": total_time * 1000,
             "avg_latency_ms": statistics.mean(latencies),
             "median_latency_ms": statistics.median(latencies),
-            "p95_latency_ms": self._percentile(latencies, 95),
-            "p99_latency_ms": self._percentile(latencies, 99),
+            "p95_latency_ms": calculate_percentile(latencies, 95),
+            "p99_latency_ms": calculate_percentile(latencies, 99),
             "min_latency_ms": min(latencies),
             "max_latency_ms": max(latencies),
             "requests_per_second": num_requests / total_time,
@@ -205,12 +206,12 @@ class CacheLoadTester:
             "requests_per_second": num_requests / total_time,
             "reads": {
                 "avg_latency_ms": statistics.mean(read_latencies) if read_latencies else 0,
-                "p95_latency_ms": self._percentile(read_latencies, 95),
+                "p95_latency_ms": calculate_percentile(read_latencies, 95),
                 "hit_rate_percent": (sum(1 for r in read_results if r["hit"]) / num_reads * 100) if num_reads > 0 else 0,
             },
             "writes": {
                 "avg_latency_ms": statistics.mean(write_latencies) if write_latencies else 0,
-                "p95_latency_ms": self._percentile(write_latencies, 95),
+                "p95_latency_ms": calculate_percentile(write_latencies, 95),
                 "success_rate_percent": (sum(1 for r in write_results if r["success"]) / num_writes * 100) if num_writes > 0 else 0,
             }
         }
@@ -245,16 +246,6 @@ class CacheLoadTester:
             "success": success,
             "latency_ms": latency_ms,
         }
-
-    @staticmethod
-    def _percentile(data: List[float], percentile: int) -> float:
-        """Calculate percentile from data list"""
-        if not data:
-            return 0.0
-        sorted_data = sorted(data)
-        index = int(len(sorted_data) * percentile / 100)
-        index = min(index, len(sorted_data) - 1)
-        return sorted_data[index]
 
     def print_results(self, results: Dict[str, Any]) -> None:
         """Pretty print test results"""

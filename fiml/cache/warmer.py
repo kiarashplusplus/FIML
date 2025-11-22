@@ -66,21 +66,29 @@ class CacheWarmer:
         """
         assets = []
         
+        # Crypto symbols set for fast lookup
+        crypto_set = {"BTC", "ETH", "BNB", "SOL", "ADA"}
+        
+        # NASDAQ symbols
+        nasdaq_symbols = {
+            "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", 
+            "TSLA", "AMD", "NFLX", "INTC", "PYPL", "CRM", "ADBE"
+        }
+        
         # Equity assets
-        equity_symbols = [s for s in self.popular_symbols if not s in ["BTC", "ETH", "BNB", "SOL", "ADA"]]
+        equity_symbols = [s for s in self.popular_symbols if s not in crypto_set]
         for symbol in equity_symbols:
             assets.append(Asset(
                 symbol=symbol,
                 name=f"{symbol} Stock",
                 asset_type=AssetType.EQUITY,
                 market=Market.US,
-                exchange="NASDAQ" if symbol in ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA", "AMD", "NFLX", "INTC", "PYPL", "CRM", "ADBE"] else "NYSE",
+                exchange="NASDAQ" if symbol in nasdaq_symbols else "NYSE",
                 currency="USD"
             ))
         
         # Crypto assets
-        crypto_symbols = ["BTC", "ETH", "BNB", "SOL", "ADA"]
-        for symbol in crypto_symbols:
+        for symbol in crypto_set:
             if symbol in self.popular_symbols:
                 assets.append(Asset(
                     symbol=symbol,

@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, List
 
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.l2_cache import l2_cache
+from fiml.cache.utils import calculate_percentile
 from fiml.core.config import settings
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, DataType
@@ -187,9 +188,9 @@ class CacheManager:
         avg_l2_latency = sum(self._l2_latencies) / len(self._l2_latencies) if self._l2_latencies else 0.0
         
         # Calculate percentiles for L1 latency
-        l1_p50 = self._calculate_percentile(self._l1_latencies, 50)
-        l1_p95 = self._calculate_percentile(self._l1_latencies, 95)
-        l1_p99 = self._calculate_percentile(self._l1_latencies, 99)
+        l1_p50 = calculate_percentile(self._l1_latencies, 50)
+        l1_p95 = calculate_percentile(self._l1_latencies, 95)
+        l1_p99 = calculate_percentile(self._l1_latencies, 99)
         
         return {
             "l1": {
@@ -215,15 +216,6 @@ class CacheManager:
                 "l2_hit_rate": round(l2_hit_rate, 2),
             }
         }
-
-    def _calculate_percentile(self, latencies: List[float], percentile: int) -> float:
-        """Calculate percentile from latency list"""
-        if not latencies:
-            return 0.0
-        sorted_latencies = sorted(latencies)
-        index = int(len(sorted_latencies) * percentile / 100)
-        index = min(index, len(sorted_latencies) - 1)
-        return sorted_latencies[index]
 
     def _track_l1_latency(self, latency_ms: float) -> None:
         """Track L1 latency (keep last 1000 measurements)"""

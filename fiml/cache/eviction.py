@@ -18,6 +18,9 @@ from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Memory pressure threshold constant
+DEFAULT_MEMORY_PRESSURE_THRESHOLD = 0.9  # 90%
+
 
 class EvictionPolicy(str, Enum):
     """Cache eviction policy types"""
@@ -86,19 +89,21 @@ class EvictionTracker:
                 del self._lfu_tracker[min_key]
                 self._evictions += 1
 
-    def should_evict(self, current_size: int, max_size: int) -> bool:
+    def should_evict(self, current_size: int, max_size: int, threshold: Optional[float] = None) -> bool:
         """
         Determine if eviction should occur based on memory pressure
         
         Args:
             current_size: Current cache size
             max_size: Maximum cache size
+            threshold: Memory pressure threshold (0.0-1.0), defaults to 0.9
             
         Returns:
             True if eviction should occur
         """
-        # Evict when cache is 90% full
-        return current_size >= (max_size * 0.9)
+        if threshold is None:
+            threshold = DEFAULT_MEMORY_PRESSURE_THRESHOLD
+        return current_size >= (max_size * threshold)
 
     def get_eviction_candidates(self, count: int = 10) -> List[str]:
         """
