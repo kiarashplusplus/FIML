@@ -109,6 +109,21 @@ class TestAnalysisTasks:
         mock_logger.error.assert_called()
 
     @patch("fiml.tasks.analysis_tasks.logger")
+    def test_run_deep_analysis_invalid_enum_value(self, mock_logger):
+        """Test that invalid enum values are properly handled"""
+        # Test with completely invalid asset_type value
+        result = run_deep_analysis(
+            symbol="TEST",
+            asset_type="not_a_valid_asset_type",
+            market="US",
+        )
+        
+        assert result["status"] == "error"
+        assert "error" in result
+        # Should mention the invalid enum value
+        assert "AssetType" in result["error"] or "not_a_valid_asset_type" in result["error"]
+
+    @patch("fiml.tasks.analysis_tasks.logger")
     def test_run_scheduled_analysis_success(self, mock_logger):
         """Test successful scheduled analysis"""
         result = run_scheduled_analysis(portfolio_id="portfolio-1")
@@ -222,8 +237,16 @@ class TestDataTasks:
     @patch("fiml.tasks.data_tasks.logger")
     def test_update_provider_health_error(self, mock_logger, mock_registry):
         """Test provider health update error handling"""
-        # Make accessing providers raise an exception
-        type(mock_registry).providers = property(lambda self: (_ for _ in ()).throw(Exception("Registry error")))
+        # Make the providers property raise an exception when accessed
+        mock_registry.providers.side_effect = Exception("Registry error")
+        
+        # Alternative: use property mock that raises
+        # type(mock_registry).providers = PropertyMock(side_effect=Exception("Registry error"))
+        
+        # Since accessing .providers raises an exception, we need to handle it differently
+        # Let's make len() raise the error instead
+        mock_registry.providers = Mock()
+        mock_registry.providers.__len__ = Mock(side_effect=Exception("Registry error"))
         
         result = update_provider_health()
         
