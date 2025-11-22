@@ -5,9 +5,13 @@ MCP Tool Implementations
 import uuid
 from datetime import datetime, timedelta
 
+from fiml.agents.orchestrator import agent_orchestrator
+from fiml.cache.manager import cache_manager
 from fiml.core.logging import get_logger
 from fiml.core.models import (
     AnalysisDepth,
+    Asset,
+    AssetType,
     CachedData,
     DataLineage,
     Market,
@@ -16,6 +20,9 @@ from fiml.core.models import (
     TaskInfo,
     TaskStatus,
 )
+from fiml.dsl.executor import fk_dsl_executor
+from fiml.dsl.parser import fk_dsl_parser
+from fiml.dsl.planner import execution_planner
 from fiml.providers import provider_registry
 
 logger = get_logger(__name__)
@@ -184,12 +191,28 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
     """
     logger.info("get_task_status called", task_id=task_id, stream=stream)
 
-    # TODO: Implement actual task status retrieval
+    # Get status from executor
+    task_info = fk_dsl_executor.get_task_status(task_id)
+    
+    if task_info:
+        return {
+            "id": task_info.task_id,
+            "status": task_info.status.value,
+            "query": task_info.query,
+            "progress": task_info.completed_steps / task_info.total_steps if task_info.total_steps > 0 else 0.0,
+            "completed_steps": task_info.completed_steps,
+            "total_steps": task_info.total_steps,
+            "created_at": task_info.created_at.isoformat() if task_info.created_at else None,
+            "started_at": task_info.started_at.isoformat() if task_info.started_at else None,
+            "completed_at": task_info.completed_at.isoformat() if task_info.completed_at else None,
+            "result": task_info.result,
+            "error": task_info.error,
+        }
+    
     return {
         "id": task_id,
-        "status": "pending",
-        "progress": 0.0,
-        "message": "Task status retrieval not yet implemented",
+        "status": "not_found",
+        "message": "Task not found",
     }
 
 
@@ -206,9 +229,38 @@ async def execute_fk_dsl(query: str, async_execution: bool = True) -> dict:
     """
     logger.info("execute_fk_dsl called", query=query, async_execution=async_execution)
 
-    # TODO: Implement FK-DSL parser and executor
-    return {
-        "query": query,
-        "status": "pending",
-        "message": "FK-DSL execution not yet implemented",
-    }
+    try:
+        # Parse query
+        parsed = fk_dsl_parser.parse(query)
+        
+        # Create execution plan
+        plan = execution_planner.plan(parsed, query)
+        
+        if async_execution:
+            # Start async execution
+            task_id = await fk_dsl_executor.execute_async(plan)
+            
+            return {
+                "task_id": task_id,
+                "query": query,
+                "status": "running",
+                "total_steps": len(plan.tasks),
+                "message": "DSL query execution started",
+            }
+        else:
+            # Execute synchronously
+            result = await fk_dsl_executor.execute_sync(plan)
+            
+            return {
+                "query": query,
+                "status": "completed",
+                "result": result,
+            }
+        
+    except Exception as e:
+        logger.error(f"DSL execution failed: {e}", query=query)
+        return {
+            "query": query,
+            "status": "failed",
+            "error": str(e),
+        }

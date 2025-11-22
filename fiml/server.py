@@ -25,21 +25,46 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup
     logger.info("Starting FIML server", version="0.1.0", environment=settings.fiml_env)
 
+    # Initialize cache layers
+    logger.info("Initializing cache layers...")
+    try:
+        from fiml.cache.manager import cache_manager
+        await cache_manager.initialize()
+    except Exception as e:
+        logger.warning(f"Cache initialization failed (non-critical): {e}")
+
     # Initialize provider registry
     await provider_registry.initialize()
     logger.info("Provider registry initialized", provider_count=len(provider_registry.providers))
 
-    # Initialize cache layers
-    # await cache_manager.initialize()
-
     # Initialize Ray cluster for multi-agent orchestration
-    # await ray_cluster.initialize()
+    if settings.ray_address:
+        logger.info("Initializing agent orchestrator...")
+        try:
+            from fiml.agents.orchestrator import agent_orchestrator
+            await agent_orchestrator.initialize()
+        except Exception as e:
+            logger.warning(f"Agent orchestrator initialization failed (non-critical): {e}")
 
     yield
 
     # Shutdown
     logger.info("Shutting down FIML server")
+    
+    try:
+        from fiml.agents.orchestrator import agent_orchestrator
+        if agent_orchestrator.initialized:
+            await agent_orchestrator.shutdown()
+    except:
+        pass
+    
     await provider_registry.shutdown()
+    
+    try:
+        from fiml.cache.manager import cache_manager
+        await cache_manager.shutdown()
+    except:
+        pass
 
 
 # Create FastAPI application
