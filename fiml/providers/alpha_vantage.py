@@ -326,29 +326,85 @@ class AlphaVantageProvider(BaseProvider):
             logger.error(f"Error fetching fundamentals from Alpha Vantage for {asset.symbol}: {e}")
             raise ProviderError(f"Alpha Vantage fundamentals fetch failed: {e}")
 
-    async def health_check(self) -> ProviderHealth:
-        """Check provider health"""
+    async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
+        """Fetch news articles from Alpha Vantage"""
+        logger.info(f"Fetching news for {asset.symbol} from Alpha Vantage")
+        
+        try:
+            params = {
+                "function": "NEWS_SENTIMENT",
+                "tickers": asset.symbol,
+                "limit": str(limit),
+            }
+            
+            response_data = await self._make_request(params)
+            
+            feed = response_data.get("feed", [])
+            
+            articles = []
+            for article in feed[:limit]:
+                articles.append({
+                    "title": article.get("title", ""),
+                    "url": article.get("url", ""),
+                    "published_at": article.get("time_published", ""),
+                    "source": article.get("source", ""),
+                    "summary": article.get("summary", ""),
+                    "sentiment": float(article.get("overall_sentiment_score", 0.0)),
+                })
+            
+            return ProviderResponse(
+                provider=self.name,
+                asset=asset,
+                data_type=DataType.NEWS,
+                data={"articles": articles},
+                timestamp=datetime.utcnow(),
+                is_valid=True,
+                is_fresh=True,
+                confidence=0.90,
+                metadata={
+                    "source": "alpha_vantage",
+                    "function": "NEWS_SENTIMENT",
+                },
+            )
+            
+        except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
+            raise
+        except Exception as e:
+            self._record_error()
+            logger.error(f"Error fetching news from Alpha Vantage for {asset.symbol}: {e}")
+            raise ProviderError(f"Alpha Vantage news fetch failed: {e}")
+
+    async def supports_asset(self, asset: Asset) -> bool:
+        """Check if provider supports this asset type"""
+        # Alpha Vantage primarily supports equities and some forex
+        return asset.asset_type in [AssetType.EQUITY, AssetType.FOREX]
+
+    async def get_health(self) -> ProviderHealth:
+        """Get provider health metrics"""
         try:
             # Simple health check - fetch a known symbol
             test_asset = Asset(symbol="IBM", asset_type=AssetType.EQUITY)
             await self.fetch_price(test_asset)
             
             return ProviderHealth(
-                provider=self.name,
+                provider_name=self.name,
                 is_healthy=True,
-                latency_ms=100,  # Approximate
-                error_rate=self._error_count / max(self._request_count, 1),
+                uptime_percent=0.99,
+                avg_latency_ms=100.0,
+                success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
                 last_check=datetime.utcnow(),
+                error_count_24h=self._error_count,
             )
         except Exception as e:
             logger.error(f"Alpha Vantage health check failed: {e}")
             return ProviderHealth(
-                provider=self.name,
+                provider_name=self.name,
                 is_healthy=False,
-                latency_ms=0,
-                error_rate=1.0,
+                uptime_percent=0.0,
+                avg_latency_ms=0.0,
+                success_rate=0.0,
                 last_check=datetime.utcnow(),
-                error_message=str(e),
+                error_count_24h=self._error_count,
             )
 
     def _record_request(self) -> None:

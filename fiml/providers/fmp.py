@@ -334,29 +334,86 @@ class FMPProvider(BaseProvider):
             logger.error(f"Error fetching fundamentals from FMP for {asset.symbol}: {e}")
             raise ProviderError(f"FMP fundamentals fetch failed: {e}")
 
-    async def health_check(self) -> ProviderHealth:
-        """Check provider health"""
+    async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
+        """Fetch news articles from FMP"""
+        logger.info(f"Fetching news for {asset.symbol} from FMP")
+        
+        try:
+            endpoint = f"stock_news"
+            params = {
+                "tickers": asset.symbol,
+                "limit": str(limit),
+            }
+            
+            response_data = await self._make_request(endpoint, params)
+            
+            if not response_data:
+                raise ProviderError(f"No news data available for {asset.symbol}")
+            
+            articles = []
+            for article in response_data[:limit]:
+                articles.append({
+                    "title": article.get("title", ""),
+                    "url": article.get("url", ""),
+                    "published_at": article.get("publishedDate", ""),
+                    "source": article.get("site", ""),
+                    "text": article.get("text", ""),
+                    "sentiment": 0.5,  # FMP doesn't provide sentiment directly
+                })
+            
+            return ProviderResponse(
+                provider=self.name,
+                asset=asset,
+                data_type=DataType.NEWS,
+                data={"articles": articles},
+                timestamp=datetime.utcnow(),
+                is_valid=True,
+                is_fresh=True,
+                confidence=0.92,
+                metadata={
+                    "source": "fmp",
+                    "endpoint": "stock_news",
+                },
+            )
+            
+        except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
+            raise
+        except Exception as e:
+            self._record_error()
+            logger.error(f"Error fetching news from FMP for {asset.symbol}: {e}")
+            raise ProviderError(f"FMP news fetch failed: {e}")
+
+    async def supports_asset(self, asset: Asset) -> bool:
+        """Check if provider supports this asset type"""
+        # FMP primarily supports equities
+        return asset.asset_type == AssetType.EQUITY
+
+    async def get_health(self) -> ProviderHealth:
+        """Get provider health metrics"""
         try:
             # Simple health check - fetch a known symbol
             test_asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
             await self.fetch_price(test_asset)
             
             return ProviderHealth(
-                provider=self.name,
+                provider_name=self.name,
                 is_healthy=True,
-                latency_ms=100,  # Approximate
-                error_rate=self._error_count / max(self._request_count, 1),
+                uptime_percent=0.98,
+                avg_latency_ms=100.0,
+                success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
                 last_check=datetime.utcnow(),
+                error_count_24h=self._error_count,
             )
         except Exception as e:
             logger.error(f"FMP health check failed: {e}")
             return ProviderHealth(
-                provider=self.name,
+                provider_name=self.name,
                 is_healthy=False,
-                latency_ms=0,
-                error_rate=1.0,
+                uptime_percent=0.0,
+                avg_latency_ms=0.0,
+                success_rate=0.0,
                 last_check=datetime.utcnow(),
-                error_message=str(e),
+                error_count_24h=self._error_count,
             )
 
     def _record_request(self) -> None:

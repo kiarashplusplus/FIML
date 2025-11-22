@@ -331,6 +331,82 @@ class CCXTProvider(BaseProvider):
             logger.error(f"Error fetching crypto metrics from {self.exchange_id} for {asset.symbol}: {e}")
             raise ProviderError(f"CCXT fundamentals fetch failed: {e}")
 
+    async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
+        """
+        Fetch news for cryptocurrency
+        
+        Note: Most CCXT exchanges don't provide news directly.
+        This is a placeholder that could integrate with crypto news APIs.
+        """
+        logger.info(f"News fetch not supported by CCXT exchanges for {asset.symbol}")
+        
+        # Return empty news response
+        return ProviderResponse(
+            provider=self.name,
+            asset=asset,
+            data_type=DataType.NEWS,
+            data={"articles": []},
+            timestamp=datetime.utcnow(),
+            is_valid=True,
+            is_fresh=False,
+            confidence=0.0,
+            metadata={
+                "source": "ccxt",
+                "exchange": self.exchange_id,
+                "note": "News not supported by exchange",
+            },
+        )
+
+    async def supports_asset(self, asset: Asset) -> bool:
+        """Check if provider supports this asset type"""
+        # CCXT supports crypto assets
+        if asset.asset_type != AssetType.CRYPTO:
+            return False
+        
+        if not self._exchange:
+            return False
+        
+        # Check if symbol is in exchange markets
+        try:
+            symbol = self._normalize_symbol(asset)
+            return symbol in self._exchange.markets
+        except Exception:
+            return False
+
+    async def get_health(self) -> ProviderHealth:
+        """Get provider health metrics"""
+        try:
+            # Check exchange status
+            if self._exchange and hasattr(self._exchange, 'fetch_status'):
+                status = await self._exchange.fetch_status()
+                is_healthy = status.get('status') == 'ok'
+            else:
+                # Fallback: try fetching a common pair
+                test_asset = Asset(symbol="BTC/USDT", asset_type=AssetType.CRYPTO)
+                await self.fetch_price(test_asset)
+                is_healthy = True
+            
+            return ProviderHealth(
+                provider_name=self.name,
+                is_healthy=is_healthy,
+                uptime_percent=0.99,
+                avg_latency_ms=50.0,  # Crypto exchanges are typically fast
+                success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
+                last_check=datetime.utcnow(),
+                error_count_24h=self._error_count,
+            )
+        except Exception as e:
+            logger.error(f"CCXT health check failed for {self.exchange_id}: {e}")
+            return ProviderHealth(
+                provider_name=self.name,
+                is_healthy=False,
+                uptime_percent=0.0,
+                avg_latency_ms=0.0,
+                success_rate=0.0,
+                last_check=datetime.utcnow(),
+                error_count_24h=self._error_count,
+            )
+
     async def health_check(self) -> ProviderHealth:
         """Check provider health"""
         try:

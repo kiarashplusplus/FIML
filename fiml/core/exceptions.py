@@ -30,7 +30,13 @@ class NoProviderAvailableError(ProviderError):
 class RateLimitError(ProviderError):
     """Provider rate limit exceeded"""
 
-    pass
+    def __init__(self, message: str, retry_after: int = 60):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+# Alias for backward compatibility
+ProviderRateLimitError = RateLimitError
 
 
 class ProviderTimeoutError(ProviderError):

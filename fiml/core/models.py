@@ -73,7 +73,7 @@ class Asset(BaseModel):
     symbol: str
     name: Optional[str] = None
     asset_type: AssetType
-    market: Market
+    market: Market = Market.US  # Default to US market
     exchange: Optional[str] = None
     currency: str = "USD"
 
