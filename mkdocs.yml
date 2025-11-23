@@ -1,5 +1,5 @@
 site_name: FIML Documentation
-site_description: Financial Intelligence Meta-Layer - AI-Native Multi-Market Financial Framework
+site_description: Financial Intelligence Meta-Layer - AI-Native Multi-Market Financial Framework (v0.2.1)
 site_author: Kiarash Adl
 site_url: https://kiarashplusplus.github.io/FIML/
 
@@ -128,6 +128,8 @@ nav:
     - MCP Tools: user-guide/mcp-tools.md
     - WebSocket Streaming: user-guide/websocket.md
     - FK-DSL Query Language: user-guide/fk-dsl.md
+    - Agent Workflows: user-guide/agent-workflows.md
+    - Agent Workflows Quick Reference: user-guide/agent-workflows-quick-reference.md
   - Architecture:
     - System Design: architecture/overview.md
     - Data Arbitration: architecture/arbitration.md
@@ -146,6 +148,7 @@ nav:
   - Development:
     - Contributing: development/contributing.md
     - Testing: development/testing.md
+    - Performance Testing: development/PERFORMANCE_TESTING.md
     - Deployment: development/deployment.md
     - Technical Debt: development/technical-debt.md
     - GitHub Pages Setup: development/github-pages-setup.md

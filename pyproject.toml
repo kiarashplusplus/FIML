@@ -1,6 +1,6 @@
 [project]
 name = "fiml"
-version = "0.2.0"
+version = "0.2.1"
 description = "Financial Intelligence Meta-Layer - AI-Native Multi-Market Financial Framework"
 authors = [{name = "Kiarash Adl"}]
 readme = "README.md"

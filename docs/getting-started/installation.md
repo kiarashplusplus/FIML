@@ -96,7 +96,7 @@ You should see a response like:
 ```json
 {
   "status": "healthy",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "services": {
     "api": "running",
     "redis": "connected",
