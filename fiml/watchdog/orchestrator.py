@@ -78,26 +78,73 @@ class WatchdogManager:
 
     @staticmethod
     def _default_config() -> Dict:
-        """Default configuration for watchdogs"""
+        """Default configuration for watchdogs (loads from settings)"""
+        from fiml.core.config import settings
+        
         return {
             "earnings_anomaly": {
-                "enabled": True,
-                "check_interval": 300,  # 5 minutes
+                "enabled": settings.enable_earnings_anomaly_watchdog,
+                "check_interval": settings.earnings_anomaly_check_interval,
+                "thresholds": {
+                    "surprise_pct": settings.earnings_surprise_threshold_pct,
+                },
             },
             "unusual_volume": {
-                "enabled": True,
-                "check_interval": 60,  # 1 minute
+                "enabled": settings.enable_unusual_volume_watchdog,
+                "check_interval": settings.unusual_volume_check_interval,
+                "thresholds": {
+                    "volume_multiplier": settings.unusual_volume_multiplier,
+                },
             },
             "whale_movement": {
-                "enabled": True,
-                "check_interval": 120,  # 2 minutes
+                "enabled": settings.enable_whale_movement_watchdog,
+                "check_interval": settings.whale_movement_check_interval,
+                "thresholds": {
+                    "min_usd": settings.whale_movement_min_usd,
+                },
             },
             "funding_rate": {
-                "enabled": True,
-                "check_interval": 300,  # 5 minutes
+                "enabled": settings.enable_funding_rate_watchdog,
+                "check_interval": settings.funding_rate_check_interval,
+                "thresholds": {
+                    "rate_pct": settings.funding_rate_threshold_pct,
+                },
             },
             "liquidity_drop": {
-                "enabled": True,
+                "enabled": settings.enable_liquidity_drop_watchdog,
+                "check_interval": settings.liquidity_drop_check_interval,
+                "thresholds": {
+                    "drop_pct": settings.liquidity_drop_threshold_pct,
+                },
+            },
+            "correlation_breakdown": {
+                "enabled": settings.enable_correlation_breakdown_watchdog,
+                "check_interval": settings.correlation_breakdown_check_interval,
+                "thresholds": {
+                    "change_threshold": settings.correlation_change_threshold,
+                },
+            },
+            "exchange_outage": {
+                "enabled": settings.enable_exchange_outage_watchdog,
+                "check_interval": settings.exchange_outage_check_interval,
+            },
+            "price_anomaly": {
+                "enabled": settings.enable_price_anomaly_watchdog,
+                "check_interval": settings.price_anomaly_check_interval,
+                "thresholds": {
+                    "price_change_pct": settings.price_anomaly_threshold_pct,
+                },
+            },
+            # Global settings
+            "global": {
+                "enabled": settings.watchdog_global_enabled,
+                "event_stream_enabled": settings.watchdog_event_stream_enabled,
+                "event_persistence": settings.watchdog_event_persistence,
+                "websocket_broadcast": settings.watchdog_websocket_broadcast,
+                "max_events_in_memory": settings.watchdog_max_events_in_memory,
+                "health_check_interval": settings.watchdog_health_check_interval,
+            },
+        }
                 "check_interval": 180,  # 3 minutes
             },
             "correlation_breakdown": {

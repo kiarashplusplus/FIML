@@ -8,6 +8,7 @@ from fiml.agents.workers import (
     FundamentalsWorker,
     MacroWorker,
     NewsWorker,
+    OptionsWorker,
     RiskWorker,
     SentimentWorker,
     TechnicalWorker,
@@ -32,6 +33,7 @@ __all__ = [
     "CorrelationWorker",
     "RiskWorker",
     "NewsWorker",
+    "OptionsWorker",
     # Workflows
     "DeepEquityAnalysisWorkflow",
     "DeepEquityAnalysisResult",

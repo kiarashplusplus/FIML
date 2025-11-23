@@ -1460,3 +1460,280 @@ Provide a JSON response with:
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
+
+
+
+@ray.remote
+class OptionsWorker(BaseWorker):
+    """
+    Analyzes options market data for implied volatility and positioning
+
+    Capabilities:
+    - Calculates implied volatility from options prices
+    - Analyzes put/call ratio
+    - Identifies unusual options activity
+    - Detects volatility skew
+    - Assesses market sentiment from options flow
+    - Returns options insights with implied outlook
+    """
+
+    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Analyze options market with real data"""
+        self.logger.info("Analyzing options", asset=asset.symbol)
+
+        try:
+            # Import provider registry
+            from fiml.providers.registry import provider_registry
+
+            # Fetch options chain data
+            providers = await provider_registry.get_providers_for_asset(asset, DataType.OPTIONS)
+
+            options_data = None
+            for provider in providers:
+                try:
+                    response = await provider.fetch_options_chain(asset)
+                    if response.is_valid and response.data:
+                        options_data = response.data
+                        self.logger.info("Fetched options data", provider=provider.name)
+                        break
+                except Exception as e:
+                    self.logger.warning("Provider failed", provider=provider.name, error=str(e))
+                    continue
+
+            if not options_data:
+                self.logger.warning("No options data available")
+                # Fallback to historical volatility
+                return await self._analyze_historical_volatility(asset)
+
+            # Extract options metrics
+            calls = options_data.get("calls", [])
+            puts = options_data.get("puts", [])
+
+            if not calls and not puts:
+                return await self._analyze_historical_volatility(asset)
+
+            # Calculate Put/Call Ratio
+            put_volume = sum(opt.get("volume", 0) for opt in puts)
+            call_volume = sum(opt.get("volume", 0) for opt in calls)
+            put_call_ratio = put_volume / call_volume if call_volume > 0 else 0
+
+            # Calculate Put/Call Open Interest Ratio
+            put_oi = sum(opt.get("open_interest", 0) for opt in puts)
+            call_oi = sum(opt.get("open_interest", 0) for opt in calls)
+            put_call_oi_ratio = put_oi / call_oi if call_oi > 0 else 0
+
+            # Extract implied volatilities
+            call_ivs = [opt.get("implied_volatility", 0) for opt in calls if opt.get("implied_volatility")]
+            put_ivs = [opt.get("implied_volatility", 0) for opt in puts if opt.get("implied_volatility")]
+
+            # Calculate average implied volatility
+            avg_call_iv = float(np.mean(call_ivs)) if call_ivs else 0
+            avg_put_iv = float(np.mean(put_ivs)) if put_ivs else 0
+            avg_iv = (avg_call_iv + avg_put_iv) / 2 if (avg_call_iv or avg_put_iv) else 0
+
+            # Detect volatility skew (put IV > call IV suggests fear)
+            volatility_skew = avg_put_iv - avg_call_iv
+
+            # Identify unusual activity (volume > 2x open interest)
+            unusual_calls = [
+                opt for opt in calls
+                if opt.get("volume", 0) > 2 * opt.get("open_interest", 1)
+                and opt.get("volume", 0) > 100
+            ]
+            unusual_puts = [
+                opt for opt in puts
+                if opt.get("volume", 0) > 2 * opt.get("open_interest", 1)
+                and opt.get("volume", 0) > 100
+            ]
+
+            # Build metrics dictionary
+            metrics = {
+                "put_call_ratio": round(put_call_ratio, 3),
+                "put_call_oi_ratio": round(put_call_oi_ratio, 3),
+                "avg_implied_volatility": round(avg_iv, 4),
+                "call_implied_volatility": round(avg_call_iv, 4),
+                "put_implied_volatility": round(avg_put_iv, 4),
+                "volatility_skew": round(volatility_skew, 4),
+                "unusual_call_count": len(unusual_calls),
+                "unusual_put_count": len(unusual_puts),
+                "total_call_volume": call_volume,
+                "total_put_volume": put_volume,
+            }
+
+            # Determine market sentiment from options
+            sentiment = "neutral"
+            if put_call_ratio > 1.2:
+                sentiment = "bearish"  # More puts than calls
+            elif put_call_ratio < 0.7:
+                sentiment = "bullish"  # More calls than puts
+
+            # Assess volatility outlook
+            volatility_outlook = "normal"
+            if avg_iv > 0.40:
+                volatility_outlook = "elevated"
+            elif avg_iv > 0.60:
+                volatility_outlook = "extreme"
+            elif avg_iv < 0.15:
+                volatility_outlook = "compressed"
+
+            # Use Azure OpenAI for interpretation
+            interpretation = ""
+            confidence = 0.7
+
+            try:
+                azure_client = AzureOpenAIClient()
+
+                prompt = f"""Analyze these options market metrics for {asset.symbol}:
+
+Options Metrics:
+- Put/Call Ratio: {put_call_ratio:.2f}
+- Put/Call OI Ratio: {put_call_oi_ratio:.2f}
+- Average Implied Volatility: {avg_iv*100:.2f}%
+- Volatility Skew: {volatility_skew*100:.2f}%
+- Unusual Calls: {len(unusual_calls)}
+- Unusual Puts: {len(unusual_puts)}
+
+Provide a JSON response with:
+1. "sentiment": one of ["very_bullish", "bullish", "neutral", "bearish", "very_bearish"]
+2. "volatility_outlook": one of ["compressed", "normal", "elevated", "extreme"]
+3. "confidence": float 0-1
+4. "interpretation": 2-3 sentence analysis of options positioning and implied outlook
+"""
+
+                messages = [
+                    {"role": "system", "content": "You are an options market analyst. Return only valid JSON."},
+                    {"role": "user", "content": prompt}
+                ]
+
+                ai_response = await azure_client._make_request(messages, temperature=0.3, max_tokens=300)
+
+                import json
+                ai_content = ai_response["choices"][0]["message"]["content"]
+                if "```json" in ai_content:
+                    ai_content = ai_content.split("```json")[1].split("```")[0].strip()
+                elif "```" in ai_content:
+                    ai_content = ai_content.split("```")[1].split("```")[0].strip()
+
+                ai_analysis = json.loads(ai_content)
+
+                sentiment = ai_analysis.get("sentiment", sentiment)
+                volatility_outlook = ai_analysis.get("volatility_outlook", volatility_outlook)
+                confidence = ai_analysis.get("confidence", confidence)
+                interpretation = ai_analysis.get("interpretation", "")
+
+            except Exception as e:
+                self.logger.warning("Azure OpenAI options interpretation failed", error=str(e))
+
+            # Calculate score (0-10)
+            score = 5.0
+
+            # Adjust based on sentiment
+            if sentiment == "very_bullish":
+                score += 2.0
+            elif sentiment == "bullish":
+                score += 1.0
+            elif sentiment == "bearish":
+                score -= 1.0
+            elif sentiment == "very_bearish":
+                score -= 2.0
+
+            # Adjust for volatility (extreme volatility is risky)
+            if volatility_outlook == "extreme":
+                score -= 1.0
+            elif volatility_outlook == "compressed":
+                score += 0.5
+
+            # Adjust for unusual activity (can signal opportunity or risk)
+            unusual_total = len(unusual_calls) + len(unusual_puts)
+            if unusual_total > 5:
+                score += 0.5 if sentiment in ["bullish", "very_bullish"] else -0.5
+
+            score = max(0.0, min(10.0, score))
+
+            return {
+                "asset": asset.symbol,
+                "analysis_type": "options",
+                "metrics": metrics,
+                "sentiment": sentiment,
+                "volatility_outlook": volatility_outlook,
+                "confidence": round(confidence, 2),
+                "interpretation": interpretation,
+                "unusual_activity": {
+                    "calls": [
+                        {
+                            "strike": opt.get("strike"),
+                            "volume": opt.get("volume"),
+                            "open_interest": opt.get("open_interest"),
+                        }
+                        for opt in unusual_calls[:5]
+                    ],
+                    "puts": [
+                        {
+                            "strike": opt.get("strike"),
+                            "volume": opt.get("volume"),
+                            "open_interest": opt.get("open_interest"),
+                        }
+                        for opt in unusual_puts[:5]
+                    ],
+                },
+                "score": round(score, 1),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            self.logger.error("Options analysis failed", error=str(e), exc_info=True)
+            return {
+                "asset": asset.symbol,
+                "analysis_type": "options",
+                "error": str(e),
+                "score": 5.0,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+    async def _analyze_historical_volatility(self, asset: Asset) -> Dict[str, Any]:
+        """Fallback to historical volatility when options data unavailable"""
+        try:
+            from fiml.providers.registry import provider_registry
+
+            # Fetch OHLCV data
+            providers = await provider_registry.get_providers_for_asset(asset, DataType.OHLCV)
+
+            for provider in providers:
+                try:
+                    response = await provider.fetch_ohlcv(asset, timeframe="1d", limit=90)
+                    if response.is_valid and response.data:
+                        close_prices = np.array(response.data["close"])
+                        returns = np.diff(close_prices) / close_prices[:-1]
+
+                        # Calculate historical volatility (annualized)
+                        hist_vol = float(np.std(returns) * np.sqrt(252))
+
+                        return {
+                            "asset": asset.symbol,
+                            "analysis_type": "options",
+                            "metrics": {
+                                "historical_volatility": round(hist_vol, 4),
+                                "put_call_ratio": None,
+                                "avg_implied_volatility": None,
+                            },
+                            "sentiment": "neutral",
+                            "volatility_outlook": "normal",
+                            "confidence": 0.5,
+                            "interpretation": f"Historical volatility: {hist_vol*100:.2f}%. No options data available.",
+                            "score": 5.0,
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                except:
+                    continue
+
+        except Exception as e:
+            self.logger.error("Historical volatility fallback failed", error=str(e))
+
+        return {
+            "asset": asset.symbol,
+            "analysis_type": "options",
+            "error": "No data available",
+            "score": 5.0,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
