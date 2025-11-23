@@ -88,7 +88,8 @@ class AlphaVantageProvider(BaseProvider):
 
         await self._check_rate_limit()
 
-        params["apikey"] = self.config.api_key
+        if self.config.api_key:
+            params["apikey"] = self.config.api_key
 
         try:
             async with self._session.get(
@@ -113,7 +114,7 @@ class AlphaVantageProvider(BaseProvider):
                             retry_after=60
                         )
 
-                    return data
+                    return data  # type: ignore[no-any-return]
                 else:
                     raise ProviderError(f"HTTP {response.status}: {await response.text()}")
 

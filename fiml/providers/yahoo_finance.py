@@ -21,7 +21,7 @@ class YahooFinanceProvider(BaseProvider):
     Free, reliable source for equity and ETF data
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         config = ProviderConfig(
             name="yahoo_finance",
             enabled=True,

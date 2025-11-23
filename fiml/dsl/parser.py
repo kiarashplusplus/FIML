@@ -100,40 +100,40 @@ FK_DSL_GRAMMAR = r"""
 class FKDSLTransformer(Transformer):
     """Transform parsed tree into execution plan"""
 
-    def query(self, q):
+    def query(self, q: Any) -> Any:
         return q
 
-    def find_query(self, asset_spec, condition_list):
+    def find_query(self, asset_spec: Any, condition_list: Any) -> dict[str, Any]:
         return {"type": "FIND", "args": [asset_spec, condition_list]}
 
-    def analyze_query(self, asset_spec, analysis_type):
+    def analyze_query(self, asset_spec: Any, analysis_type: Any) -> dict[str, Any]:
         return {"type": "ANALYZE", "args": [asset_spec, analysis_type]}
 
-    def compare_query(self, asset_list, metric_list):
+    def compare_query(self, asset_list: Any, metric_list: Any) -> dict[str, Any]:
         return {"type": "COMPARE", "args": [asset_list, metric_list]}
 
-    def track_query(self, asset_spec, condition_list):
+    def track_query(self, asset_spec: Any, condition_list: Any) -> dict[str, Any]:
         return {"type": "TRACK", "args": [asset_spec, condition_list]}
 
-    def get_query(self, data_request):
+    def get_query(self, data_request: Any) -> dict[str, Any]:
         return {"type": "GET", "args": [data_request]}
 
-    def asset_spec(self, asset_filter, market=None):
+    def asset_spec(self, asset_filter: Any, market: Any = None) -> dict[str, Any]:
         return {"filter": asset_filter, "market": market}
 
-    def asset_filter(self, *args):
+    def asset_filter(self, *args: Any) -> Any:
         """Handle asset filter - could be symbol, sector, top/bottom, or all"""
         if args:
             return args[0]
         return None
 
-    def symbol(self, name):
+    def symbol(self, name: Any) -> dict[str, Any]:
         return {"type": "symbol", "value": str(name)}
 
-    def sector(self, name):
+    def sector(self, name: Any) -> dict[str, Any]:
         return {"type": "sector", "value": str(name)}
 
-    def condition(self, *args):
+    def condition(self, *args) -> dict[str, Any]:
         if len(args) == 3:  # metric COMPARATOR value
             return {
                 "type": "comparison",
@@ -151,16 +151,16 @@ class FKDSLTransformer(Transformer):
         else:
             return {"type": "custom", "args": args}
 
-    def metric(self, m):
+    def metric(self, m) -> Any:
         return m
 
     # These are called by the parser with tree nodes
-    def price_metric(self, *args):
+    def price_metric(self, *args) -> dict[str, str]:
         if args:
             return {"category": "price", "name": str(args[0]).lower()}
         return {"category": "price", "name": "unknown"}
 
-    def fundamental_metric(self, *args):
+    def fundamental_metric(self, *args) -> dict[str, str]:
         if args:
             return {"category": "fundamental", "name": str(args[0]).lower()}
         return {"category": "fundamental", "name": "unknown"}
@@ -172,32 +172,32 @@ class FKDSLTransformer(Transformer):
             return {"category": "technical", "name": str(args[0]).lower()}
         return {"category": "technical", "name": "unknown"}
 
-    def sentiment_metric(self, *args):
+    def sentiment_metric(self, *args) -> dict[str, str]:
         if args:
             return {"category": "sentiment", "name": str(args[0]).lower()}
         return {"category": "sentiment", "name": "unknown"}
 
-    def value(self, v):
+    def value(self, v) -> float | str:
         try:
             return float(v)
         except:
             return str(v).strip('"')
 
-    def condition_list(self, *conditions):
+    def condition_list(self, *conditions) -> list:
         return list(conditions)
 
-    def analysis_type(self, *args):
+    def analysis_type(self, *args) -> str:
         if args:
             return str(args[0]).lower()
         return "unknown"
 
-    def asset_list(self, *assets):
+    def asset_list(self, *assets) -> list:
         return list(assets)
 
-    def metric_list(self, *metrics):
+    def metric_list(self, *metrics) -> list:
         return list(metrics)
 
-    def data_request(self, *args):
+    def data_request(self, *args) -> dict[str, Any]:
         """Handle data request queries"""
         return {"type": "data_request", "args": args}
 

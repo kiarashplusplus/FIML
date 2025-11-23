@@ -15,7 +15,7 @@ class MockProvider(BaseProvider):
     Returns synthetic data without external API calls
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         config = ProviderConfig(
             name="mock_provider",
             enabled=True,

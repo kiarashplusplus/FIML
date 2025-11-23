@@ -84,7 +84,7 @@ class EvictionTracker:
             # Limit size by removing least frequently used
             if len(self._lfu_tracker) > self.max_entries:
                 # Find key with minimum access count
-                min_key = min(self._lfu_tracker, key=self._lfu_tracker.get)
+                min_key = min(self._lfu_tracker, key=lambda k: self._lfu_tracker.get(k, 0))
                 del self._lfu_tracker[min_key]
                 self._evictions += 1
 

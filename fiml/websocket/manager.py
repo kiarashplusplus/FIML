@@ -9,7 +9,7 @@ import asyncio
 import uuid
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Dict, List, Set
+from typing import Callable, Dict, List, Set
 
 from fastapi import WebSocket
 
@@ -60,7 +60,7 @@ class Subscription:
         self.last_update = datetime.now(timezone.utc)
         self._task: asyncio.Task | None = None
 
-    def start_streaming(self, callback) -> None:
+    def start_streaming(self, callback: Callable) -> None:
         """Start the streaming task"""
         if self._task is None or self._task.done():
             self._task = asyncio.create_task(callback(self))

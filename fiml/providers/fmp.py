@@ -94,7 +94,8 @@ class FMPProvider(BaseProvider):
         if params is None:
             params = {}
 
-        params["apikey"] = self.config.api_key
+        if self.config.api_key:
+            params["apikey"] = self.config.api_key
 
         try:
             async with self._session.get(
@@ -187,7 +188,7 @@ class FMPProvider(BaseProvider):
 
         try:
             endpoint = f"historical-price-full/{asset.symbol}"
-            params = {}
+            params: dict[str, Any] = {}
 
             if timeframe == "1d":
                 # Daily data

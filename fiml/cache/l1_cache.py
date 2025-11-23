@@ -48,7 +48,9 @@ class L1Cache:
             )
 
             # Test connection
-            await self._redis.ping()
+            ping_result = await self._redis.ping()  # type: ignore[misc]
+            if not ping_result:
+                raise CacheError("Redis ping failed")
 
             self._initialized = True
             logger.info("L1 cache initialized", host=settings.redis_host, port=settings.redis_port)
@@ -74,7 +76,7 @@ class L1Cache:
         Returns:
             Cached value or None if not found
         """
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         try:
@@ -108,7 +110,7 @@ class L1Cache:
         Returns:
             True if successful
         """
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         try:
@@ -128,7 +130,7 @@ class L1Cache:
 
     async def delete(self, key: str) -> bool:
         """Delete key from cache"""
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         try:
@@ -142,7 +144,7 @@ class L1Cache:
 
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache"""
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         try:
@@ -153,7 +155,7 @@ class L1Cache:
 
     async def get_ttl(self, key: str) -> Optional[int]:
         """Get remaining TTL for key in seconds"""
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         try:
@@ -173,7 +175,7 @@ class L1Cache:
         Returns:
             Number of keys deleted
         """
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         try:
@@ -193,7 +195,7 @@ class L1Cache:
 
     async def get_stats(self) -> dict:
         """Get cache statistics"""
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         try:
@@ -232,7 +234,7 @@ class L1Cache:
         Returns:
             List of cached values (None for missing keys)
         """
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         if not keys:
@@ -274,7 +276,7 @@ class L1Cache:
         Returns:
             Number of successfully set items
         """
-        if not self._initialized:
+        if not self._initialized or self._redis is None:
             raise CacheError("L1 cache not initialized")
 
         if not items:

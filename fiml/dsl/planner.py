@@ -100,7 +100,7 @@ class ExecutionPlanner:
     - Estimate resource requirements
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def plan(self, parsed_query: Dict[str, Any], query_str: str) -> ExecutionPlan:

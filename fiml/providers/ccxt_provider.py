@@ -420,21 +420,24 @@ class CCXTProvider(BaseProvider):
                 is_healthy = True
 
             return ProviderHealth(
-                provider=self.name,
+                provider_name=self.name,
                 is_healthy=is_healthy,
-                latency_ms=50,  # Crypto exchanges are typically fast
-                error_rate=self._error_count / max(self._request_count, 1),
+                uptime_percent=99.0,  # Placeholder
+                avg_latency_ms=50.0,  # Crypto exchanges are typically fast
+                success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
                 last_check=datetime.now(timezone.utc),
+                error_count_24h=self._error_count,
             )
         except Exception as e:
             logger.error(f"CCXT health check failed for {self.exchange_id}: {e}")
             return ProviderHealth(
-                provider=self.name,
+                provider_name=self.name,
                 is_healthy=False,
-                latency_ms=0,
-                error_rate=1.0,
+                uptime_percent=0.0,
+                avg_latency_ms=0.0,
+                success_rate=0.0,
                 last_check=datetime.now(timezone.utc),
-                error_message=str(e),
+                error_count_24h=self._error_count + 1,
             )
 
     def _record_request(self) -> None:
@@ -454,7 +457,7 @@ class CCXTMultiExchangeProvider:
     Provides access to multiple exchanges and can aggregate data
     """
 
-    def __init__(self, exchanges: List[str] = None):
+    def __init__(self, exchanges: Optional[List[str]] = None) -> None:
         if exchanges is None:
             exchanges = ["binance", "coinbase", "kraken"]
 

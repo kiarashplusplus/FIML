@@ -250,6 +250,9 @@ class FKDSLExecutor:
             await asyncio.sleep(0.1)
 
         internal_info = self.active_executions.get(task_id)
+        if internal_info is None:
+            raise FKDSLExecutionError(f"Task {task_id} not found")
+
         if internal_info.status == TaskStatus.FAILED:
             raise FKDSLExecutionError(internal_info.error)
 

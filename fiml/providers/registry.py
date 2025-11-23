@@ -58,7 +58,7 @@ class ProviderRegistry:
         logger.info("Initializing provider registry")
 
         # Register providers based on configuration and availability
-        providers_to_register = []
+        providers_to_register: List[BaseProvider] = []
 
         # Always register mock provider for testing
         providers_to_register.append(MockProvider())

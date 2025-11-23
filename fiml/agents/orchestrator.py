@@ -34,7 +34,7 @@ class AgentOrchestrator:
     - Fault tolerance with fallbacks
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.initialized = False
         self.workers: Dict[str, List] = {}
 
@@ -63,13 +63,13 @@ class AgentOrchestrator:
 
             # Spawn worker pool
             self.workers = {
-                "fundamentals": [FundamentalsWorker.remote(f"fund_{i}") for i in range(2)],
-                "technical": [TechnicalWorker.remote(f"tech_{i}") for i in range(2)],
-                "macro": [MacroWorker.remote(f"macro_{i}") for i in range(1)],
-                "sentiment": [SentimentWorker.remote(f"sent_{i}") for i in range(2)],
-                "correlation": [CorrelationWorker.remote(f"corr_{i}") for i in range(1)],
-                "risk": [RiskWorker.remote(f"risk_{i}") for i in range(1)],
-                "news": [NewsWorker.remote(f"news_{i}") for i in range(2)],
+                "fundamentals": [FundamentalsWorker.remote(f"fund_{i}") for i in range(2)],  # type: ignore[attr-defined]
+                "technical": [TechnicalWorker.remote(f"tech_{i}") for i in range(2)],  # type: ignore[attr-defined]
+                "macro": [MacroWorker.remote(f"macro_{i}") for i in range(1)],  # type: ignore[attr-defined]
+                "sentiment": [SentimentWorker.remote(f"sent_{i}") for i in range(2)],  # type: ignore[attr-defined]
+                "correlation": [CorrelationWorker.remote(f"corr_{i}") for i in range(1)],  # type: ignore[attr-defined]
+                "risk": [RiskWorker.remote(f"risk_{i}") for i in range(1)],  # type: ignore[attr-defined]
+                "news": [NewsWorker.remote(f"news_{i}") for i in range(2)],  # type: ignore[attr-defined]
             }
 
             self.initialized = True
