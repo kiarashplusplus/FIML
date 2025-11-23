@@ -155,5 +155,6 @@ nav:
   - Project:
     - Roadmap: project/roadmap.md
     - Status: project/status.md
+    - FIML vs Bloomberg: project/FIML-VS-BLOOMBERG.md
     - Phase Reports: project/phase-reports.md
     - Changelog: project/changelog.md

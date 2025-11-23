@@ -16,6 +16,16 @@
 
 ---
 
+## 🎯 Positioning
+
+> **"FIML is the intelligent data router for AI-native finance. We give ChatGPT and Claude the same data quality as Bloomberg, at 2% of the cost, with zero integration effort. Our arbitration engine automatically picks the best data source for every query, falling back seamlessly when providers fail. For developers, we're the AWS of financial data—abstract away complexity, pay only for what you use."**
+
+**Tagline:** *"Bloomberg's intelligence, API simplicity, AI-native design. $15/month."*
+
+📘 **[See detailed comparison: FIML vs Bloomberg vs Direct Provider APIs](docs/project/FIML-VS-BLOOMBERG.md)**
+
+---
+
 FIML is an MCP (Model Context Protocol) server that provides intelligent financial data access through a unified interface. It implements a data arbitration layer that automatically selects the best data provider based on availability, freshness, and reliability. The project is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](BLUEPRINT.md) for the complete vision).
 
 ## 🌟 What's Actually Working (Phase 1 Complete)
