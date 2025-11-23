@@ -85,7 +85,9 @@ class TestMCPToolDiscovery:
                 assert "inputSchema" in tool
                 assert "type" in tool["inputSchema"]
                 assert "properties" in tool["inputSchema"]
-                assert "required" in tool["inputSchema"]
+                # required field is optional if all parameters are optional
+                if "required" in tool["inputSchema"]:
+                    assert isinstance(tool["inputSchema"]["required"], list)
 
 
 class TestStockQueries:

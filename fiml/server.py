@@ -72,7 +72,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="FIML - Financial Intelligence Meta-Layer",
     description="AI-Native Multi-Market Financial Intelligence Framework",
-    version="0.1.1",
+    version="0.2.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.is_development else None,
     redoc_url="/redoc" if settings.is_development else None,

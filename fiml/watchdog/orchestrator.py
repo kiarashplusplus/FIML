@@ -123,7 +123,7 @@ class WatchdogManager:
         logger.info("Initializing watchdog manager")
 
         # Initialize event stream
-        await self._event_stream.initialize()
+        await self.event_stream.initialize()
 
         # Register all watchdogs
         await self._register_watchdogs()

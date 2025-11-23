@@ -2,8 +2,15 @@
 Integration tests for MCP narrative generation
 
 Tests narrative generation flow with AAPL and BTC examples
+
+NOTE: These tests require a real Azure OpenAI endpoint and are skipped
+in standard test environments. They are meant for manual/integration testing.
 """
 
+
+import os
+from datetime import datetime, timezone
+from unittest.mock import patch
 
 import pytest
 
@@ -13,6 +20,54 @@ from fiml.mcp.tools import (
     search_by_coin,
     search_by_symbol,
 )
+
+# Skip all tests in this module if using mock Azure OpenAI endpoint
+pytestmark = pytest.mark.skipif(
+    os.getenv("AZURE_OPENAI_ENDPOINT", "").startswith("https://mock"),
+    reason="Narrative integration tests require real Azure OpenAI endpoint"
+)
+
+
+@pytest.fixture(autouse=True)
+async def mock_providers():
+    """Mock provider responses for narrative integration tests"""
+    from fiml.core.models import ArbitrationPlan, Asset, AssetType, DataType
+    from fiml.providers.base import ProviderResponse
+
+    mock_asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
+
+    mock_response = ProviderResponse(
+        provider="mock_provider",
+        asset=mock_asset,
+        data_type=DataType.PRICE,
+        data={
+            "price": 150.0,
+            "change": 2.5,
+            "change_percent": 1.69,
+            "volume": 50000000,
+            "market_cap": 2500000000000,
+            "pe_ratio": 28.5,
+            "dividend_yield": 0.5,
+        },
+        timestamp=datetime.now(timezone.utc),
+        is_valid=True,
+        is_fresh=True,
+        confidence=1.0,
+    )
+
+    async def mock_arbitrate_request(*args, **kwargs):
+        return ArbitrationPlan(
+            primary_provider="mock_primary",
+            fallback_providers=[],
+            estimated_latency_ms=10,
+        )
+
+    async def mock_execute_with_fallback(*args, **kwargs):
+        return mock_response
+
+    with patch("fiml.arbitration.engine.arbitration_engine.arbitrate_request", side_effect=mock_arbitrate_request), \
+         patch("fiml.arbitration.engine.arbitration_engine.execute_with_fallback", side_effect=mock_execute_with_fallback):
+        yield
 
 
 class TestMCPNarrativeIntegration:
