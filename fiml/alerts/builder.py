@@ -135,9 +135,10 @@ class AlertBuilder:
         from fiml.core.config import settings
         
         # Email config
-        if hasattr(settings, 'smtp_host') and settings.smtp_host:
+        smtp_host = getattr(settings, 'smtp_host', None)
+        if smtp_host:
             self._default_email_config = EmailConfig(
-                smtp_host=settings.smtp_host,
+                smtp_host=smtp_host,
                 smtp_port=getattr(settings, 'smtp_port', 587),
                 smtp_user=getattr(settings, 'smtp_user', ''),
                 smtp_password=getattr(settings, 'smtp_password', ''),
@@ -146,9 +147,10 @@ class AlertBuilder:
             )
         
         # Telegram config
-        if hasattr(settings, 'telegram_bot_token') and settings.telegram_bot_token:
+        telegram_token = getattr(settings, 'telegram_bot_token', None)
+        if telegram_token:
             self._default_telegram_config = TelegramConfig(
-                bot_token=settings.telegram_bot_token,
+                bot_token=telegram_token,
                 chat_ids=[],
             )
         

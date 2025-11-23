@@ -25,12 +25,6 @@ logger = get_logger(__name__)
 alert_router = APIRouter()
 
 
-@alert_router.on_event("startup")
-async def startup_alert_system():
-    """Initialize alert system on startup"""
-    await alert_builder.initialize()
-
-
 @alert_router.post("/alerts", response_model=AlertConfig)
 async def create_alert(config: AlertConfig) -> AlertConfig:
     """
@@ -42,6 +36,10 @@ async def create_alert(config: AlertConfig) -> AlertConfig:
     Returns:
         Created alert configuration
     """
+    # Ensure alert builder is initialized
+    if not alert_builder._initialized:
+        await alert_builder.initialize()
+    
     try:
         return alert_builder.create_alert(config)
     except ValueError as e:
