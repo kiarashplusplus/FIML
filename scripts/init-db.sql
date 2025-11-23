@@ -1,9 +1,7 @@
-"""
-Database initialization script for PostgreSQL + TimescaleDB
-"""
+-- Database initialization script for PostgreSQL + TimescaleDB
 
--- Enable TimescaleDB extension
-CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+-- Enable TimescaleDB extension (optional - only for production)
+-- CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
 -- Create enum types
 CREATE TYPE asset_type AS ENUM ('equity', 'crypto', 'forex', 'commodity', 'index', 'etf', 'option', 'future');
@@ -41,11 +39,11 @@ CREATE TABLE IF NOT EXISTS price_cache (
     PRIMARY KEY (time, asset_id, provider)
 );
 
--- Convert to hypertable
-SELECT create_hypertable('price_cache', 'time', if_not_exists => TRUE);
+-- Convert to hypertable (TimescaleDB only)
+-- SELECT create_hypertable('price_cache', 'time', if_not_exists => TRUE);
 
--- Create retention policy (keep data for 90 days)
-SELECT add_retention_policy('price_cache', INTERVAL '90 days', if_not_exists => TRUE);
+-- Create retention policy (keep data for 90 days) (TimescaleDB only)
+-- SELECT add_retention_policy('price_cache', INTERVAL '90 days', if_not_exists => TRUE);
 
 -- OHLCV cache
 CREATE TABLE IF NOT EXISTS ohlcv_cache (
@@ -61,8 +59,8 @@ CREATE TABLE IF NOT EXISTS ohlcv_cache (
     PRIMARY KEY (time, asset_id, provider, timeframe)
 );
 
-SELECT create_hypertable('ohlcv_cache', 'time', if_not_exists => TRUE);
-SELECT add_retention_policy('ohlcv_cache', INTERVAL '365 days', if_not_exists => TRUE);
+-- SELECT create_hypertable('ohlcv_cache', 'time', if_not_exists => TRUE);
+-- SELECT add_retention_policy('ohlcv_cache', INTERVAL '365 days', if_not_exists => TRUE);
 
 -- Fundamentals cache
 CREATE TABLE IF NOT EXISTS fundamentals_cache (
@@ -119,8 +117,8 @@ CREATE TABLE IF NOT EXISTS provider_health (
     PRIMARY KEY (time, provider_name)
 );
 
-SELECT create_hypertable('provider_health', 'time', if_not_exists => TRUE);
-SELECT add_retention_policy('provider_health', INTERVAL '30 days', if_not_exists => TRUE);
+-- SELECT create_hypertable('provider_health', 'time', if_not_exists => TRUE);
+-- SELECT add_retention_policy('provider_health', INTERVAL '30 days', if_not_exists => TRUE);
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -147,8 +145,8 @@ CREATE TABLE IF NOT EXISTS events (
     PRIMARY KEY (time, event_type, asset_id)
 );
 
-SELECT create_hypertable('events', 'time', if_not_exists => TRUE);
-SELECT add_retention_policy('events', INTERVAL '30 days', if_not_exists => TRUE);
+-- SELECT create_hypertable('events', 'time', if_not_exists => TRUE);
+-- SELECT add_retention_policy('events', INTERVAL '30 days', if_not_exists => TRUE);
 
 -- Audit log
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -161,8 +159,8 @@ CREATE TABLE IF NOT EXISTS audit_log (
     user_agent TEXT
 );
 
-SELECT create_hypertable('audit_log', 'time', if_not_exists => TRUE);
-SELECT add_retention_policy('audit_log', INTERVAL '365 days', if_not_exists => TRUE);
+-- SELECT create_hypertable('audit_log', 'time', if_not_exists => TRUE);
+-- SELECT add_retention_policy('audit_log', INTERVAL '365 days', if_not_exists => TRUE);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()

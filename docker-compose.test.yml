@@ -27,6 +27,8 @@ services:
       - POSTGRES_USER=fiml_test
       - POSTGRES_PASSWORD=fiml_test_password
       - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fiml_test -d fiml_test"]
       interval: 5s

@@ -4,7 +4,7 @@ Yahoo Finance Provider Implementation
 
 from datetime import datetime, timezone
 
-import yfinance as yf
+import yfinance as yf  # type: ignore[import-untyped]
 
 from fiml.core.exceptions import ProviderError
 from fiml.core.logging import get_logger

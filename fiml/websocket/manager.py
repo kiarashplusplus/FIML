@@ -83,7 +83,7 @@ class WebSocketManager:
     - Error handling and reconnection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Active connections
         self.active_connections: Set[WebSocket] = set()
 

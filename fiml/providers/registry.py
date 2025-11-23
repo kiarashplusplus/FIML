@@ -45,7 +45,7 @@ class ProviderRegistry:
     Manages provider lifecycle, discovery, and selection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.providers: Dict[str, BaseProvider] = {}
         self._initialized = False
 

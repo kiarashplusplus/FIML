@@ -31,7 +31,7 @@ class DisclaimerGenerator:
     to regional regulations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.templates = self._initialize_templates()
 
     def _initialize_templates(self) -> Dict[str, Dict[str, str]]:

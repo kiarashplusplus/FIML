@@ -5,7 +5,7 @@ Data fetching and caching tasks
 from typing import Optional
 
 from fiml.core.logging import get_logger
-from fiml.core.models import Asset, AssetType
+from fiml.core.models import Asset, AssetType, Market
 from fiml.providers import provider_registry
 from fiml.tasks.celery import celery_app
 
@@ -44,7 +44,7 @@ def fetch_historical_data(
         Asset(
             symbol=symbol,
             asset_type=AssetType(asset_type),
-            market="US",
+            market=Market.US,
         )
 
         # This would call the provider registry to fetch data

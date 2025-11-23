@@ -154,37 +154,39 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
 
     try:
         if request.name == "search-by-symbol":
-            result = await search_by_symbol(
+            symbol_result = await search_by_symbol(
                 symbol=request.arguments["symbol"],
                 market=Market(request.arguments.get("market", "US")),
                 depth=AnalysisDepth(request.arguments.get("depth", "standard")),
                 language=request.arguments.get("language", "en"),
             )
-            return MCPToolResponse(content=[{"type": "text", "text": result.model_dump_json()}])
+            return MCPToolResponse(content=[{"type": "text", "text": symbol_result.model_dump_json()}])
 
         elif request.name == "search-by-coin":
-            result = await search_by_coin(
+            coin_result = await search_by_coin(
                 symbol=request.arguments["symbol"],
                 exchange=request.arguments.get("exchange", "binance"),
                 pair=request.arguments.get("pair", "USDT"),
                 depth=AnalysisDepth(request.arguments.get("depth", "standard")),
                 language=request.arguments.get("language", "en"),
             )
-            return MCPToolResponse(content=[{"type": "text", "text": result.model_dump_json()}])
+            return MCPToolResponse(content=[{"type": "text", "text": coin_result.model_dump_json()}])
 
         elif request.name == "get-task-status":
-            result = await get_task_status(
+            task_result = await get_task_status(
                 task_id=request.arguments["taskId"],
                 stream=request.arguments.get("stream", False),
             )
-            return MCPToolResponse(content=[{"type": "text", "text": result.model_dump_json()}])
+            import json
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(task_result)}])
 
         elif request.name == "execute-fk-dsl":
-            result = await execute_fk_dsl(
+            dsl_result = await execute_fk_dsl(
                 query=request.arguments["query"],
                 async_execution=request.arguments.get("async", True),
             )
-            return MCPToolResponse(content=[{"type": "text", "text": result.model_dump_json()}])
+            import json
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(dsl_result)}])
 
         else:
             raise HTTPException(status_code=404, detail=f"Tool not found: {request.name}")

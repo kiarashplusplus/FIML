@@ -6,7 +6,7 @@ import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional
 
-import ccxt.async_support as ccxt
+import ccxt.async_support as ccxt  # type: ignore[import-untyped]
 
 from fiml.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError
 from fiml.core.logging import get_logger

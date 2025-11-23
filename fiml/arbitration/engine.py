@@ -39,7 +39,7 @@ class DataArbitrationEngine:
     5. Resolve conflicts when providers disagree
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.provider_registry = provider_registry
 
     async def arbitrate_request(
@@ -143,6 +143,9 @@ class DataArbitrationEngine:
         providers = [p for p in providers if p is not None]
 
         for i, provider in enumerate(providers):
+            if provider is None:
+                continue
+
             try:
                 logger.info(
                     f"Attempting provider {i + 1}/{len(providers)}",
@@ -155,25 +158,28 @@ class DataArbitrationEngine:
 
                 # Validate response
                 if response.is_valid and response.is_fresh:
+                    provider_name = provider.name if provider else "unknown"
                     logger.info(
                         "Provider succeeded",
-                        provider=provider.name,
+                        provider=provider_name,
                         asset=asset.symbol,
                         confidence=response.confidence,
                     )
                     return response
                 else:
+                    provider_name = provider.name if provider else "unknown"
                     logger.warning(
                         "Provider returned invalid/stale data",
-                        provider=provider.name,
+                        provider=provider_name,
                         valid=response.is_valid,
                         fresh=response.is_fresh,
                     )
 
             except Exception as e:
+                provider_name = provider.name if provider else "unknown"
                 logger.warning(
                     "Provider failed, falling back",
-                    provider=provider.name,
+                    provider=provider_name,
                     error=str(e),
                     fallback_available=i < len(providers) - 1,
                 )

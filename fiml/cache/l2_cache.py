@@ -3,6 +3,7 @@ L2 Cache - PostgreSQL + TimescaleDB Persistent Cache
 Target: 300-700ms latency
 """
 
+import json
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
@@ -375,7 +376,7 @@ class L2Cache:
                     query,
                     {
                         "key": key,
-                        "value": value,
+                        "value": json.dumps(value),
                         "ttl_seconds": ttl_seconds or 3600,
                     },
                 )
@@ -415,6 +416,7 @@ class L2Cache:
                 row = result.fetchone()
 
                 if row:
+                    # JSONB is automatically deserialized by asyncpg
                     return row[0]
                 return None
 
@@ -569,6 +571,7 @@ class L2Cache:
 
                 return {
                     "status": "initialized",
+                    "entries": total_entries,  # For backward compatibility
                     "total_entries": total_entries,
                     "expired_entries": expired_entries,
                     "active_entries": total_entries - expired_entries,

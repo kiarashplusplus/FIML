@@ -127,13 +127,13 @@ class FKDSLTransformer(Transformer):
             return args[0]
         return None
 
-    def symbol(self, name: Any) -> dict[str, Any]:
+    def symbol(self, name: list) -> dict[str, Any]:
         return {"type": "symbol", "value": str(name)}
 
-    def sector(self, name: Any) -> dict[str, Any]:
+    def sector(self, name: list) -> dict[str, Any]:
         return {"type": "sector", "value": str(name)}
 
-    def condition(self, *args) -> dict[str, Any]:
+    def condition(self, *args: Any) -> dict[str, Any]:
         if len(args) == 3:  # metric COMPARATOR value
             return {
                 "type": "comparison",
@@ -151,53 +151,53 @@ class FKDSLTransformer(Transformer):
         else:
             return {"type": "custom", "args": args}
 
-    def metric(self, m) -> Any:
+    def metric(self, m: Any) -> Any:
         return m
 
     # These are called by the parser with tree nodes
-    def price_metric(self, *args) -> dict[str, str]:
+    def price_metric(self, *args: Any) -> dict[str, str]:
         if args:
             return {"category": "price", "name": str(args[0]).lower()}
         return {"category": "price", "name": "unknown"}
 
-    def fundamental_metric(self, *args) -> dict[str, str]:
+    def fundamental_metric(self, *args: Any) -> dict[str, str]:
         if args:
             return {"category": "fundamental", "name": str(args[0]).lower()}
         return {"category": "fundamental", "name": "unknown"}
 
-    def technical_metric(self, *args):
+    def technical_metric(self, *args: Any) -> dict[str, Any]:
         if len(args) == 2:  # SMA 20, EMA 50
             return {"category": "technical", "name": str(args[0]).lower(), "period": int(args[1])}
         elif len(args) == 1:
             return {"category": "technical", "name": str(args[0]).lower()}
         return {"category": "technical", "name": "unknown"}
 
-    def sentiment_metric(self, *args) -> dict[str, str]:
+    def sentiment_metric(self, *args: Any) -> dict[str, str]:
         if args:
             return {"category": "sentiment", "name": str(args[0]).lower()}
         return {"category": "sentiment", "name": "unknown"}
 
-    def value(self, v) -> float | str:
+    def value(self, v: Any) -> float | str:
         try:
             return float(v)
         except:
             return str(v).strip('"')
 
-    def condition_list(self, *conditions) -> list:
+    def condition_list(self, *conditions: Any) -> list:
         return list(conditions)
 
-    def analysis_type(self, *args) -> str:
+    def analysis_type(self, *args: Any) -> str:
         if args:
             return str(args[0]).lower()
         return "unknown"
 
-    def asset_list(self, *assets) -> list:
+    def asset_list(self, *assets: Any) -> list:
         return list(assets)
 
-    def metric_list(self, *metrics) -> list:
+    def metric_list(self, *metrics: Any) -> list:
         return list(metrics)
 
-    def data_request(self, *args) -> dict[str, Any]:
+    def data_request(self, *args: Any) -> dict[str, Any]:
         """Handle data request queries"""
         return {"type": "data_request", "args": args}
 
@@ -215,7 +215,7 @@ class FKDSLParser:
         GET PRICE FOR BTCUSD
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.parser = Lark(FK_DSL_GRAMMAR, start="query", parser="lalr")
         self.transformer = FKDSLTransformer()
 
@@ -243,7 +243,7 @@ class FKDSLParser:
             plan = self.transformer.transform(tree)
 
             logger.info("DSL query parsed", query=query[:100])
-            return plan
+            return dict(plan) if isinstance(plan, dict) else plan
 
         except Exception as e:
             logger.error(f"DSL parse error: {e}", query=query)

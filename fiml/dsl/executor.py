@@ -35,7 +35,7 @@ class ExecutionTaskInfo(BaseModel):
 class TaskExecutor:
     """Executes individual tasks"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.providers = None  # Would inject provider registry
 
     async def execute(self, task: ExecutionTask, context: Dict[str, Any]) -> Any:
@@ -129,7 +129,7 @@ class FKDSLExecutor:
     - Result caching
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.task_executor = TaskExecutor()
         self.active_executions: Dict[str, ExecutionTaskInfo] = {}
 
