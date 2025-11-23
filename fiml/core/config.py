@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     finnhub_api_key: str | None = None
     newsapi_api_key: str | None = None
     newsapi_key: str | None = None  # Alternative name for NewsAPI key
+    twelvedata_api_key: str | None = None
+    tiingo_api_key: str | None = None
+    intrinio_api_key: str | None = None
+    marketstack_api_key: str | None = None
+    coinmarketcap_api_key: str | None = None
+    quandl_api_key: str | None = None
 
     # NewsAPI Provider Settings
     newsapi_rate_limit_per_minute: int = 20  # Conservative for free tier
