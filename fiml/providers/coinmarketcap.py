@@ -110,6 +110,10 @@ class CoinMarketCapProvider(BaseProvider):
         
         Only removes suffixes from the end if the resulting symbol
         would otherwise be too short or invalid.
+        
+        Note: This is a best-effort approach for common crypto symbols.
+        For complex cases like EURUSD or exotic trading pairs, users
+        should provide the base symbol directly (e.g., 'EUR' not 'EURUSD').
         """
         clean_symbol = symbol.upper()
         for suffix in ["USDT", "USD", "BUSD", "EUR"]:

@@ -69,7 +69,15 @@ class CoinGeckoProvider(BaseProvider):
         self._is_initialized = False
 
     def _get_coin_id(self, symbol: str) -> str:
-        """Convert symbol to CoinGecko coin ID"""
+        """
+        Convert symbol to CoinGecko coin ID.
+        
+        First checks for direct mapping, then tries removing common trading
+        pair suffixes only if a valid mapping exists for the result.
+        
+        Note: For complex trading pairs or exotic symbols, users should
+        provide the base cryptocurrency symbol directly (e.g., 'BTC' not 'BTCUSDT').
+        """
         clean_symbol = symbol.upper()
         
         # First check if we have a direct mapping for the full symbol

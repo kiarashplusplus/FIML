@@ -18,7 +18,7 @@ from fiml.providers.quandl import QuandlProvider
 
 @pytest.mark.asyncio
 async def test_polygon_provider_initialization():
-    """Test Polygon provider initialization without API key"""
+    """Test Polygon provider initialization with test API key"""
     provider = PolygonProvider(api_key="test_key")
     assert provider.name == "polygon"
     assert provider.config.priority == 8
@@ -36,7 +36,7 @@ async def test_finnhub_provider_initialization():
 
 @pytest.mark.asyncio
 async def test_twelvedata_provider_initialization():
-    """Test Twelvedata provider initialization without API key"""
+    """Test Twelvedata provider initialization with test API key"""
     provider = TwelvedataProvider(api_key="test_key")
     assert provider.name == "twelvedata"
     assert provider.config.priority == 7
@@ -45,7 +45,7 @@ async def test_twelvedata_provider_initialization():
 
 @pytest.mark.asyncio
 async def test_tiingo_provider_initialization():
-    """Test Tiingo provider initialization without API key"""
+    """Test Tiingo provider initialization with test API key"""
     provider = TiingoProvider(api_key="test_key")
     assert provider.name == "tiingo"
     assert provider.config.priority == 7
@@ -54,7 +54,7 @@ async def test_tiingo_provider_initialization():
 
 @pytest.mark.asyncio
 async def test_intrinio_provider_initialization():
-    """Test Intrinio provider initialization without API key"""
+    """Test Intrinio provider initialization with test API key"""
     provider = IntrinioProvider(api_key="test_key")
     assert provider.name == "intrinio"
     assert provider.config.priority == 7
@@ -63,7 +63,7 @@ async def test_intrinio_provider_initialization():
 
 @pytest.mark.asyncio
 async def test_marketstack_provider_initialization():
-    """Test Marketstack provider initialization without API key"""
+    """Test Marketstack provider initialization with test API key"""
     provider = MarketstackProvider(api_key="test_key")
     assert provider.name == "marketstack"
     assert provider.config.priority == 6
@@ -87,7 +87,7 @@ async def test_coingecko_provider_initialization():
 
 @pytest.mark.asyncio
 async def test_coinmarketcap_provider_initialization():
-    """Test CoinMarketCap provider initialization without API key"""
+    """Test CoinMarketCap provider initialization with test API key"""
     provider = CoinMarketCapProvider(api_key="test_key")
     assert provider.name == "coinmarketcap"
     assert provider.config.priority == 7
@@ -96,7 +96,7 @@ async def test_coinmarketcap_provider_initialization():
 
 @pytest.mark.asyncio
 async def test_quandl_provider_initialization():
-    """Test Quandl provider initialization without API key"""
+    """Test Quandl provider initialization with test API key"""
     provider = QuandlProvider(api_key="test_key")
     assert provider.name == "quandl"
     assert provider.config.priority == 6
