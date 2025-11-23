@@ -141,6 +141,8 @@ nav:
     - MCP Narrative: features/mcp-narrative.md
     - Session Management: features/session-management.md
     - Compliance Framework: features/compliance.md
+  - Use Cases:
+    - Trading Education Bot: use-cases/trading-education-bot.md
   - API Reference:
     - REST API: api/rest.md
     - WebSocket API: api/websocket.md
