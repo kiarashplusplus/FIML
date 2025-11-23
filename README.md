@@ -145,6 +145,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 make dev
 
+# Install pre-push hook (recommended)
+./scripts/install-hooks.sh
+
 # Run tests
 make test
 

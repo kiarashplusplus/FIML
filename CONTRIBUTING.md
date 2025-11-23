@@ -173,7 +173,22 @@ Branch naming conventions:
 - Add/update tests
 - Update documentation
 
-### 3. Run Quality Checks
+### 3. Install Pre-Push Hook (Recommended)
+
+Install the pre-push hook to automatically run linting and tests before pushing:
+
+```bash
+./scripts/install-hooks.sh
+```
+
+This hook will automatically run before each push:
+- ✅ Ruff linting
+- ✅ MyPy type checking (non-blocking)
+- ✅ Test suite
+
+To bypass the hook (not recommended): `git push --no-verify`
+
+### 4. Run Quality Checks
 
 Before committing:
 
@@ -188,7 +203,7 @@ make lint
 make test
 ```
 
-### 4. Commit Your Changes
+### 5. Commit Your Changes
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
@@ -202,15 +217,17 @@ perf: optimize database query performance
 chore: update dependencies
 ```
 
-### 5. Push and Create PR
+### 6. Push and Create PR
 
 ```bash
 git push origin feature/your-feature-name
 ```
 
+The pre-push hook will automatically run checks. If it fails, fix the issues and try again.
+
 Then create a pull request on GitHub.
 
-### 6. PR Requirements
+### 7. PR Requirements
 
 All pull requests must:
 
