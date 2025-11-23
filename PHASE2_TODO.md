@@ -1415,6 +1415,58 @@ Use this to track Phase 2 progress:
 
 ---
 
+## 🔮 Phase 3+ Future Enhancements
+
+Beyond Phase 2, the following advanced features are planned for FIML's evolution into a comprehensive financial OS:
+
+### Backtesting Framework (Phase 3 - 2026+)
+**Priority**: HIGH for quant users  
+**Description**: Comprehensive backtesting engine for strategy validation
+
+**Planned Features**:
+- Historical data replay with tick-level accuracy
+- Multi-asset strategy testing (stocks, crypto, options)
+- Performance metrics: Sharpe ratio, max drawdown, win rate, etc.
+- Monte Carlo simulation for robustness testing
+- Walk-forward optimization
+- Slippage and commission modeling
+- Risk-adjusted return analysis
+- Strategy comparison and benchmarking
+- Integration with FK-DSL for strategy definition
+- Export backtest results to standard formats (QuantConnect, Backtrader compatible)
+
+**Technical Approach**:
+- Leverage existing cache layer for historical data
+- Use Ray for distributed backtesting across multiple strategies
+- Store backtest results in TimescaleDB for time-series analysis
+- Provide MCP tool: `backtest-strategy` with parameters:
+  * Strategy definition (FK-DSL or Python code)
+  * Time period (start/end dates)
+  * Initial capital
+  * Assets to trade
+  * Risk parameters
+  * Execution model (market/limit orders, slippage)
+
+**Success Criteria**:
+- Backtest 10+ years of daily data in <1 minute
+- Support intraday strategies (1-minute bars)
+- Accurate modeling of trading costs
+- Statistical validation of strategy performance
+- Overfitting detection and warnings
+- Comprehensive performance reporting
+
+**Dependencies**:
+- Enhanced historical data in L2 cache
+- Advanced agent workers (for strategy execution logic)
+- Performance optimization (to handle large datasets)
+
+**Related Features**:
+- Portfolio optimization engine (use backtest results)
+- Paper trading mode (forward testing)
+- Strategy marketplace (share/discover strategies)
+
+---
+
 **Document Status**: Ready for AI Agent Execution  
 **Last Updated**: November 23, 2025  
 **Maintainer**: FIML Development Team  

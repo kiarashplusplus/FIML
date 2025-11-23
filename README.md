@@ -465,6 +465,7 @@ Once running, access interactive API docs at:
 ### 📋 Phase 3 (Q4 2025) - Scale & Platform
 - [ ] Multi-language support
 - [ ] Advanced analytics and ML models
+- [ ] Backtesting framework for strategy validation
 - [ ] Platform integrations (ChatGPT, Claude, Telegram)
 - [ ] Performance optimization
 - [ ] Enterprise features
@@ -474,7 +475,7 @@ Once running, access interactive API docs at:
 See [BLUEPRINT.md](BLUEPRINT.md) for the complete 10-year vision including:
 - Plugin ecosystem and Financial OS
 - Decentralized data verification
-- Advanced quant strategies
+- Advanced quant strategies with backtesting engine
 - Global market expansion
 - AI-native portfolio optimization
 
