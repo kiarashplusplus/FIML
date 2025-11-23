@@ -2,9 +2,10 @@
 Tests for session management system
 """
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
+
+import pytest
 
 from fiml.sessions.models import (
     AnalysisHistory,
@@ -330,7 +331,7 @@ class TestSessionStore:
         assert archived is True
 
         # Session should no longer be in Redis
-        retrieved = await session_store.get_session(session.id)
+        await session_store.get_session(session.id)
         # But might still be retrievable from PostgreSQL
         # depending on implementation
 
@@ -461,7 +462,7 @@ class TestSessionIntegration:
         # Step 4: Demonstrate context-aware follow-up
         # Simulate "remember previous query" capability
         recent_queries = retrieved.state.history.get_recent_queries(2)
-        print(f"\n=== Recent Queries ===")
+        print("\n=== Recent Queries ===")
         for rq in recent_queries:
             print(f"  {rq.query_type}: {rq.result_summary}")
 
@@ -475,7 +476,7 @@ class TestSessionIntegration:
         assert extended is not None
         assert extended.expires_at > original_expiry
 
-        print(f"\n=== Session Extended ===")
+        print("\n=== Session Extended ===")
         print(f"New expiry: {extended.expires_at}")
         print(f"Time remaining: {extended.time_remaining.total_seconds() / 3600:.1f} hours")
 
@@ -484,7 +485,7 @@ class TestSessionIntegration:
         assert final_session is not None
         assert final_session.state.history.total_queries == len(queries)
 
-        print(f"\n=== Session Verified ===")
+        print("\n=== Session Verified ===")
         print(f"Session ID: {final_session.id}")
         print(f"Duration: {final_session.duration.total_seconds():.2f} seconds")
         print(f"Assets: {final_session.assets}")
@@ -492,7 +493,7 @@ class TestSessionIntegration:
 
         # Cleanup
         await session_store.delete_session(session_id)
-        print(f"\n=== Session Deleted ===")
+        print("\n=== Session Deleted ===")
 
 
 if __name__ == "__main__":

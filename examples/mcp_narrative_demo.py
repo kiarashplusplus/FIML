@@ -5,12 +5,9 @@ Demonstrates narrative generation capabilities with real examples
 """
 
 import asyncio
-from datetime import datetime
 
 from fiml.core.models import AnalysisDepth, Market
 from fiml.mcp.tools import (
-    format_narrative_markdown,
-    format_narrative_text,
     get_narrative,
     search_by_coin,
     search_by_symbol,
@@ -54,7 +51,7 @@ async def demo_aapl_standard():
             for i, risk in enumerate(response.narrative.risk_factors, 1):
                 print(f"  {i}. {risk}")
 
-    print(f"\nData Lineage:")
+    print("\nData Lineage:")
     print(f"  Providers: {', '.join(response.data_lineage.providers)}")
     print(f"  Arbitration Score: {response.data_lineage.arbitration_score:.2f}")
 
@@ -179,7 +176,7 @@ async def demo_btc_deep_analysis():
         include_narrative=True,
     )
 
-    print(f"\nBitcoin Deep Analysis")
+    print("\nBitcoin Deep Analysis")
     print(f"Price: ${response.cached.price:,.2f}")
     print(f"24h Change: {response.cached.change_percent:+.2f}%")
     print(f"Exchange: {response.exchange}")
@@ -330,7 +327,7 @@ async def demo_cache_efficiency():
     )
     time1 = (time.time() - start) * 1000
 
-    print(f"\nFirst call (generation):")
+    print("\nFirst call (generation):")
     print(f"  Time: {time1:.2f}ms")
     print(f"  Cached: {result1.get('cached', False)}")
     if "narrative" in result1:
@@ -347,7 +344,7 @@ async def demo_cache_efficiency():
     )
     time2 = (time.time() - start) * 1000
 
-    print(f"\nSecond call (cached):")
+    print("\nSecond call (cached):")
     print(f"  Time: {time2:.2f}ms")
     print(f"  Cached: {result2.get('cached', False)}")
     print(f"  Speedup: {time1 / time2:.2f}x faster")

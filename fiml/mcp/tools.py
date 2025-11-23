@@ -3,7 +3,8 @@ MCP Tool Implementations
 """
 
 import uuid
-from datetime import datetime, time as time_obj, timedelta, timezone
+from datetime import datetime, timedelta, timezone
+from datetime import time as time_obj
 from typing import Any, Dict, Optional
 
 from fiml.arbitration.engine import arbitration_engine
@@ -102,63 +103,63 @@ def calculate_narrative_ttl(
 ) -> int:
     """
     Calculate dynamic TTL for narrative caching based on market conditions
-    
+
     Args:
         asset: Asset being analyzed
         volatility: Price volatility (change_percent absolute value)
-    
+
     Returns:
         TTL in seconds
     """
     # Get current time
     now = datetime.now(timezone.utc)
     current_time = now.time()
-    
+
     # Market hours (NYSE: 9:30 AM - 4:00 PM ET, convert to UTC: 14:30-21:00)
     market_open = time_obj(14, 30)
     market_close = time_obj(21, 0)
     is_market_hours = market_open <= current_time <= market_close
-    
+
     # Crypto is 24/7
     if asset.asset_type == AssetType.CRYPTO:
         base_ttl = 600  # 10 minutes baseline
-        
+
         # Adjust for volatility
         if volatility:
             if volatility > 10:  # High volatility (>10%)
                 return 180  # 3 minutes
             elif volatility > 5:  # Medium volatility (5-10%)
                 return 300  # 5 minutes
-        
+
         return base_ttl
-    
+
     # Equity/traditional assets
     if not is_market_hours:
         # Pre-market/After-hours: less volatility
         return 1800  # 30 minutes
-    
+
     # During market hours
     if volatility:
         if volatility > 3:  # Significant price movement (>3%)
             return 300  # 5 minutes
         elif volatility > 1:  # Moderate movement (1-3%)
             return 600  # 10 minutes
-    
+
     return 900  # 15 minutes default during market hours
 
 
 def format_narrative_text(narrative: Narrative) -> str:
     """
     Format narrative as plain text
-    
+
     Args:
         narrative: Generated narrative
-    
+
     Returns:
         Formatted text string
     """
     parts = ["EXECUTIVE SUMMARY", "=" * 50, narrative.summary, ""]
-    
+
     for section in narrative.sections:
         parts.extend([
             "",
@@ -166,7 +167,7 @@ def format_narrative_text(narrative: Narrative) -> str:
             "=" * 50,
             section.content,
         ])
-    
+
     if narrative.key_insights:
         parts.extend([
             "",
@@ -175,7 +176,7 @@ def format_narrative_text(narrative: Narrative) -> str:
         ])
         for i, insight in enumerate(narrative.key_insights, 1):
             parts.append(f"{i}. {insight}")
-    
+
     if narrative.risk_factors:
         parts.extend([
             "",
@@ -184,29 +185,29 @@ def format_narrative_text(narrative: Narrative) -> str:
         ])
         for i, risk in enumerate(narrative.risk_factors, 1):
             parts.append(f"{i}. {risk}")
-    
+
     parts.extend([
         "",
         "DISCLAIMER",
         "=" * 50,
         narrative.disclaimer,
     ])
-    
+
     return "\n".join(parts)
 
 
 def format_narrative_markdown(narrative: Narrative) -> str:
     """
     Format narrative as markdown
-    
+
     Args:
         narrative: Generated narrative
-    
+
     Returns:
         Formatted markdown string
     """
     parts = ["# Executive Summary", "", narrative.summary, ""]
-    
+
     for section in narrative.sections:
         parts.extend([
             f"## {section.title}",
@@ -214,42 +215,42 @@ def format_narrative_markdown(narrative: Narrative) -> str:
             section.content,
             "",
         ])
-    
+
     if narrative.key_insights:
         parts.extend(["## Key Insights", ""])
         for insight in narrative.key_insights:
             parts.append(f"- {insight}")
         parts.append("")
-    
+
     if narrative.risk_factors:
         parts.extend(["## Risk Factors", ""])
         for risk in narrative.risk_factors:
             parts.append(f"- {risk}")
         parts.append("")
-    
+
     parts.extend([
         "---",
         "",
         "*" + narrative.disclaimer + "*",
     ])
-    
+
     return "\n".join(parts)
 
 
 def truncate_narrative(text: str, max_length: int = 1000) -> str:
     """
     Truncate narrative for display limits
-    
+
     Args:
         text: Text to truncate
         max_length: Maximum length
-    
+
     Returns:
         Truncated text
     """
     if len(text) <= max_length:
         return text
-    
+
     return text[:max_length - 3] + "..."
 
 
@@ -260,17 +261,17 @@ async def get_cached_narrative(
 ) -> Optional[Dict[str, Any]]:
     """
     Get cached narrative if available
-    
+
     Args:
         symbol: Asset symbol
         language: Language code
         expertise: Expertise level
-    
+
     Returns:
         Cached narrative data or None
     """
     cache_key = f"narrative:{symbol.upper()}:{language}:{expertise}"
-    
+
     try:
         cached = await cache_manager.l1.get(cache_key)
         if cached:
@@ -278,7 +279,7 @@ async def get_cached_narrative(
             return cached
     except Exception as e:
         logger.warning(f"Narrative cache read error: {e}")
-    
+
     return None
 
 
@@ -291,19 +292,19 @@ async def cache_narrative(
 ) -> bool:
     """
     Cache generated narrative
-    
+
     Args:
         symbol: Asset symbol
         language: Language code
         expertise: Expertise level
         narrative_data: Narrative data to cache
         ttl: Time to live in seconds
-    
+
     Returns:
         True if cached successfully
     """
     cache_key = f"narrative:{symbol.upper()}:{language}:{expertise}"
-    
+
     try:
         await cache_manager.l1.set(cache_key, narrative_data, ttl)
         logger.debug("Narrative cached", symbol=symbol, ttl=ttl)
@@ -455,7 +456,7 @@ async def search_by_symbol(
                 cached_narrative = await get_cached_narrative(
                     symbol.upper(), language, expertise_level
                 )
-                
+
                 if cached_narrative:
                     from fiml.core.models import NarrativeSummary
                     narrative_summary = NarrativeSummary(**cached_narrative)
@@ -463,18 +464,18 @@ async def search_by_symbol(
                 else:
                     # Generate new narrative
                     generator = get_narrative_generator()
-                    
+
                     # Map string to enum
                     try:
                         lang_enum = Language(language.lower())
                     except ValueError:
                         lang_enum = Language.ENGLISH
-                    
+
                     try:
                         expertise_enum = ExpertiseLevel(expertise_level.lower())
                     except ValueError:
                         expertise_enum = ExpertiseLevel.INTERMEDIATE
-                    
+
                     # Build narrative preferences based on depth
                     preferences = NarrativePreferences(
                         language=lang_enum,
@@ -485,7 +486,7 @@ async def search_by_symbol(
                         include_risk=depth == AnalysisDepth.DEEP,
                         max_length=2000 if depth == AnalysisDepth.DEEP else 1000,
                     )
-                    
+
                     # Build narrative context
                     context = NarrativeContext(
                         asset_symbol=symbol.upper(),
@@ -501,24 +502,24 @@ async def search_by_symbol(
                         preferences=preferences,
                         data_sources=[response.provider] if response else [],
                     )
-                    
+
                     # Add technical data for standard/deep
                     if depth in [AnalysisDepth.STANDARD, AnalysisDepth.DEEP]:
                         context.technical_data = {
                             "trend": "bullish" if cached_data.change_percent > 0 else "bearish",
                             "strength": "strong" if abs(cached_data.change_percent) > 2 else "moderate",
                         }
-                    
+
                     # Add sentiment for deep
                     if depth == AnalysisDepth.DEEP:
                         context.sentiment_data = {
                             "overall": "positive" if cached_data.change_percent > 0 else "negative",
                             "confidence": 0.7,
                         }
-                    
+
                     # Generate narrative
                     narrative = await generator.generate_narrative(context)
-                    
+
                     # Convert to summary format
                     from fiml.core.models import NarrativeSummary
                     narrative_summary = NarrativeSummary(
@@ -527,7 +528,7 @@ async def search_by_symbol(
                         risk_factors=narrative.risk_factors,
                         language=language,
                     )
-                    
+
                     # Cache the narrative
                     ttl = calculate_narrative_ttl(
                         asset, abs(cached_data.change_percent)
@@ -539,7 +540,7 @@ async def search_by_symbol(
                         narrative_summary.model_dump(),
                         ttl,
                     )
-                    
+
                     logger.info(
                         "Narrative generated",
                         symbol=symbol,
@@ -547,7 +548,7 @@ async def search_by_symbol(
                         language=language,
                         ttl=ttl,
                     )
-            
+
             except Exception as e:
                 logger.warning(
                     f"Narrative generation failed, continuing without: {e}",
@@ -785,7 +786,7 @@ async def search_by_coin(
                 cached_narrative = await get_cached_narrative(
                     crypto_symbol, language, expertise_level
                 )
-                
+
                 if cached_narrative:
                     from fiml.core.models import NarrativeSummary
                     narrative_summary = NarrativeSummary(**cached_narrative)
@@ -793,18 +794,18 @@ async def search_by_coin(
                 else:
                     # Generate new crypto narrative
                     generator = get_narrative_generator()
-                    
+
                     # Map string to enum
                     try:
                         lang_enum = Language(language.lower())
                     except ValueError:
                         lang_enum = Language.ENGLISH
-                    
+
                     try:
                         expertise_enum = ExpertiseLevel(expertise_level.lower())
                     except ValueError:
                         expertise_enum = ExpertiseLevel.INTERMEDIATE
-                    
+
                     # Build narrative preferences for crypto
                     preferences = NarrativePreferences(
                         language=lang_enum,
@@ -815,7 +816,7 @@ async def search_by_coin(
                         include_risk=True,  # Always include risk for crypto
                         max_length=2000 if depth == AnalysisDepth.DEEP else 1000,
                     )
-                    
+
                     # Build crypto narrative context
                     context = NarrativeContext(
                         asset_symbol=crypto_symbol,
@@ -833,7 +834,7 @@ async def search_by_coin(
                         preferences=preferences,
                         data_sources=[response.provider] if response else [],
                     )
-                    
+
                     # Add crypto-specific fundamental data
                     if depth in [AnalysisDepth.STANDARD, AnalysisDepth.DEEP]:
                         context.fundamental_data = {
@@ -845,7 +846,7 @@ async def search_by_coin(
                                 "trading_pairs": [pair],
                             },
                         }
-                    
+
                     # Add technical data
                     if depth in [AnalysisDepth.STANDARD, AnalysisDepth.DEEP]:
                         volatility = abs(cached_data.change_percent)
@@ -857,7 +858,7 @@ async def search_by_coin(
                                 "low": crypto_metrics.get("low_24h", 0),
                             },
                         }
-                    
+
                     # Add sentiment for deep (crypto-specific)
                     if depth == AnalysisDepth.DEEP:
                         context.sentiment_data = {
@@ -865,7 +866,7 @@ async def search_by_coin(
                             "confidence": 0.6,  # Lower confidence for crypto
                             "market_fear_greed": "neutral",
                         }
-                    
+
                     # Add crypto risk warnings
                     context.risk_data = {
                         "volatility_risk": "high" if abs(cached_data.change_percent) > 5 else "moderate",
@@ -875,10 +876,10 @@ async def search_by_coin(
                         "funding_rates": data.get("funding_rate", None),
                         "open_interest": data.get("open_interest", None),
                     }
-                    
+
                     # Generate narrative
                     narrative = await generator.generate_narrative(context)
-                    
+
                     # Convert to summary format with crypto context
                     from fiml.core.models import NarrativeSummary
                     narrative_summary = NarrativeSummary(
@@ -894,7 +895,7 @@ async def search_by_coin(
                         ],
                         language=language,
                     )
-                    
+
                     # Cache the crypto narrative with shorter TTL
                     ttl = calculate_narrative_ttl(
                         asset, abs(cached_data.change_percent)
@@ -906,7 +907,7 @@ async def search_by_coin(
                         narrative_summary.model_dump(),
                         ttl,
                     )
-                    
+
                     logger.info(
                         "Crypto narrative generated",
                         symbol=crypto_symbol,
@@ -914,7 +915,7 @@ async def search_by_coin(
                         language=language,
                         ttl=ttl,
                     )
-            
+
             except Exception as e:
                 logger.warning(
                     f"Crypto narrative generation failed, continuing without: {e}",
@@ -1125,7 +1126,7 @@ async def get_narrative(
         cached_narrative = await get_cached_narrative(
             symbol.upper(), language, expertise_level
         )
-        
+
         if cached_narrative:
             logger.debug("Returning cached narrative", symbol=symbol)
             return {
@@ -1139,22 +1140,22 @@ async def get_narrative(
 
         # Generate new narrative
         generator = get_narrative_generator()
-        
+
         # Map string to enum
         try:
             lang_enum = Language(language.lower())
         except ValueError:
             lang_enum = Language.ENGLISH
-        
+
         try:
             expertise_enum = ExpertiseLevel(expertise_level.lower())
         except ValueError:
             expertise_enum = ExpertiseLevel.INTERMEDIATE
-        
+
         # Determine what to include based on focus areas
         if focus_areas is None:
             focus_areas = ["market", "technical", "fundamental", "sentiment", "risk"]
-        
+
         # Build narrative preferences
         preferences = NarrativePreferences(
             language=lang_enum,
@@ -1165,7 +1166,7 @@ async def get_narrative(
             include_risk="risk" in focus_areas or asset_type == "crypto",
             max_length=2000,
         )
-        
+
         # Build narrative context from analysis data
         context = NarrativeContext(
             asset_symbol=symbol.upper(),
@@ -1175,7 +1176,7 @@ async def get_narrative(
             preferences=preferences,
             data_sources=analysis_data.get("sources", []) if analysis_data else [],
         )
-        
+
         # Add analysis data if provided
         if analysis_data:
             if "price_data" in analysis_data:
@@ -1195,14 +1196,14 @@ async def get_narrative(
                 "change": 0.0,
                 "change_percent": 0.0,
             }
-        
+
         # Generate narrative
         narrative = await generator.generate_narrative(context)
-        
+
         # Format narrative
         narrative_text = format_narrative_text(narrative)
         narrative_markdown = format_narrative_markdown(narrative)
-        
+
         # Create response
         response_data = {
             "symbol": symbol.upper(),
@@ -1230,13 +1231,13 @@ async def get_narrative(
             },
             "cached": False,
         }
-        
+
         # Cache the narrative
         asset = Asset(symbol=symbol.upper(), asset_type=AssetType(asset_type))
         volatility = None
         if analysis_data and "price_data" in analysis_data:
             volatility = abs(analysis_data["price_data"].get("change_percent", 0))
-        
+
         ttl = calculate_narrative_ttl(asset, volatility)
         await cache_narrative(
             symbol.upper(),
@@ -1245,7 +1246,7 @@ async def get_narrative(
             response_data["narrative"],
             ttl,
         )
-        
+
         logger.info(
             "Narrative generated successfully",
             symbol=symbol,
@@ -1253,7 +1254,7 @@ async def get_narrative(
             word_count=narrative.total_word_count,
             ttl=ttl,
         )
-        
+
         return response_data
 
     except Exception as e:

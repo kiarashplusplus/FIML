@@ -4,11 +4,11 @@ Reduces API calls by batching similar requests during low-load periods
 """
 
 import asyncio
+import contextlib
 from collections import defaultdict
-from datetime import datetime, time
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-from fiml.core.config import settings
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, DataType
 
@@ -372,10 +372,8 @@ class BatchUpdateScheduler:
 
         if self._scheduler_task:
             self._scheduler_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._scheduler_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Batch scheduler stopped")
 

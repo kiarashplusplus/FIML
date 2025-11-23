@@ -5,7 +5,7 @@ SQLAlchemy models for session persistence in PostgreSQL
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
@@ -71,7 +71,7 @@ class SessionMetrics(Base):
     # Timing metrics
     created_at = Column(DateTime, nullable=False, index=True)
     duration_seconds = Column(Integer, nullable=False)
-    
+
     # Query metrics
     total_queries = Column(Integer, nullable=False, default=0)
     cache_hit_rate = Column(String(50), nullable=False, default="0.0")
@@ -144,6 +144,6 @@ CREATE INDEX IF NOT EXISTS idx_session_metrics_type ON session_metrics(session_t
 CREATE INDEX IF NOT EXISTS idx_session_metrics_created_at ON session_metrics(created_at);
 
 -- Cleanup expired sessions (retention policy)
-CREATE INDEX IF NOT EXISTS idx_sessions_cleanup ON sessions(is_archived, expires_at) 
+CREATE INDEX IF NOT EXISTS idx_sessions_cleanup ON sessions(is_archived, expires_at)
     WHERE is_archived = FALSE;
 """

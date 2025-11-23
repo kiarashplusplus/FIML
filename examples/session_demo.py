@@ -5,7 +5,6 @@ Demonstrates the session management system for multi-query analysis workflows.
 """
 
 import asyncio
-from datetime import datetime
 
 from fiml.sessions.models import SessionType
 from fiml.sessions.store import get_session_store
@@ -76,7 +75,7 @@ async def demo_session_workflow():
     print(f"  Session duration: {refreshed.duration.total_seconds():.1f} seconds")
 
     query_types = refreshed.state.history.get_query_types_summary()
-    print(f"  Query breakdown:")
+    print("  Query breakdown:")
     for qtype, count in query_types.items():
         print(f"    - {qtype}: {count}")
 
@@ -135,7 +134,7 @@ async def demo_session_workflow():
             days=7,
         )
 
-        print(f"  Statistics (last 7 days):")
+        print("  Statistics (last 7 days):")
         print(f"    - Total sessions: {stats['total_sessions']}")
         print(f"    - Total queries: {stats['total_queries']}")
         print(f"    - Avg queries/session: {stats['avg_queries_per_session']:.1f}")
@@ -165,8 +164,8 @@ async def demo_mcp_tool_integration():
 
     from fiml.mcp.tools import (
         create_analysis_session,
-        get_session_info,
         extend_session,
+        get_session_info,
     )
 
     # Create session via MCP tool
@@ -199,12 +198,13 @@ async def demo_mcp_tool_integration():
         extend_result = await extend_session(session_id, hours=24)
 
         if extend_result["status"] == "success":
-            print(f"✓ Session extended")
+            print("✓ Session extended")
             print(f"  New time remaining: {extend_result['time_remaining_hours']:.1f} hours")
 
         # Cleanup
-        from fiml.sessions.store import get_session_store
         from uuid import UUID
+
+        from fiml.sessions.store import get_session_store
 
         session_store = await get_session_store()
         await session_store.delete_session(UUID(session_id))

@@ -4,8 +4,8 @@ Integration tests for MCP narrative generation
 Tests narrative generation flow with AAPL and BTC examples
 """
 
+
 import pytest
-from datetime import datetime, timezone
 
 from fiml.core.models import AnalysisDepth, Asset, AssetType, Market
 from fiml.mcp.tools import (
@@ -13,7 +13,6 @@ from fiml.mcp.tools import (
     search_by_coin,
     search_by_symbol,
 )
-from fiml.narrative.models import ExpertiseLevel, Language
 
 
 class TestMCPNarrativeIntegration:
@@ -269,7 +268,7 @@ class TestMCPNarrativeIntegration:
     async def test_narrative_caching(self):
         """Test that narratives are cached and reused"""
         # First call generates narrative
-        result1 = await get_narrative(
+        await get_narrative(
             symbol="AAPL",
             asset_type="equity",
             language="en",
@@ -309,8 +308,8 @@ class TestMCPNarrativeIntegration:
     @pytest.mark.asyncio
     async def test_narrative_formatting_text(self):
         """Test narrative text formatting"""
-        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
         from fiml.mcp.tools import format_narrative_text
+        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
 
         # Create test narrative
         narrative = Narrative(
@@ -341,8 +340,8 @@ class TestMCPNarrativeIntegration:
     @pytest.mark.asyncio
     async def test_narrative_formatting_markdown(self):
         """Test narrative markdown formatting"""
-        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
         from fiml.mcp.tools import format_narrative_markdown
+        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
 
         # Create test narrative
         narrative = Narrative(

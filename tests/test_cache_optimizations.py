@@ -2,8 +2,6 @@
 Tests for cache optimization features
 """
 
-import asyncio
-from datetime import datetime
 
 import pytest
 
@@ -11,13 +9,11 @@ from fiml.cache import (
     BatchUpdateScheduler,
     CacheAnalytics,
     EvictionPolicy,
-    L1Cache,
     PredictiveCacheWarmer,
-    cache_manager,
 )
 from fiml.cache.l1_cache import L1Cache
 from fiml.cache.manager import CacheManager
-from fiml.core.models import Asset, DataType
+from fiml.core.models import DataType
 
 
 class TestL1CacheBatchOperations:

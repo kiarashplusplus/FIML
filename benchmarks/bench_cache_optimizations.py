@@ -179,7 +179,7 @@ class CacheBenchmark:
             return price
 
         tasks = [fetch_price(asset) for asset in assets]
-        results = await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks)
 
         elapsed_time = time.perf_counter() - start_time
 
@@ -323,7 +323,7 @@ class CacheBenchmark:
             Complete benchmark results
         """
         print(f"\n{'#'*60}")
-        print(f"# COMPREHENSIVE CACHE OPTIMIZATION BENCHMARKS")
+        print("# COMPREHENSIVE CACHE OPTIMIZATION BENCHMARKS")
         print(f"{'#'*60}")
 
         results = {}

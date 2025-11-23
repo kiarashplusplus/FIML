@@ -3,13 +3,13 @@ Session analytics and metrics tracking
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from fiml.core.logging import get_logger
-from fiml.sessions.db import SessionMetrics, SessionRecord
+from fiml.sessions.db import SessionMetrics
 from fiml.sessions.models import Session
 
 logger = get_logger(__name__)

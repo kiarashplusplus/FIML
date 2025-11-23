@@ -77,7 +77,7 @@ async def delete_old_archived_sessions() -> dict:
         async with session_store._session_maker() as db_session:
             # Delete old archived sessions
             stmt = delete(SessionRecord).where(
-                SessionRecord.is_archived == True,
+                SessionRecord.is_archived,
                 SessionRecord.archived_at < cutoff_date,
             )
 
@@ -135,7 +135,7 @@ async def generate_session_metrics() -> dict:
             # Find archived sessions from last 24 hours
             cutoff = datetime.utcnow() - timedelta(hours=24)
             stmt = select(SessionRecord).where(
-                SessionRecord.is_archived == True,
+                SessionRecord.is_archived,
                 SessionRecord.archived_at >= cutoff,
             )
 

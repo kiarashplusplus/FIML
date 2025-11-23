@@ -4,11 +4,11 @@ Analyzes query patterns and pre-warms cache during off-peak hours
 """
 
 import asyncio
+import contextlib
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from fiml.core.config import settings
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, DataType
 
@@ -374,10 +374,8 @@ class PredictiveCacheWarmer:
 
         if self._warming_task:
             self._warming_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._warming_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Background cache warming stopped")
 

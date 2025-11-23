@@ -3,12 +3,10 @@ Cache Analytics - Comprehensive cache performance monitoring
 Tracks hit/miss rates, latency, and exports metrics to Prometheus
 """
 
-import time
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from fiml.core.config import settings
 from fiml.core.logging import get_logger
 from fiml.core.models import DataType
 
@@ -17,7 +15,7 @@ logger = get_logger(__name__)
 
 # Prometheus metrics (optional - will work without prometheus_client)
 try:
-    from prometheus_client import Counter, Gauge, Histogram, Summary
+    from prometheus_client import Counter, Gauge, Histogram
 
     PROMETHEUS_AVAILABLE = True
 except ImportError:

@@ -13,23 +13,23 @@ Components:
 
 Usage:
     from fiml.watchdog import watchdog_manager
-    
+
     # Initialize and start
     await watchdog_manager.initialize()
     await watchdog_manager.start()
-    
+
     # Subscribe to events
     def handle_event(event):
         print(f"Event: {event.description}")
-    
+
     subscription_id = watchdog_manager.subscribe_to_events(
         callback=handle_event,
         event_filter=EventFilter(severities=[Severity.HIGH, Severity.CRITICAL])
     )
-    
+
     # Get health status
     health = watchdog_manager.get_health()
-    
+
     # Stop
     await watchdog_manager.stop()
 """

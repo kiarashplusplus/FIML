@@ -390,11 +390,7 @@ class L1Cache:
             return True
 
         # Check pattern matches
-        for pattern in self.protected_patterns:
-            if self._matches_pattern(key, pattern):
-                return True
-
-        return False
+        return any(self._matches_pattern(key, pattern) for pattern in self.protected_patterns)
 
     @staticmethod
     def _matches_pattern(key: str, pattern: str) -> bool:

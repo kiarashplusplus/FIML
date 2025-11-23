@@ -4,17 +4,22 @@ Session store with Redis (active) and PostgreSQL (archived) backends
 
 import json
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import List, Optional
 from uuid import UUID
 
 import redis.asyncio as redis
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from fiml.core.config import settings
 from fiml.core.exceptions import CacheError
 from fiml.core.logging import get_logger
-from fiml.sessions.db import SessionMetrics, SessionRecord
+from fiml.sessions.db import SessionRecord
 from fiml.sessions.models import AnalysisHistory, QueryRecord, Session, SessionSummary, SessionType
 
 logger = get_logger(__name__)
@@ -308,7 +313,7 @@ class SessionStore:
                     result = await db_session.execute(
                         select(SessionRecord)
                         .where(SessionRecord.user_id == user_id)
-                        .where(SessionRecord.is_archived == True)
+                        .where(SessionRecord.is_archived)
                         .order_by(SessionRecord.archived_at.desc())
                         .limit(limit - count)
                     )
