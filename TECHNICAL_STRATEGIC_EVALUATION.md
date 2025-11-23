@@ -1,7 +1,7 @@
 # FIML - Comprehensive Technical & Strategic Evaluation
 
 **Evaluation Date**: November 22, 2025  
-**Version**: 0.1.0  
+**Version**: 0.1.1  
 **Evaluator**: Automated Code Review System  
 **Repository**: https://github.com/kiarashplusplus/FIML
 
@@ -482,7 +482,7 @@ All 4 MCP tools are **fully operational** with real data:
 **Weaknesses vs Competitors**:
 - ⚠️ Limited providers (5 vs Bloomberg's dozens)
 - ⚠️ No proprietary data
-- ⚠️ Early stage (0.1.0)
+- ⚠️ Early stage (0.1.1)
 - ⚠️ Small team (appears to be solo developer)
 - ⚠️ Limited track record
 

@@ -6,8 +6,8 @@ Thank you for your interest in contributing to FIML (Financial Intelligence Meta
 
 1. **Fork and clone the repository**
 ```bash
-git clone https://github.com/your-username/fiml.git
-cd fiml
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML
 ```
 
 2. **Create a virtual environment**

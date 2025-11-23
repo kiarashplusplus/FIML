@@ -10,8 +10,8 @@
 ### 1. Clone and Setup
 
 ```bash
-git clone https://github.com/your-org/fiml.git
-cd fiml
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML
 cp .env.example .env
 # Edit .env with your API keys
 ```
@@ -317,5 +317,5 @@ docker-compose exec postgres psql -U fiml -d fiml -c "DELETE FROM tasks WHERE cr
 ## Support
 
 - **Documentation**: [docs.fiml.ai](https://docs.fiml.ai)
-- **GitHub Issues**: [github.com/your-org/fiml/issues](https://github.com/your-org/fiml/issues)
+- **GitHub Issues**: [github.com/kiarashplusplus/FIML/issues](https://github.com/kiarashplusplus/FIML/issues)
 - **Discord**: [Join community](https://discord.gg/fiml)

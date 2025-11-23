@@ -1,7 +1,7 @@
 # FIML - Project Status & Implementation Report
 
 **Project**: Financial Intelligence Meta-Layer (FIML)  
-**Version**: 0.1.0  
+**Version**: 0.1.1  
 **Last Updated**: November 22, 2025  
 **Status**: 🟢 **PRODUCTION READY** - Phase 1 Complete & Validated
 
@@ -635,8 +635,8 @@ Phase 1 delivers a **fully operational financial intelligence system** with live
 ### Manual Installation
 ```bash
 # Clone repository
-git clone https://github.com/your-org/fiml.git
-cd fiml
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML
 
 # Configure environment
 cp .env.example .env
@@ -697,8 +697,8 @@ make lint
 
 ## 📞 Support & Community
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/fiml/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/fiml/discussions)
+- **Issues**: [GitHub Issues](https://github.com/kiarashplusplus/FIML/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/kiarashplusplus/FIML/discussions)
 - **Email**: support@fiml.io
 
 ---
@@ -710,5 +710,5 @@ Apache 2.0 License - See [LICENSE](LICENSE) file for details.
 ---
 
 **Last Updated**: November 22, 2025  
-**Version**: 0.1.0  
+**Version**: 0.1.1  
 **Status**: 🟢 Production Ready (Phase 1)

@@ -1,7 +1,7 @@
 # FIML Performance Benchmark Results
 
 **Date**: November 22, 2025  
-**Version**: 0.1.0  
+**Version**: 0.1.1  
 **Python**: 3.12.3  
 **pytest-benchmark**: 5.2.3
 

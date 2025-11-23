@@ -11,7 +11,7 @@ cat << "EOF"
 ║   ██║     ██║██║ ╚████║██║  ██║██║ ╚████║╚██████╗███████╗║
 ║   ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝║
 ║                                                           ║
-║        Financial Intelligence Meta-Layer v0.1.0          ║
+║        Financial Intelligence Meta-Layer v0.1.1          ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
 
@@ -169,7 +169,7 @@ echo "   • DEPLOYMENT.md     - Production deployment"
 echo "   • BUILD_SUMMARY.md  - Current status & roadmap"
 echo ""
 echo "🤝 Need help?"
-echo "   • GitHub Issues: https://github.com/your-org/fiml/issues"
+echo "   • GitHub Issues: https://github.com/kiarashplusplus/fiml/issues"
 echo "   • Documentation: https://docs.fiml.ai"
 echo ""
 echo "⚠️  Disclaimer: FIML provides financial data for informational"

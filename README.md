@@ -4,7 +4,8 @@
 
 > 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Test Results](TEST_REPORT.md) | [Technical Evaluation](TECHNICAL_STRATEGIC_EVALUATION.md)
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 Planning 📋 | **Version**: 0.1.0 | **Tests**: 236 passing, 24 skipped (100% pass rate) | **Coverage**: 67%
+> **Current State**: Phase 1 Complete ✅ | Phase 2 Planning 📋 | **Version**: 0.1.1 | **Tests**: 100% pass rate | **Coverage**: [![codecov](https://codecov.io/gh/OWNER/REPO/graph/badge.svg)](https://codecov.io/gh/OWNER/REPO)
+
 
 > 📊 **Quick Links**:
 > - 🎯 [Phase Evaluation Report](PHASE_EVALUATION_REPORT.md) - Visual summary and verification
@@ -98,8 +99,8 @@ This interactive script will:
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/your-org/fiml.git
-cd fiml
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML
 ```
 
 2. **Configure environment**
@@ -492,7 +493,7 @@ Built with ♥ for the AI and finance communities
 ## 📞 Support
 
 - **Documentation**: [docs.fiml.ai](https://docs.fiml.ai)
-- **Issues**: [GitHub Issues](https://github.com/your-org/fiml/issues)
+- **Issues**: [GitHub Issues](https://github.com/kiarashplusplus/FIML/issues)
 - **Discord**: [Join our community](https://discord.gg/fiml)
 
 ---
