@@ -95,7 +95,7 @@ Content-Type: application/json
   "trigger": {
     "type": "watchdog_event",
     "event_filter": {
-      "types": ["price_anomaly"],
+      "event_types": ["price_anomaly"],
       "severities": ["high", "critical"]
     }
   },

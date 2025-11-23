@@ -250,7 +250,6 @@ async def dashboard_websocket(websocket: WebSocket):
         })
         
         # Keep connection alive and send periodic updates
-        import asyncio
         while True:
             try:
                 # Wait for client messages (e.g., ping)

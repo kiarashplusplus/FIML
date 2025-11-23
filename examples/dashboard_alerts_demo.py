@@ -167,7 +167,7 @@ async def create_price_alert():
         "trigger": {
             "type": "watchdog_event",
             "event_filter": {
-                "types": ["price_anomaly"],
+                "event_types": ["price_anomaly"],
                 "severities": ["high", "critical"]
             }
         },
@@ -220,7 +220,7 @@ async def create_email_alert():
         "trigger": {
             "type": "watchdog_event",
             "event_filter": {
-                "types": ["earnings_anomaly"],
+                "event_types": ["earnings_anomaly"],
                 "severities": ["high", "critical"]
             }
         },
