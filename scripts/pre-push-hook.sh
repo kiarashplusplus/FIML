@@ -3,6 +3,9 @@
 # This hook runs linting and tests before pushing code
 # It mimics the CI pipeline to catch issues early
 
+# Configuration
+MAX_MYPY_ERRORS_DISPLAY=10  # Maximum number of mypy errors to show in detail
+
 # Colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -45,7 +48,7 @@ if command -v mypy &> /dev/null; then
         error_count=$(echo "$mypy_output" | grep -c "error:" || echo "0")
         echo -e "${YELLOW}⚠️  Type checking found $error_count issues (non-blocking)${NC}"
         echo "$mypy_output" | head -5
-        if [ "$error_count" -gt 10 ]; then
+        if [ "$error_count" -gt "$MAX_MYPY_ERRORS_DISPLAY" ]; then
             echo "..."
             echo "$mypy_output" | tail -3
         fi
@@ -64,13 +67,15 @@ else
         echo -e "${YELLOW}Install with: pip install -e \".[dev]\"${NC}"
     else
         echo "🧪 Running test suite..."
-        # Set test environment variables (matching CI)
+        # Set test environment variables (matching CI pipeline configuration)
+        # These are mock/test credentials, not production values
         export FIML_ENV=test
         export REDIS_HOST=localhost
         export POSTGRES_HOST=localhost
         export POSTGRES_DB=fiml_test
         export POSTGRES_USER=fiml_test
         export POSTGRES_PASSWORD=fiml_test_password
+        # Mock Azure OpenAI credentials for testing
         export AZURE_OPENAI_ENDPOINT=https://mock-azure-openai.openai.azure.com/
         export AZURE_OPENAI_API_KEY=mock-api-key-for-testing
         export AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4

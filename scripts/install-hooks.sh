@@ -41,7 +41,7 @@ fi
 if [ -f ".git/hooks/pre-push" ]; then
     echo -e "${YELLOW}Pre-push hook already exists${NC}"
     if [ "$FORCE" = false ]; then
-        read -p "Do you want to overwrite it? (y/n) " -n 1 -r
+        read -p "Do you want to overwrite it? (y/n) " -r REPLY
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             echo "Installation cancelled"
