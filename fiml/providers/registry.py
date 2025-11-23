@@ -37,6 +37,13 @@ except ImportError:
     CCXT_AVAILABLE = False
     logger.warning("CCXT provider not available")
 
+try:
+    from fiml.providers.newsapi import NewsAPIProvider
+    NEWSAPI_AVAILABLE = True
+except ImportError:
+    NEWSAPI_AVAILABLE = False
+    logger.warning("NewsAPI provider not available")
+
 
 class ProviderRegistry:
     """
@@ -89,6 +96,15 @@ class ProviderRegistry:
                 logger.info("CCXT Binance provider will be registered")
             except Exception as e:
                 logger.warning(f"Could not create CCXT provider: {e}")
+
+        # Register NewsAPI if API key is configured
+        newsapi_key = settings.newsapi_api_key or settings.newsapi_key
+        if NEWSAPI_AVAILABLE and newsapi_key and settings.newsapi_enabled:
+            try:
+                providers_to_register.append(NewsAPIProvider(newsapi_key))
+                logger.info("NewsAPI provider will be registered")
+            except Exception as e:
+                logger.warning(f"Could not create NewsAPI provider: {e}")
 
         for provider in providers_to_register:
             try:

@@ -63,6 +63,12 @@ class Settings(BaseSettings):
     polygon_api_key: str | None = None
     finnhub_api_key: str | None = None
     newsapi_api_key: str | None = None
+    newsapi_key: str | None = None  # Alternative name for NewsAPI key
+
+    # NewsAPI Provider Settings
+    newsapi_rate_limit_per_minute: int = 20  # Conservative for free tier
+    newsapi_daily_limit: int = 100  # Free tier default (can be 1000 for paid)
+    newsapi_enabled: bool = True
 
     # Azure OpenAI Configuration
     azure_openai_endpoint: str | None = None

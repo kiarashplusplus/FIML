@@ -239,6 +239,9 @@ class DataArbitrationEngine:
         - Uptime (20%): Availability over last 24h
         - Completeness (15%): Data field coverage
         - Reliability (10%): Success rate over last N requests
+        
+        Special rules:
+        - NewsAPI gets bonus score for NEWS and SENTIMENT data types
         """
         # Freshness score
         last_update = await provider.get_last_update(asset, data_type)
@@ -267,6 +270,15 @@ class DataArbitrationEngine:
             + completeness_score * 0.15
             + reliability_score * 0.10
         )
+
+        # Apply provider-specific bonuses
+        if provider.name == "newsapi" and data_type in [DataType.NEWS, DataType.SENTIMENT]:
+            # NewsAPI gets 20% bonus for news/sentiment data
+            total_score *= 1.20
+            logger.debug(f"Applied NewsAPI bonus for {data_type}, new score: {total_score:.2f}")
+
+        # Cap at 100
+        total_score = min(100.0, total_score)
 
         return ProviderScore(
             total=total_score,
