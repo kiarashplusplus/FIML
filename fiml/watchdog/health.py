@@ -104,9 +104,8 @@ class WatchdogMetrics:
         self.last_error = f"{datetime.utcnow().isoformat()}: {error_message}"
         self.last_check_at = datetime.utcnow()
         
-        # Mark as unhealthy if too many consecutive failures
-        # Use the default threshold from the class constant
-        if self.consecutive_failures >= WatchdogHealthMonitor.DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD:
+        # Mark as unhealthy if too many consecutive failures (default: 3)
+        if self.consecutive_failures >= 3:
             self.is_healthy = False
     
     def reset_health(self) -> None:

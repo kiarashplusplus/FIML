@@ -1527,9 +1527,9 @@ class OptionsWorker(BaseWorker):
             put_ivs = [opt.get("implied_volatility", 0) for opt in puts if opt.get("implied_volatility")]
 
             # Calculate average implied volatility
-            avg_call_iv = float(np.mean(call_ivs)) if call_ivs else 0
-            avg_put_iv = float(np.mean(put_ivs)) if put_ivs else 0
-            avg_iv = (avg_call_iv + avg_put_iv) / 2 if (avg_call_iv or avg_put_iv) else 0
+            avg_call_iv = float(np.mean(call_ivs)) if call_ivs else 0.0
+            avg_put_iv = float(np.mean(put_ivs)) if put_ivs else 0.0
+            avg_iv = (avg_call_iv + avg_put_iv) / 2 if (call_ivs or put_ivs) else 0.0
 
             # Detect volatility skew (put IV > call IV suggests fear)
             volatility_skew = avg_put_iv - avg_call_iv
@@ -1703,6 +1703,13 @@ Provide a JSON response with:
                     response = await provider.fetch_ohlcv(asset, timeframe="1d", limit=90)
                     if response.is_valid and response.data:
                         close_prices = np.array(response.data["close"])
+                        
+                        # Filter out any zero prices to avoid division by zero
+                        close_prices = close_prices[close_prices > 0]
+                        
+                        if len(close_prices) < 2:
+                            continue
+                        
                         returns = np.diff(close_prices) / close_prices[:-1]
 
                         # Calculate historical volatility (annualized)

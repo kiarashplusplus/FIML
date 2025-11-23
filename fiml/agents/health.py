@@ -118,9 +118,8 @@ class WorkerMetrics:
         if heartbeat_age > max_heartbeat_age_seconds:
             return False
         
-        # Check error rate
-        # Use the default threshold from the class constant
-        if self.error_rate > WorkerHealthMonitor.DEFAULT_ERROR_RATE_THRESHOLD:
+        # Check error rate (default threshold: 0.5 or 50%)
+        if self.error_rate > 0.5:
             return False
         
         # Check status
