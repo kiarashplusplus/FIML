@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     finnhub_api_key: str | None = None
     newsapi_api_key: str | None = None
 
+    # Azure OpenAI Configuration
+    azure_openai_endpoint: str | None = None
+    azure_openai_api_key: str | None = None
+    azure_openai_deployment_name: str | None = None
+    azure_openai_api_version: str = "2024-02-15-preview"
+
     # Crypto Exchange Keys
     binance_api_key: str | None = None
     binance_secret_key: str | None = None
