@@ -104,7 +104,7 @@ class PerformanceMonitor:
     Tracks timing, slow queries, and exports metrics to Prometheus.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._slow_query_threshold = 1.0  # 1 second
         self._slow_queries: List[Dict] = []
         self._operation_times: Dict[str, List[float]] = {}
@@ -118,7 +118,7 @@ class PerformanceMonitor:
         self._tasks_failed = 0
 
     @contextmanager
-    def track(self, operation: str, threshold: Optional[float] = None):
+    def track(self, operation: str, threshold: Optional[float] = None) -> None:
         """
         Track synchronous operation timing
 
@@ -135,7 +135,7 @@ class PerformanceMonitor:
             self._record_timing(operation, elapsed, threshold)
 
     @asynccontextmanager
-    async def track_async(self, operation: str, threshold: Optional[float] = None):
+    async def track_async(self, operation: str, threshold: Optional[float] = None) -> None:
         """
         Track asynchronous operation timing
 
@@ -151,7 +151,7 @@ class PerformanceMonitor:
             elapsed = time.perf_counter() - start
             self._record_timing(operation, elapsed, threshold)
 
-    def _record_timing(self, operation: str, elapsed: float, threshold: Optional[float] = None):
+    def _record_timing(self, operation: str, elapsed: float, threshold: Optional[float] = None) -> None:
         """Record operation timing"""
         # Store timing
         if operation not in self._operation_times:
@@ -167,7 +167,7 @@ class PerformanceMonitor:
         if elapsed > threshold:
             self._record_slow_query(operation, elapsed)
 
-    def _record_slow_query(self, operation: str, elapsed: float):
+    def _record_slow_query(self, operation: str, elapsed: float) -> None:
         """Record slow query"""
         slow_query = {
             "operation": operation,
@@ -191,30 +191,30 @@ class PerformanceMonitor:
         # Update Prometheus metric
         SLOW_QUERIES.labels(operation=operation).inc()
 
-    def record_cache_hit(self, layer: str):
+    def record_cache_hit(self, layer: str) -> None:
         """Record cache hit (metrics tracked by cache.analytics module)"""
         self._cache_hits[layer] = self._cache_hits.get(layer, 0) + 1
 
-    def record_cache_miss(self, layer: str):
+    def record_cache_miss(self, layer: str) -> None:
         """Record cache miss (metrics tracked by cache.analytics module)"""
         self._cache_misses[layer] = self._cache_misses.get(layer, 0) + 1
 
-    def record_cache_operation(self, operation: str, layer: str, elapsed: float):
+    def record_cache_operation(self, operation: str, layer: str, elapsed: float) -> None:
         """Record cache operation timing (metrics tracked by cache.analytics module)"""
         pass
 
-    def record_provider_request(self, provider: str, operation: str, elapsed: float, success: bool):
+    def record_provider_request(self, provider: str, operation: str, elapsed: float, success: bool) -> None:
         """Record provider API request"""
         status = "success" if success else "error"
         PROVIDER_REQUESTS.labels(provider=provider, operation=operation, status=status).inc()
         PROVIDER_LATENCY.labels(provider=provider, operation=operation).observe(elapsed)
 
-    def record_request(self, method: str, endpoint: str, status: int, elapsed: float):
+    def record_request(self, method: str, endpoint: str, status: int, elapsed: float) -> None:
         """Record HTTP request"""
         REQUEST_COUNT.labels(method=method, endpoint=endpoint, status=status).inc()
         REQUEST_DURATION.labels(method=method, endpoint=endpoint).observe(elapsed)
 
-    def record_task_completion(self, success: bool):
+    def record_task_completion(self, success: bool) -> None:
         """Record task completion"""
         if success:
             self._tasks_completed += 1
@@ -226,11 +226,11 @@ class PerformanceMonitor:
             completion_rate = self._tasks_completed / total
             TASK_COMPLETION_RATE.set(completion_rate)
 
-    def record_narrative_generation(self, style: str, elapsed: float):
+    def record_narrative_generation(self, style: str, elapsed: float) -> None:
         """Record narrative generation time"""
         NARRATIVE_GENERATION_TIME.labels(style=style).observe(elapsed)
 
-    def record_dsl_execution(self, query_type: str, elapsed: float):
+    def record_dsl_execution(self, query_type: str, elapsed: float) -> None:
         """Record DSL execution time"""
         DSL_EXECUTION_TIME.labels(query_type=query_type).observe(elapsed)
 

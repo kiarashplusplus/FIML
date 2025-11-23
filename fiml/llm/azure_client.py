@@ -122,9 +122,9 @@ class AzureOpenAIClient:
             f"/chat/completions?api-version={self.api_version}"
         )
 
-        headers = {
+        headers: Dict[str, str] = {
             "Content-Type": "application/json",
-            "api-key": self.api_key,
+            "api-key": self.api_key,  # type: ignore[dict-item]
         }
 
         payload = {

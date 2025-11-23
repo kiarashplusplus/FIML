@@ -6,23 +6,16 @@ Target: 10-100ms latency
 import json
 from collections import defaultdict
 from datetime import datetime
-from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
 import redis.asyncio as redis
 
+from fiml.cache.eviction import EvictionPolicy
 from fiml.core.config import settings
 from fiml.core.exceptions import CacheError
 from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
-
-
-class EvictionPolicy(Enum):
-    """Cache eviction policies"""
-    LRU = "lru"  # Least Recently Used (Redis default)
-    LFU = "lfu"  # Least Frequently Used
-    HYBRID = "hybrid"  # Combination of LRU and LFU
 
 
 class L1Cache:

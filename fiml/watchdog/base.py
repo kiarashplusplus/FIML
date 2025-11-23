@@ -9,10 +9,13 @@ import asyncio
 import contextlib
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from fiml.core.logging import get_logger
 from fiml.watchdog.models import WatchdogEvent, WatchdogHealth
+
+if TYPE_CHECKING:
+    from fiml.watchdog.events import EventStream
 
 logger = get_logger(__name__)
 
@@ -68,7 +71,7 @@ class BaseWatchdog(ABC):
         self._consecutive_errors = 0
 
         # Event stream (set by orchestrator)
-        self._event_stream = None
+        self._event_stream: Optional["EventStream"] = None
 
     @property
     @abstractmethod
@@ -89,7 +92,7 @@ class BaseWatchdog(ABC):
         """
         pass
 
-    def set_event_stream(self, event_stream) -> None:
+    def set_event_stream(self, event_stream: "EventStream") -> None:
         """Set the event stream for emitting events"""
         self._event_stream = event_stream
 
@@ -170,7 +173,7 @@ class BaseWatchdog(ABC):
 
     async def _check_with_retry(self) -> Optional[WatchdogEvent]:
         """Execute check with retry logic"""
-        last_error = None
+        last_error: Optional[Exception] = None
 
         for attempt in range(self.max_retries):
             try:
@@ -184,8 +187,10 @@ class BaseWatchdog(ABC):
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay)
 
-        # All retries failed
-        raise last_error
+        # All retries failed - last_error should not be None here
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError(f"Check failed for {self.name} with no error recorded")
 
     async def _emit_event(self, event: WatchdogEvent) -> None:
         """Emit event to event stream"""

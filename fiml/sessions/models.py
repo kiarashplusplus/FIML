@@ -110,7 +110,7 @@ class Session(BaseModel):
     is_archived: bool = False
     tags: List[str] = Field(default_factory=list)  # User-defined tags
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Set default expiration if not provided
         if "expires_at" not in data:
             data["expires_at"] = datetime.utcnow() + timedelta(hours=24)

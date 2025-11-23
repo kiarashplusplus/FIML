@@ -261,7 +261,9 @@ class TestSummarizeAnalysis:
     @pytest.mark.asyncio
     async def test_summarize_analysis_custom_length(self, client, mock_response):
         """Test summarization with custom max length"""
-        mock_response["choices"][0]["message"]["content"] = "Short summary."
+        mock_response["choices"][0]["message"]["content"] = (
+            "This is a short summary for testing purposes and validation of the response."
+        )
 
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = MagicMock(
@@ -272,7 +274,7 @@ class TestSummarizeAnalysis:
             data = {"test": "data"}
             summary = await client.summarize_analysis(data, max_length=100)
 
-            assert summary == "Short summary."
+            assert summary == "This is a short summary for testing purposes and validation of the response."
             # Check that max_tokens was calculated based on max_length
             call_args = mock_post.call_args
             payload = call_args.kwargs["json"]

@@ -3,7 +3,7 @@ Session analytics and metrics tracking
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -81,7 +81,7 @@ class SessionAnalytics:
         user_id: Optional[str] = None,
         session_type: Optional[str] = None,
         days: int = 30,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Get aggregated session statistics
 
@@ -158,7 +158,7 @@ class SessionAnalytics:
             logger.error(f"Failed to get session stats: {e}")
             raise
 
-    async def get_user_session_summary(self, user_id: str, days: int = 30) -> Dict[str, any]:
+    async def get_user_session_summary(self, user_id: str, days: int = 30) -> Dict[str, Any]:
         """
         Get session summary for specific user
 
@@ -200,7 +200,7 @@ class SessionAnalytics:
         format: str = "json",
         user_id: Optional[str] = None,
         days: int = 30,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Export session metrics in various formats
 

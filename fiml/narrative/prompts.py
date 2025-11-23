@@ -19,7 +19,7 @@ class PromptTemplateLibrary:
     to enable adaptive, multi-lingual narrative generation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.templates = self._initialize_templates()
 
     def get_template(

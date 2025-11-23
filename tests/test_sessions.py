@@ -25,7 +25,7 @@ class TestSessionModels:
         query = QueryRecord(
             query_type="price",
             parameters={"symbol": "AAPL"},
-            result_summary="Price: $150.00",
+            result_summary="Price data retrieved successfully: AAPL trading at $150.00 with volume indicators",
             execution_time_ms=123.45,
             cache_hit=True,
         )

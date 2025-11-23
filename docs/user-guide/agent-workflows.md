@@ -688,7 +688,7 @@ Specialized workflow for cryptocurrency sentiment analysis.
 
 ## Examples
 
-See [`examples/agent_workflows_demo.py`](../examples/agent_workflows_demo.py) for comprehensive usage examples including:
+See [`examples/agent_workflows_demo.py`](https://github.com/kiarashplusplus/FIML/blob/main/examples/agent_workflows_demo.py) for comprehensive usage examples including:
 
 - Basic workflow execution
 - Batch processing multiple assets

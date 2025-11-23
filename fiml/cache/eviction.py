@@ -27,6 +27,7 @@ class EvictionPolicy(str, Enum):
     LFU = "lfu"  # Least Frequently Used
     TTL = "ttl"  # Time To Live
     FIFO = "fifo"  # First In First Out
+    HYBRID = "hybrid"  # Combination of LRU and LFU
 
 
 class EvictionTracker:

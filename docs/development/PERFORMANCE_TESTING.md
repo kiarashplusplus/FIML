@@ -412,7 +412,7 @@ jobs:
 
 ## Additional Resources
 
-- [BLUEPRINT.md](../BLUEPRINT.md) - Performance targets
+- [BLUEPRINT.md](https://github.com/kiarashplusplus/FIML/blob/main/BLUEPRINT.md) - Performance targets
 - [Locust Documentation](https://docs.locust.io/)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)

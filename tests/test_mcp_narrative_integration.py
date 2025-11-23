@@ -313,7 +313,7 @@ class TestMCPNarrativeIntegration:
 
         # Create test narrative
         narrative = Narrative(
-            summary="This is a test summary.",
+            summary="This is a comprehensive test summary with sufficient length to meet validation requirements.",
             sections=[
                 NarrativeSection(
                     title="Market Context",
@@ -330,7 +330,7 @@ class TestMCPNarrativeIntegration:
 
         # Verify formatting
         assert "EXECUTIVE SUMMARY" in text
-        assert "This is a test summary" in text
+        assert "This is a comprehensive test summary" in text
         assert "MARKET CONTEXT" in text
         assert "Market is bullish" in text
         assert "KEY INSIGHTS" in text
@@ -345,7 +345,7 @@ class TestMCPNarrativeIntegration:
 
         # Create test narrative
         narrative = Narrative(
-            summary="This is a test summary.",
+            summary="This is a comprehensive test summary with sufficient length to meet validation requirements.",
             sections=[
                 NarrativeSection(
                     title="Market Context",

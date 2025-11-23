@@ -484,7 +484,7 @@ async def search_by_symbol(
                         include_fundamental=depth in [AnalysisDepth.STANDARD, AnalysisDepth.DEEP],
                         include_sentiment=depth == AnalysisDepth.DEEP,
                         include_risk=depth == AnalysisDepth.DEEP,
-                        max_length=2000 if depth == AnalysisDepth.DEEP else 1000,
+                        max_length_chars=2000 if depth == AnalysisDepth.DEEP else 1000,
                     )
 
                     # Build narrative context
@@ -814,7 +814,7 @@ async def search_by_coin(
                         include_fundamental=depth in [AnalysisDepth.STANDARD, AnalysisDepth.DEEP],
                         include_sentiment=depth == AnalysisDepth.DEEP,
                         include_risk=True,  # Always include risk for crypto
-                        max_length=2000 if depth == AnalysisDepth.DEEP else 1000,
+                        max_length_chars=2000 if depth == AnalysisDepth.DEEP else 1000,
                     )
 
                     # Build crypto narrative context
@@ -1164,7 +1164,7 @@ async def get_narrative(
             include_fundamental="fundamental" in focus_areas,
             include_sentiment="sentiment" in focus_areas,
             include_risk="risk" in focus_areas or asset_type == "crypto",
-            max_length=2000,
+            max_length_chars=2000,
         )
 
         # Build narrative context from analysis data

@@ -22,6 +22,16 @@ os.environ["REDIS_HOST"] = "localhost"
 os.environ["REDIS_PORT"] = "6379"
 os.environ["FIML_ENV"] = "test"
 
+# Mock Azure OpenAI configuration for tests (unless already set)
+if "AZURE_OPENAI_ENDPOINT" not in os.environ:
+    os.environ["AZURE_OPENAI_ENDPOINT"] = "https://mock-azure-openai.openai.azure.com/"
+if "AZURE_OPENAI_API_KEY" not in os.environ:
+    os.environ["AZURE_OPENAI_API_KEY"] = "mock-api-key-for-testing"
+if "AZURE_OPENAI_DEPLOYMENT_NAME" not in os.environ:
+    os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = "gpt-4"
+if "AZURE_OPENAI_API_VERSION" not in os.environ:
+    os.environ["AZURE_OPENAI_API_VERSION"] = "2024-02-15-preview"
+
 
 def pytest_configure(config):
     """Pytest configuration hook - runs before test collection"""
@@ -159,6 +169,11 @@ def test_settings():
         postgres_password="fiml_test_password",
         enable_compliance_checks=False,
         enable_rate_limiting=False,
+        # Mock Azure OpenAI configuration
+        azure_openai_endpoint="https://mock-azure-openai.openai.azure.com/",
+        azure_openai_api_key="mock-api-key-for-testing",
+        azure_openai_deployment_name="gpt-4",
+        azure_openai_api_version="2024-02-15-preview",
     )
 
 
