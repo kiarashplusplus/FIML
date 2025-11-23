@@ -1,0 +1,243 @@
+name: Performance Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Run weekly performance tests
+    - cron: '0 0 * * 0'
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg15
+        env:
+          POSTGRES_USER: fiml_test
+          POSTGRES_PASSWORD: fiml_test_password
+          POSTGRES_DB: fiml_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for comparison
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev,performance]"
+      
+      - name: Run benchmarks
+        run: |
+          pytest benchmarks/ \
+            --benchmark-only \
+            --benchmark-json=benchmark_results.json \
+            -v
+      
+      - name: Download baseline
+        if: github.event_name == 'pull_request'
+        run: |
+          # Download baseline from main branch
+          git show origin/main:benchmarks/baseline.json > benchmark_baseline.json || true
+      
+      - name: Detect regressions
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f benchmark_baseline.json ]; then
+            python tests/performance/regression_detection.py \
+              --baseline benchmark_baseline.json \
+              --current benchmark_results.json \
+              --ci \
+              --threshold 0.10
+          else
+            echo "No baseline found, skipping regression detection"
+          fi
+      
+      - name: Save baseline
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cp benchmark_results.json benchmarks/baseline.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add benchmarks/baseline.json
+          git commit -m "Update performance baseline [skip ci]" || true
+          git push || true
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: |
+            benchmark_results.json
+            regression_report.txt
+  
+  performance-targets:
+    name: Validate Performance Targets
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg15
+        env:
+          POSTGRES_USER: fiml_test
+          POSTGRES_PASSWORD: fiml_test_password
+          POSTGRES_DB: fiml_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev,performance]"
+      
+      - name: Start FIML server
+        run: |
+          python -m fiml.server &
+          sleep 10  # Wait for server to start
+      
+      - name: Run performance target tests
+        run: |
+          pytest tests/performance/test_targets.py -v
+      
+      - name: Generate performance report
+        if: always()
+        run: |
+          python tests/performance/generate_report.py
+      
+      - name: Upload performance report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: PERFORMANCE_REPORT.md
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('PERFORMANCE_REPORT.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Performance Test Results\n\n${report}`
+            });
+  
+  stress-test:
+    name: Stress Tests
+    runs-on: ubuntu-latest
+    # Only run on main branch and scheduled runs
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
+    
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg15
+        env:
+          POSTGRES_USER: fiml_test
+          POSTGRES_PASSWORD: fiml_test_password
+          POSTGRES_DB: fiml_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev,performance]"
+      
+      - name: Start FIML server
+        run: |
+          python -m fiml.server &
+          sleep 10
+      
+      - name: Run stress tests
+        run: |
+          pytest tests/performance/stress_test.py \
+            -v \
+            -m slow \
+            --tb=short \
+            --maxfail=1
+      
+      - name: Upload stress test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: stress-test-results
+          path: |
+            logs/
+            profiling_results/

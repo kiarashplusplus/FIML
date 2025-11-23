@@ -48,6 +48,56 @@ benchmark-save:
 benchmark-compare:
 	pytest benchmarks/ --benchmark-only --benchmark-compare
 
+# Performance Testing
+install-perf:
+	pip install -e ".[dev,performance]"
+
+test-performance:
+	@echo "Running performance target tests..."
+	pytest tests/performance/test_targets.py -v
+
+test-performance-full:
+	@echo "Running full performance test suite..."
+	pytest tests/performance/stress_test.py -v -m slow
+	pytest tests/performance/test_targets.py -v
+
+test-load:
+	@echo "Starting load test (use Ctrl+C to stop)..."
+	locust -f tests/performance/load_test.py --host=http://localhost:8000
+
+test-load-headless:
+	@echo "Running headless load test (100 users, 5 minutes)..."
+	locust -f tests/performance/load_test.py \
+		--host=http://localhost:8000 \
+		--users 100 \
+		--spawn-rate 10 \
+		--run-time 5m \
+		--headless \
+		--html tests/performance/reports/load_test_report.html
+
+profile-cache:
+	@echo "Profiling cache operations..."
+	python tests/performance/profile.py --target cache --duration 30
+
+profile-providers:
+	@echo "Profiling provider fetches..."
+	python tests/performance/profile.py --target providers --duration 30
+
+perf-baseline:
+	@echo "Creating performance baseline..."
+	python tests/performance/regression_detection.py --save-baseline
+
+perf-compare:
+	@echo "Comparing performance with baseline..."
+	python tests/performance/regression_detection.py \
+		--baseline benchmark_baseline.json \
+		--report regression_report.txt
+
+perf-report:
+	@echo "Generating performance report..."
+	python tests/performance/generate_report.py --output PERFORMANCE_REPORT.md
+	@echo "Report saved to PERFORMANCE_REPORT.md"
+
 lint:
 	ruff check fiml/
 	mypy fiml/

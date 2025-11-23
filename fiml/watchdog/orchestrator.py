@@ -50,7 +50,7 @@ class WatchdogManager:
             event_stream: Event stream for events (uses global if None)
             config: Configuration dict for watchdogs
         """
-        self._event_stream = event_stream or globals()["event_stream"]
+        self._event_stream = event_stream
         self._config = config or self._default_config()
 
         # Watchdogs registry
@@ -67,6 +67,14 @@ class WatchdogManager:
             Severity.MEDIUM: [],
             Severity.LOW: [],
         }
+
+    @property
+    def event_stream(self) -> EventStream:
+        """Get event stream, lazy-loading from global if needed"""
+        if self._event_stream is None:
+            from fiml.watchdog.events import event_stream
+            self._event_stream = event_stream
+        return self._event_stream
 
     @staticmethod
     def _default_config() -> Dict:
