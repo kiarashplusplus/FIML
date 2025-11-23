@@ -206,11 +206,10 @@ Complete configuration template:
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 AZURE_OPENAI_API_KEY=your_azure_openai_api_key
 AZURE_OPENAI_API_VERSION=2024-02-15-preview
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-5.1
 
 # Model Configuration
-AZURE_OPENAI_MODEL=gpt-4
-AZURE_OPENAI_TEMPERATURE=0.7
+AZURE_OPENAI_MODEL=gpt-5.1
 AZURE_OPENAI_MAX_TOKENS=2000
 
 # Narrative Generation Settings

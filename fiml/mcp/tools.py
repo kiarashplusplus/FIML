@@ -48,6 +48,54 @@ def get_narrative_generator() -> NarrativeGenerator:
     return _narrative_generator
 
 
+async def track_query_in_session(
+    session_id: str,
+    query_type: str,
+    parameters: Dict[str, Any],
+    result_summary: Optional[str] = None,
+    execution_time_ms: Optional[float] = None,
+    cache_hit: bool = False,
+) -> None:
+    """
+    Track a query in the session context
+
+    Args:
+        session_id: Session UUID
+        query_type: Type of query (e.g., "price", "fundamentals")
+        parameters: Query parameters
+        result_summary: Optional summary of result
+        execution_time_ms: Execution time in milliseconds
+        cache_hit: Whether result was from cache
+    """
+    try:
+        from uuid import UUID
+
+        from fiml.sessions.models import QueryRecord
+        from fiml.sessions.store import get_session_store
+
+        session_store = await get_session_store()
+        session = await session_store.get_session(UUID(session_id))
+
+        if session:
+            # Add query to history
+            query = QueryRecord(
+                query_type=query_type,
+                parameters=parameters,
+                result_summary=result_summary,
+                execution_time_ms=execution_time_ms,
+                cache_hit=cache_hit,
+            )
+
+            session.add_query(query)
+            await session_store.update_session(UUID(session_id), session)
+
+            logger.debug(f"Tracked query in session {session_id}", query_type=query_type)
+
+    except Exception as e:
+        # Don't fail the main operation if session tracking fails
+        logger.warning(f"Failed to track query in session: {e}")
+
+
 def calculate_narrative_ttl(
     asset: Asset,
     volatility: Optional[float] = None,
@@ -272,6 +320,7 @@ async def search_by_symbol(
     language: str,
     expertise_level: str = "intermediate",
     include_narrative: bool = True,
+    session_id: Optional[str] = None,
 ) -> SearchBySymbolResponse:
     """
     Search for a stock by symbol with instant cached data and async deep analysis
@@ -283,6 +332,7 @@ async def search_by_symbol(
         language: Response language (en, es, fr, ja, zh, de, it, pt, fa)
         expertise_level: User expertise level (beginner, intermediate, advanced, quant)
         include_narrative: Whether to generate narrative (default True, except for quick depth)
+        session_id: Optional session ID to track context across queries
 
     Returns:
         SearchBySymbolResponse with cached data, task info, and optional narrative
@@ -295,6 +345,7 @@ async def search_by_symbol(
         language=language,
         expertise_level=expertise_level,
         include_narrative=include_narrative,
+        session_id=session_id,
     )
 
     from fiml.compliance.disclaimers import AssetClass, disclaimer_generator
@@ -504,7 +555,21 @@ async def search_by_symbol(
                 )
                 # Continue without narrative - graceful fallback
 
-        return SearchBySymbolResponse(
+        # Track query in session if session_id provided
+        if session_id:
+            await track_query_in_session(
+                session_id=session_id,
+                query_type="equity_price",
+                parameters={
+                    "symbol": symbol.upper(),
+                    "market": market.value,
+                    "depth": depth.value,
+                },
+                result_summary=f"Price: {cached_data.price}, Change: {cached_data.change_percent}%",
+                cache_hit=False,
+            )
+
+        response = SearchBySymbolResponse(
             symbol=symbol.upper(),
             name=data.get("name", f"{symbol.upper()} Inc."),
             exchange=data.get("exchange", "NASDAQ"),
@@ -516,6 +581,13 @@ async def search_by_symbol(
             data_lineage=data_lineage,
             narrative=narrative_summary,
         )
+
+        # Add session_id to response metadata if provided
+        if session_id:
+            # Store session_id in task metadata for reference
+            task_info.resource_url += f"?session_id={session_id}"
+
+        return response
 
     except Exception as e:
         logger.error(f"Error fetching data for {symbol}: {e}")
@@ -565,6 +637,7 @@ async def search_by_coin(
     language: str,
     expertise_level: str = "intermediate",
     include_narrative: bool = True,
+    session_id: Optional[str] = None,
 ) -> SearchByCoinResponse:
     """
     Search for cryptocurrency with instant cached data and async deep analysis
@@ -577,6 +650,7 @@ async def search_by_coin(
         language: Response language (en, es, fr, ja, zh, de, it, pt, fa)
         expertise_level: User expertise level (beginner, intermediate, advanced, quant)
         include_narrative: Whether to generate narrative (default True, except for quick depth)
+        session_id: Optional session ID to track context across queries
 
     Returns:
         SearchByCoinResponse with cached data, task info, and optional crypto narrative
@@ -590,6 +664,7 @@ async def search_by_coin(
         language=language,
         expertise_level=expertise_level,
         include_narrative=include_narrative,
+        session_id=session_id,
     )
 
     from fiml.compliance.disclaimers import AssetClass, disclaimer_generator
@@ -847,7 +922,22 @@ async def search_by_coin(
                 )
                 # Continue without narrative - graceful fallback
 
-        return SearchByCoinResponse(
+        # Track query in session if session_id provided
+        if session_id:
+            await track_query_in_session(
+                session_id=session_id,
+                query_type="crypto_price",
+                parameters={
+                    "symbol": symbol.upper(),
+                    "exchange": exchange,
+                    "pair": pair,
+                    "depth": depth.value,
+                },
+                result_summary=f"Price: {cached_data.price}, Change: {cached_data.change_percent}%",
+                cache_hit=False,
+            )
+
+        response = SearchByCoinResponse(
             symbol=symbol.upper(),
             name=data.get("name", symbol.upper()),
             pair=crypto_symbol,
@@ -859,6 +949,12 @@ async def search_by_coin(
             data_lineage=data_lineage,
             narrative=narrative_summary,
         )
+
+        # Add session_id to response metadata if provided
+        if session_id:
+            task_info.resource_url += f"?session_id={session_id}"
+
+        return response
 
     except Exception as e:
         logger.error(f"Error fetching crypto data for {symbol}: {e}")
@@ -1169,4 +1265,292 @@ async def get_narrative(
             "expertise_level": expertise_level,
             "error": str(e),
             "status": "failed",
+        }
+
+
+# =============================================================================
+# Session Management Tools
+# =============================================================================
+
+
+async def create_analysis_session(
+    assets: list[str],
+    session_type: str,
+    user_id: Optional[str] = None,
+    ttl_hours: int = 24,
+    tags: Optional[list[str]] = None,
+) -> dict:
+    """
+    Create a new analysis session for tracking multi-query workflows
+
+    Args:
+        assets: List of asset symbols to analyze in this session
+        session_type: Type of analysis (equity, crypto, portfolio, comparative, macro)
+        user_id: Optional user identifier
+        ttl_hours: Session time-to-live in hours (default 24, max per config)
+        tags: Optional tags for categorizing the session
+
+    Returns:
+        Session information including session_id
+    """
+    from fiml.core.config import settings
+    from fiml.sessions.models import SessionType
+    from fiml.sessions.store import get_session_store
+
+    logger.info(
+        "create_analysis_session called",
+        assets=assets,
+        session_type=session_type,
+        ttl_hours=ttl_hours,
+    )
+
+    try:
+        # Validate TTL
+        if ttl_hours > settings.session_max_ttl_hours:
+            ttl_hours = settings.session_max_ttl_hours
+            logger.warning(
+                f"TTL capped at maximum: {settings.session_max_ttl_hours} hours"
+            )
+
+        # Get session store
+        session_store = await get_session_store()
+
+        # Create session
+        session = await session_store.create_session(
+            assets=assets,
+            session_type=SessionType(session_type),
+            user_id=user_id,
+            ttl_hours=ttl_hours,
+            tags=tags,
+        )
+
+        return {
+            "status": "success",
+            "session_id": str(session.id),
+            "user_id": session.user_id,
+            "type": session.type.value,
+            "assets": session.assets,
+            "created_at": session.created_at.isoformat(),
+            "expires_at": session.expires_at.isoformat(),
+            "ttl_hours": ttl_hours,
+            "tags": session.tags,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to create session: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+        }
+
+
+async def get_session_info(session_id: str) -> dict:
+    """
+    Get information about an existing session
+
+    Args:
+        session_id: Session UUID
+
+    Returns:
+        Session information and state
+    """
+    from uuid import UUID
+
+    from fiml.sessions.store import get_session_store
+
+    logger.info("get_session_info called", session_id=session_id)
+
+    try:
+        session_store = await get_session_store()
+        session = await session_store.get_session(UUID(session_id))
+
+        if not session:
+            return {
+                "status": "not_found",
+                "session_id": session_id,
+            }
+
+        return {
+            "status": "success",
+            "session_id": str(session.id),
+            "user_id": session.user_id,
+            "type": session.type.value,
+            "assets": session.assets,
+            "created_at": session.created_at.isoformat(),
+            "expires_at": session.expires_at.isoformat(),
+            "last_accessed_at": session.last_accessed_at.isoformat(),
+            "is_expired": session.is_expired,
+            "time_remaining_hours": round(session.time_remaining.total_seconds() / 3600, 2),
+            "duration_hours": round(session.duration.total_seconds() / 3600, 2),
+            "total_queries": session.state.history.total_queries,
+            "cache_hit_rate": session.state.history.cache_hit_rate,
+            "tags": session.tags,
+            "recent_queries": [
+                {
+                    "type": q.query_type,
+                    "timestamp": q.timestamp.isoformat(),
+                    "cache_hit": q.cache_hit,
+                }
+                for q in session.state.history.get_recent_queries(5)
+            ],
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get session info: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+        }
+
+
+async def list_sessions(
+    user_id: str,
+    include_archived: bool = False,
+    limit: int = 50,
+) -> dict:
+    """
+    List sessions for a user
+
+    Args:
+        user_id: User identifier
+        include_archived: Include archived sessions
+        limit: Maximum number of sessions to return
+
+    Returns:
+        List of session summaries
+    """
+    from fiml.sessions.store import get_session_store
+
+    logger.info("list_sessions called", user_id=user_id)
+
+    try:
+        session_store = await get_session_store()
+        summaries = await session_store.list_user_sessions(
+            user_id=user_id,
+            include_archived=include_archived,
+            limit=limit,
+        )
+
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "total_sessions": len(summaries),
+            "sessions": [
+                {
+                    "session_id": str(s.id),
+                    "type": s.type.value,
+                    "assets": s.assets,
+                    "created_at": s.created_at.isoformat(),
+                    "expires_at": s.expires_at.isoformat(),
+                    "total_queries": s.total_queries,
+                    "is_expired": s.is_expired,
+                    "is_archived": s.is_archived,
+                    "tags": s.tags,
+                }
+                for s in summaries
+            ],
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to list sessions: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+        }
+
+
+async def extend_session(session_id: str, hours: int = 24) -> dict:
+    """
+    Extend session expiration time
+
+    Args:
+        session_id: Session UUID
+        hours: Hours to extend by
+
+    Returns:
+        Updated session info
+    """
+    from uuid import UUID
+
+    from fiml.core.config import settings
+    from fiml.sessions.store import get_session_store
+
+    logger.info("extend_session called", session_id=session_id, hours=hours)
+
+    try:
+        # Validate extension
+        if hours > settings.session_max_ttl_hours:
+            hours = settings.session_max_ttl_hours
+
+        session_store = await get_session_store()
+        await session_store.extend_session(UUID(session_id), hours)
+
+        # Get updated session
+        session = await session_store.get_session(UUID(session_id))
+
+        if not session:
+            return {
+                "status": "not_found",
+                "session_id": session_id,
+            }
+
+        return {
+            "status": "success",
+            "session_id": str(session.id),
+            "expires_at": session.expires_at.isoformat(),
+            "time_remaining_hours": round(session.time_remaining.total_seconds() / 3600, 2),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to extend session: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+        }
+
+
+async def get_session_analytics(
+    user_id: Optional[str] = None,
+    session_type: Optional[str] = None,
+    days: int = 30,
+) -> dict:
+    """
+    Get session analytics and statistics
+
+    Args:
+        user_id: Filter by user (optional)
+        session_type: Filter by type (optional)
+        days: Number of days to analyze
+
+    Returns:
+        Analytics data
+    """
+    from fiml.sessions.analytics import SessionAnalytics
+    from fiml.sessions.store import get_session_store
+
+    logger.info("get_session_analytics called", user_id=user_id, days=days)
+
+    try:
+        session_store = await get_session_store()
+
+        if not session_store._session_maker:
+            raise RuntimeError("SessionStore not initialized")
+
+        analytics = SessionAnalytics(session_store._session_maker)
+        stats = await analytics.get_session_stats(
+            user_id=user_id,
+            session_type=session_type,
+            days=days,
+        )
+
+        return {
+            "status": "success",
+            **stats,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get session analytics: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
         }

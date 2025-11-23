@@ -10,8 +10,13 @@ from pydantic import BaseModel, Field
 from fiml.core.logging import get_logger
 from fiml.core.models import AnalysisDepth, Market
 from fiml.mcp.tools import (
+    create_analysis_session,
     execute_fk_dsl,
+    extend_session,
+    get_session_analytics,
+    get_session_info,
     get_task_status,
+    list_sessions,
     search_by_coin,
     search_by_symbol,
 )
@@ -63,6 +68,10 @@ MCP_TOOLS = [
                     "description": "Response language (en, ja, zh, es, fr, de)",
                     "default": "en",
                 },
+                "sessionId": {
+                    "type": "string",
+                    "description": "Optional session ID to track query context",
+                },
             },
             "required": ["symbol"],
         },
@@ -95,6 +104,10 @@ MCP_TOOLS = [
                 "language": {
                     "type": "string",
                     "default": "en",
+                },
+                "sessionId": {
+                    "type": "string",
+                    "description": "Optional session ID to track query context",
                 },
             },
             "required": ["symbol"],
@@ -138,6 +151,119 @@ MCP_TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "create-analysis-session",
+        "description": "Create a new analysis session for tracking multi-query workflows",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "assets": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of asset symbols to analyze in this session",
+                },
+                "sessionType": {
+                    "type": "string",
+                    "enum": ["equity", "crypto", "portfolio", "comparative", "macro"],
+                    "description": "Type of analysis session",
+                },
+                "userId": {
+                    "type": "string",
+                    "description": "Optional user identifier",
+                },
+                "ttlHours": {
+                    "type": "number",
+                    "description": "Session time-to-live in hours (default 24)",
+                    "default": 24,
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional tags for categorizing the session",
+                },
+            },
+            "required": ["assets", "sessionType"],
+        },
+    },
+    {
+        "name": "get-session-info",
+        "description": "Get information about an existing session",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "Session UUID",
+                },
+            },
+            "required": ["sessionId"],
+        },
+    },
+    {
+        "name": "list-sessions",
+        "description": "List sessions for a user",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "userId": {
+                    "type": "string",
+                    "description": "User identifier",
+                },
+                "includeArchived": {
+                    "type": "boolean",
+                    "description": "Include archived sessions",
+                    "default": False,
+                },
+                "limit": {
+                    "type": "number",
+                    "description": "Maximum number of sessions to return",
+                    "default": 50,
+                },
+            },
+            "required": ["userId"],
+        },
+    },
+    {
+        "name": "extend-session",
+        "description": "Extend session expiration time",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "sessionId": {
+                    "type": "string",
+                    "description": "Session UUID",
+                },
+                "hours": {
+                    "type": "number",
+                    "description": "Hours to extend by (default 24)",
+                    "default": 24,
+                },
+            },
+            "required": ["sessionId"],
+        },
+    },
+    {
+        "name": "get-session-analytics",
+        "description": "Get session analytics and statistics",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "userId": {
+                    "type": "string",
+                    "description": "Filter by user (optional)",
+                },
+                "sessionType": {
+                    "type": "string",
+                    "description": "Filter by session type (optional)",
+                },
+                "days": {
+                    "type": "number",
+                    "description": "Number of days to analyze (default 30)",
+                    "default": 30,
+                },
+            },
+        },
+    },
 ]
 
 
@@ -159,6 +285,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 market=Market(request.arguments.get("market", "US")),
                 depth=AnalysisDepth(request.arguments.get("depth", "standard")),
                 language=request.arguments.get("language", "en"),
+                session_id=request.arguments.get("sessionId"),
             )
             return MCPToolResponse(content=[{"type": "text", "text": symbol_result.model_dump_json()}])
 
@@ -169,6 +296,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 pair=request.arguments.get("pair", "USDT"),
                 depth=AnalysisDepth(request.arguments.get("depth", "standard")),
                 language=request.arguments.get("language", "en"),
+                session_id=request.arguments.get("sessionId"),
             )
             return MCPToolResponse(content=[{"type": "text", "text": coin_result.model_dump_json()}])
 
@@ -187,6 +315,50 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
             )
             import json
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(dsl_result)}])
+
+        elif request.name == "create-analysis-session":
+            session_result = await create_analysis_session(
+                assets=request.arguments["assets"],
+                session_type=request.arguments["sessionType"],
+                user_id=request.arguments.get("userId"),
+                ttl_hours=request.arguments.get("ttlHours", 24),
+                tags=request.arguments.get("tags"),
+            )
+            import json
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(session_result)}])
+
+        elif request.name == "get-session-info":
+            session_info = await get_session_info(
+                session_id=request.arguments["sessionId"],
+            )
+            import json
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(session_info)}])
+
+        elif request.name == "list-sessions":
+            sessions_list = await list_sessions(
+                user_id=request.arguments["userId"],
+                include_archived=request.arguments.get("includeArchived", False),
+                limit=request.arguments.get("limit", 50),
+            )
+            import json
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(sessions_list)}])
+
+        elif request.name == "extend-session":
+            extend_result = await extend_session(
+                session_id=request.arguments["sessionId"],
+                hours=request.arguments.get("hours", 24),
+            )
+            import json
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(extend_result)}])
+
+        elif request.name == "get-session-analytics":
+            analytics_result = await get_session_analytics(
+                user_id=request.arguments.get("userId"),
+                session_type=request.arguments.get("sessionType"),
+                days=request.arguments.get("days", 30),
+            )
+            import json
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(analytics_result)}])
 
         else:
             raise HTTPException(status_code=404, detail=f"Tool not found: {request.name}")

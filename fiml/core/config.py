@@ -129,6 +129,14 @@ class Settings(BaseSettings):
     max_concurrent_tasks: int = 100
     task_result_ttl: int = 3600  # 1 hour
 
+    # Session Management Settings
+    session_default_ttl_hours: int = 24  # 24 hours default session lifetime
+    session_max_ttl_hours: int = 168  # 7 days maximum session lifetime
+    session_cleanup_interval_minutes: int = 60  # Run cleanup every hour
+    session_retention_days: int = 30  # Keep archived sessions for 30 days
+    session_max_queries_per_session: int = 1000  # Max queries per session
+    session_enable_analytics: bool = True  # Track session analytics
+
     @field_validator("fiml_env")
     @classmethod
     def validate_environment(cls, v: str) -> str:
