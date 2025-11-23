@@ -186,6 +186,7 @@ class SearchBySymbolResponse(BaseModel):
     task: TaskInfo
     disclaimer: str
     data_lineage: DataLineage
+    narrative: Optional[NarrativeSummary] = None  # Added for narrative generation
 
 
 class SearchByCoinResponse(BaseModel):
@@ -200,6 +201,7 @@ class SearchByCoinResponse(BaseModel):
     task: TaskInfo
     disclaimer: str
     data_lineage: DataLineage
+    narrative: Optional[NarrativeSummary] = None  # Added for narrative generation
 
 
 class ArbitrationPlan(BaseModel):
