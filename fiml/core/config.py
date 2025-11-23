@@ -143,6 +143,72 @@ class Settings(BaseSettings):
     session_max_queries_per_session: int = 1000  # Max queries per session
     session_enable_analytics: bool = True  # Track session analytics
 
+    # Worker Configuration for Production
+    worker_pool_size: int = 8  # Number of worker instances per type
+    worker_max_concurrent_tasks: int = 50  # Max concurrent tasks per worker
+    worker_task_timeout: int = 120  # Task timeout in seconds (2 minutes)
+    worker_retry_attempts: int = 3  # Number of retry attempts for failed tasks
+    worker_retry_delay: int = 5  # Delay between retries in seconds
+    worker_health_check_interval: int = 60  # Health check interval in seconds
+    worker_memory_limit_mb: int = 2048  # Memory limit per worker in MB
+    worker_cpu_limit: float = 2.0  # CPU cores limit per worker
+
+    # Individual Worker Enable/Disable Flags
+    enable_fundamentals_worker: bool = True
+    enable_technical_worker: bool = True
+    enable_macro_worker: bool = True
+    enable_sentiment_worker: bool = True
+    enable_correlation_worker: bool = True
+    enable_risk_worker: bool = True
+    enable_news_worker: bool = True
+    enable_options_worker: bool = True
+
+    # Worker Health Monitoring Thresholds
+    worker_circuit_breaker_threshold: int = 5  # Failures before opening circuit
+    worker_circuit_breaker_timeout: int = 60  # Seconds before trying recovery
+    worker_max_heartbeat_age: int = 120  # Max seconds since last heartbeat
+    worker_error_rate_threshold: float = 0.5  # Error rate threshold (0-1)
+
+    # Watchdog Configuration for Production
+    watchdog_global_enabled: bool = True  # Master switch for all watchdogs
+    watchdog_event_stream_enabled: bool = True  # Enable event streaming
+    watchdog_event_persistence: bool = True  # Persist events to Redis
+    watchdog_websocket_broadcast: bool = True  # Broadcast events via WebSocket
+    watchdog_max_events_in_memory: int = 1000  # Max events in circular buffer
+    watchdog_health_check_interval: int = 60  # Health check interval in seconds
+
+    # Watchdog Health Monitoring Thresholds
+    watchdog_consecutive_failure_threshold: int = 3  # Failures before marking unhealthy
+
+    # Individual Watchdog Enable/Disable Flags
+    enable_earnings_anomaly_watchdog: bool = True
+    enable_unusual_volume_watchdog: bool = True
+    enable_whale_movement_watchdog: bool = True
+    enable_funding_rate_watchdog: bool = True
+    enable_liquidity_drop_watchdog: bool = True
+    enable_correlation_breakdown_watchdog: bool = True
+    enable_exchange_outage_watchdog: bool = True
+    enable_price_anomaly_watchdog: bool = True
+
+    # Watchdog Check Intervals (in seconds)
+    earnings_anomaly_check_interval: int = 300  # 5 minutes
+    unusual_volume_check_interval: int = 60  # 1 minute
+    whale_movement_check_interval: int = 120  # 2 minutes
+    funding_rate_check_interval: int = 300  # 5 minutes
+    liquidity_drop_check_interval: int = 180  # 3 minutes
+    correlation_breakdown_check_interval: int = 600  # 10 minutes
+    exchange_outage_check_interval: int = 60  # 1 minute
+    price_anomaly_check_interval: int = 30  # 30 seconds
+
+    # Watchdog Alert Thresholds
+    earnings_surprise_threshold_pct: float = 10.0  # Earnings surprise threshold percentage
+    unusual_volume_multiplier: float = 3.0  # Volume spike threshold (3x average)
+    whale_movement_min_usd: float = 1000000.0  # Minimum whale transfer amount in USD
+    funding_rate_threshold_pct: float = 0.1  # Funding rate threshold percentage
+    liquidity_drop_threshold_pct: float = 50.0  # Liquidity drop threshold percentage
+    correlation_change_threshold: float = 0.5  # Correlation change threshold
+    price_anomaly_threshold_pct: float = 5.0  # Price movement threshold percentage
+
     @field_validator("fiml_env")
     @classmethod
     def validate_environment(cls, v: str) -> str:
