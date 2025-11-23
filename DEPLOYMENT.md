@@ -1,321 +1,408 @@
-# FIML Deployment Guide
+# Deployment Guide
 
-## Quick Start (Development)
+This guide covers deploying FIML in various environments from development to production.
 
-### Prerequisites
-- Docker & Docker Compose
-- Python 3.11+
-- Git
+## Development Deployment
 
-### 1. Clone and Setup
+### Quick Start
+
+See [Installation Guide](../getting-started/installation.md) for development setup.
 
 ```bash
 git clone https://github.com/kiarashplusplus/FIML.git
 cd FIML
-cp .env.example .env
-# Edit .env with your API keys
-```
-
-### 2. Start Services
-
-```bash
-# Build and start all services
-make build
-make up
-
-# Verify health
-curl http://localhost:8000/health
-```
-
-### 3. Test the API
-
-```bash
-# Using curl
-curl -X POST http://localhost:8000/mcp/tools/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "search-by-symbol",
-    "arguments": {
-      "symbol": "TSLA",
-      "market": "US",
-      "depth": "standard"
-    }
-  }'
-
-# Using Python
-python examples/basic_usage.py
+./quickstart.sh
 ```
 
 ## Production Deployment
 
-### Option 1: Docker Compose (Recommended for Small/Medium Scale)
+### Docker Compose (Small to Medium Scale)
 
-1. **Update environment variables**
+**Best for**: Single server deployments, staging environments
+
+#### 1. Prepare Environment
+
 ```bash
+# Clone repository
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML
+
+# Create production environment file
 cp .env.example .env.production
-# Edit .env.production with production settings
 ```
 
-2. **Build production image**
+Edit `.env.production` with production settings:
+
 ```bash
+ENVIRONMENT=production
+LOG_LEVEL=WARNING
+SERVER_WORKERS=8
+
+# Use strong passwords
+POSTGRES_PASSWORD=your_strong_password
+REDIS_PASSWORD=your_redis_password
+
+# Add monitoring
+SENTRY_DSN=your_sentry_dsn
+```
+
+#### 2. Build and Deploy
+
+```bash
+# Build production images
 docker-compose -f docker-compose.yml build
-```
 
-3. **Deploy**
-```bash
+# Start services
 docker-compose -f docker-compose.yml up -d
+
+# Verify deployment
+curl http://localhost:8000/health
 ```
 
-4. **Configure reverse proxy (Nginx)**
+#### 3. Configure Reverse Proxy
+
+Use Nginx or Caddy for SSL termination and load balancing.
+
+**Nginx Example:**
+
 ```nginx
 server {
     listen 80;
     server_name fiml.yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name fiml.yourdomain.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
 
     location / {
         proxy_pass http://localhost:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # WebSocket support
+    location /ws {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
     }
 }
 ```
 
-### Option 2: Kubernetes (Recommended for Large Scale)
+### Kubernetes (Large Scale)
 
-1. **Build and push image**
-```bash
-docker build -t your-registry/fiml:latest .
-docker push your-registry/fiml:latest
-```
+**Best for**: Production clusters, high availability, auto-scaling
 
-2. **Create namespace**
+#### Prerequisites
+
+- Kubernetes cluster (v1.25+)
+- kubectl configured
+- Helm 3.x
+
+#### 1. Create Namespace
+
 ```bash
 kubectl create namespace fiml
 ```
 
-3. **Deploy manifests**
+#### 2. Configure Secrets
+
+```bash
+kubectl create secret generic fiml-secrets \
+  --from-literal=postgres-password=your_password \
+  --from-literal=redis-password=your_password \
+  --from-literal=alpha-vantage-key=your_key \
+  --from-literal=fmp-key=your_key \
+  -n fiml
+```
+
+#### 3. Deploy with Helm
+
+```bash
+# Add FIML Helm repository (if available)
+helm repo add fiml https://charts.fiml.ai
+helm repo update
+
+# Install
+helm install fiml fiml/fiml \
+  --namespace fiml \
+  --values values-production.yaml
+```
+
+Or deploy using kubectl:
+
 ```bash
 kubectl apply -f k8s/
 ```
 
-4. **Verify deployment**
+#### 4. Verify Deployment
+
 ```bash
 kubectl get pods -n fiml
-kubectl get svc -n fiml
+kubectl logs -f deployment/fiml-api -n fiml
 ```
 
-### Option 3: Cloud Platforms
+## Cloud Provider Deployments
 
-#### AWS (ECS/EKS)
+### AWS
+
+#### ECS Deployment
+
+Use the provided CloudFormation template:
+
 ```bash
-# Build and push to ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin xxx.dkr.ecr.us-east-1.amazonaws.com
-docker build -t fiml:latest .
-docker tag fiml:latest xxx.dkr.ecr.us-east-1.amazonaws.com/fiml:latest
-docker push xxx.dkr.ecr.us-east-1.amazonaws.com/fiml:latest
+aws cloudformation create-stack \
+  --stack-name fiml-production \
+  --template-body file://cloudformation/ecs-deployment.yaml \
+  --parameters file://cloudformation/parameters.json
 ```
 
-#### Google Cloud (GKE)
+#### EKS Deployment
+
+Deploy to Amazon EKS:
+
 ```bash
-# Build and push to GCR
-gcloud builds submit --tag gcr.io/PROJECT_ID/fiml:latest
-gcloud run deploy fiml --image gcr.io/PROJECT_ID/fiml:latest --platform managed
+# Create EKS cluster
+eksctl create cluster -f eks-cluster.yaml
+
+# Deploy application
+kubectl apply -f k8s/
 ```
 
-## Environment Configuration
+### Google Cloud Platform
 
-### Required Environment Variables
+#### GKE Deployment
 
 ```bash
-# Server
-FIML_ENV=production
-FIML_HOST=0.0.0.0
-FIML_PORT=8000
+# Create GKE cluster
+gcloud container clusters create fiml-cluster \
+  --num-nodes=3 \
+  --machine-type=n1-standard-2
 
-# Database
+# Deploy
+kubectl apply -f k8s/
+```
+
+### Azure
+
+#### AKS Deployment
+
+```bash
+# Create AKS cluster
+az aks create \
+  --resource-group fiml-rg \
+  --name fiml-cluster \
+  --node-count 3
+
+# Deploy
+kubectl apply -f k8s/
+```
+
+## Database Setup
+
+### PostgreSQL
+
+#### Production Configuration
+
+```bash
+# In .env.production
 POSTGRES_HOST=your-postgres-host
+POSTGRES_PORT=5432
 POSTGRES_DB=fiml
 POSTGRES_USER=fiml
-POSTGRES_PASSWORD=<secure-password>
+POSTGRES_PASSWORD=strong_password
 
-# Cache
-REDIS_HOST=your-redis-host
-REDIS_PASSWORD=<secure-password>
-
-# API Keys
-ALPHA_VANTAGE_API_KEY=your-key
-FMP_API_KEY=your-key
+# Connection pooling
+DATABASE_POOL_SIZE=20
+DATABASE_MAX_OVERFLOW=10
 ```
 
-### Security Considerations
+#### Managed Database Services
 
-1. **Change default passwords**
-2. **Use secrets management** (AWS Secrets Manager, HashiCorp Vault, etc.)
-3. **Enable HTTPS** (use Let's Encrypt or cloud provider certificates)
-4. **Configure firewall rules**
-5. **Enable rate limiting**
-6. **Set up monitoring and alerts**
+- **AWS RDS**: Use PostgreSQL 14+ with TimescaleDB extension
+- **Google Cloud SQL**: PostgreSQL with high availability
+- **Azure Database**: PostgreSQL flexible server
 
-## Scaling
+### Redis
+
+#### Production Configuration
+
+```bash
+# In .env.production
+REDIS_HOST=your-redis-host
+REDIS_PORT=6379
+REDIS_PASSWORD=strong_password
+REDIS_MAX_CONNECTIONS=100
+```
+
+#### Managed Redis Services
+
+- **AWS ElastiCache**: Redis cluster mode
+- **Google Memorystore**: Redis with HA
+- **Azure Cache**: Redis premium tier
+
+## Monitoring Setup
+
+### Prometheus
+
+Already configured in docker-compose.yml:
+
+```yaml
+prometheus:
+  image: prom/prometheus
+  ports:
+    - "9091:9090"
+  volumes:
+    - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+```
+
+### Grafana
+
+Access dashboards at http://localhost:3000:
+
+Default credentials: admin/admin
+
+Import provided dashboards:
+- FIML API Metrics
+- Cache Performance
+- Provider Health
+
+### Sentry
+
+Add to `.env.production`:
+
+```bash
+SENTRY_DSN=your_sentry_dsn
+SENTRY_ENVIRONMENT=production
+SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+## Scaling Considerations
 
 ### Horizontal Scaling
 
-Scale the MCP server:
-```bash
-docker-compose up -d --scale fiml-server=3
-```
+Scale API instances:
 
-Or in Kubernetes:
 ```bash
-kubectl scale deployment fiml-server --replicas=5 -n fiml
+# Docker Compose
+docker-compose up -d --scale api=4
+
+# Kubernetes
+kubectl scale deployment fiml-api --replicas=4 -n fiml
 ```
 
 ### Vertical Scaling
 
-Update resource limits in `docker-compose.yml`:
+Adjust resource limits:
+
 ```yaml
+# docker-compose.yml
 services:
-  fiml-server:
+  api:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 4G
-        reservations:
-          cpus: '1'
-          memory: 2G
+          cpus: '4.0'
+          memory: 8G
 ```
 
-## Monitoring
+### Cache Scaling
 
-### Access Dashboards
+- **Redis**: Use Redis Cluster for large datasets
+- **PostgreSQL**: Enable read replicas for L2 cache
 
-- **Grafana**: http://your-domain:3000 (admin/admin)
-- **Prometheus**: http://your-domain:9090
-- **Ray Dashboard**: http://your-domain:8265
+## Backup & Recovery
 
-### Key Metrics to Monitor
-
-- Request rate and latency
-- Error rate
-- Provider health scores
-- Cache hit rate
-- Database connections
-- Memory and CPU usage
-
-### Alerting
-
-Configure alerts in `config/prometheus/alerts.yml`:
-```yaml
-groups:
-  - name: fiml
-    rules:
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status="500"}[5m]) > 0.05
-        for: 5m
-        annotations:
-          summary: "High error rate detected"
-```
-
-## Backup and Recovery
-
-### Database Backup
+### Database Backups
 
 ```bash
-# Backup PostgreSQL
-docker-compose exec postgres pg_dump -U fiml fiml > backup_$(date +%Y%m%d).sql
+# PostgreSQL backup
+docker-compose exec postgres pg_dump -U fiml fiml > backup.sql
 
 # Restore
-docker-compose exec -T postgres psql -U fiml fiml < backup_20250101.sql
+docker-compose exec -T postgres psql -U fiml fiml < backup.sql
 ```
 
-### Redis Backup
+### Automated Backups
 
-```bash
-# Redis automatically persists to disk (AOF enabled)
-# Copy dump.rdb and appendonly.aof files
-```
+Configure in cloud provider:
+- AWS RDS: Automated snapshots
+- Google Cloud SQL: Automated backups
+- Azure: Automated backup policy
 
-## Troubleshooting
+## Security Checklist
 
-### Check logs
-```bash
-make logs
-# or
-docker-compose logs -f fiml-server
-```
+- [ ] Use strong passwords for all services
+- [ ] Enable SSL/TLS for all connections
+- [ ] Configure firewall rules
+- [ ] Enable API authentication
+- [ ] Set up rate limiting
+- [ ] Enable audit logging
+- [ ] Regular security updates
+- [ ] Secrets management (Vault, AWS Secrets Manager)
+- [ ] Network isolation
+- [ ] Enable CORS properly
 
-### Check service health
+## Health Checks
+
+### API Health
+
 ```bash
 curl http://localhost:8000/health
 ```
 
-### Database connection issues
-```bash
-# Test PostgreSQL connection
-docker-compose exec postgres psql -U fiml -d fiml -c "SELECT 1;"
-```
-
-### Redis connection issues
-```bash
-# Test Redis connection
-docker-compose exec redis redis-cli ping
-```
-
-## Performance Tuning
-
-### Database Optimization
-
-```sql
--- Analyze query performance
-EXPLAIN ANALYZE SELECT * FROM price_cache WHERE asset_id = 1;
-
--- Vacuum database
-VACUUM ANALYZE;
-```
-
-### Cache Tuning
-
-Adjust TTL values in `.env`:
-```bash
-CACHE_TTL_PRICE=10        # 10 seconds for price data
-CACHE_TTL_FUNDAMENTALS=3600  # 1 hour for fundamentals
-```
-
-### Ray Worker Configuration
-
-Scale worker nodes:
-```yaml
-ray-worker:
-  deploy:
-    replicas: 4  # Increase for more parallel processing
-```
-
-## Maintenance
-
-### Update Dependencies
+### Database Health
 
 ```bash
-pip install --upgrade -r requirements.txt
+curl http://localhost:8000/health/db
 ```
 
-### Rotate API Keys
-
-1. Update `.env` with new keys
-2. Restart services:
-```bash
-docker-compose restart fiml-server
-```
-
-### Clean Up Old Data
+### Cache Health
 
 ```bash
-# Clean old task results (older than 7 days)
-docker-compose exec postgres psql -U fiml -d fiml -c "DELETE FROM tasks WHERE created_at < NOW() - INTERVAL '7 days' AND status = 'completed';"
+curl http://localhost:8000/health/cache
 ```
 
-## Support
+## Troubleshooting
 
-- **Documentation**: [docs.fiml.ai](https://docs.fiml.ai)
-- **GitHub Issues**: [github.com/kiarashplusplus/FIML/issues](https://github.com/kiarashplusplus/FIML/issues)
-- **Discord**: [Join community](https://discord.gg/fiml)
+### Container Logs
+
+```bash
+# Docker Compose
+docker-compose logs -f api
+
+# Kubernetes
+kubectl logs -f deployment/fiml-api -n fiml
+```
+
+### Database Connection Issues
+
+Check connection string and credentials:
+
+```bash
+docker-compose exec api python -c "from fiml.db import test_connection; test_connection()"
+```
+
+### Memory Issues
+
+Monitor memory usage:
+
+```bash
+docker stats
+```
+
+Adjust limits if needed in docker-compose.yml.
+
+## Next Steps
+
+- Set up [Monitoring](../architecture/overview.md#monitoring)
+- Configure [CI/CD Pipeline](https://github.com/kiarashplusplus/FIML/blob/main/.github/workflows/ci.yml)
+- Review [Security Best Practices](../architecture/overview.md#security)

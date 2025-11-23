@@ -86,6 +86,10 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      base_path: ['docs', '.']
+      check_paths: true
+      restrict_base_path: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -105,9 +109,10 @@ extra:
       link: https://github.com/kiarashplusplus/FIML
     - icon: fontawesome/brands/discord
       link: https://discord.gg/fiml
-  analytics:
-    provider: google
-    property: G-XXXXXXXXXX
+  # Uncomment and configure Google Analytics if needed
+  # analytics:
+  #   provider: google
+  #   property: G-XXXXXXXXXX
 
 extra_css:
   - stylesheets/extra.css
@@ -143,6 +148,7 @@ nav:
     - Testing: development/testing.md
     - Deployment: development/deployment.md
     - Technical Debt: development/technical-debt.md
+    - GitHub Pages Setup: development/github-pages-setup.md
   - Project:
     - Roadmap: project/roadmap.md
     - Status: project/status.md
