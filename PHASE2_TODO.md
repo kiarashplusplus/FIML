@@ -366,10 +366,22 @@ Success criteria:
 ```
 
 #### Files to Modify/Create
-- **Modify**: `fiml/agents/workers.py` (expand from 257 to 800-1000 lines)
+- **Refactor**: `fiml/agents/workers.py` → split into separate modules:
+  - `fiml/agents/workers/__init__.py`
+  - `fiml/agents/workers/fundamentals.py` (150-200 lines)
+  - `fiml/agents/workers/technical.py` (150-200 lines)
+  - `fiml/agents/workers/macro.py` (100-150 lines)
+  - `fiml/agents/workers/sentiment.py` (150-200 lines)
+  - `fiml/agents/workers/correlation.py` (100-150 lines)
+  - `fiml/agents/workers/risk.py` (150-200 lines)
+  - `fiml/agents/workers/news.py` (100-150 lines)
 - **Create**: `fiml/agents/calculators.py` (financial calculations, 300-400 lines)
-- **Create**: `tests/test_enhanced_workers.py` (300-400 lines)
+- **Create**: `tests/workers/test_fundamentals.py` (separate test per worker)
+- **Create**: `tests/workers/test_technical.py` 
+- **Create**: `tests/workers/test_enhanced_workers.py` (integration tests)
 - **Modify**: `tests/test_agents.py` (expand coverage)
+
+**Note**: Splitting workers into separate files improves maintainability and follows single responsibility principle.
 
 #### Success Criteria
 - [ ] All workers fetch real data from providers
@@ -505,12 +517,24 @@ Success criteria:
 #### Files to Create/Modify
 - **Create**: `fiml/watchdog/__init__.py`
 - **Create**: `fiml/watchdog/base.py` (150-200 lines)
-- **Create**: `fiml/watchdog/detectors.py` (800-1000 lines, all watchdogs)
+- **Create**: `fiml/watchdog/detectors/__init__.py`
+- **Create**: `fiml/watchdog/detectors/earnings.py` (100-120 lines)
+- **Create**: `fiml/watchdog/detectors/volume.py` (100-120 lines)
+- **Create**: `fiml/watchdog/detectors/whale.py` (120-150 lines)
+- **Create**: `fiml/watchdog/detectors/funding.py` (100-120 lines)
+- **Create**: `fiml/watchdog/detectors/liquidity.py` (120-150 lines)
+- **Create**: `fiml/watchdog/detectors/correlation.py` (150-180 lines)
+- **Create**: `fiml/watchdog/detectors/exchange.py` (100-120 lines)
+- **Create**: `fiml/watchdog/detectors/price.py` (100-120 lines)
 - **Create**: `fiml/watchdog/events.py` (200-250 lines)
 - **Create**: `fiml/watchdog/orchestrator.py` (250-300 lines)
 - **Create**: `fiml/watchdog/models.py` (100-150 lines)
-- **Create**: `tests/test_watchdog.py` (400-500 lines)
+- **Create**: `tests/watchdog/test_earnings_detector.py` (separate test per detector)
+- **Create**: `tests/watchdog/test_volume_detector.py`
+- **Create**: `tests/watchdog/test_watchdog_integration.py` (integration tests)
 - **Modify**: `fiml/server.py` (integrate watchdog startup)
+
+**Note**: Splitting detectors into separate files improves maintainability and allows independent testing/deployment.
 
 #### Success Criteria
 - [ ] All 8 watchdogs detect their target anomalies
@@ -683,11 +707,16 @@ Enhance MCP tools in fiml/mcp/tools.py to include narrative generation:
    - Support re-generation with different params
    - Allow custom narrative focus areas
 
-4. Add narrative caching:
+4. Add narrative caching with dynamic TTL:
    - Cache generated narratives in L1 cache
-   - TTL: 5 minutes for market narratives
-   - Invalidate on new analysis data
+   - Dynamic TTL based on market conditions:
+     * Pre-market/After-hours: 30 minutes (less volatility)
+     * Market hours, low volatility: 15 minutes
+     * Market hours, high volatility: 5 minutes
+     * Crypto (24/7): 10 minutes baseline, adjust for volatility
+   - Invalidate on new analysis data or significant price movement (>3%)
    - Key: f"narrative:{symbol}:{language}:{expertise}"
+   - Monitor cache efficiency and adjust TTLs based on hit rates
 
 5. Update tool schemas:
    - Add language parameter to existing tools
