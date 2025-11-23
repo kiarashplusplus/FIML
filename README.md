@@ -4,7 +4,7 @@
 
 > 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Test Results](TEST_REPORT.md) | [Technical Evaluation](TECHNICAL_STRATEGIC_EVALUATION.md)
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 Planning 📋 | **Version**: 0.1.1 | **Tests**: 100% pass rate | **Coverage**: [![codecov](https://codecov.io/gh/OWNER/REPO/graph/badge.svg)](https://codecov.io/gh/OWNER/REPO)
+> **Current State**: Phase 1 Complete ✅ | Phase 2 Planning 📋 | **Version**: 0.1.1 | **Tests**: 100% pass rate | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
 
 
 > 📊 **Quick Links**:
