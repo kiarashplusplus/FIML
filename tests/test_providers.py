@@ -3,6 +3,7 @@ Tests for Providers
 """
 
 import pytest
+
 from fiml.core.models import Asset, AssetType, DataType, Market
 from fiml.providers.mock_provider import MockProvider
 from fiml.providers.yahoo_finance import YahooFinanceProvider

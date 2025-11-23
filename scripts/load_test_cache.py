@@ -9,15 +9,13 @@ Tests cache system under heavy load:
 """
 
 import asyncio
+import statistics
 import time
 from datetime import datetime, timezone
-from typing import List, Dict, Any
-import statistics
+from typing import Any, Dict, List
 
 from fiml.cache.l1_cache import l1_cache
-from fiml.cache.manager import cache_manager
 from fiml.cache.utils import calculate_percentile
-from fiml.core.models import Asset, AssetType, Market
 
 
 class CacheLoadTester:
@@ -27,17 +25,17 @@ class CacheLoadTester:
         self.results: List[Dict[str, Any]] = []
 
     async def test_concurrent_reads(
-        self, 
+        self,
         num_requests: int = 1000,
         num_unique_keys: int = 100
     ) -> Dict[str, Any]:
         """
         Test concurrent read performance
-        
+
         Args:
             num_requests: Total number of concurrent requests
             num_unique_keys: Number of unique keys (affects hit rate)
-            
+
         Returns:
             Test results with latency and hit rate metrics
         """
@@ -74,7 +72,7 @@ class CacheLoadTester:
         # Analyze results
         latencies = [r["latency_ms"] for r in results]
         hits = sum(1 for r in results if r["hit"])
-        
+
         return {
             "num_requests": num_requests,
             "num_unique_keys": num_unique_keys,
@@ -91,15 +89,15 @@ class CacheLoadTester:
         }
 
     async def test_concurrent_writes(
-        self, 
+        self,
         num_requests: int = 1000
     ) -> Dict[str, Any]:
         """
         Test concurrent write performance
-        
+
         Args:
             num_requests: Number of concurrent write operations
-            
+
         Returns:
             Test results with write latency metrics
         """
@@ -146,11 +144,11 @@ class CacheLoadTester:
     ) -> Dict[str, Any]:
         """
         Test mixed read/write workload
-        
+
         Args:
             num_requests: Total number of requests
             read_ratio: Ratio of reads to total requests (0.0-1.0)
-            
+
         Returns:
             Test results for mixed workload
         """
@@ -174,7 +172,7 @@ class CacheLoadTester:
         for i in range(num_reads):
             key_id = i % 100
             tasks.append(self._timed_get(f"mixed_key_{key_id}"))
-        
+
         for i in range(num_writes):
             tasks.append(self._timed_set(
                 f"mixed_key_{i % 100}",
@@ -221,7 +219,7 @@ class CacheLoadTester:
         start = time.perf_counter()
         value = await l1_cache.get(key)
         latency_ms = (time.perf_counter() - start) * 1000
-        
+
         return {
             "operation": "get",
             "key": key,
@@ -230,16 +228,16 @@ class CacheLoadTester:
         }
 
     async def _timed_set(
-        self, 
-        key: str, 
-        value: Any, 
+        self,
+        key: str,
+        value: Any,
         ttl_seconds: int
     ) -> Dict[str, Any]:
         """Execute timed SET operation"""
         start = time.perf_counter()
         success = await l1_cache.set(key, value, ttl_seconds)
         latency_ms = (time.perf_counter() - start) * 1000
-        
+
         return {
             "operation": "set",
             "key": key,
@@ -252,7 +250,7 @@ class CacheLoadTester:
         print(f"\n{'='*60}")
         print("LOAD TEST RESULTS")
         print(f"{'='*60}")
-        
+
         for key, value in results.items():
             if isinstance(value, dict):
                 print(f"\n{key.upper()}:")
@@ -265,7 +263,7 @@ class CacheLoadTester:
                 print(f"{key}: {value:.2f}")
             else:
                 print(f"{key}: {value}")
-        
+
         print(f"{'='*60}\n")
 
 
@@ -273,7 +271,7 @@ async def main():
     """Run load tests"""
     print("Cache Load Testing Suite")
     print("="*60)
-    
+
     # Initialize cache
     print("Initializing cache...")
     try:
@@ -288,7 +286,7 @@ async def main():
     try:
         # Test 1: 1000 concurrent reads
         results = await tester.test_concurrent_reads(
-            num_requests=1000, 
+            num_requests=1000,
             num_unique_keys=100
         )
         tester.print_results(results)
@@ -299,7 +297,7 @@ async def main():
 
         # Test 3: Mixed workload
         results = await tester.test_mixed_workload(
-            num_requests=1000, 
+            num_requests=1000,
             read_ratio=0.8
         )
         tester.print_results(results)
@@ -309,7 +307,7 @@ async def main():
         print("STRESS TEST: 5000 concurrent requests")
         print("="*60)
         results = await tester.test_concurrent_reads(
-            num_requests=5000, 
+            num_requests=5000,
             num_unique_keys=500
         )
         tester.print_results(results)

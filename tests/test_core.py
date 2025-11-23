@@ -2,21 +2,29 @@
 Tests for Core modules - models, config, exceptions, logging
 """
 
-import pytest
-from datetime import datetime
-from fiml.core.models import (
-    Asset, AssetType, Market, DataType, AnalysisDepth, TaskStatus,
-    ProviderScore, DataLineage, CachedData, StructuralData, TaskInfo,
-    ComplianceInfo, NarrativeSummary, SearchBySymbolResponse,
-    SearchByCoinResponse, ArbitrationPlan, ProviderHealth
-)
 from fiml.core.config import Settings
 from fiml.core.exceptions import (
-    FIMLException, ProviderError, NoProviderAvailableError,
-    DataQualityError, ArbitrationError, FKDSLParseError,
-    FKDSLExecutionError, CacheError, ComplianceError
+    ArbitrationError,
+    CacheError,
+    ComplianceError,
+    DataQualityError,
+    FIMLException,
+    FKDSLExecutionError,
+    FKDSLParseError,
+    NoProviderAvailableError,
+    ProviderError,
 )
 from fiml.core.logging import get_logger
+from fiml.core.models import (
+    ArbitrationPlan,
+    Asset,
+    AssetType,
+    DataLineage,
+    Market,
+    ProviderScore,
+    TaskInfo,
+    TaskStatus,
+)
 
 
 class TestModels:
@@ -163,7 +171,7 @@ class TestLogging:
         """Test getting a logger"""
         logger = get_logger("test_module")
         assert logger is not None
-        
+
         # Test logging methods exist
         assert hasattr(logger, 'info')
         assert hasattr(logger, 'error')

@@ -3,10 +3,10 @@ Additional tests for DSL components
 """
 
 import pytest
-from fiml.dsl.parser import fk_dsl_parser, FKDSLParser
-from fiml.dsl.planner import execution_planner, ExecutionPlanner, ExecutionTask, TaskType
+
 from fiml.dsl.executor import fk_dsl_executor
-from fiml.core.exceptions import FKDSLParseError
+from fiml.dsl.parser import fk_dsl_parser
+from fiml.dsl.planner import ExecutionTask, TaskType, execution_planner
 
 
 class TestDSLParserAdvanced:
@@ -16,7 +16,7 @@ class TestDSLParserAdvanced:
         """Test parsing TRACK query"""
         query = "TRACK AAPL WHEN PRICE > 150"
         parsed = fk_dsl_parser.parse(query)
-        
+
         assert parsed is not None
         assert parsed["type"] == "TRACK"
 
@@ -24,7 +24,7 @@ class TestDSLParserAdvanced:
         """Test parsing with market specification"""
         query = "GET PRICE FOR AAPL"
         parsed = fk_dsl_parser.parse(query)
-        
+
         assert parsed is not None
         assert parsed["type"] == "GET"
 
@@ -32,7 +32,7 @@ class TestDSLParserAdvanced:
         """Test parsing queries with technical indicators"""
         query = "FIND AAPL WITH RSI < 30"
         parsed = fk_dsl_parser.parse(query)
-        
+
         assert parsed is not None
         assert "args" in parsed
 
@@ -50,7 +50,7 @@ class TestDSLParserAdvanced:
         """Test parsing multiple conditions"""
         query = "FIND AAPL WITH PRICE > 150 AND VOLUME > 1000000"
         parsed = fk_dsl_parser.parse(query)
-        
+
         assert parsed is not None
         # Should have multiple conditions
         conditions = parsed["args"][1]
@@ -65,7 +65,7 @@ class TestExecutionPlannerAdvanced:
         query = "COMPARE AAPL, MSFT BY PE, EPS"
         parsed = fk_dsl_parser.parse(query)
         plan = execution_planner.plan(parsed, query)
-        
+
         assert plan is not None
         assert plan.query == query
 
@@ -74,22 +74,22 @@ class TestExecutionPlannerAdvanced:
         query = "TRACK AAPL WHEN PRICE > 150"
         parsed = fk_dsl_parser.parse(query)
         plan = execution_planner.plan(parsed, query)
-        
+
         assert plan is not None
         # Even if no tasks are created, plan should exist
         assert plan.query == query
 
     def test_execution_plan_add_task(self):
         """Test adding tasks to execution plan"""
-        from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType
-        
+        from fiml.dsl.planner import ExecutionPlan
+
         plan = ExecutionPlan(query="test")
-        
+
         task = ExecutionTask(
             type=TaskType.FETCH_PRICE,
             params={"symbol": "AAPL"}
         )
-        
+
         task_id = plan.add_task(task)
         assert task_id is not None
         assert len(plan.tasks) == 1
@@ -97,54 +97,54 @@ class TestExecutionPlannerAdvanced:
 
     def test_execution_plan_get_task(self):
         """Test getting task from plan"""
-        from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType
-        
+        from fiml.dsl.planner import ExecutionPlan
+
         plan = ExecutionPlan(query="test")
-        
+
         task = ExecutionTask(
             type=TaskType.FETCH_PRICE,
             params={"symbol": "AAPL"}
         )
-        
+
         task_id = plan.add_task(task)
         retrieved = plan.get_task(task_id)
-        
+
         assert retrieved is not None
         assert retrieved.id == task_id
 
     def test_execution_plan_get_executable_tasks(self):
         """Test getting executable tasks"""
-        from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType
-        
+        from fiml.dsl.planner import ExecutionPlan
+
         plan = ExecutionPlan(query="test")
-        
+
         # Add tasks with dependencies
         task1 = ExecutionTask(type=TaskType.FETCH_PRICE)
         task1_id = plan.add_task(task1)
-        
+
         task2 = ExecutionTask(
             type=TaskType.COMPUTE_TECHNICAL,
             dependencies=[task1_id]
         )
         plan.add_task(task2)
-        
+
         # Initially, only task1 is executable
         executable = plan.get_executable_tasks(set())
         assert len(executable) == 1
         assert executable[0].id == task1_id
-        
+
         # After task1 completes, task2 is executable
         executable = plan.get_executable_tasks({task1_id})
         assert len(executable) == 1
 
     def test_execution_plan_to_dict(self):
         """Test converting plan to dict"""
-        from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType
-        
+        from fiml.dsl.planner import ExecutionPlan
+
         plan = ExecutionPlan(query="test")
         task = ExecutionTask(type=TaskType.FETCH_PRICE)
         plan.add_task(task)
-        
+
         plan_dict = plan.to_dict()
         assert "query" in plan_dict
         assert "tasks" in plan_dict
@@ -157,12 +157,12 @@ class TestDSLExecutorAdvanced:
     async def test_execute_empty_plan(self):
         """Test executing an empty plan"""
         from fiml.dsl.planner import ExecutionPlan
-        
+
         plan = ExecutionPlan(query="test")
-        
+
         # Execute empty plan
         result = await fk_dsl_executor.execute_sync(plan)
-        
+
         # Should complete without errors
         assert result is not None
 
@@ -178,9 +178,9 @@ class TestDSLExecutorAdvanced:
         query = "GET PRICE FOR AAPL"
         parsed = fk_dsl_parser.parse(query)
         plan = execution_planner.plan(parsed, query)
-        
+
         # Execute the plan
         result = await fk_dsl_executor.execute_sync(plan)
-        
+
         # Should return a result
         assert result is not None

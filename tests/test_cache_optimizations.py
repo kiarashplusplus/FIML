@@ -2,12 +2,11 @@
 Tests for cache optimization features
 """
 
+
 import pytest
-from datetime import datetime, timezone
 
 from fiml.cache.l1_cache import L1Cache
 from fiml.cache.manager import CacheManager
-from fiml.core.models import Asset, AssetType, Market, DataType
 
 
 class TestL1CacheBatchOperations:
@@ -15,14 +14,14 @@ class TestL1CacheBatchOperations:
 
     def test_get_many_empty_list(self):
         """Test get_many with empty list"""
-        cache = L1Cache()
+        L1Cache()
         # Should return empty list without Redis connection
         # This tests the logic without needing Redis running
         assert True  # Placeholder
 
     def test_set_many_empty_list(self):
         """Test set_many with empty list"""
-        cache = L1Cache()
+        L1Cache()
         # Should return 0 without Redis connection
         # This tests the logic without needing Redis running
         assert True  # Placeholder
@@ -30,11 +29,11 @@ class TestL1CacheBatchOperations:
     def test_batch_operations_logic(self):
         """Test batch operation methods exist and have correct signatures"""
         cache = L1Cache()
-        
+
         # Verify methods exist
         assert hasattr(cache, 'get_many')
         assert hasattr(cache, 'set_many')
-        
+
         # Verify they're callable
         assert callable(cache.get_many)
         assert callable(cache.set_many)
@@ -47,7 +46,7 @@ class TestCacheManagerBatchOperations:
     async def test_get_prices_batch_logic(self):
         """Test batch price retrieval logic"""
         manager = CacheManager()
-        
+
         # Verify method exists
         assert hasattr(manager, 'get_prices_batch')
         assert callable(manager.get_prices_batch)
@@ -56,7 +55,7 @@ class TestCacheManagerBatchOperations:
     async def test_set_prices_batch_logic(self):
         """Test batch price setting logic"""
         manager = CacheManager()
-        
+
         # Verify method exists
         assert hasattr(manager, 'set_prices_batch')
         assert callable(manager.set_prices_batch)
@@ -64,7 +63,7 @@ class TestCacheManagerBatchOperations:
     def test_cache_manager_has_batch_methods(self):
         """Verify cache manager has batch optimization methods"""
         manager = CacheManager()
-        
+
         # Check that batch methods exist
         assert hasattr(manager, 'get_prices_batch')
         assert hasattr(manager, 'set_prices_batch')

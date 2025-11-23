@@ -2,7 +2,6 @@
 Performance benchmarks for FK-DSL Parser
 """
 
-import pytest
 from fiml.dsl.parser import FKDSLParser
 
 
@@ -13,10 +12,10 @@ class TestDSLBenchmarks:
         """Benchmark parsing a simple GET query"""
         parser = FKDSLParser()
         query = "GET PRICE FOR AAPL"
-        
+
         def parse_query():
             return parser.parse(query)
-        
+
         result = benchmark(parse_query)
         assert result is not None
 
@@ -24,10 +23,10 @@ class TestDSLBenchmarks:
         """Benchmark parsing an ANALYZE query"""
         parser = FKDSLParser()
         query = "ANALYZE AAPL FOR TECHNICALS"
-        
+
         def parse_query():
             return parser.parse(query)
-        
+
         result = benchmark(parse_query)
         assert result is not None
 
@@ -35,10 +34,10 @@ class TestDSLBenchmarks:
         """Benchmark parsing a COMPARE query"""
         parser = FKDSLParser()
         query = "COMPARE AAPL, TSLA BY PRICE, VOLUME"
-        
+
         def parse_query():
             return parser.parse(query)
-        
+
         result = benchmark(parse_query)
         assert result is not None
 
@@ -46,10 +45,10 @@ class TestDSLBenchmarks:
         """Benchmark parsing a FIND query with conditions"""
         parser = FKDSLParser()
         query = "FIND AAPL WITH PRICE > 100"
-        
+
         def parse_query():
             return parser.parse(query)
-        
+
         result = benchmark(parse_query)
         assert result is not None
 
@@ -57,19 +56,19 @@ class TestDSLBenchmarks:
         """Benchmark parsing a TRACK query"""
         parser = FKDSLParser()
         query = "TRACK AAPL WHEN PRICE > 150"
-        
+
         def parse_query():
             return parser.parse(query)
-        
+
         result = benchmark(parse_query)
         assert result is not None
 
     def test_parser_initialization(self, benchmark):
         """Benchmark parser initialization overhead"""
-        
+
         def init_parser():
             return FKDSLParser()
-        
+
         result = benchmark(init_parser)
         assert result is not None
 
@@ -82,7 +81,7 @@ class TestDSLBenchmarks:
             "FIND AAPL WITH PRICE > 100",
             "TRACK AAPL WHEN VOLUME > 1000000",
         ]
-        
+
         def parse_multiple():
             # Parser creation included to measure total overhead
             parser = FKDSLParser()
@@ -90,7 +89,7 @@ class TestDSLBenchmarks:
             for query in queries:
                 results.append(parser.parse(query))
             return results
-        
+
         results = benchmark(parse_multiple)
         assert len(results) == 5
 
@@ -98,9 +97,9 @@ class TestDSLBenchmarks:
         """Benchmark query parsing with parser reuse (excludes initialization)"""
         parser = FKDSLParser()
         query = "GET PRICE FOR AAPL"
-        
+
         def parse_query():
             return parser.parse(query)
-        
+
         result = benchmark(parse_query)
         assert result is not None

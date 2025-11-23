@@ -3,8 +3,8 @@ Tests for Agent System
 """
 
 import pytest
+
 from fiml.agents.base import BaseWorker
-from fiml.core.models import Asset, AssetType, Market
 
 
 class TestWorkerAgents:
@@ -17,9 +17,9 @@ class TestWorkerAgents:
         class TestWorker(BaseWorker):
             async def process(self, asset, params=None):
                 return {"asset": asset.symbol, "result": "test"}
-        
+
         worker = TestWorker(worker_id="test-1")
-        
+
         health = await worker.health_check()
         assert "worker_id" in health
         assert health["status"] == "healthy"

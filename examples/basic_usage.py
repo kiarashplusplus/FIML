@@ -3,6 +3,7 @@ Example usage of FIML MCP tools
 """
 
 import asyncio
+
 from fiml.core.models import AnalysisDepth, Market
 from fiml.mcp.tools import search_by_coin, search_by_symbol
 
@@ -50,7 +51,7 @@ async def example_search_crypto():
     print(f"Confidence: {result.cached.confidence:.1%}")
 
     if result.crypto_metrics:
-        print(f"\n📈 Crypto Metrics:")
+        print("\n📈 Crypto Metrics:")
         print(f"  Dominance: {result.crypto_metrics.get('dominance', 0):.2f}%")
         print(f"  ATH: ${result.crypto_metrics.get('ath', 0):,.2f}")
         print(f"  24h Volume: ${result.crypto_metrics.get('volume24h', 0):,.0f}")

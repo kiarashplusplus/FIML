@@ -20,33 +20,33 @@ async def quick_demo():
 
     # Note: This assumes the server is running on localhost:8000
     # Start the server with: uvicorn fiml.server:app --reload
-    
+
     uri = "ws://localhost:8000/ws/prices/AAPL,GOOGL"
-    
+
     try:
         print(f"Connecting to {uri}...")
         async with websockets.connect(uri) as websocket:
             print("✅ Connected!")
             print()
-            
+
             # Receive subscription acknowledgment
             ack = await websocket.recv()
             ack_data = json.loads(ack)
-            print(f"📨 Subscription Acknowledged:")
+            print("📨 Subscription Acknowledged:")
             print(f"   Subscription ID: {ack_data['subscription_id']}")
             print(f"   Symbols: {', '.join(ack_data['symbols'])}")
             print(f"   Update Interval: {ack_data['interval_ms']}ms")
             print()
-            
+
             print("📊 Streaming data (receiving 5 updates)...")
             print("-" * 60)
-            
+
             # Receive 5 data updates
             count = 0
             while count < 5:
                 message = await websocket.recv()
                 data = json.loads(message)
-                
+
                 if data.get("type") == "data":
                     count += 1
                     print(f"\n📈 Update #{count}:")
@@ -60,11 +60,11 @@ async def quick_demo():
                 elif data.get("type") == "error":
                     print(f"   ❌ Error: {data['message']}")
                     break
-            
+
             print()
             print("-" * 60)
             print("✅ Demo completed successfully!")
-            
+
     except websockets.exceptions.ConnectionClosed as e:
         print(f"❌ Connection closed: {e}")
     except ConnectionRefusedError:

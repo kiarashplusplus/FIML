@@ -3,6 +3,7 @@ Integration Tests for Cache, DSL, and Multi-Agent Systems
 """
 
 import asyncio
+
 import pytest
 
 from fiml.agents.orchestrator import agent_orchestrator
@@ -90,7 +91,7 @@ class TestFKDSLParser:
 
     def test_invalid_query(self):
         """Test invalid query handling"""
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, SyntaxError)):
             fk_dsl_parser.parse("INVALID QUERY SYNTAX")
 
 

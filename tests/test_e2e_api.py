@@ -9,9 +9,10 @@ These tests verify the complete API workflow including:
 - Response validation
 """
 
-import pytest
-from httpx import AsyncClient, ASGITransport
 import json
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 from fiml.server import app
 
@@ -63,7 +64,7 @@ class TestMCPToolDiscovery:
             data = response.json()
             assert "tools" in data
             assert len(data["tools"]) > 0
-            
+
             # Check for required tools
             tool_names = [tool["name"] for tool in data["tools"]]
             assert "search-by-symbol" in tool_names
@@ -77,7 +78,7 @@ class TestMCPToolDiscovery:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/mcp/tools")
             data = response.json()
-            
+
             for tool in data["tools"]:
                 assert "name" in tool
                 assert "description" in tool
@@ -105,11 +106,11 @@ class TestStockQueries:
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
             data = response.json()
-            
+
             assert "content" in data
             assert len(data["content"]) > 0
             assert data["isError"] is False
-            
+
             # Parse the actual response
             result = json.loads(data["content"][0]["text"])
             assert result["symbol"] == "AAPL"
@@ -122,7 +123,7 @@ class TestStockQueries:
     async def test_search_by_symbol_different_stocks(self):
         """Test searching different stocks"""
         symbols = ["TSLA", "MSFT", "GOOGL"]
-        
+
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             for symbol in symbols:
                 payload = {
@@ -137,7 +138,7 @@ class TestStockQueries:
                 assert response.status_code == 200
                 data = response.json()
                 assert data["isError"] is False
-                
+
                 result = json.loads(data["content"][0]["text"])
                 assert result["symbol"] == symbol
 
@@ -176,10 +177,10 @@ class TestCryptoQueries:
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
             data = response.json()
-            
+
             assert "content" in data
             assert data["isError"] is False
-            
+
             result = json.loads(data["content"][0]["text"])
             assert result["symbol"] == "BTC"
             assert "cached" in result
@@ -188,7 +189,7 @@ class TestCryptoQueries:
     async def test_search_by_coin_different_cryptos(self):
         """Test searching different cryptocurrencies"""
         symbols = ["BTC", "ETH", "SOL"]
-        
+
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             for symbol in symbols:
                 payload = {
@@ -229,7 +230,7 @@ class TestErrorHandling:
             }
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
-            data = response.json()
+            response.json()
             # Should handle missing arguments gracefully
 
     @pytest.mark.asyncio
@@ -261,16 +262,16 @@ class TestDataQuality:
             }
             response = await client.post("/mcp/tools/call", json=payload)
             data = response.json()
-            
+
             result = json.loads(data["content"][0]["text"])
-            
+
             # Check required fields
             assert "symbol" in result
             assert "cached" in result
             assert "task" in result
             assert "disclaimer" in result
             assert "data_lineage" in result
-            
+
             # Check cached data structure
             cached = result["cached"]
             assert "price" in cached
@@ -279,7 +280,7 @@ class TestDataQuality:
             assert "as_of" in cached
             assert "source" in cached
             assert "confidence" in cached
-            
+
             # Check task structure
             task = result["task"]
             assert "id" in task
@@ -300,10 +301,10 @@ class TestDataQuality:
             }
             response = await client.post("/mcp/tools/call", json=payload)
             data = response.json()
-            
+
             result = json.loads(data["content"][0]["text"])
             cached = result["cached"]
-            
+
             # Verify data types
             assert isinstance(cached["price"], (int, float))
             assert isinstance(cached["change"], (int, float))
@@ -319,9 +320,9 @@ class TestConcurrency:
     async def test_concurrent_stock_queries(self):
         """Test multiple concurrent stock queries"""
         import asyncio
-        
+
         symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
-        
+
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             async def query_symbol(symbol):
                 payload = {
@@ -334,11 +335,11 @@ class TestConcurrency:
                 }
                 response = await client.post("/mcp/tools/call", json=payload)
                 return response
-            
+
             # Execute queries concurrently
             tasks = [query_symbol(symbol) for symbol in symbols]
             responses = await asyncio.gather(*tasks)
-            
+
             # All should succeed
             for response in responses:
                 assert response.status_code == 200

@@ -21,29 +21,29 @@ import websockets
 async def stream_prices_simple():
     """
     Simple example: Stream prices for multiple symbols
-    
+
     Uses the simplified /ws/prices/{symbols} endpoint
     """
     print("=== Simple Price Streaming ===\n")
-    
+
     uri = "ws://localhost:8000/ws/prices/AAPL,GOOGL,MSFT"
-    
+
     try:
         async with websockets.connect(uri) as websocket:
             print(f"Connected to {uri}")
-            
+
             # Receive subscription acknowledgment
             ack = await websocket.recv()
             ack_data = json.loads(ack)
             print(f"Subscribed: {ack_data}")
             print()
-            
+
             # Receive price updates
             print("Receiving price updates (Ctrl+C to stop):\n")
             while True:
                 message = await websocket.recv()
                 data = json.loads(message)
-                
+
                 if data.get("type") == "data":
                     # Print price updates
                     for update in data["data"]:
@@ -54,7 +54,7 @@ async def stream_prices_simple():
                         )
                 elif data.get("type") == "heartbeat":
                     print(f"❤️  Heartbeat - {data['active_subscriptions']} active subscriptions")
-                    
+
     except websockets.exceptions.ConnectionClosed:
         print("Connection closed")
     except KeyboardInterrupt:
@@ -64,17 +64,17 @@ async def stream_prices_simple():
 async def stream_with_full_control():
     """
     Advanced example: Full control over subscriptions
-    
+
     Uses the main /ws/stream endpoint with subscription messages
     """
     print("\n=== Advanced Streaming with Full Control ===\n")
-    
+
     uri = "ws://localhost:8000/ws/stream"
-    
+
     try:
         async with websockets.connect(uri) as websocket:
             print(f"Connected to {uri}")
-            
+
             # Subscribe to price stream for equities
             equity_subscription = {
                 "type": "subscribe",
@@ -85,11 +85,11 @@ async def stream_with_full_control():
                 "interval_ms": 2000,  # Update every 2 seconds
                 "data_type": "price"
             }
-            
+
             await websocket.send(json.dumps(equity_subscription))
             ack1 = json.loads(await websocket.recv())
             print(f"Equity subscription created: {ack1['subscription_id']}")
-            
+
             # Subscribe to OHLCV stream for crypto
             crypto_subscription = {
                 "type": "subscribe",
@@ -100,23 +100,23 @@ async def stream_with_full_control():
                 "interval_ms": 5000,  # Update every 5 seconds
                 "data_type": "ohlcv"
             }
-            
+
             await websocket.send(json.dumps(crypto_subscription))
             ack2 = json.loads(await websocket.recv())
             print(f"Crypto subscription created: {ack2['subscription_id']}")
             print()
-            
+
             # Receive updates
             print("Receiving updates from multiple streams:\n")
-            
+
             update_count = 0
             while update_count < 20:  # Receive 20 updates then stop
                 message = await websocket.recv()
                 data = json.loads(message)
-                
+
                 if data.get("type") == "data":
                     stream_type = data["stream_type"]
-                    
+
                     if stream_type == "price":
                         for update in data["data"]:
                             print(
@@ -131,15 +131,15 @@ async def stream_with_full_control():
                                 f"L:{update['low']:.2f} C:{update['close']:.2f} "
                                 f"V:{update['volume']:.0f}"
                             )
-                    
+
                     update_count += 1
-                    
+
                 elif data.get("type") == "heartbeat":
-                    print(f"❤️  Heartbeat")
-                    
+                    print("❤️  Heartbeat")
+
                 elif data.get("type") == "error":
                     print(f"❌ Error: {data['message']}")
-            
+
             # Unsubscribe from equity stream
             print("\nUnsubscribing from equity stream...")
             unsubscribe = {
@@ -148,10 +148,10 @@ async def stream_with_full_control():
                 "symbols": None  # Unsubscribe from all price streams
             }
             await websocket.send(json.dumps(unsubscribe))
-            
+
             unsub_ack = json.loads(await websocket.recv())
             print(f"Unsubscribed: {unsub_ack}")
-            
+
     except websockets.exceptions.ConnectionClosed:
         print("Connection closed")
     except KeyboardInterrupt:
@@ -163,28 +163,28 @@ async def stream_with_error_handling():
     Robust example: Automatic reconnection and error handling
     """
     print("\n=== Streaming with Auto-Reconnection ===\n")
-    
+
     uri = "ws://localhost:8000/ws/prices/AAPL,GOOGL"
     max_retries = 3
     retry_delay = 5
-    
+
     for attempt in range(max_retries):
         try:
             print(f"Connection attempt {attempt + 1}/{max_retries}")
-            
+
             async with websockets.connect(uri) as websocket:
                 print("✅ Connected successfully")
-                
+
                 # Receive subscription ACK
                 ack = json.loads(await websocket.recv())
                 print(f"Subscribed to: {', '.join(ack['symbols'])}\n")
-                
+
                 # Stream data
                 while True:
                     try:
                         message = await asyncio.wait_for(websocket.recv(), timeout=60)
                         data = json.loads(message)
-                        
+
                         if data.get("type") == "data":
                             timestamp = datetime.fromisoformat(
                                 data["timestamp"].replace("Z", "+00:00")
@@ -194,12 +194,12 @@ async def stream_with_error_handling():
                                     f"[{timestamp.strftime('%H:%M:%S')}] "
                                     f"{update['symbol']}: ${update['price']:.2f}"
                                 )
-                                
+
                     except asyncio.TimeoutError:
                         print("⚠️  No data received in 60s, checking connection...")
                         # Send a ping to check if connection is alive
                         await websocket.ping()
-                        
+
         except websockets.exceptions.ConnectionClosed as e:
             print(f"❌ Connection closed: {e}")
             if attempt < max_retries - 1:
@@ -208,7 +208,7 @@ async def stream_with_error_handling():
             else:
                 print("Max retries reached, giving up")
                 break
-                
+
         except KeyboardInterrupt:
             print("\n👋 Stopped by user")
             break
@@ -219,19 +219,19 @@ async def monitor_multiple_assets():
     Practical example: Monitor a portfolio of assets
     """
     print("\n=== Portfolio Monitoring ===\n")
-    
+
     # Portfolio to monitor
     portfolio = {
         "Tech Stocks": ["AAPL", "GOOGL", "MSFT", "NVDA"],
         "Crypto": ["BTC/USDT", "ETH/USDT"],
     }
-    
+
     uri = "ws://localhost:8000/ws/stream"
-    
+
     try:
         async with websockets.connect(uri) as websocket:
             print("📊 Starting portfolio monitor...\n")
-            
+
             # Subscribe to tech stocks
             tech_sub = {
                 "type": "subscribe",
@@ -243,9 +243,9 @@ async def monitor_multiple_assets():
                 "data_type": "price"
             }
             await websocket.send(json.dumps(tech_sub))
-            tech_ack = json.loads(await websocket.recv())
+            json.loads(await websocket.recv())
             print(f"✅ Monitoring tech stocks: {portfolio['Tech Stocks']}")
-            
+
             # Subscribe to crypto
             crypto_sub = {
                 "type": "subscribe",
@@ -257,35 +257,35 @@ async def monitor_multiple_assets():
                 "data_type": "price"
             }
             await websocket.send(json.dumps(crypto_sub))
-            crypto_ack = json.loads(await websocket.recv())
+            json.loads(await websocket.recv())
             print(f"✅ Monitoring crypto: {portfolio['Crypto']}\n")
-            
+
             # Track portfolio value
             prices = {}
-            
+
             while True:
                 message = await websocket.recv()
                 data = json.loads(message)
-                
+
                 if data.get("type") == "data":
                     for update in data["data"]:
                         symbol = update["symbol"]
                         price = update["price"]
                         change_pct = update["change_percent"]
-                        
+
                         prices[symbol] = price
-                        
+
                         # Color code by change
                         color = "🟢" if change_pct >= 0 else "🔴"
-                        
+
                         print(
                             f"{color} {symbol:12} ${price:>10.2f} "
                             f"({change_pct:>+6.2f}%) "
                             f"[{update['provider']}]"
                         )
-                    
+
                     print(f"\nTracking {len(prices)} assets\n")
-                    
+
     except KeyboardInterrupt:
         print("\n👋 Portfolio monitor stopped")
 
@@ -300,7 +300,7 @@ async def main():
     print("\nMake sure the FIML server is running:")
     print("  uvicorn fiml.server:app --reload")
     print("\n" + "=" * 60 + "\n")
-    
+
     # Choose which example to run
     examples = {
         "1": ("Simple Price Streaming", stream_prices_simple),
@@ -308,13 +308,13 @@ async def main():
         "3": ("Auto-Reconnection", stream_with_error_handling),
         "4": ("Portfolio Monitor", monitor_multiple_assets),
     }
-    
+
     print("Available examples:")
     for key, (name, _) in examples.items():
         print(f"  {key}. {name}")
-    
+
     choice = input("\nSelect example (1-4, or 'all'): ").strip()
-    
+
     if choice == "all":
         # Run all examples sequentially
         for name, func in examples.values():

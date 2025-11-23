@@ -5,11 +5,12 @@ Test configuration for FIML
 import os
 import subprocess
 import time
+
+import psycopg2
 import pytest
 import redis
-import psycopg2
-from fiml.core.config import Settings
 
+from fiml.core.config import Settings
 
 # Set environment variables BEFORE any imports happen
 os.environ["POSTGRES_HOST"] = "localhost"
@@ -85,7 +86,7 @@ def is_postgres_ready(host="localhost", port=5432, max_retries=30):
 def docker_services(request):
     """Start Docker services for testing"""
     no_docker = request.config.getoption("--no-docker")
-    
+
     if no_docker:
         # Assume services are already running
         if not is_redis_ready():
@@ -94,20 +95,20 @@ def docker_services(request):
             pytest.exit("PostgreSQL is not available. Please start PostgreSQL or remove --no-docker flag.")
         yield
         return
-    
+
     # Check if docker is available
     try:
         subprocess.run(["docker", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         pytest.exit("Docker is not available. Install Docker or use --no-docker flag.")
-    
+
     # Get the project root directory
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     compose_file = os.path.join(project_root, "docker-compose.test.yml")
-    
+
     if not os.path.exists(compose_file):
         pytest.exit(f"docker-compose.test.yml not found at {compose_file}")
-    
+
     # Start services
     print("\n🐳 Starting test containers (Redis & PostgreSQL)...")
     subprocess.run(
@@ -116,24 +117,24 @@ def docker_services(request):
         check=True,
         capture_output=True
     )
-    
+
     # Wait for services to be ready
     print("⏳ Waiting for Redis to be ready...")
     if not is_redis_ready():
         subprocess.run(["docker-compose", "-f", compose_file, "down", "-v"], cwd=project_root)
         pytest.exit("Redis failed to start within timeout period")
     print("✅ Redis is ready")
-    
+
     print("⏳ Waiting for PostgreSQL to be ready...")
     if not is_postgres_ready():
         subprocess.run(["docker-compose", "-f", compose_file, "down", "-v"], cwd=project_root)
         pytest.exit("PostgreSQL failed to start within timeout period")
     print("✅ PostgreSQL is ready")
-    
+
     print("✅ All test services are ready\n")
-    
+
     yield
-    
+
     # Teardown: stop and remove containers
     print("\n🧹 Cleaning up test containers...")
     subprocess.run(

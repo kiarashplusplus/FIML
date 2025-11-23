@@ -4,10 +4,6 @@ WebSocket Streaming Tests
 Tests for real-time WebSocket data streaming functionality
 """
 
-import asyncio
-import json
-from datetime import datetime
-from typing import List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -18,8 +14,6 @@ from fiml.websocket.manager import websocket_manager
 from fiml.websocket.models import (
     MessageType,
     StreamType,
-    SubscriptionRequest,
-    UnsubscribeRequest,
 )
 
 
@@ -55,18 +49,20 @@ class TestWebSocketConnection:
         """Test multiple simultaneous WebSocket connections"""
         # Note: TestClient has limitations with multiple connections
         # This test verifies basic connection capability
-        with client.websocket_connect("/ws/stream") as ws1:
-            with client.websocket_connect("/ws/stream") as ws2:
-                # Both should be connected
-                assert ws1 is not None
-                assert ws2 is not None
-                # Connections close automatically when context exits
+        with (
+            client.websocket_connect("/ws/stream") as ws1,
+            client.websocket_connect("/ws/stream") as ws2,
+        ):
+            # Both should be connected
+            assert ws1 is not None
+            assert ws2 is not None
+            # Connections close automatically when context exits
 
     def test_heartbeat_received(self, client):
         """Test that heartbeat messages are received"""
         # Note: TestClient doesn't support timeout parameter
         # This test verifies the connection can receive messages
-        with client.websocket_connect("/ws/stream") as websocket:
+        with client.websocket_connect("/ws/stream"):
             # Override heartbeat interval for testing
             original_interval = websocket_manager.heartbeat_interval
             websocket_manager.heartbeat_interval = 1  # 1 second for testing
@@ -358,7 +354,7 @@ class TestIntegrationWithArbitration:
             websocket.send_json(request)
 
             # Get ACK
-            ack = websocket.receive_json()
+            websocket.receive_json()
 
             # Try to get a data message
             for _ in range(5):

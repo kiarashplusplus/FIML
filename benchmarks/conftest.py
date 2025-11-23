@@ -3,6 +3,7 @@ Benchmark configuration and fixtures
 """
 
 import pytest
+
 from fiml.core.config import Settings
 from fiml.core.models import Asset, AssetType, Market
 

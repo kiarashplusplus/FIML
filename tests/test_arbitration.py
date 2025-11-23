@@ -3,8 +3,9 @@ Tests for Data Arbitration Engine
 """
 
 import pytest
+
 from fiml.arbitration.engine import DataArbitrationEngine
-from fiml.core.models import Asset, AssetType, DataType, Market
+from fiml.core.models import DataType
 from fiml.providers.registry import provider_registry
 
 
@@ -13,7 +14,7 @@ async def test_arbitrate_request(mock_asset):
     """Test basic arbitration request"""
     # Initialize provider registry
     await provider_registry.initialize()
-    
+
     engine = DataArbitrationEngine()
 
     plan = await engine.arbitrate_request(
@@ -26,7 +27,7 @@ async def test_arbitrate_request(mock_asset):
     assert plan.primary_provider is not None
     assert isinstance(plan.fallback_providers, list)
     assert plan.estimated_latency_ms > 0
-    
+
     await provider_registry.shutdown()
 
 
@@ -35,7 +36,7 @@ async def test_execute_with_fallback(mock_asset):
     """Test execution with fallback"""
     # Initialize provider registry
     await provider_registry.initialize()
-    
+
     engine = DataArbitrationEngine()
 
     # First create a plan
@@ -55,5 +56,5 @@ async def test_execute_with_fallback(mock_asset):
     assert response.is_valid
     assert response.data is not None
     assert "price" in response.data
-    
+
     await provider_registry.shutdown()
