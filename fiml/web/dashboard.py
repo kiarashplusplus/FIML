@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, Market
-from fiml.watchdog.models import EventFilter, Severity, WatchdogEvent
+from fiml.watchdog.models import EventFilter, EventType, Severity, WatchdogEvent
 from fiml.watchdog.orchestrator import watchdog_manager
 from fiml.websocket.manager import websocket_manager
 
@@ -130,9 +130,20 @@ async def get_recent_events(
     """
     event_filter = None
     if severity or event_type:
+        # Convert string event_type to EventType enum if provided
+        event_types_list = None
+        if event_type:
+            try:
+                event_types_list = [EventType(event_type)]
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid event type: {event_type}"
+                )
+        
         event_filter = EventFilter(
             severities=[severity] if severity else None,
-            event_types=[event_type] if event_type else None,
+            event_types=event_types_list,
         )
     
     events = watchdog_manager.get_recent_events(
