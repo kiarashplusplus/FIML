@@ -82,6 +82,17 @@ class Settings(BaseSettings):
     coinbase_api_key: str | None = None
     coinbase_secret_key: str | None = None
 
+    # Alert System Configuration
+    # Email Settings
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from_email: str | None = None
+    
+    # Telegram Settings
+    telegram_bot_token: str | None = None
+    
     # Monitoring
     sentry_dsn: str | None = None
     prometheus_port: int = 9090
