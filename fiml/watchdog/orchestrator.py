@@ -145,21 +145,6 @@ class WatchdogManager:
                 "health_check_interval": settings.watchdog_health_check_interval,
             },
         }
-                "check_interval": 180,  # 3 minutes
-            },
-            "correlation_breakdown": {
-                "enabled": True,
-                "check_interval": 600,  # 10 minutes
-            },
-            "exchange_outage": {
-                "enabled": True,
-                "check_interval": 60,  # 1 minute
-            },
-            "price_anomaly": {
-                "enabled": True,
-                "check_interval": 30,  # 30 seconds
-            },
-        }
 
     async def initialize(self) -> None:
         """Initialize the watchdog system"""
