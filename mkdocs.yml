@@ -105,9 +105,10 @@ extra:
       link: https://github.com/kiarashplusplus/FIML
     - icon: fontawesome/brands/discord
       link: https://discord.gg/fiml
-  analytics:
-    provider: google
-    property: G-XXXXXXXXXX
+  # Uncomment and configure Google Analytics if needed
+  # analytics:
+  #   provider: google
+  #   property: G-XXXXXXXXXX
 
 extra_css:
   - stylesheets/extra.css
@@ -143,6 +144,7 @@ nav:
     - Testing: development/testing.md
     - Deployment: development/deployment.md
     - Technical Debt: development/technical-debt.md
+    - GitHub Pages Setup: development/github-pages-setup.md
   - Project:
     - Roadmap: project/roadmap.md
     - Status: project/status.md
