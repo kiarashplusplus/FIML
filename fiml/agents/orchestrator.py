@@ -64,45 +64,45 @@ class AgentOrchestrator:
 
             # Spawn worker pool with production configuration
             pool_size = settings.worker_pool_size
-            
+
             # Initialize workers based on enabled flags
             self.workers = {}
-            
+
             if settings.enable_fundamentals_worker:
                 self.workers["fundamentals"] = [
                     FundamentalsWorker.remote(f"fund_{i}") for i in range(pool_size)  # type: ignore[attr-defined]
                 ]
-            
+
             if settings.enable_technical_worker:
                 self.workers["technical"] = [
                     TechnicalWorker.remote(f"tech_{i}") for i in range(pool_size)  # type: ignore[attr-defined]
                 ]
-            
+
             if settings.enable_macro_worker:
                 self.workers["macro"] = [
                     MacroWorker.remote(f"macro_{i}") for i in range(max(1, pool_size // 2))  # type: ignore[attr-defined]
                 ]
-            
+
             if settings.enable_sentiment_worker:
                 self.workers["sentiment"] = [
                     SentimentWorker.remote(f"sent_{i}") for i in range(pool_size)  # type: ignore[attr-defined]
                 ]
-            
+
             if settings.enable_correlation_worker:
                 self.workers["correlation"] = [
                     CorrelationWorker.remote(f"corr_{i}") for i in range(max(1, pool_size // 2))  # type: ignore[attr-defined]
                 ]
-            
+
             if settings.enable_risk_worker:
                 self.workers["risk"] = [
                     RiskWorker.remote(f"risk_{i}") for i in range(max(1, pool_size // 2))  # type: ignore[attr-defined]
                 ]
-            
+
             if settings.enable_news_worker:
                 self.workers["news"] = [
                     NewsWorker.remote(f"news_{i}") for i in range(pool_size)  # type: ignore[attr-defined]
                 ]
-            
+
             if settings.enable_options_worker:
                 self.workers["options"] = [
                     OptionsWorker.remote(f"opt_{i}") for i in range(max(1, pool_size // 2))  # type: ignore[attr-defined]

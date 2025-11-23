@@ -119,6 +119,11 @@ line-length = 100
 select = ["E", "F", "I", "N", "W", "B", "C4", "SIM"]
 ignore = ["E501", "N818", "B904", "SIM102", "SIM103", "SIM108", "SIM118", "B007", "E722", "N815"]
 
+# Per-file ignores for intentional patterns
+[tool.ruff.lint.per-file-ignores]
+"fiml/server.py" = ["E402"]  # Late imports after app initialization (FastAPI pattern)
+"fiml/web/dashboard.py" = ["B008"]  # Query() in defaults is correct FastAPI usage
+
 [tool.mypy]
 python_version = "3.11"
 warn_return_any = true

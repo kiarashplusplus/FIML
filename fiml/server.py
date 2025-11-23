@@ -100,10 +100,12 @@ app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Include Dashboard router
 from fiml.web.dashboard import dashboard_router
+
 app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 
 # Include Alert router
 from fiml.alerts.router import alert_router
+
 app.include_router(alert_router, prefix="/api", tags=["alerts"])
 
 

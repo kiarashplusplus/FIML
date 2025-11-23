@@ -1703,13 +1703,13 @@ Provide a JSON response with:
                     response = await provider.fetch_ohlcv(asset, timeframe="1d", limit=90)
                     if response.is_valid and response.data:
                         close_prices = np.array(response.data["close"])
-                        
+
                         # Filter out any zero prices to avoid division by zero
                         close_prices = close_prices[close_prices > 0]
-                        
+
                         if len(close_prices) < 2:
                             continue
-                        
+
                         returns = np.diff(close_prices) / close_prices[:-1]
 
                         # Calculate historical volatility (annualized)
