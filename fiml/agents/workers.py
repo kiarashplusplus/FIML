@@ -1723,7 +1723,7 @@ Provide a JSON response with:
                             "score": 5.0,
                             "timestamp": datetime.utcnow().isoformat(),
                         }
-                except:
+                except Exception:
                     continue
 
         except Exception as e:

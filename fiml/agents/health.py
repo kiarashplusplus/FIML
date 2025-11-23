@@ -119,8 +119,16 @@ class WorkerMetrics:
             return False
         
         # Check error rate
-        if self.error_rate > 0.5:  # More than 50% failure rate
-            return False
+        if self.error_rate > max_heartbeat_age_seconds / 1000:  # Use normalized threshold
+            # Get threshold from monitor if available
+            try:
+                from fiml.agents.health import WorkerHealthMonitor
+                threshold = getattr(WorkerHealthMonitor, 'DEFAULT_ERROR_RATE_THRESHOLD', 0.5)
+            except Exception:
+                threshold = 0.5
+            
+            if self.error_rate > threshold:
+                return False
         
         # Check status
         if self.status in [WorkerStatus.UNHEALTHY, WorkerStatus.SHUTDOWN]:
@@ -140,6 +148,12 @@ class WorkerHealthMonitor:
     - Automatic recovery detection
     """
     
+    # Configuration constants - can be overridden via settings
+    DEFAULT_FAILURE_THRESHOLD = 5  # Failures before opening circuit
+    DEFAULT_RECOVERY_TIMEOUT = 60  # Seconds before trying recovery
+    DEFAULT_MAX_HEARTBEAT_AGE = 120  # Max seconds since last heartbeat
+    DEFAULT_ERROR_RATE_THRESHOLD = 0.5  # 50% error rate threshold
+    
     def __init__(self):
         self._metrics: Dict[str, WorkerMetrics] = {}
         self._circuit_breakers: Dict[str, Dict] = defaultdict(lambda: {
@@ -148,10 +162,19 @@ class WorkerHealthMonitor:
             "state": "closed",  # closed, open, half-open
         })
         
-        # Configuration
-        self._failure_threshold = 5  # Failures before opening circuit
-        self._recovery_timeout = 60  # Seconds before trying recovery
-        self._max_heartbeat_age = 120  # Max seconds since last heartbeat
+        # Configuration - try to load from settings, otherwise use defaults
+        try:
+            from fiml.core.config import settings
+            self._failure_threshold = getattr(settings, 'worker_circuit_breaker_threshold', self.DEFAULT_FAILURE_THRESHOLD)
+            self._recovery_timeout = getattr(settings, 'worker_circuit_breaker_timeout', self.DEFAULT_RECOVERY_TIMEOUT)
+            self._max_heartbeat_age = getattr(settings, 'worker_max_heartbeat_age', self.DEFAULT_MAX_HEARTBEAT_AGE)
+            self._error_rate_threshold = getattr(settings, 'worker_error_rate_threshold', self.DEFAULT_ERROR_RATE_THRESHOLD)
+        except Exception:
+            # Fallback to defaults if settings not available
+            self._failure_threshold = self.DEFAULT_FAILURE_THRESHOLD
+            self._recovery_timeout = self.DEFAULT_RECOVERY_TIMEOUT
+            self._max_heartbeat_age = self.DEFAULT_MAX_HEARTBEAT_AGE
+            self._error_rate_threshold = self.DEFAULT_ERROR_RATE_THRESHOLD
         
     def register_worker(self, worker_id: str, worker_type: str) -> WorkerMetrics:
         """Register a new worker for monitoring"""

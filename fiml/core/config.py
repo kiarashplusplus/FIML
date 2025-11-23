@@ -163,6 +163,12 @@ class Settings(BaseSettings):
     enable_news_worker: bool = True
     enable_options_worker: bool = True
 
+    # Worker Health Monitoring Thresholds
+    worker_circuit_breaker_threshold: int = 5  # Failures before opening circuit
+    worker_circuit_breaker_timeout: int = 60  # Seconds before trying recovery
+    worker_max_heartbeat_age: int = 120  # Max seconds since last heartbeat
+    worker_error_rate_threshold: float = 0.5  # Error rate threshold (0-1)
+
     # Watchdog Configuration for Production
     watchdog_global_enabled: bool = True  # Master switch for all watchdogs
     watchdog_event_stream_enabled: bool = True  # Enable event streaming
@@ -170,6 +176,9 @@ class Settings(BaseSettings):
     watchdog_websocket_broadcast: bool = True  # Broadcast events via WebSocket
     watchdog_max_events_in_memory: int = 1000  # Max events in circular buffer
     watchdog_health_check_interval: int = 60  # Health check interval in seconds
+
+    # Watchdog Health Monitoring Thresholds
+    watchdog_consecutive_failure_threshold: int = 3  # Failures before marking unhealthy
 
     # Individual Watchdog Enable/Disable Flags
     enable_earnings_anomaly_watchdog: bool = True
