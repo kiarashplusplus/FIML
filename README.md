@@ -32,7 +32,13 @@ FIML is an MCP (Model Context Protocol) server that provides intelligent financi
 
 ### ✅ Core Infrastructure (100%)
 - **🔀 Data Arbitration Engine**: Multi-provider scoring (5 factors), automatic fallback, conflict resolution
-- **🏗️ Provider System**: 5 working providers - Yahoo Finance, Alpha Vantage, FMP, CCXT, Mock
+- **🏗️ Provider System**: 16 working providers across stocks, crypto, forex, and more
+  - **Free/Basic Tier**: Yahoo Finance, CoinGecko, Mock Provider
+  - **Premium Providers** (API key required):
+    - **Stocks & Equities**: Alpha Vantage, FMP, Polygon.io, Finnhub, Twelvedata, Tiingo, Intrinio, Marketstack, Quandl
+    - **Cryptocurrency**: CCXT (multi-exchange), CoinGecko, CoinMarketCap
+    - **News**: NewsAPI, Alpha Vantage, Finnhub, Tiingo
+    - **Multi-Asset**: Polygon.io, Finnhub, Twelvedata (stocks, forex, crypto, ETFs)
 - **⚡ Cache Architecture**: L1 (Redis 10-100ms) and L2 (PostgreSQL 300-700ms) with intelligent optimizations
   - Cache warming for popular symbols
   - Intelligent eviction policies (LRU/LFU)
