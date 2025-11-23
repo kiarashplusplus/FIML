@@ -1,22 +1,25 @@
 # FIML Test Report
-**Generated:** November 22, 2025
+**Generated:** November 23, 2025
 
-## Test Summary
+## 🎉 100% PASSING - ALL TESTS GREEN
 
-### Total Tests
-- **Total Collected:** 272 tests
-- **Unit Tests:** 236 tests
-- **Skipped Tests:** 24 tests (Redis/PostgreSQL dependent)
-- **Live System Tests:** 12 tests (excluded by default)
+### Test Summary
 
-### Test Results
+- **Total Collected:** 464 tests
+- **✅ Passed:** 439 tests (100% pass rate)
+- **⏭️ Skipped:** 25 tests (LLM-dependent narrative integration tests)
+- **❌ Failed:** 0
+- **⚡ Test Execution Time:** ~2 minutes
 
-#### All Tests (Excluding Live)
-```
-✅ Passed: 236
-⏭️  Skipped: 24 (Redis/PostgreSQL dependent)
-❌ Failed: 0
-```
+### CI/CD Compatibility
+
+✅ **Verified on both environments:**
+1. **With .env file** (local development): 439 passed, 25 skipped
+2. **Without .env file** (GitHub runner simulation): 439 passed, 25 skipped
+
+All tests pass identically regardless of environment configuration, ensuring CI/CD reliability.
+
+### Test Results Breakdown
 
 ### Code Coverage
 - **Overall Coverage:** 67%
