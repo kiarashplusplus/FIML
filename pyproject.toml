@@ -80,6 +80,14 @@ dev = [
     "psycopg2-binary>=2.9.9",  # For test fixtures
 ]
 
+docs = [
+    "mkdocs>=1.5.3",
+    "mkdocs-material>=9.5.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.2.0",
+    "mkdocs-minify-plugin>=0.8.0",
+    "pymdown-extensions>=10.7.0",
+]
+
 # Optional dependencies for advanced features
 ta = [
     "pandas-ta>=0.3.14b0; python_version>='3.12'",

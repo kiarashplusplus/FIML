@@ -493,7 +493,7 @@ Built with ♥ for the AI and finance communities
 
 ## 📞 Support
 
-- **Documentation**: [docs.fiml.ai](https://docs.fiml.ai)
+- **Documentation**: [https://kiarashplusplus.github.io/FIML/](https://kiarashplusplus.github.io/FIML/)
 - **Issues**: [GitHub Issues](https://github.com/kiarashplusplus/FIML/issues)
 - **Discord**: [Join our community](https://discord.gg/fiml)
 
