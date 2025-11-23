@@ -45,7 +45,7 @@ if command -v mypy &> /dev/null; then
         error_count=$(echo "$mypy_output" | grep -c "error:" || echo "0")
         echo -e "${YELLOW}⚠️  Type checking found $error_count issues (non-blocking)${NC}"
         echo "$mypy_output" | head -5
-        if [ "$error_count" -gt "10" ]; then
+        if [ "$error_count" -gt 10 ]; then
             echo "..."
             echo "$mypy_output" | tail -3
         fi
