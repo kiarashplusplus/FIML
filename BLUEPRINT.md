@@ -4873,8 +4873,9 @@ class EvaluationSuite:
 **2030:**  
 - Decentralized data verification  
 - Blockchain-based audit trail  
-- Advanced quant strategy builder  
+- Advanced quant strategy builder with backtesting framework
 - Institutional-grade risk models  
+- Historical strategy performance validation  
   
 **Phase 4: Ecosystem (Year 7-10)**  
   
@@ -4991,7 +4992,7 @@ See [TEST_REPORT.md](TEST_REPORT.md) for detailed test results.
 2. Data lineage transparency API  
 3. Open evaluation suite  
 4. Multi-market expansion (15+ markets)  
-5. Advanced quant strategies  
+5. Advanced quant strategies with comprehensive backtesting framework  
 6. Enterprise white-label solutions  
 7. Blockchain-based audit trail  
 8. AI-native portfolio optimization  

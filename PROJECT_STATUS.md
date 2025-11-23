@@ -573,7 +573,7 @@ Phase 1 delivers a **fully operational financial intelligence system** with live
 - [ ] Real-time WebSocket streaming
 - [ ] Advanced charting and visualization
 - [ ] Portfolio optimization engine
-- [ ] Backtesting framework
+- [ ] Backtesting framework for strategy validation
 - [ ] Options chain analysis
 - [ ] Insider trading detection
 - [ ] Earnings call transcripts
