@@ -109,3 +109,6 @@ secrets/
 *.key
 *.pem
 *.crt
+
+# MkDocs build output
+site/

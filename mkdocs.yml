@@ -1,0 +1,150 @@
+site_name: FIML Documentation
+site_description: Financial Intelligence Meta-Layer - AI-Native Multi-Market Financial Framework
+site_author: Kiarash Adl
+site_url: https://kiarashplusplus.github.io/FIML/
+
+repo_name: kiarashplusplus/FIML
+repo_url: https://github.com/kiarashplusplus/FIML
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - toc.follow
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+plugins:
+  - search:
+      lang: en
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/kiarashplusplus/FIML
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/fiml
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Configuration: getting-started/configuration.md
+  - User Guide:
+    - Overview: user-guide/overview.md
+    - MCP Tools: user-guide/mcp-tools.md
+    - WebSocket Streaming: user-guide/websocket.md
+    - FK-DSL Query Language: user-guide/fk-dsl.md
+  - Architecture:
+    - System Design: architecture/overview.md
+    - Data Arbitration: architecture/arbitration.md
+    - Caching Strategy: architecture/caching.md
+    - Provider System: architecture/providers.md
+    - Multi-Agent Framework: architecture/agents.md
+  - Features:
+    - Watchdog System: features/watchdog.md
+    - MCP Narrative: features/mcp-narrative.md
+    - Session Management: features/session-management.md
+    - Compliance Framework: features/compliance.md
+  - API Reference:
+    - REST API: api/rest.md
+    - WebSocket API: api/websocket.md
+    - MCP Protocol: api/mcp.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Deployment: development/deployment.md
+    - Technical Debt: development/technical-debt.md
+  - Project:
+    - Roadmap: project/roadmap.md
+    - Status: project/status.md
+    - Phase Reports: project/phase-reports.md
+    - Changelog: project/changelog.md
