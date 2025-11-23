@@ -131,7 +131,7 @@ async def get_recent_events(
     if severity or event_type:
         event_filter = EventFilter(
             severities=[severity] if severity else None,
-            types=[event_type] if event_type else None,
+            event_types=[event_type] if event_type else None,
         )
     
     events = watchdog_manager.get_recent_events(
@@ -223,15 +223,18 @@ async def dashboard_websocket(websocket: WebSocket):
     
     try:
         # Subscribe to all watchdog events
-        async def event_callback(event: WatchdogEvent):
-            """Callback for watchdog events"""
-            try:
-                await websocket.send_json({
-                    "type": "event",
-                    "data": event.to_dict(),
-                })
-            except Exception as e:
-                logger.error(f"Error sending event to dashboard: {e}")
+        def event_callback(event: WatchdogEvent):
+            """Callback for watchdog events - creates async task"""
+            async def send_event():
+                try:
+                    await websocket.send_json({
+                        "type": "event",
+                        "data": event.to_dict(),
+                    })
+                except Exception as e:
+                    logger.error(f"Error sending event to dashboard: {e}")
+            
+            asyncio.create_task(send_event())
         
         subscription_id = watchdog_manager.subscribe_to_events(
             callback=event_callback,

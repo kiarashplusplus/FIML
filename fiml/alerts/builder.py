@@ -256,8 +256,9 @@ class AlertBuilder:
     
     def _subscribe_to_watchdog_events(self, config: AlertConfig) -> None:
         """Subscribe to watchdog events for an alert"""
-        async def event_handler(event: WatchdogEvent):
-            await self._handle_event(config, event)
+        def event_handler(event: WatchdogEvent):
+            """Callback for watchdog events - creates async task"""
+            asyncio.create_task(self._handle_event(config, event))
         
         subscription_id = watchdog_manager.subscribe_to_events(
             callback=event_handler,
@@ -359,18 +360,22 @@ class AlertBuilder:
             
             msg.attach(MIMEText(html_body, 'html'))
             
-            # Send email
-            with smtplib.SMTP(
-                config.email_config.smtp_host,
-                config.email_config.smtp_port
-            ) as server:
-                if config.email_config.use_tls:
-                    server.starttls()
-                server.login(
-                    config.email_config.smtp_user,
-                    config.email_config.smtp_password
-                )
-                server.send_message(msg)
+            # Send email in thread to avoid blocking
+            def send_smtp():
+                with smtplib.SMTP(
+                    config.email_config.smtp_host,
+                    config.email_config.smtp_port
+                ) as server:
+                    if config.email_config.use_tls:
+                        server.starttls()
+                    server.login(
+                        config.email_config.smtp_user,
+                        config.email_config.smtp_password
+                    )
+                    server.send_message(msg)
+            
+            # Run SMTP in thread pool to avoid blocking
+            await asyncio.to_thread(send_smtp)
             
             logger.info(f"Email sent for alert: {config.name}")
         
