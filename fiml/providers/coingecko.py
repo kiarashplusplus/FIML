@@ -70,12 +70,22 @@ class CoinGeckoProvider(BaseProvider):
 
     def _get_coin_id(self, symbol: str) -> str:
         """Convert symbol to CoinGecko coin ID"""
-        # Remove common suffixes
-        clean_symbol = symbol.upper().replace("USDT", "").replace("USD", "").replace("BTC", "").replace("ETH", "")
-        if not clean_symbol:
-            clean_symbol = symbol.upper()
+        clean_symbol = symbol.upper()
         
-        return self._symbol_to_id.get(clean_symbol, clean_symbol.lower())
+        # First check if we have a direct mapping for the full symbol
+        if clean_symbol in self._symbol_to_id:
+            return self._symbol_to_id[clean_symbol]
+        
+        # Try removing common trading pair suffixes (only at the end)
+        # Only remove if the resulting symbol has a known mapping
+        for suffix in ["USDT", "BUSD", "USD"]:  # More conservative list, removed BTC/ETH
+            if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
+                potential_symbol = clean_symbol[:-len(suffix)]
+                if potential_symbol in self._symbol_to_id:
+                    return self._symbol_to_id[potential_symbol]
+        
+        # If no mapping found, return lowercase as coin ID (API will handle it)
+        return clean_symbol.lower()
 
     async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         """Make API request to CoinGecko"""

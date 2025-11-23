@@ -29,7 +29,7 @@ class MarketstackProvider(BaseProvider):
     - Simple REST API integration
     """
 
-    BASE_URL = "http://api.marketstack.com/v1"
+    BASE_URL = "https://api.marketstack.com/v1"
 
     def __init__(self, api_key: Optional[str] = None):
         config = ProviderConfig(

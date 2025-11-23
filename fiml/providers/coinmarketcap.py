@@ -109,8 +109,15 @@ class CoinMarketCapProvider(BaseProvider):
         logger.info(f"Fetching price for {asset.symbol} from CoinMarketCap")
 
         try:
+            # Remove common trading pair suffixes (only at the end)
+            clean_symbol = asset.symbol.upper()
+            for suffix in ["USDT", "USD", "BUSD", "EUR"]:
+                if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
+                    clean_symbol = clean_symbol[:-len(suffix)]
+                    break
+            
             endpoint = "/cryptocurrency/quotes/latest"
-            params = {"symbol": asset.symbol.replace("USDT", "").replace("USD", "")}
+            params = {"symbol": clean_symbol}
             
             response_data = await self._make_request(endpoint, params)
 
@@ -174,8 +181,15 @@ class CoinMarketCapProvider(BaseProvider):
         logger.info(f"Fetching fundamentals for {asset.symbol} from CoinMarketCap")
 
         try:
+            # Remove common trading pair suffixes (only at the end)
+            clean_symbol = asset.symbol.upper()
+            for suffix in ["USDT", "USD", "BUSD", "EUR"]:
+                if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
+                    clean_symbol = clean_symbol[:-len(suffix)]
+                    break
+            
             endpoint = "/cryptocurrency/info"
-            params = {"symbol": asset.symbol.replace("USDT", "").replace("USD", "")}
+            params = {"symbol": clean_symbol}
             
             response_data = await self._make_request(endpoint, params)
 
