@@ -105,10 +105,8 @@ class WatchdogMetrics:
         self.last_check_at = datetime.utcnow()
         
         # Mark as unhealthy if too many consecutive failures
-        # Use the monitor's threshold if available, otherwise default to 3
-        from fiml.watchdog.health import WatchdogHealthMonitor
-        threshold = getattr(WatchdogHealthMonitor, 'DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD', 3)
-        if self.consecutive_failures >= threshold:
+        # Use the default threshold from the class constant
+        if self.consecutive_failures >= WatchdogHealthMonitor.DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD:
             self.is_healthy = False
     
     def reset_health(self) -> None:

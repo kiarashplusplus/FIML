@@ -119,16 +119,9 @@ class WorkerMetrics:
             return False
         
         # Check error rate
-        if self.error_rate > max_heartbeat_age_seconds / 1000:  # Use normalized threshold
-            # Get threshold from monitor if available
-            try:
-                from fiml.agents.health import WorkerHealthMonitor
-                threshold = getattr(WorkerHealthMonitor, 'DEFAULT_ERROR_RATE_THRESHOLD', 0.5)
-            except Exception:
-                threshold = 0.5
-            
-            if self.error_rate > threshold:
-                return False
+        # Use the default threshold from the class constant
+        if self.error_rate > WorkerHealthMonitor.DEFAULT_ERROR_RATE_THRESHOLD:
+            return False
         
         # Check status
         if self.status in [WorkerStatus.UNHEALTHY, WorkerStatus.SHUTDOWN]:
