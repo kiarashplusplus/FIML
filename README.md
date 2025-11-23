@@ -4,7 +4,7 @@
 
 > 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Test Results](TEST_REPORT.md) [![FIML CI/CD Pipeline](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml) | [Technical Evaluation](TECHNICAL_STRATEGIC_EVALUATION.md)
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 Planning 📋 | **Version**: 0.1.1 | **Tests**: 100% pass rate | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
+> **Current State**: Phase 1 Complete ✅ | Phase 2 Planning 📋 | **Version**: 0.2.0 | **Tests**: 100% pass rate | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
 
 
 > 📊 **Quick Links**:

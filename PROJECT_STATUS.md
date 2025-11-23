@@ -784,6 +784,6 @@ Apache 2.0 License - See [LICENSE](LICENSE) file for details.
 
 ---
 
-**Last Updated**: November 22, 2025  
-**Version**: 0.1.1  
+**Last Updated**: November 23, 2025  
+**Version**: 0.2.0  
 **Status**: 🟢 Production Ready (Phase 1)

@@ -22,7 +22,7 @@ class TestServerConfiguration:
         from fiml.server import app
 
         assert app.title == "FIML - Financial Intelligence Meta-Layer"
-        assert app.version == "0.1.1"
+        assert app.version == "0.2.0"
         assert "AI-Native Multi-Market Financial Intelligence Framework" in app.description
 
     def test_app_has_routers(self):

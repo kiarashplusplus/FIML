@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifecycle management for the application"""
     # Startup
-    logger.info("Starting FIML server", version="0.1.1", environment=settings.fiml_env)
+    logger.info("Starting FIML server", version="0.2.0", environment=settings.fiml_env)
 
     # Initialize cache layers
     logger.info("Initializing cache layers...")

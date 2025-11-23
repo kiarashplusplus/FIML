@@ -482,7 +482,7 @@ All 4 MCP tools are **fully operational** with real data:
 **Weaknesses vs Competitors**:
 - ⚠️ Limited providers (5 vs Bloomberg's dozens)
 - ⚠️ No proprietary data
-- ⚠️ Early stage (0.1.1)
+- ⚠️ Early stage (0.2.0)
 - ⚠️ Small team (appears to be solo developer)
 - ⚠️ Limited track record
 
