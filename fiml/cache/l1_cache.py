@@ -4,7 +4,10 @@ Target: 10-100ms latency
 """
 
 import json
-from typing import Any, List, Optional
+from collections import defaultdict
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set
 
 import redis.asyncio as redis
 
@@ -13,6 +16,13 @@ from fiml.core.exceptions import CacheError
 from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+class EvictionPolicy(Enum):
+    """Cache eviction policies"""
+    LRU = "lru"  # Least Recently Used (Redis default)
+    LFU = "lfu"  # Least Frequently Used
+    HYBRID = "hybrid"  # Combination of LRU and LFU
 
 
 class L1Cache:
@@ -24,11 +34,29 @@ class L1Cache:
     - Automatic TTL management
     - JSON serialization
     - Connection pooling
+    - LFU/LRU/Hybrid eviction policies
+    - Protected keys (never evicted)
+    - Access frequency tracking
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        eviction_policy: EvictionPolicy = EvictionPolicy.LRU,
+        protected_patterns: Optional[List[str]] = None
+    ) -> None:
         self._redis: Optional[redis.Redis] = None
         self._initialized = False
+        self.eviction_policy = eviction_policy
+        self.protected_patterns = protected_patterns or []
+
+        # LFU tracking (in-memory, synced to Redis)
+        self._access_counts: Dict[str, int] = defaultdict(int)
+        self._last_access: Dict[str, datetime] = {}
+        self._protected_keys: Set[str] = set()
+
+        # Eviction statistics
+        self._eviction_count = 0
+        self._eviction_log: List[Dict[str, Any]] = []
 
     async def initialize(self) -> None:
         """Initialize Redis connection pool"""
@@ -37,6 +65,9 @@ class L1Cache:
             return
 
         try:
+            # Configure Redis eviction policy
+            maxmemory_policy = self._get_redis_eviction_policy()
+
             self._redis = redis.Redis(
                 host=settings.redis_host,
                 port=settings.redis_port,
@@ -52,8 +83,17 @@ class L1Cache:
             if not ping_result:
                 raise CacheError("Redis ping failed")
 
+            # Configure Redis eviction policy
+            await self._redis.config_set("maxmemory-policy", maxmemory_policy)
+
             self._initialized = True
-            logger.info("L1 cache initialized", host=settings.redis_host, port=settings.redis_port)
+            logger.info(
+                "L1 cache initialized",
+                host=settings.redis_host,
+                port=settings.redis_port,
+                eviction_policy=self.eviction_policy.value,
+                redis_policy=maxmemory_policy
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize L1 cache: {e}")
@@ -82,6 +122,9 @@ class L1Cache:
         try:
             value = await self._redis.get(key)
             if value:
+                # Track access for LFU
+                self._track_access(key)
+
                 logger.debug("L1 cache hit", key=key)
                 result: Any = json.loads(value)
                 return result
@@ -304,6 +347,166 @@ class L1Cache:
         except Exception as e:
             logger.error(f"L1 cache set_many error: {e}")
             return 0
+
+
+    def _get_redis_eviction_policy(self) -> str:
+        """Map our eviction policy to Redis config"""
+        if self.eviction_policy == EvictionPolicy.LRU:
+            return "allkeys-lru"
+        elif self.eviction_policy == EvictionPolicy.LFU:
+            return "allkeys-lfu"
+        else:  # HYBRID
+            return "volatile-lfu"  # LFU for keys with TTL
+
+    def _track_access(self, key: str) -> None:
+        """Track key access for LFU policy"""
+        self._access_counts[key] += 1
+        self._last_access[key] = datetime.utcnow()
+
+    def protect_key(self, key: str) -> None:
+        """
+        Protect a key from eviction
+
+        Args:
+            key: Key to protect
+        """
+        self._protected_keys.add(key)
+        logger.debug("Key protected from eviction", key=key)
+
+    def unprotect_key(self, key: str) -> None:
+        """
+        Remove protection from a key
+
+        Args:
+            key: Key to unprotect
+        """
+        self._protected_keys.discard(key)
+        logger.debug("Key unprotected", key=key)
+
+    def is_protected(self, key: str) -> bool:
+        """Check if key is protected"""
+        # Check exact match
+        if key in self._protected_keys:
+            return True
+
+        # Check pattern matches
+        for pattern in self.protected_patterns:
+            if self._matches_pattern(key, pattern):
+                return True
+
+        return False
+
+    @staticmethod
+    def _matches_pattern(key: str, pattern: str) -> bool:
+        """Simple pattern matching (supports * wildcard)"""
+        if "*" not in pattern:
+            return key == pattern
+
+        # Convert pattern to regex-like matching
+        parts = pattern.split("*")
+        if len(parts) == 2:
+            prefix, suffix = parts
+            return key.startswith(prefix) and key.endswith(suffix)
+
+        return False
+
+    async def evict_least_used(self, count: int = 10) -> int:
+        """
+        Manually evict least used keys (for LFU/HYBRID policies)
+
+        Args:
+            count: Number of keys to evict
+
+        Returns:
+            Number of keys actually evicted
+        """
+        if not self._initialized or self._redis is None:
+            raise CacheError("L1 cache not initialized")
+
+        # Sort keys by access count (ascending)
+        sorted_keys = sorted(
+            self._access_counts.items(),
+            key=lambda x: x[1]
+        )
+
+        evicted = 0
+        for key, access_count in sorted_keys[:count]:
+            # Skip protected keys
+            if self.is_protected(key):
+                logger.debug("Skipping eviction of protected key", key=key)
+                continue
+
+            # Check if key still exists
+            if await self.exists(key):
+                success = await self.delete(key)
+                if success:
+                    evicted += 1
+                    self._log_eviction(key, access_count, "manual_lfu")
+
+            # Clean up tracking data
+            if key in self._access_counts:
+                del self._access_counts[key]
+            if key in self._last_access:
+                del self._last_access[key]
+
+        logger.info("Manual eviction complete", target=count, evicted=evicted)
+        return evicted
+
+    def _log_eviction(self, key: str, access_count: int, reason: str) -> None:
+        """Log eviction decision for analysis"""
+        self._eviction_count += 1
+
+        eviction_record = {
+            "key": key,
+            "access_count": access_count,
+            "last_access": self._last_access.get(key),
+            "reason": reason,
+            "timestamp": datetime.utcnow(),
+        }
+
+        self._eviction_log.append(eviction_record)
+
+        # Keep only last 1000 evictions
+        if len(self._eviction_log) > 1000:
+            self._eviction_log.pop(0)
+
+        logger.info(
+            "Cache key evicted",
+            key=key,
+            access_count=access_count,
+            reason=reason
+        )
+
+    def get_eviction_stats(self) -> Dict[str, Any]:
+        """Get eviction statistics"""
+        return {
+            "total_evictions": self._eviction_count,
+            "recent_evictions": len(self._eviction_log),
+            "protected_keys": len(self._protected_keys),
+            "tracked_keys": len(self._access_counts),
+            "eviction_policy": self.eviction_policy.value,
+        }
+
+    def get_access_stats(self) -> Dict[str, Any]:
+        """Get access frequency statistics"""
+        if not self._access_counts:
+            return {
+                "total_tracked": 0,
+                "most_accessed": [],
+                "least_accessed": [],
+            }
+
+        sorted_by_access = sorted(
+            self._access_counts.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        return {
+            "total_tracked": len(self._access_counts),
+            "most_accessed": sorted_by_access[:10],
+            "least_accessed": sorted_by_access[-10:],
+        }
 
 
 # Global L1 cache instance

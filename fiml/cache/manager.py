@@ -3,8 +3,10 @@ Cache Manager - Coordinates L1 and L2 caches
 """
 
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, time as time_obj
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from fiml.cache.analytics import cache_analytics
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.l2_cache import l2_cache
 from fiml.cache.utils import calculate_percentile
@@ -30,6 +32,9 @@ class CacheManager:
     - Latency tracking for L1 and L2 operations
     - Hit rate measurement
     - Eviction statistics
+    - Dynamic TTL based on data volatility and market hours
+    - Read-through cache pattern
+    - Integrated analytics
     """
 
     def __init__(self) -> None:
@@ -44,6 +49,13 @@ class CacheManager:
         self._l2_misses = 0
         self._l1_latencies: List[float] = []
         self._l2_latencies: List[float] = []
+
+        # Analytics integration
+        self.analytics = cache_analytics
+
+        # Market hours configuration (NYSE default: 9:30 AM - 4:00 PM ET)
+        self.market_open = time_obj(9, 30)
+        self.market_close = time_obj(16, 0)
 
     async def initialize(self) -> None:
         """Initialize both cache layers"""
@@ -99,7 +111,7 @@ class CacheManager:
         price_data: Dict[str, Any],
     ) -> bool:
         """
-        Set price in both caches
+        Set price in both caches with dynamic TTL
 
         Args:
             asset: Asset
@@ -110,7 +122,7 @@ class CacheManager:
             True if successful
         """
         l1_key = self.l1.build_key("price", asset.symbol, provider)
-        ttl = self._get_ttl(DataType.PRICE)
+        ttl = self._get_ttl(DataType.PRICE, asset)
 
         # Set in L1
         l1_success = await self.l1.set(l1_key, price_data, ttl)
@@ -119,7 +131,13 @@ class CacheManager:
         # In production, would insert into PostgreSQL
         # l2_success = await self.l2.set_price(asset_id, provider, ...)
 
-        logger.debug("Price cached", asset=asset.symbol, provider=provider, l1=l1_success)
+        logger.debug(
+            "Price cached",
+            asset=asset.symbol,
+            provider=provider,
+            l1=l1_success,
+            ttl=ttl
+        )
         return bool(l1_success)
 
     async def get_fundamentals(
@@ -146,9 +164,9 @@ class CacheManager:
         provider: str,
         data: Dict[str, Any],
     ) -> bool:
-        """Set fundamentals in both caches"""
+        """Set fundamentals in both caches with dynamic TTL"""
         l1_key = self.l1.build_key("fundamentals", asset.symbol, provider)
-        ttl = self._get_ttl(DataType.FUNDAMENTALS)
+        ttl = self._get_ttl(DataType.FUNDAMENTALS, asset)
 
         # Set in L1
         l1_success = await self.l1.set(l1_key, data, ttl)
@@ -156,7 +174,12 @@ class CacheManager:
         # Set in L2
         # In production: await self.l2.set_fundamentals(asset_id, provider, data, ttl)
 
-        logger.debug("Fundamentals cached", asset=asset.symbol, provider=provider)
+        logger.debug(
+            "Fundamentals cached",
+            asset=asset.symbol,
+            provider=provider,
+            ttl=ttl
+        )
         return bool(l1_success)
 
     async def invalidate_asset(self, asset: Asset) -> int:
@@ -298,8 +321,17 @@ class CacheManager:
         result = await self.l1.clear_pattern(pattern)
         return int(result) if result else 0
 
-    def _get_ttl(self, data_type: DataType) -> int:
-        """Get TTL for data type"""
+    def _get_ttl(self, data_type: DataType, asset: Optional[Asset] = None) -> int:
+        """
+        Get intelligent TTL for data type with dynamic adjustments
+
+        Factors:
+        - Data type volatility
+        - Market hours (shorter TTL during trading)
+        - Asset type (crypto vs stocks)
+        - Weekend/holiday extended TTL
+        """
+        # Base TTL from settings
         ttl_map = {
             DataType.PRICE: settings.cache_ttl_price,
             DataType.FUNDAMENTALS: settings.cache_ttl_fundamentals,
@@ -307,7 +339,111 @@ class CacheManager:
             DataType.NEWS: settings.cache_ttl_news,
             DataType.MACRO: settings.cache_ttl_macro,
         }
-        return ttl_map.get(data_type, 300)
+        base_ttl = ttl_map.get(data_type, 300)
+
+        # Check if market is currently open
+        now = datetime.utcnow()
+        current_time = now.time()
+        is_weekday = now.weekday() < 5  # Monday = 0, Sunday = 6
+
+        # Dynamic adjustments for price data
+        if data_type == DataType.PRICE:
+            # Crypto trades 24/7 - shorter TTL always
+            if asset and asset.asset_type == "crypto":
+                return min(base_ttl, 60)  # Max 1 minute for crypto
+
+            # Stock market hours
+            if is_weekday and self.market_open <= current_time <= self.market_close:
+                # During market hours - use base TTL (shorter)
+                return base_ttl
+            else:
+                # After hours or weekends - extend TTL by 4x
+                return base_ttl * 4
+
+        # Fundamentals have longer TTL on weekends
+        elif data_type == DataType.FUNDAMENTALS:
+            if not is_weekday:
+                return base_ttl * 2  # Double TTL on weekends
+
+        # News can be extended on weekends
+        elif data_type == DataType.NEWS:
+            if not is_weekday:
+                return base_ttl * 1.5
+
+        return base_ttl
+
+    async def get_with_read_through(
+        self,
+        key: str,
+        data_type: DataType,
+        fetch_fn: Callable[[], Any],
+        asset: Optional[Asset] = None
+    ) -> Optional[Any]:
+        """
+        Read-through cache pattern: fetch from source if not in cache
+
+        Args:
+            key: Cache key
+            data_type: Type of data
+            fetch_fn: Async function to fetch data if cache miss
+            asset: Asset (for TTL calculation)
+
+        Returns:
+            Cached or fetched data
+        """
+        # Try cache first
+        start = time.perf_counter()
+        value = await self.l1.get(key)
+        l1_latency_ms = (time.perf_counter() - start) * 1000
+
+        if value is not None:
+            self._l1_hits += 1
+            self._track_l1_latency(l1_latency_ms)
+
+            # Record analytics
+            self.analytics.record_cache_access(
+                data_type=data_type,
+                is_hit=True,
+                latency_ms=l1_latency_ms,
+                cache_level="l1",
+                key=key
+            )
+
+            return value
+
+        self._l1_misses += 1
+
+        # Record analytics for miss
+        self.analytics.record_cache_access(
+            data_type=data_type,
+            is_hit=False,
+            latency_ms=l1_latency_ms,
+            cache_level="l1",
+            key=key
+        )
+
+        # Fetch from source
+        try:
+            fetched_value = await fetch_fn()
+
+            if fetched_value is not None:
+                # Store in cache with dynamic TTL
+                ttl = self._get_ttl(data_type, asset)
+                await self.l1.set(key, fetched_value, ttl)
+
+                logger.debug(
+                    "Read-through cache populated",
+                    key=key,
+                    data_type=data_type.value,
+                    ttl=ttl
+                )
+
+            return fetched_value
+
+        except Exception as e:
+            logger.error(f"Read-through fetch error: {e}", key=key)
+            self.analytics.record_error(data_type)
+            return None
 
     async def get_prices_batch(
         self, assets: List[Asset], provider: Optional[str] = None
@@ -346,7 +482,7 @@ class CacheManager:
         items: List[tuple[Asset, str, Dict[str, Any]]],
     ) -> int:
         """
-        Set multiple prices in L1 cache using batch optimization
+        Set multiple prices in L1 cache using batch optimization with dynamic TTL
 
         Args:
             items: List of (asset, provider, price_data) tuples
@@ -354,13 +490,13 @@ class CacheManager:
         Returns:
             Number of successfully cached items
         """
-        ttl = self._get_ttl(DataType.PRICE)
+        # Build cache items with dynamic TTL per asset
+        cache_items: List[Tuple[str, Any, Optional[int]]] = []
 
-        # Build cache items
-        cache_items: List[Tuple[str, Any, Optional[int]]] = [
-            (self.l1.build_key("price", asset.symbol, provider), price_data, ttl)
-            for asset, provider, price_data in items
-        ]
+        for asset, provider, price_data in items:
+            ttl = self._get_ttl(DataType.PRICE, asset)
+            key = self.l1.build_key("price", asset.symbol, provider)
+            cache_items.append((key, price_data, ttl))
 
         # Batch set in L1
         success_count = await self.l1.set_many(cache_items)

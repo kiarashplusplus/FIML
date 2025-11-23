@@ -2,11 +2,22 @@
 Tests for cache optimization features
 """
 
+import asyncio
+from datetime import datetime
 
 import pytest
 
+from fiml.cache import (
+    BatchUpdateScheduler,
+    CacheAnalytics,
+    EvictionPolicy,
+    L1Cache,
+    PredictiveCacheWarmer,
+    cache_manager,
+)
 from fiml.cache.l1_cache import L1Cache
 from fiml.cache.manager import CacheManager
+from fiml.core.models import Asset, DataType
 
 
 class TestL1CacheBatchOperations:
@@ -86,3 +97,86 @@ class TestDatetimeTimezoneAwareness:
         """Verify L2 cache can be imported"""
         from fiml.cache.l2_cache import L2Cache
         assert L2Cache is not None
+
+
+class TestCacheWarmingIntegration:
+    """Integration tests for cache warming"""
+
+    @pytest.mark.asyncio
+    async def test_warming_pattern_tracking(self):
+        """Test that warming tracks access patterns"""
+        class MockProviderRegistry:
+            def get_provider_for_data_type(self, data_type, asset):
+                return None
+
+        warmer = PredictiveCacheWarmer(
+            cache_manager=None,  # type: ignore
+            provider_registry=MockProviderRegistry(),
+            min_request_threshold=2,
+        )
+
+        # Record access patterns
+        for _ in range(10):
+            warmer.record_cache_access("AAPL", DataType.PRICE)
+
+        # Check that pattern was recorded
+        assert "AAPL" in warmer.query_patterns
+        assert warmer.query_patterns["AAPL"].request_count == 10
+
+
+class TestEvictionPolicyTracking:
+    """Test eviction policy tracking"""
+
+    def test_eviction_policy_enum_exists(self):
+        """Test that EvictionPolicy enum is properly defined"""
+        assert hasattr(EvictionPolicy, "LRU")
+        assert hasattr(EvictionPolicy, "LFU")
+        assert hasattr(EvictionPolicy, "HYBRID")
+
+
+class TestBatchScheduler:
+    """Test batch update scheduler"""
+
+    def test_scheduler_initialization(self):
+        """Test scheduler can be initialized"""
+        class MockProviderRegistry:
+            pass
+
+        class MockCacheManager:
+            pass
+
+        scheduler = BatchUpdateScheduler(
+            cache_manager=MockCacheManager(),  # type: ignore
+            provider_registry=MockProviderRegistry(),  # type: ignore
+            batch_size=10,
+        )
+
+        assert scheduler.batch_size == 10
+        assert scheduler.total_requests == 0
+
+
+class TestCacheAnalytics:
+    """Test cache analytics"""
+
+    def test_analytics_initialization(self):
+        """Test analytics can be initialized"""
+        analytics = CacheAnalytics(enable_prometheus=False)
+
+        assert analytics.total_hits == 0
+        assert analytics.total_misses == 0
+
+    def test_analytics_record_access(self):
+        """Test recording cache access"""
+        analytics = CacheAnalytics(enable_prometheus=False)
+
+        analytics.record_cache_access(
+            data_type=DataType.PRICE,
+            is_hit=True,
+            latency_ms=10.0,
+            cache_level="l1",
+        )
+
+        stats = analytics.get_overall_stats()
+        assert stats["total_hits"] == 1
+        assert stats["total_misses"] == 0
+
