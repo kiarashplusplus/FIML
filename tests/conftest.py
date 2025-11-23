@@ -9,6 +9,10 @@ import time
 import psycopg2
 import pytest
 import redis
+from dotenv import load_dotenv
+
+# Load .env file first to get real configuration
+load_dotenv()
 
 from fiml.core.config import Settings
 
@@ -22,7 +26,7 @@ os.environ["REDIS_HOST"] = "localhost"
 os.environ["REDIS_PORT"] = "6379"
 os.environ["FIML_ENV"] = "test"
 
-# Mock Azure OpenAI configuration for tests (unless already set)
+# Mock Azure OpenAI configuration for tests (unless already set in .env)
 if "AZURE_OPENAI_ENDPOINT" not in os.environ:
     os.environ["AZURE_OPENAI_ENDPOINT"] = "https://mock-azure-openai.openai.azure.com/"
 if "AZURE_OPENAI_API_KEY" not in os.environ:

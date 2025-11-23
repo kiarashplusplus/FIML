@@ -136,4 +136,4 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
 ]
-addopts = "--strict-markers"
+addopts = "--strict-markers --run-cache-tests"
