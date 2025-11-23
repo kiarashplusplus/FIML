@@ -29,6 +29,11 @@ The hook runs three checks in sequence:
 ./scripts/install-hooks.sh
 ```
 
+For non-interactive/automated installation:
+```bash
+./scripts/install-hooks.sh --force
+```
+
 This script will:
 - Check if you're in the FIML project root
 - Backup any existing pre-push hook

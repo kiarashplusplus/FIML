@@ -1,8 +1,15 @@
 #!/bin/bash
 # Install Git pre-push hook for FIML
 # This script copies the pre-push hook to .git/hooks/
+# Usage: ./scripts/install-hooks.sh [--force]
 
 set -e
+
+# Parse command line arguments
+FORCE=false
+if [ "$1" = "--force" ] || [ "$1" = "-f" ]; then
+    FORCE=true
+fi
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -33,11 +40,15 @@ fi
 # Check if pre-push hook already exists
 if [ -f ".git/hooks/pre-push" ]; then
     echo -e "${YELLOW}Pre-push hook already exists${NC}"
-    read -p "Do you want to overwrite it? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Installation cancelled"
-        exit 0
+    if [ "$FORCE" = false ]; then
+        read -p "Do you want to overwrite it? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Installation cancelled"
+            exit 0
+        fi
+    else
+        echo "Force mode: Overwriting existing hook"
     fi
     # Backup existing hook
     cp .git/hooks/pre-push .git/hooks/pre-push.backup

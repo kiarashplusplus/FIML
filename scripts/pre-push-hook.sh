@@ -38,10 +38,17 @@ fi
 # 2. Run type checking (optional, matches CI behavior)
 if command -v mypy &> /dev/null; then
     echo "🔍 Running mypy type checker..."
-    if mypy fiml/ 2>/dev/null; then
+    if mypy_output=$(mypy fiml/ 2>&1); then
         echo -e "${GREEN}✅ Type checking passed${NC}"
     else
-        echo -e "${YELLOW}⚠️  Type checking found issues (non-blocking)${NC}"
+        # Show summary of errors (first and last few lines)
+        error_count=$(echo "$mypy_output" | grep -c "error:" || echo "0")
+        echo -e "${YELLOW}⚠️  Type checking found $error_count issues (non-blocking)${NC}"
+        echo "$mypy_output" | head -5
+        if [ "$error_count" -gt "10" ]; then
+            echo "..."
+            echo "$mypy_output" | tail -3
+        fi
     fi
     echo ""
 fi
@@ -71,8 +78,8 @@ else
 
         # Run tests with --no-docker flag to skip tests requiring Docker
         # This matches the CI behavior and is faster for pre-push checks
-        # Show only summary output
-        if pytest --no-docker -q 2>&1 | tail -10; then
+        # Show concise output with short traceback
+        if pytest --no-docker -q --tb=short; then
             echo -e "${GREEN}✅ Tests passed${NC}"
         else
             echo -e "${RED}❌ Tests failed${NC}"
