@@ -33,13 +33,10 @@ Historical reports documenting development progress through each phase.
 ### Cache System
 
 - [Cache Enhancements Summary](https://github.com/kiarashplusplus/FIML/blob/main/CACHE_ENHANCEMENTS_SUMMARY.md)
-- [Cache Architecture](CACHE_ARCHITECTURE.md)
-- [Cache Optimizations](CACHE_OPTIMIZATIONS.md)
 
 ### WebSocket Streaming
 
-- [WebSocket Summary](WEBSOCKET_SUMMARY.md)
-- [WebSocket Implementation](WEBSOCKET.md)
+- [WebSocket Implementation](../user-guide/websocket.md)
 
 ### MCP Narrative Integration
 
