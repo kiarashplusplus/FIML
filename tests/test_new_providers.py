@@ -27,7 +27,7 @@ async def test_polygon_provider_initialization():
 
 @pytest.mark.asyncio
 async def test_finnhub_provider_initialization():
-    """Test Finnhub provider initialization without API key"""
+    """Test Finnhub provider initialization with test API key"""
     provider = FinnhubProvider(api_key="test_key")
     assert provider.name == "finnhub"
     assert provider.config.priority == 7

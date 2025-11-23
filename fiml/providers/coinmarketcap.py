@@ -104,17 +104,26 @@ class CoinMarketCapProvider(BaseProvider):
             self._record_error()
             raise ProviderError(f"Request failed: {e}")
 
+    def _clean_symbol(self, symbol: str) -> str:
+        """
+        Remove common trading pair suffixes from symbol.
+        
+        Only removes suffixes from the end if the resulting symbol
+        would otherwise be too short or invalid.
+        """
+        clean_symbol = symbol.upper()
+        for suffix in ["USDT", "USD", "BUSD", "EUR"]:
+            if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
+                clean_symbol = clean_symbol[:-len(suffix)]
+                break
+        return clean_symbol
+
     async def fetch_price(self, asset: Asset) -> ProviderResponse:
         """Fetch current price from CoinMarketCap"""
         logger.info(f"Fetching price for {asset.symbol} from CoinMarketCap")
 
         try:
-            # Remove common trading pair suffixes (only at the end)
-            clean_symbol = asset.symbol.upper()
-            for suffix in ["USDT", "USD", "BUSD", "EUR"]:
-                if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
-                    clean_symbol = clean_symbol[:-len(suffix)]
-                    break
+            clean_symbol = self._clean_symbol(asset.symbol)
             
             endpoint = "/cryptocurrency/quotes/latest"
             params = {"symbol": clean_symbol}
@@ -181,12 +190,7 @@ class CoinMarketCapProvider(BaseProvider):
         logger.info(f"Fetching fundamentals for {asset.symbol} from CoinMarketCap")
 
         try:
-            # Remove common trading pair suffixes (only at the end)
-            clean_symbol = asset.symbol.upper()
-            for suffix in ["USDT", "USD", "BUSD", "EUR"]:
-                if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
-                    clean_symbol = clean_symbol[:-len(suffix)]
-                    break
+            clean_symbol = self._clean_symbol(asset.symbol)
             
             endpoint = "/cryptocurrency/info"
             params = {"symbol": clean_symbol}

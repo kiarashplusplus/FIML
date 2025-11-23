@@ -166,7 +166,13 @@ class PolygonProvider(BaseProvider):
             to_date = datetime.now(timezone.utc)
             from_date = to_date - timedelta(days=limit if timespan == "day" else 30)
             
-            endpoint = f"/v2/aggs/ticker/{asset.symbol}/range/{multiplier}/{timespan}/{from_date.strftime('%Y-%m-%d')}/{to_date.strftime('%Y-%m-%d')}"
+            # Format endpoint with dates
+            from_date_str = from_date.strftime('%Y-%m-%d')
+            to_date_str = to_date.strftime('%Y-%m-%d')
+            endpoint = (
+                f"/v2/aggs/ticker/{asset.symbol}/range/{multiplier}/{timespan}/"
+                f"{from_date_str}/{to_date_str}"
+            )
             params = {"limit": str(limit), "sort": "desc"}
             
             response_data = await self._make_request(endpoint, params)

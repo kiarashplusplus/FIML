@@ -77,8 +77,9 @@ class CoinGeckoProvider(BaseProvider):
             return self._symbol_to_id[clean_symbol]
         
         # Try removing common trading pair suffixes (only at the end)
-        # Only remove if the resulting symbol has a known mapping
-        for suffix in ["USDT", "BUSD", "USD"]:  # More conservative list, removed BTC/ETH
+        # Conservative suffix list to avoid incorrectly stripping valid symbols
+        # (e.g., BTCETH should remain btceth, not be parsed as BTC)
+        for suffix in ["USDT", "BUSD", "USD"]:  # Stablecoins/fiat only
             if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
                 potential_symbol = clean_symbol[:-len(suffix)]
                 if potential_symbol in self._symbol_to_id:
