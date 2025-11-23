@@ -87,8 +87,9 @@ markdown_extensions:
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.snippets:
-      base_path: ['.']
+      base_path: ['docs', '.']
       check_paths: true
+      restrict_base_path: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

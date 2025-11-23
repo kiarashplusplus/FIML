@@ -8,12 +8,16 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
       - '.github/workflows/docs.yml'
+      - 'CONTRIBUTING.md'
+      - 'DEPLOYMENT.md'
   pull_request:
     branches:
       - main
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'CONTRIBUTING.md'
+      - 'DEPLOYMENT.md'
   workflow_dispatch:
 
 permissions:
@@ -50,7 +54,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install mkdocs mkdocs-material mkdocs-git-revision-date-localized-plugin mkdocs-minify-plugin pymdown-extensions
+          # Install docs dependencies from pyproject.toml
+          # Using explicit packages for reliability in CI environment
+          pip install mkdocs>=1.5.3 mkdocs-material>=9.5.0 \
+                      mkdocs-git-revision-date-localized-plugin>=1.2.0 \
+                      mkdocs-minify-plugin>=0.8.0 \
+                      pymdown-extensions>=10.7.0
 
       - name: Build documentation
         run: |
