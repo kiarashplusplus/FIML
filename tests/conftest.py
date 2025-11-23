@@ -176,3 +176,43 @@ def mock_asset():
         currency="USD",
     )
 
+
+@pytest.fixture(scope="session")
+async def init_session_db():
+    """Initialize session database tables for testing"""
+    from sqlalchemy import text
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    from fiml.core.config import settings
+    from fiml.sessions.db import CREATE_TABLES_SQL
+
+    # Create engine
+    engine = create_async_engine(settings.database_url, echo=False)
+
+    try:
+        async with engine.begin() as conn:
+            # First, drop existing tables if they exist (clean slate)
+            await conn.execute(text("DROP TABLE IF EXISTS session_metrics CASCADE"))
+            await conn.execute(text("DROP TABLE IF EXISTS sessions CASCADE"))
+
+            # Then create tables with new schema
+            statements = CREATE_TABLES_SQL.strip().split(';')
+            for statement in statements:
+                statement = statement.strip()
+                if statement:
+                    await conn.execute(text(statement))
+    finally:
+        await engine.dispose()
+
+    yield
+
+    # Cleanup: drop tables after tests
+    engine = create_async_engine(settings.database_url, echo=False)
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("DROP TABLE IF EXISTS session_metrics CASCADE"))
+            await conn.execute(text("DROP TABLE IF EXISTS sessions CASCADE"))
+    finally:
+        await engine.dispose()
+
+

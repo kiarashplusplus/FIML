@@ -36,9 +36,10 @@ FIML is an MCP (Model Context Protocol) server that provides intelligent financi
 - **🛡️ Compliance Framework**: Regional checks (8 regions), disclaimers, investment advice detection
 - **📈 Monitoring Hooks**: Prometheus metrics endpoints, health checks
 
-### 📋 Phase 2 Features (In Planning, Not Yet Implemented)
-- **🤖 Advanced Agent Workflows**: Framework exists (700 lines), full implementation pending
-- **📝 Narrative Generation**: Not yet started - planned for Q1 2026
+### 📋 Phase 2 Features (Partially Implemented)
+- **🤖 Agent Workflows**: ✅ **SHIPPED** - Deep equity analysis and crypto sentiment workflows with LLM narratives
+- **📝 Narrative Generation**: ✅ **WORKING** - Azure OpenAI integration for AI-powered market insights
+- **🤖 Advanced Multi-Agent Orchestration**: Framework exists (700 lines), workflow implementation complete
 - **🌍 Multi-language Support**: Not yet implemented - planned for Q2 2026
 - **🔌 Platform Integrations**: ChatGPT, Claude, Telegram - not yet started
 - **⚡ Performance Optimization**: Cache warming, load testing - pending
@@ -274,6 +275,106 @@ MACRO: US10Y, CPI, VIX, DXY → REGRESSION ON SPY
 
 # Market scan
 SCAN NASDAQ WHERE VOLUME > AVG_VOLUME(30d) * 2 AND PRICE_CHANGE(1d) > 5%
+```
+
+### Agent Workflows (NEW - Phase 2)
+
+FIML provides production-ready agent workflows that orchestrate multiple specialized agents, data providers, and LLM capabilities for comprehensive financial analysis.
+
+#### Deep Equity Analysis
+
+Multi-dimensional analysis combining fundamentals, technicals, sentiment, and AI narratives:
+
+```python
+from fiml.agents import deep_equity_analysis
+from fiml.core.models import Market
+
+# Comprehensive equity analysis
+result = await deep_equity_analysis(
+    symbol="AAPL",
+    market=Market.US,
+    include_narrative=True,
+    include_recommendation=True
+)
+
+# Access results
+print(f"Price: ${result.snapshot['price']:.2f}")
+print(f"P/E Ratio: {result.fundamentals['metrics']['pe_ratio']}")
+print(f"Technical Signal: {result.technicals['trend']['direction']}")
+print(f"Recommendation: {result.recommendation['action']}")
+print(f"\nAI Narrative:\n{result.narrative}")
+```
+
+**Features**:
+- ✅ Quick price snapshot from multiple providers
+- ✅ Fundamental analysis (P/E, EPS, ROE, valuation)
+- ✅ Technical analysis (RSI, MACD, trends, support/resistance)
+- ✅ Sentiment analysis (news, social media)
+- ✅ Risk assessment (volatility, beta, correlations)
+- ✅ LLM-generated narrative synthesis (Azure OpenAI)
+- ✅ Actionable BUY/HOLD/SELL recommendations
+- ✅ Data quality and confidence scoring
+
+#### Crypto Sentiment Analysis
+
+Specialized cryptocurrency analysis for trading signals:
+
+```python
+from fiml.agents import crypto_sentiment_analysis
+
+# Crypto sentiment and market analysis
+result = await crypto_sentiment_analysis(
+    symbol="ETH",
+    exchange="binance",
+    pair="USDT",
+    include_narrative=True
+)
+
+# Access results
+print(f"Price: ${result.price_data['price']:,.2f}")
+print(f"Trading Signal: {result.signals['signal']}")
+print(f"Sentiment Score: {result.sentiment['sentiment']['score']}")
+print(f"BTC Correlation: {result.correlations['btc_correlation']:.2f}")
+print(f"\nMarket Narrative:\n{result.narrative}")
+```
+
+**Features**:
+- ✅ Real-time price data from crypto exchanges
+- ✅ Technical indicators (RSI, MACD, volume analysis)
+- ✅ Sentiment from news and social media
+- ✅ Correlation with major cryptos (BTC, ETH)
+- ✅ LLM-powered market narrative
+- ✅ Trading signal generation (BUY/SELL/NEUTRAL)
+- ✅ Confidence scoring
+
+#### Batch Processing
+
+Analyze multiple assets in parallel:
+
+```python
+import asyncio
+
+symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
+
+# Run analyses concurrently
+results = await asyncio.gather(
+    *[deep_equity_analysis(symbol) for symbol in symbols]
+)
+
+# Process results
+for symbol, result in zip(symbols, results):
+    rec = result.recommendation
+    print(f"{symbol}: {rec['action']} (Score: {rec['overall_score']:.1f})")
+```
+
+**Documentation**:
+- 📖 [Agent Workflows Guide](docs/user-guide/agent-workflows.md) - Comprehensive documentation
+- ⚡ [Quick Reference](docs/user-guide/agent-workflows-quick-reference.md) - Common patterns
+- 💻 [Demo Script](examples/agent_workflows_demo.py) - Live examples
+
+**Run the Demo**:
+```bash
+python examples/agent_workflows_demo.py
 ```
 
 ## 📊 Code Metrics & Quality

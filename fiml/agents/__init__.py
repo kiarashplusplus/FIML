@@ -12,6 +12,16 @@ from fiml.agents.workers import (
     SentimentWorker,
     TechnicalWorker,
 )
+from fiml.agents.workflows import (
+    CryptoSentimentAnalysisResult,
+    CryptoSentimentAnalysisWorkflow,
+    DeepEquityAnalysisResult,
+    DeepEquityAnalysisWorkflow,
+    WorkflowResult,
+    WorkflowStatus,
+    crypto_sentiment_analysis,
+    deep_equity_analysis,
+)
 
 __all__ = [
     "AgentOrchestrator",
@@ -22,4 +32,13 @@ __all__ = [
     "CorrelationWorker",
     "RiskWorker",
     "NewsWorker",
+    # Workflows
+    "DeepEquityAnalysisWorkflow",
+    "DeepEquityAnalysisResult",
+    "CryptoSentimentAnalysisWorkflow",
+    "CryptoSentimentAnalysisResult",
+    "WorkflowResult",
+    "WorkflowStatus",
+    "deep_equity_analysis",
+    "crypto_sentiment_analysis",
 ]

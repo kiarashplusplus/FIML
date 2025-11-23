@@ -187,7 +187,7 @@ class TestSessionStore:
     """Test SessionStore operations"""
 
     @pytest.fixture
-    async def session_store(self):
+    async def session_store(self, init_session_db):
         """Create and initialize session store"""
         store = SessionStore()
         await store.initialize()
@@ -360,7 +360,7 @@ class TestSessionIntegration:
     """Integration tests demonstrating full session lifecycle"""
 
     @pytest.fixture
-    async def session_store(self):
+    async def session_store(self, init_session_db):
         """Create and initialize session store"""
         store = SessionStore()
         await store.initialize()

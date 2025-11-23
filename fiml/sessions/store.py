@@ -441,8 +441,8 @@ class SessionStore:
             context=session.state.context,
             preferences=session.state.preferences,
             intermediate_results=session.state.intermediate_results,
-            metadata=session.state.metadata,
-            history_queries=[q.model_dump() for q in session.state.history.queries],
+            session_metadata=session.state.metadata,
+            history_queries=[q.model_dump(mode='json') for q in session.state.history.queries],
             total_queries=session.state.history.total_queries,
             first_query_at=session.state.history.first_query_at,
             last_query_at=session.state.history.last_query_at,
@@ -467,7 +467,7 @@ class SessionStore:
             context=record.context,
             preferences=record.preferences,
             intermediate_results=record.intermediate_results,
-            metadata=record.metadata,
+            metadata=record.session_metadata,
             history=history,
         )
 

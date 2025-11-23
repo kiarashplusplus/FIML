@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS price_cache (
     change_percent DOUBLE PRECISION,
     volume BIGINT,
     confidence DOUBLE PRECISION DEFAULT 1.0,
-    metadata JSONB,
+    session_metadata JSONB,
     PRIMARY KEY (time, asset_id, provider)
 );
 

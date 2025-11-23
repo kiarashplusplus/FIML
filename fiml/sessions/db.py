@@ -41,7 +41,7 @@ class SessionRecord(Base):
     context = Column(JSON, nullable=False, default=dict)
     preferences = Column(JSON, nullable=False, default=dict)
     intermediate_results = Column(JSON, nullable=False, default=dict)
-    metadata = Column(JSON, nullable=False, default=dict)
+    session_metadata = Column(JSON, nullable=False, default=dict)
 
     # Analysis history stored as JSON
     history_queries = Column(JSON, nullable=False, default=list)
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     context JSONB NOT NULL DEFAULT '{}',
     preferences JSONB NOT NULL DEFAULT '{}',
     intermediate_results JSONB NOT NULL DEFAULT '{}',
-    metadata JSONB NOT NULL DEFAULT '{}',
+    session_metadata JSONB NOT NULL DEFAULT '{}',
     history_queries JSONB NOT NULL DEFAULT '[]',
     total_queries INTEGER NOT NULL DEFAULT 0,
     first_query_at TIMESTAMP,
