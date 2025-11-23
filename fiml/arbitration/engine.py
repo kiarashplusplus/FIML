@@ -239,7 +239,7 @@ class DataArbitrationEngine:
         - Uptime (20%): Availability over last 24h
         - Completeness (15%): Data field coverage
         - Reliability (10%): Success rate over last N requests
-        
+
         Special rules:
         - NewsAPI gets bonus score for NEWS and SENTIMENT data types
         """
