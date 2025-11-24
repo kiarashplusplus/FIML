@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # FIML Test Status Checker
 # Quick script to check test status and show summary
 
@@ -22,18 +22,20 @@ echo ""
 # Run tests and capture output
 OUTPUT=$(pytest tests/ -v -m "not live" --tb=no 2>&1 || true)
 
-# Count results
-TOTAL=$(echo "$OUTPUT" | grep -oP '\d+(?= (passed|failed|skipped|deselected))' | head -1 || echo "0")
-PASSED=$(echo "$OUTPUT" | grep -oP '\d+(?= passed)' || echo "0")
-FAILED=$(echo "$OUTPUT" | grep -oP '\d+(?= failed)' || echo "0")
-SKIPPED=$(echo "$OUTPUT" | grep -oP '\d+(?= skipped)' || echo "0")
-DESELECTED=$(echo "$OUTPUT" | grep -oP '\d+(?= deselected)' || echo "0")
+# Count results using more portable method (avoiding perl regex)
+PASSED=$(echo "$OUTPUT" | grep -o '[0-9][0-9]* passed' | grep -o '[0-9][0-9]*' | head -1 || echo "0")
+FAILED=$(echo "$OUTPUT" | grep -o '[0-9][0-9]* failed' | grep -o '[0-9][0-9]*' | head -1 || echo "0")
+SKIPPED=$(echo "$OUTPUT" | grep -o '[0-9][0-9]* skipped' | grep -o '[0-9][0-9]*' | head -1 || echo "0")
+DESELECTED=$(echo "$OUTPUT" | grep -o '[0-9][0-9]* deselected' | grep -o '[0-9][0-9]*' | head -1 || echo "0")
 
-# Calculate percentage
+# Calculate total
+TOTAL=$((PASSED + FAILED + SKIPPED))
+
+# Calculate percentage using awk (more portable than bc)
 if [ "$TOTAL" -gt 0 ]; then
-    PASS_PCT=$(echo "scale=1; $PASSED * 100 / $TOTAL" | bc)
+    PASS_PCT=$(awk "BEGIN {printf \"%.1f\", $PASSED * 100 / $TOTAL}")
 else
-    PASS_PCT="0"
+    PASS_PCT="0.0"
 fi
 
 # Display summary
