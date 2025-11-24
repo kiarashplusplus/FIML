@@ -11,8 +11,6 @@ from datetime import datetime
 from cryptography.fernet import Fernet
 import structlog
 
-from fiml.core.models import AssetType
-
 logger = structlog.get_logger(__name__)
 
 
