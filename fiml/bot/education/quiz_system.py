@@ -4,7 +4,7 @@ Interactive quizzes with scoring and XP rewards
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
 import structlog
@@ -15,6 +15,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class QuizQuestion:
     """Quiz question"""
+
     id: str
     type: str  # multiple_choice, true_false, numeric
     text: str
@@ -31,6 +32,7 @@ class QuizQuestion:
 @dataclass
 class QuizSession:
     """Active quiz session"""
+
     session_id: str
     user_id: str
     lesson_id: str
@@ -46,7 +48,7 @@ class QuizSession:
         if self.answers is None:
             self.answers = {}
         if self.started_at is None:
-            self.started_at = datetime.utcnow()
+            self.started_at = datetime.now(UTC)
 
 
 class QuizSystem:
@@ -67,10 +69,7 @@ class QuizSystem:
         logger.info("QuizSystem initialized")
 
     async def start_quiz(
-        self,
-        user_id: str,
-        lesson_id: str,
-        questions: List[QuizQuestion]
+        self, user_id: str, lesson_id: str, questions: List[QuizQuestion]
     ) -> QuizSession:
         """
         Start a new quiz session
@@ -83,30 +82,21 @@ class QuizSystem:
         Returns:
             Quiz session
         """
-        session_id = f"{user_id}_{lesson_id}_{datetime.utcnow().timestamp()}"
+        session_id = f"{user_id}_{lesson_id}_{datetime.now(UTC).timestamp()}"
 
         session = QuizSession(
-            session_id=session_id,
-            user_id=user_id,
-            lesson_id=lesson_id,
-            questions=questions
+            session_id=session_id, user_id=user_id, lesson_id=lesson_id, questions=questions
         )
 
         self._active_sessions[session_id] = session
 
         logger.info(
-            "Quiz started",
-            user_id=user_id,
-            lesson_id=lesson_id,
-            num_questions=len(questions)
+            "Quiz started", user_id=user_id, lesson_id=lesson_id, num_questions=len(questions)
         )
 
         return session
 
-    async def get_current_question(
-        self,
-        session_id: str
-    ) -> Optional[QuizQuestion]:
+    async def get_current_question(self, session_id: str) -> Optional[QuizQuestion]:
         """Get current question for session"""
         session = self._active_sessions.get(session_id)
         if not session:
@@ -117,11 +107,7 @@ class QuizSystem:
 
         return session.questions[session.current_question_index]
 
-    async def submit_answer(
-        self,
-        session_id: str,
-        answer: Any
-    ) -> Dict[str, Any]:
+    async def submit_answer(self, session_id: str, answer: Any) -> Dict[str, Any]:
         """
         Submit answer for current question
 
@@ -147,7 +133,7 @@ class QuizSystem:
         session.answers[current_q.id] = {
             "answer": answer,
             "correct": is_correct,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         # Update score
@@ -162,7 +148,7 @@ class QuizSystem:
         quiz_complete = session.current_question_index >= len(session.questions)
 
         if quiz_complete:
-            session.completed_at = datetime.utcnow()
+            session.completed_at = datetime.now(UTC)
 
             # Move to completed
             if session.user_id not in self._completed_sessions:
@@ -177,7 +163,7 @@ class QuizSystem:
                 user_id=session.user_id,
                 score=session.score,
                 total_questions=len(session.questions),
-                xp_earned=session.total_xp
+                xp_earned=session.total_xp,
             )
 
         result = {
@@ -186,7 +172,7 @@ class QuizSystem:
             "xp_earned": current_q.xp_reward if is_correct else 0,
             "quiz_complete": quiz_complete,
             "score": session.score,
-            "total_questions": len(session.questions)
+            "total_questions": len(session.questions),
         }
 
         if quiz_complete:
@@ -200,12 +186,9 @@ class QuizSystem:
         """Check if answer is correct"""
         if question.type == "multiple_choice":
             # Find correct option
-            correct_option = next(
-                (opt for opt in question.options if opt.get('correct')),
-                None
-            )
+            correct_option = next((opt for opt in question.options if opt.get("correct")), None)
             if correct_option:
-                return answer.lower().strip() == correct_option['text'].lower().strip()
+                return answer.lower().strip() == correct_option["text"].lower().strip()
             return str(answer).lower().strip() == str(question.correct_answer).lower().strip()
 
         elif question.type == "true_false":
@@ -233,7 +216,7 @@ class QuizSystem:
                 "status": "in_progress",
                 "score": session.score,
                 "answered": len(session.answers),
-                "total": len(session.questions)
+                "total": len(session.questions),
             }
 
         # Check completed sessions
@@ -247,30 +230,30 @@ class QuizSystem:
                         "total": len(session.questions),
                         "percentage": (session.score / len(session.questions)) * 100,
                         "xp_earned": session.total_xp,
-                        "duration_seconds": duration
+                        "duration_seconds": duration,
                     }
 
         return None
 
-    async def get_user_quiz_history(
-        self,
-        user_id: str,
-        limit: int = 10
-    ) -> List[Dict]:
+    async def get_user_quiz_history(self, user_id: str, limit: int = 10) -> List[Dict]:
         """Get user's quiz history"""
         if user_id not in self._completed_sessions:
             return []
 
         history = []
         for session in self._completed_sessions[user_id][-limit:]:
-            history.append({
-                "lesson_id": session.lesson_id,
-                "score": session.score,
-                "total": len(session.questions),
-                "percentage": (session.score / len(session.questions)) * 100,
-                "xp_earned": session.total_xp,
-                "completed_at": session.completed_at.isoformat() if session.completed_at else None
-            })
+            history.append(
+                {
+                    "lesson_id": session.lesson_id,
+                    "score": session.score,
+                    "total": len(session.questions),
+                    "percentage": (session.score / len(session.questions)) * 100,
+                    "xp_earned": session.total_xp,
+                    "completed_at": (
+                        session.completed_at.isoformat() if session.completed_at else None
+                    ),
+                }
+            )
 
         return history
 
@@ -293,10 +276,7 @@ class QuizSystem:
 
     # Alias for compatibility with tests
     async def create_session(
-        self,
-        user_id: str,
-        lesson_id: str,
-        questions: List[QuizQuestion]
+        self, user_id: str, lesson_id: str, questions: List[QuizQuestion]
     ) -> QuizSession:
         """
         Create a new quiz session (alias for start_quiz)

@@ -4,6 +4,7 @@ Renders lessons with live FIML market data
 """
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -16,6 +17,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class LessonSection:
     """A section within a lesson"""
+
     type: str  # introduction, live_example, explanation, chart, key_takeaways
     content: str
     fiml_query: Optional[Dict] = None
@@ -29,6 +31,7 @@ class LessonSection:
 @dataclass
 class QuizQuestion:
     """A quiz question"""
+
     id: str
     type: str  # multiple_choice, true_false, numeric
     text: str
@@ -40,6 +43,7 @@ class QuizQuestion:
 @dataclass
 class Lesson:
     """Complete lesson structure"""
+
     id: str
     title: str
     category: str
@@ -105,44 +109,48 @@ class LessonContentEngine:
             return None
 
         try:
-            with open(lesson_file, 'r') as f:
+            with open(lesson_file, "r") as f:
                 lesson_data = yaml.safe_load(f)
 
             # Parse sections
             sections = []
-            for section_data in lesson_data.get('sections', []):
-                sections.append(LessonSection(
-                    type=section_data['type'],
-                    content=section_data.get('content', ''),
-                    fiml_query=section_data.get('fiml_query'),
-                    metadata=section_data.get('metadata', {})
-                ))
+            for section_data in lesson_data.get("sections", []):
+                sections.append(
+                    LessonSection(
+                        type=section_data["type"],
+                        content=section_data.get("content", ""),
+                        fiml_query=section_data.get("fiml_query"),
+                        metadata=section_data.get("metadata", {}),
+                    )
+                )
 
             # Parse quiz questions
             quiz_questions = []
-            for q_data in lesson_data.get('quiz', {}).get('questions', []):
-                quiz_questions.append(QuizQuestion(
-                    id=q_data['id'],
-                    type=q_data['type'],
-                    text=q_data['text'],
-                    options=q_data.get('options', []),
-                    correct_answer=q_data.get('correct_answer'),
-                    xp_reward=q_data.get('xp_reward', 10)
-                ))
+            for q_data in lesson_data.get("quiz", {}).get("questions", []):
+                quiz_questions.append(
+                    QuizQuestion(
+                        id=q_data["id"],
+                        type=q_data["type"],
+                        text=q_data["text"],
+                        options=q_data.get("options", []),
+                        correct_answer=q_data.get("correct_answer"),
+                        xp_reward=q_data.get("xp_reward", 10),
+                    )
+                )
 
             # Create lesson
             lesson = Lesson(
                 id=lesson_id,
-                title=lesson_data['title'],
-                category=lesson_data.get('category', 'general'),
-                difficulty=lesson_data.get('difficulty', 'beginner'),
-                duration_minutes=lesson_data.get('duration_minutes', 5),
-                learning_objectives=lesson_data.get('learning_objectives', []),
-                prerequisites=lesson_data.get('prerequisites', []),
+                title=lesson_data["title"],
+                category=lesson_data.get("category", "general"),
+                difficulty=lesson_data.get("difficulty", "beginner"),
+                duration_minutes=lesson_data.get("duration_minutes", 5),
+                learning_objectives=lesson_data.get("learning_objectives", []),
+                prerequisites=lesson_data.get("prerequisites", []),
                 sections=sections,
                 quiz_questions=quiz_questions,
-                xp_reward=lesson_data.get('xp_reward', 50),
-                next_lesson=lesson_data.get('next_lesson')
+                xp_reward=lesson_data.get("xp_reward", 50),
+                next_lesson=lesson_data.get("next_lesson"),
             )
 
             # Cache it
@@ -156,10 +164,7 @@ class LessonContentEngine:
             return None
 
     async def render_lesson(
-        self,
-        lesson: Lesson,
-        user_id: str,
-        include_fiml_data: bool = True
+        self, lesson: Lesson, user_id: str, include_fiml_data: bool = True
     ) -> str:
         """
         Render lesson with live data
@@ -176,8 +181,7 @@ class LessonContentEngine:
 
         # Header
         output.append(f"📚 **{lesson.title}**\n")
-        output.append(f"⏱️ {lesson.duration_minutes} minutes | "
-                     f"📊 {lesson.difficulty.title()}\n")
+        output.append(f"⏱️ {lesson.duration_minutes} minutes | " f"📊 {lesson.difficulty.title()}\n")
 
         # Learning objectives
         if lesson.learning_objectives:
@@ -216,7 +220,7 @@ class LessonContentEngine:
             elif section.type == "key_takeaways":
                 output.append("🔑 **Key Takeaways:**")
                 # Parse content as bullet points
-                for line in section.content.split('\n'):
+                for line in section.content.split("\n"):
                     if line.strip():
                         output.append(f"• {line.strip()}")
                 output.append("")
@@ -229,11 +233,7 @@ class LessonContentEngine:
 
         return "\n".join(output)
 
-    async def check_prerequisites(
-        self,
-        user_id: str,
-        lesson: Lesson
-    ) -> tuple[bool, List[str]]:
+    async def check_prerequisites(self, user_id: str, lesson: Lesson) -> tuple[bool, List[str]]:
         """
         Check if user meets lesson prerequisites
 
@@ -248,26 +248,20 @@ class LessonContentEngine:
             return True, []
 
         user_progress = self._user_progress.get(user_id, {})
-        completed = user_progress.get('completed', set())
+        completed = user_progress.get("completed", set())
 
-        missing = [
-            prereq for prereq in lesson.prerequisites
-            if prereq not in completed
-        ]
+        missing = [prereq for prereq in lesson.prerequisites if prereq not in completed]
 
         return len(missing) == 0, missing
 
     async def mark_completed(self, user_id: str, lesson_id: str):
         """Mark lesson as completed for user"""
         if user_id not in self._user_progress:
-            self._user_progress[user_id] = {
-                'completed': set(),
-                'in_progress': set()
-            }
+            self._user_progress[user_id] = {"completed": set(), "in_progress": set()}
 
-        self._user_progress[user_id]['completed'].add(lesson_id)
-        if lesson_id in self._user_progress[user_id]['in_progress']:
-            self._user_progress[user_id]['in_progress'].remove(lesson_id)
+        self._user_progress[user_id]["completed"].add(lesson_id)
+        if lesson_id in self._user_progress[user_id]["in_progress"]:
+            self._user_progress[user_id]["in_progress"].remove(lesson_id)
 
         logger.info("Lesson completed", user_id=user_id, lesson_id=lesson_id)
 
@@ -280,77 +274,71 @@ class LessonContentEngine:
 
     async def get_user_progress(self, user_id: str) -> Dict:
         """Get user's learning progress"""
-        return self._user_progress.get(user_id, {
-            'completed': set(),
-            'in_progress': set()
-        })
+        return self._user_progress.get(user_id, {"completed": set(), "in_progress": set()})
 
     def create_sample_lesson(self, lesson_id: str = "stock_basics_001"):
         """Create a sample lesson for demonstration"""
         sample = {
-            'id': lesson_id,
-            'title': 'Understanding Stock Prices',
-            'category': 'foundations',
-            'difficulty': 'beginner',
-            'duration_minutes': 5,
-            'learning_objectives': [
-                'Understand bid-ask spread',
-                'Read price charts',
-                'Interpret volume data'
+            "id": lesson_id,
+            "title": "Understanding Stock Prices",
+            "category": "foundations",
+            "difficulty": "beginner",
+            "duration_minutes": 5,
+            "learning_objectives": [
+                "Understand bid-ask spread",
+                "Read price charts",
+                "Interpret volume data",
             ],
-            'prerequisites': [],
-            'sections': [
+            "prerequisites": [],
+            "sections": [
                 {
-                    'type': 'introduction',
-                    'content': 'Every second, millions of stock trades happen worldwide. '
-                              'Let\'s explore what makes prices move using real market data!'
+                    "type": "introduction",
+                    "content": "Every second, millions of stock trades happen worldwide. "
+                    "Let's explore what makes prices move using real market data!",
                 },
                 {
-                    'type': 'live_example',
-                    'content': 'Notice the bid and ask prices above? The bid is what buyers are '
-                              'willing to pay, the ask is what sellers want. The difference is the spread.',
-                    'fiml_query': {
-                        'symbol': 'AAPL',
-                        'market': 'US'
-                    }
+                    "type": "live_example",
+                    "content": "Notice the bid and ask prices above? The bid is what buyers are "
+                    "willing to pay, the ask is what sellers want. The difference is the spread.",
+                    "fiml_query": {"symbol": "AAPL", "market": "US"},
                 },
                 {
-                    'type': 'explanation',
-                    'content': 'The **spread** is the market\'s transaction cost. In liquid stocks '
-                              'like AAPL, it\'s tiny (often $0.01). In less liquid stocks, it can be much wider.'
+                    "type": "explanation",
+                    "content": "The **spread** is the market's transaction cost. In liquid stocks "
+                    "like AAPL, it's tiny (often $0.01). In less liquid stocks, it can be much wider.",
                 },
                 {
-                    'type': 'key_takeaways',
-                    'content': 'Bid-ask spread = transaction cost\n'
-                              'Liquid stocks have narrow spreads\n'
-                              'Volume indicates market interest'
-                }
+                    "type": "key_takeaways",
+                    "content": "Bid-ask spread = transaction cost\n"
+                    "Liquid stocks have narrow spreads\n"
+                    "Volume indicates market interest",
+                },
             ],
-            'quiz': {
-                'questions': [
+            "quiz": {
+                "questions": [
                     {
-                        'id': 'q1',
-                        'type': 'multiple_choice',
-                        'text': 'If Bid=$100 and Ask=$100.05, what is the spread?',
-                        'options': [
-                            {'text': '$0.05', 'correct': True},
-                            {'text': '$100', 'correct': False},
-                            {'text': '$200.05', 'correct': False}
+                        "id": "q1",
+                        "type": "multiple_choice",
+                        "text": "If Bid=$100 and Ask=$100.05, what is the spread?",
+                        "options": [
+                            {"text": "$0.05", "correct": True},
+                            {"text": "$100", "correct": False},
+                            {"text": "$200.05", "correct": False},
                         ],
-                        'correct_answer': '$0.05',
-                        'xp_reward': 10
+                        "correct_answer": "$0.05",
+                        "xp_reward": 10,
                     }
                 ]
             },
-            'xp_reward': 50,
-            'next_lesson': 'stock_basics_002'
+            "xp_reward": 50,
+            "next_lesson": "stock_basics_002",
         }
 
         # Save to file
         self.lessons_path.mkdir(parents=True, exist_ok=True)
         lesson_file = self.lessons_path / f"{lesson_id}.yaml"
 
-        with open(lesson_file, 'w') as f:
+        with open(lesson_file, "w") as f:
             yaml.dump(sample, f, default_flow_style=False)
 
         logger.info("Sample lesson created", lesson_id=lesson_id)
@@ -368,7 +356,7 @@ class LessonContentEngine:
             Lesson data dictionary or None
         """
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 lesson_data = yaml.safe_load(f)
             return lesson_data
         except Exception as e:
@@ -408,7 +396,7 @@ class LessonContentEngine:
 
         self._user_progress[user_id]["lessons"][lesson_id] = {
             "status": "in_progress",
-            "started_at": datetime.utcnow().isoformat()
+            "started_at": datetime.now(UTC).isoformat(),
         }
 
         logger.info("Lesson started", user_id=user_id, lesson_id=lesson_id)
@@ -429,7 +417,7 @@ class LessonContentEngine:
 
         self._user_progress[user_id]["lessons"][lesson_id] = {
             "status": "completed",
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.now(UTC).isoformat(),
         }
 
         logger.info("Lesson completed", user_id=user_id, lesson_id=lesson_id)

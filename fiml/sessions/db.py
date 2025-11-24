@@ -2,7 +2,7 @@
 SQLAlchemy models for session persistence in PostgreSQL
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
@@ -30,10 +30,14 @@ class SessionRecord(Base):
     user_id = Column(String(255), index=True, nullable=True)
     type = Column(String(50), nullable=False, index=True)
     assets = Column(JSON, nullable=False, default=list)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
-    expires_at = Column(DateTime, nullable=False, index=True)
-    last_accessed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    archived_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC), index=True
+    )
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    last_accessed_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+    archived_at = Column(DateTime(timezone=True), nullable=True, index=True)
     is_archived = Column(Boolean, nullable=False, default=False, index=True)
     tags = Column(JSON, nullable=False, default=list)
 
@@ -46,8 +50,8 @@ class SessionRecord(Base):
     # Analysis history stored as JSON
     history_queries = Column(JSON, nullable=False, default=list)
     total_queries = Column(Integer, nullable=False, default=0)
-    first_query_at = Column(DateTime, nullable=True)
-    last_query_at = Column(DateTime, nullable=True)
+    first_query_at = Column(DateTime(timezone=True), nullable=True)
+    last_query_at = Column(DateTime(timezone=True), nullable=True)
     cache_hit_rate = Column(String(50), nullable=False, default="0.0")
 
     def __repr__(self) -> str:
@@ -69,7 +73,7 @@ class SessionMetrics(Base):
     session_type = Column(String(50), nullable=False, index=True)
 
     # Timing metrics
-    created_at = Column(DateTime, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, index=True)
     duration_seconds = Column(Integer, nullable=False)
 
     # Query metrics
@@ -97,10 +101,10 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id VARCHAR(255),
     type VARCHAR(50) NOT NULL,
     assets JSONB NOT NULL DEFAULT '[]',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMP NOT NULL,
-    last_accessed_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    archived_at TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    last_accessed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    archived_at TIMESTAMPTZ,
     is_archived BOOLEAN NOT NULL DEFAULT FALSE,
     tags JSONB NOT NULL DEFAULT '[]',
     context JSONB NOT NULL DEFAULT '{}',
@@ -109,8 +113,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     session_metadata JSONB NOT NULL DEFAULT '{}',
     history_queries JSONB NOT NULL DEFAULT '[]',
     total_queries INTEGER NOT NULL DEFAULT 0,
-    first_query_at TIMESTAMP,
-    last_query_at TIMESTAMP,
+    first_query_at TIMESTAMPTZ,
+    last_query_at TIMESTAMPTZ,
     cache_hit_rate VARCHAR(50) NOT NULL DEFAULT '0.0'
 );
 
@@ -127,7 +131,7 @@ CREATE TABLE IF NOT EXISTS session_metrics (
     session_id UUID NOT NULL,
     user_id VARCHAR(255),
     session_type VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
     duration_seconds INTEGER NOT NULL,
     total_queries INTEGER NOT NULL DEFAULT 0,
     cache_hit_rate VARCHAR(50) NOT NULL DEFAULT '0.0',
