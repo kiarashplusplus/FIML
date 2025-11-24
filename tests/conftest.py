@@ -5,6 +5,7 @@ Test configuration for FIML
 import os
 import subprocess
 import time
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import psycopg2
 import pytest
@@ -27,6 +28,8 @@ os.environ["REDIS_PORT"] = "6379"
 os.environ["FIML_ENV"] = "test"
 
 # Mock Azure OpenAI configuration for tests (unless already set in .env)
+# When using mock endpoint, httpx calls are automatically mocked by the
+# mock_azure_openai_httpx fixture to prevent timeouts from unreachable endpoints
 if "AZURE_OPENAI_ENDPOINT" not in os.environ:
     os.environ["AZURE_OPENAI_ENDPOINT"] = "https://mock-azure-openai.openai.azure.com/"
 if "AZURE_OPENAI_API_KEY" not in os.environ:
@@ -179,6 +182,52 @@ def test_settings():
         azure_openai_deployment_name="gpt-4",
         azure_openai_api_version="2024-02-15-preview",
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_azure_openai_httpx():
+    """
+    Automatically mock httpx calls to Azure OpenAI when using mock endpoint.
+    
+    This prevents tests from making actual HTTP calls to the non-existent
+    mock endpoint (https://mock-azure-openai.openai.azure.com/), which would
+    cause timeouts and slow down tests significantly.
+    
+    The fixture is autouse=True, so it applies to all tests automatically
+    when the mock endpoint is configured.
+    """
+    # Only mock if we're using the mock endpoint
+    if os.environ.get("AZURE_OPENAI_ENDPOINT", "").startswith("https://mock"):
+        # Create a mock response that mimics Azure OpenAI's response format
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "This is a mock response from Azure OpenAI for testing purposes.",
+                    },
+                    "finish_reason": "stop",
+                    "index": 0,
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 20,
+                "total_tokens": 30,
+            },
+        }
+        
+        # Create async mock for httpx.AsyncClient.post
+        async_mock_post = AsyncMock(return_value=mock_response)
+        
+        # Patch httpx.AsyncClient.post to return our mock
+        with patch("httpx.AsyncClient.post", async_mock_post):
+            yield
+    else:
+        # If using real endpoint, don't mock anything
+        yield
 
 
 @pytest.fixture
