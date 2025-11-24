@@ -1,0 +1,104 @@
+name: Integration Tests
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+  # Run on schedule for long-running integration tests
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+
+jobs:
+  test-integration:
+    runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+      
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: fiml_test
+          POSTGRES_USER: fiml_test
+          POSTGRES_PASSWORD: fiml_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install TA-Lib dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libta-lib0 libta-lib-dev || true
+          
+          if [ ! -f /usr/lib/libta_lib.so ]; then
+            echo "Installing TA-Lib from source (GitHub mirror)"
+            wget https://github.com/TA-Lib/ta-lib/releases/download/v0.4.0/ta-lib-0.4.0-src.tar.gz
+            tar -xzf ta-lib-0.4.0-src.tar.gz
+            cd ta-lib/
+            ./configure --prefix=/usr
+            make
+            sudo make install
+            cd ..
+          fi
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Initialize database schema
+        env:
+          PGPASSWORD: fiml_test_password
+        run: |
+          psql -h localhost -U fiml_test -d fiml_test -f scripts/init-db.sql
+
+      - name: Run Integration tests
+        env:
+          FIML_ENV: test
+          REDIS_HOST: localhost
+          POSTGRES_HOST: localhost
+          POSTGRES_DB: fiml_test
+          POSTGRES_USER: fiml_test
+          POSTGRES_PASSWORD: fiml_test_password
+          AZURE_OPENAI_ENDPOINT: https://mock-azure-openai.openai.azure.com/
+          AZURE_OPENAI_API_KEY: mock-api-key-for-testing
+          AZURE_OPENAI_DEPLOYMENT_NAME: gpt-4
+          AZURE_OPENAI_API_VERSION: 2024-02-15-preview
+        run: |
+          pytest -v --cov=fiml --cov-report=xml --cov-report=term --no-docker \
+            tests/test_integration.py \
+            tests/test_e2e_api.py \
+            tests/test_dashboard.py \
+            tests/test_azure_openai.py
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: integration

@@ -1,21 +1,29 @@
-name: FIML CI/CD Pipeline (Core Only)
-
-# This workflow runs only the core tests on every commit for fast feedback.
-# Component-specific tests run via dedicated workflows triggered by path changes.
-# See: test-core.yml, test-providers.yml, test-arbitration.yml, test-dsl.yml,
-#      test-mcp.yml, test-agents.yml, test-infrastructure.yml, test-integration.yml
+name: Infrastructure Tests
 
 permissions:
   contents: read
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'fiml/compliance/**'
+      - 'fiml/alerts/**'
+      - 'fiml/watchdog/**'
+      - 'fiml/sessions/**'
+      - 'fiml/tasks/**'
+      - 'fiml/websocket/**'
+      - 'tests/test_compliance.py'
+      - 'tests/test_alerts.py'
+      - 'tests/test_watchdog.py'
+      - 'tests/test_sessions.py'
+      - 'tests/test_tasks.py'
+      - 'tests/test_websocket.py'
+      - 'tests/test_workers_integration.py'
+  workflow_dispatch:
 
 jobs:
-  test-core:
+  test-infrastructure:
     runs-on: ubuntu-latest
     
     services:
@@ -56,11 +64,9 @@ jobs:
 
       - name: Install TA-Lib dependencies
         run: |
-          # Try to install TA-Lib from Ubuntu packages first (more reliable)
           sudo apt-get update
           sudo apt-get install -y libta-lib0 libta-lib-dev || true
           
-          # If Ubuntu package installation fails, download from GitHub mirror
           if [ ! -f /usr/lib/libta_lib.so ]; then
             echo "Installing TA-Lib from source (GitHub mirror)"
             wget https://github.com/TA-Lib/ta-lib/releases/download/v0.4.0/ta-lib-0.4.0-src.tar.gz
@@ -85,14 +91,14 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check fiml/core/ fiml/cache/
+          ruff check fiml/compliance/ fiml/alerts/ fiml/watchdog/ fiml/sessions/ fiml/tasks/ fiml/websocket/
 
       - name: Type check with mypy
         run: |
-          mypy fiml/core/ fiml/cache/
+          mypy fiml/compliance/ fiml/alerts/ fiml/watchdog/ fiml/sessions/ fiml/tasks/ fiml/websocket/
         continue-on-error: true
 
-      - name: Run Core tests
+      - name: Run Infrastructure tests
         env:
           FIML_ENV: test
           REDIS_HOST: localhost
@@ -100,69 +106,22 @@ jobs:
           POSTGRES_DB: fiml_test
           POSTGRES_USER: fiml_test
           POSTGRES_PASSWORD: fiml_test_password
-          # Mock Azure OpenAI configuration for tests
           AZURE_OPENAI_ENDPOINT: https://mock-azure-openai.openai.azure.com/
           AZURE_OPENAI_API_KEY: mock-api-key-for-testing
           AZURE_OPENAI_DEPLOYMENT_NAME: gpt-4
           AZURE_OPENAI_API_VERSION: 2024-02-15-preview
         run: |
-          pytest -v --cov=fiml.core --cov=fiml.cache --cov-report=xml --cov-report=term --no-docker \
-            tests/test_core.py \
-            tests/test_cache.py \
-            tests/test_cache_improved.py \
-            tests/test_cache_optimizations.py
+          pytest -v --cov=fiml.compliance --cov=fiml.alerts --cov=fiml.watchdog --cov=fiml.sessions --cov=fiml.tasks --cov=fiml.websocket --cov-report=xml --cov-report=term --no-docker \
+            tests/test_compliance.py \
+            tests/test_alerts.py \
+            tests/test_watchdog.py \
+            tests/test_sessions.py \
+            tests/test_tasks.py \
+            tests/test_websocket.py \
+            tests/test_workers_integration.py
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: core
-
-  # build:
-  #   runs-on: ubuntu-latest
-  #   needs: test
-  #   if: github.ref == 'refs/heads/main'
-
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Clean runner caches
-  #       run: |
-  #         sudo apt-get clean || true
-  #         rm -rf ~/.cache/pip || true
-  #         rm -rf ~/.cache || true
-  #         docker system prune -af || true
-
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v2
-
-  #     - name: Log in to Docker Hub
-  #       uses: docker/login-action@v2
-  #       with:
-  #         username: ${{ secrets.DOCKER_USERNAME }}
-  #         password: ${{ secrets.DOCKER_PASSWORD }}
-
-  #     - name: Build and push Docker image
-  #       uses: docker/build-push-action@v4
-  #       with:
-  #         context: .
-  #         push: true
-  #         tags: |
-  #           fiml/fiml:latest
-  #           fiml/fiml:${{ github.sha }}
-  #         cache-from: type=registry,ref=fiml/fiml:latest
-  #         cache-to: type=inline
-
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   if: github.ref == 'refs/heads/main'
-
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Deploy to production
-  #       run: |
-  #         echo "Deployment step - configure based on your infrastructure"
-  #         # Example: kubectl apply -f k8s/
-  #         # Example: helm upgrade fiml ./charts/fiml
+          flags: infrastructure
