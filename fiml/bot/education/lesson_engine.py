@@ -163,9 +163,7 @@ class LessonContentEngine:
             logger.error("Failed to load lesson", lesson_id=lesson_id, error=str(e))
             return None
 
-    async def render_lesson(
-        self, lesson: Any, user_id: str, include_fiml_data: bool = True
-    ) -> str:
+    async def render_lesson(self, lesson: Any, user_id: str, include_fiml_data: bool = True) -> str:
         """
         Render lesson with live data
 

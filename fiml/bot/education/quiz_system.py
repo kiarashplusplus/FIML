@@ -202,7 +202,7 @@ class QuizSystem:
                 answer_num = float(answer)
                 correct_num = float(question.correct_answer)
                 # Use tolerance from question or default
-                tolerance = question.tolerance if hasattr(question, 'tolerance') else 0.01
+                tolerance = question.tolerance if hasattr(question, "tolerance") else 0.01
                 return abs(answer_num - correct_num) <= tolerance
             except (ValueError, TypeError):
                 return False
@@ -277,9 +277,7 @@ class QuizSystem:
         return "\n".join(output)
 
     # Alias for compatibility with tests
-    def create_session(
-        self, user_id: str, lesson_id: str, questions: List[Dict]
-    ) -> str:
+    def create_session(self, user_id: str, lesson_id: str, questions: List[Dict]) -> str:
         """
         Create a new quiz session (synchronous version for tests)
 
@@ -299,7 +297,7 @@ class QuizSystem:
             if options and isinstance(options[0], str):
                 # Options are strings, convert to dict format
                 options = [{"text": opt} for opt in options]
-            
+
             quiz_questions.append(
                 QuizQuestion(
                     id=q_dict.get("id", f"q_{len(quiz_questions)}"),
@@ -394,8 +392,12 @@ class QuizSystem:
                         "answers": session.answers,
                         "score": session.score,
                         "total_xp": session.total_xp,
-                        "started_at": session.started_at.isoformat() if session.started_at else None,
-                        "completed_at": session.completed_at.isoformat() if session.completed_at else None,
+                        "started_at": (
+                            session.started_at.isoformat() if session.started_at else None
+                        ),
+                        "completed_at": (
+                            session.completed_at.isoformat() if session.completed_at else None
+                        ),
                     }
 
         return None
@@ -446,7 +448,11 @@ class QuizSystem:
 
         return {
             "correct": is_correct,
-            "explanation": current_q.explanation if current_q.explanation else ("Correct!" if is_correct else "Incorrect"),
+            "explanation": (
+                current_q.explanation
+                if current_q.explanation
+                else ("Correct!" if is_correct else "Incorrect")
+            ),
             "xp_earned": current_q.xp_reward if is_correct else 0,
         }
 
