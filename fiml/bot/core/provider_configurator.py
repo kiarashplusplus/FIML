@@ -3,11 +3,12 @@ Component 2: FIML Provider Configurator
 Configures FIML arbitration engine with user-specific API keys
 """
 
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING
 
 import structlog
 
-from fiml.bot.core.key_manager import UserProviderKeyManager
+if TYPE_CHECKING:
+    from fiml.bot.core.key_manager import UserProviderKeyManager
 
 logger = structlog.get_logger(__name__)
 
@@ -23,7 +24,7 @@ class FIMLProviderConfigurator:
     - Usage tracking and quota management
     """
 
-    def __init__(self, key_manager=None):
+    def __init__(self, key_manager: 'UserProviderKeyManager' = None):
         """
         Initialize configurator
 
@@ -31,6 +32,7 @@ class FIMLProviderConfigurator:
             key_manager: User provider key manager instance (optional, created if not provided)
         """
         if key_manager is None:
+            from fiml.bot.core.key_manager import UserProviderKeyManager
             key_manager = UserProviderKeyManager()
         self.key_manager = key_manager
         logger.info("FIMLProviderConfigurator initialized")
@@ -41,12 +43,13 @@ class FIMLProviderConfigurator:
 
         Args:
             user_id: User identifier
-            user_keys: User keys dict (required - must be provided explicitly)
+            user_keys: User keys dict (optional - if not provided, defaults to empty dict
+                       resulting in free-tier-only configuration)
 
         Returns:
             Provider configuration dict
         """
-        # User keys must be provided explicitly for synchronous operation
+        # Default to empty dict if not provided (free tier only)
         if user_keys is None:
             user_keys = {}
 
