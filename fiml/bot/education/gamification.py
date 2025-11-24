@@ -338,3 +338,115 @@ class GamificationEngine:
             "quizzes_completed": stats.quizzes_completed,
             "progress_to_next_level": progress,
         }
+
+    # Synchronous wrapper methods for testing compatibility
+    def add_xp(self, user_id: str, amount: int, reason: str) -> None:
+        """
+        Synchronous wrapper for adding XP
+        Note: Uses simplified logic for testing
+        """
+        if user_id not in self._user_stats:
+            self._user_stats[user_id] = UserStats(user_id=user_id)
+        
+        stats = self._user_stats[user_id]
+        old_level = stats.level
+        stats.total_xp += amount
+        new_level = self._calculate_level(stats.total_xp)
+        
+        if new_level > old_level:
+            stats.level = new_level
+            logger.info("Level up!", user_id=user_id, old_level=old_level, new_level=new_level)
+        
+        stats.last_activity = datetime.now(UTC)
+
+    def get_user_xp(self, user_id: str) -> int:
+        """Get user's total XP (sync)"""
+        if user_id not in self._user_stats:
+            return 0
+        return self._user_stats[user_id].total_xp
+
+    def get_user_level(self, user_id: str) -> Dict:
+        """Get user's level info (sync)"""
+        if user_id not in self._user_stats:
+            return {"level": 1, "name": "Novice", "xp": 0}
+        
+        stats = self._user_stats[user_id]
+        return {
+            "level": stats.level,
+            "name": self.get_level_title(stats.level),
+            "xp": stats.total_xp
+        }
+
+    def get_user_badges(self, user_id: str) -> List[Dict]:
+        """Get user's badges (sync)"""
+        if user_id not in self._user_stats:
+            return []
+        
+        stats = self._user_stats[user_id]
+        return [
+            {
+                "id": badge_id,
+                "name": self.BADGES[badge_id].name if badge_id in self.BADGES else badge_id,
+                "description": ""
+            }
+            for badge_id in stats.badges
+        ]
+
+    def award_badge(self, user_id: str, badge_id: str, description: str = "") -> bool:
+        """Award badge to user (sync)"""
+        if user_id not in self._user_stats:
+            self._user_stats[user_id] = UserStats(user_id=user_id)
+        
+        stats = self._user_stats[user_id]
+        if badge_id in stats.badges:
+            return False
+        
+        stats.badges.append(badge_id)
+        logger.info("Badge awarded", user_id=user_id, badge_id=badge_id)
+        return True
+
+    def has_badge(self, user_id: str, badge_id: str) -> bool:
+        """Check if user has a badge (sync)"""
+        if user_id not in self._user_stats:
+            return False
+        return badge_id in self._user_stats[user_id].badges
+
+    def record_daily_activity(self, user_id: str) -> None:
+        """Record daily activity for streak (sync)"""
+        if user_id not in self._user_stats:
+            self._user_stats[user_id] = UserStats(user_id=user_id)
+        
+        stats = self._user_stats[user_id]
+        today = datetime.now(UTC).date()
+        
+        if stats.last_activity:
+            last_date = stats.last_activity.date()
+            days_diff = (today - last_date).days
+            
+            if days_diff == 0:
+                # Same day, ensure streak is at least 1
+                if stats.streak_days == 0:
+                    stats.streak_days = 1
+            elif days_diff == 1:
+                # Next day, increment streak
+                stats.streak_days += 1
+            else:
+                # Gap in days, reset streak
+                stats.streak_days = 1
+        else:
+            # First activity
+            stats.streak_days = 1
+        
+        stats.last_activity = datetime.now(UTC)
+
+    def get_streak(self, user_id: str) -> Dict:
+        """Get user's streak info (sync)"""
+        if user_id not in self._user_stats:
+            return {"current_streak": 0, "longest_streak": 0}
+        
+        stats = self._user_stats[user_id]
+        return {
+            "current_streak": stats.streak_days,
+            "longest_streak": stats.streak_days  # Simplified
+        }
+

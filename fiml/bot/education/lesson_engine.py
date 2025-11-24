@@ -87,7 +87,7 @@ class LessonContentEngine:
 
         logger.info("LessonContentEngine initialized", path=lessons_path)
 
-    async def load_lesson(self, lesson_id: str) -> Optional[Lesson]:
+    async def load_lesson(self, lesson_id: str) -> Optional[Dict]:
         """
         Load lesson from YAML file
 
@@ -95,11 +95,13 @@ class LessonContentEngine:
             lesson_id: Lesson identifier
 
         Returns:
-            Lesson object or None
+            Lesson dict or None
         """
         # Check cache
         if lesson_id in self._lessons_cache:
-            return self._lessons_cache[lesson_id]
+            cached = self._lessons_cache[lesson_id]
+            # Convert to dict for API compatibility
+            return self._lesson_to_dict(cached)
 
         # Load from file
         lesson_file = self.lessons_path / f"{lesson_id}.yaml"
@@ -126,10 +128,12 @@ class LessonContentEngine:
 
             # Parse quiz questions
             quiz_questions = []
-            for q_data in lesson_data.get("quiz", {}).get("questions", []):
+            for idx, q_data in enumerate(lesson_data.get("quiz", {}).get("questions", [])):
+                # Generate ID if not provided
+                question_id = q_data.get("id", f"{lesson_id}_q{idx + 1}")
                 quiz_questions.append(
                     QuizQuestion(
-                        id=q_data["id"],
+                        id=question_id,
                         type=q_data["type"],
                         text=q_data["text"],
                         options=q_data.get("options", []),
@@ -157,11 +161,47 @@ class LessonContentEngine:
             self._lessons_cache[lesson_id] = lesson
 
             logger.info("Lesson loaded", lesson_id=lesson_id, sections=len(sections))
-            return lesson
+            return self._lesson_to_dict(lesson)
 
         except Exception as e:
             logger.error("Failed to load lesson", lesson_id=lesson_id, error=str(e))
             return None
+
+    def _lesson_to_dict(self, lesson: Lesson) -> Dict:
+        """Convert Lesson dataclass to dict for API compatibility"""
+        return {
+            "id": lesson.id,
+            "title": lesson.title,
+            "category": lesson.category,
+            "difficulty": lesson.difficulty,
+            "duration_minutes": lesson.duration_minutes,
+            "learning_objectives": lesson.learning_objectives,
+            "prerequisites": lesson.prerequisites,
+            "sections": [
+                {
+                    "type": s.type,
+                    "content": s.content,
+                    "fiml_query": s.fiml_query,
+                    "metadata": s.metadata
+                }
+                for s in lesson.sections
+            ],
+            "quiz": {
+                "questions": [
+                    {
+                        "id": q.id,
+                        "type": q.type,
+                        "text": q.text,
+                        "options": q.options,
+                        "correct_answer": q.correct_answer,
+                        "xp_reward": q.xp_reward
+                    }
+                    for q in lesson.quiz_questions
+                ]
+            },
+            "xp_reward": lesson.xp_reward,
+            "next_lesson": lesson.next_lesson
+        }
 
     async def render_lesson(
         self, lesson: Union[Lesson, Dict[str, Any]], user_id: str, include_fiml_data: bool = True

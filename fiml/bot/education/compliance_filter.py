@@ -4,8 +4,9 @@ Ensures all content is educational-only with no financial advice
 """
 
 import re
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import structlog
 
@@ -17,6 +18,18 @@ class ComplianceLevel(Enum):
     SAFE = "safe"  # Educational content, no issues
     WARNING = "warning"  # Borderline, requires disclaimer
     BLOCKED = "blocked"  # Advice detected, must be blocked
+
+
+@dataclass
+class ComplianceFilterResult:
+    """Result from filtering user questions"""
+    is_allowed: bool
+    message: str = ""
+    alternative_suggestions: List[str] = None
+
+    def __post_init__(self):
+        if self.alternative_suggestions is None:
+            self.alternative_suggestions = []
 
 
 class EducationalComplianceFilter:
@@ -140,7 +153,7 @@ class EducationalComplianceFilter:
             "Content is educational and compliant"
         )
 
-    async def filter_user_question(self, question: str) -> Tuple[bool, str]:
+    async def filter_user_question(self, question: str) -> ComplianceFilterResult:
         """
         Check if user question is seeking advice
 
@@ -148,7 +161,7 @@ class EducationalComplianceFilter:
             question: User's question
 
         Returns:
-            (is_allowed, response_or_message)
+            ComplianceFilterResult with is_allowed and alternative_suggestions
         """
         question_lower = question.lower().strip()
 
@@ -164,21 +177,25 @@ class EducationalComplianceFilter:
 
         for pattern in advice_seeking:
             if re.search(pattern, question_lower):
-                return (
-                    False,
-                    "I can't provide investment advice! 🚫\n\n"
-                    "Instead, I can help you:\n"
-                    "• Learn how to analyze stocks yourself\n"
-                    "• Understand key financial concepts\n"
-                    "• Practice with real market data\n\n"
-                    "Try asking:\n"
-                    "• 'How do I analyze a stock?'\n"
-                    "• 'What is P/E ratio?'\n"
-                    "• 'How does technical analysis work?'"
+                return ComplianceFilterResult(
+                    is_allowed=False,
+                    message=(
+                        "I can't provide investment advice! 🚫\n\n"
+                        "Instead, I can help you:\n"
+                        "• Learn how to analyze stocks yourself\n"
+                        "• Understand key financial concepts\n"
+                        "• Practice with real market data\n\n"
+                        "Try asking one of these:"
+                    ),
+                    alternative_suggestions=[
+                        "How do I analyze a stock?",
+                        "What is P/E ratio?",
+                        "How does technical analysis work?"
+                    ]
                 )
 
         # Question is educational
-        return (True, "")
+        return ComplianceFilterResult(is_allowed=True, message="")
 
     def add_disclaimer(
         self,
