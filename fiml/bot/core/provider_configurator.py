@@ -3,7 +3,7 @@ Component 2: FIML Provider Configurator
 Configures FIML arbitration engine with user-specific API keys
 """
 
-from typing import Dict, List, TYPE_CHECKING
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 import structlog
 
@@ -24,7 +24,21 @@ class FIMLProviderConfigurator:
     - Usage tracking and quota management
     """
 
-    def __init__(self, key_manager: 'UserProviderKeyManager' = None):
+    # Known providers that support API keys
+    KNOWN_PROVIDERS = ["alpha_vantage", "polygon", "finnhub", "fmp"]
+    
+    # Free providers that don't require API keys
+    FREE_PROVIDERS = ["yahoo_finance"]
+    
+    # Provider fallback mappings
+    FALLBACK_MAP = {
+        "alpha_vantage": ["yahoo_finance", "finnhub"],
+        "polygon": ["alpha_vantage", "yahoo_finance"],
+        "finnhub": ["alpha_vantage", "yahoo_finance"],
+        "fmp": ["alpha_vantage", "yahoo_finance"],
+    }
+
+    def __init__(self, key_manager: Optional['UserProviderKeyManager'] = None):
         """
         Initialize configurator
 
@@ -37,7 +51,7 @@ class FIMLProviderConfigurator:
         self.key_manager = key_manager
         logger.info("FIMLProviderConfigurator initialized")
 
-    def get_user_provider_config(self, user_id: str, user_keys: Dict = None) -> Dict:
+    def get_user_provider_config(self, user_id: str, user_keys: Optional[Dict] = None) -> Dict:
         """
         Get user's provider configuration for FIML (synchronous)
 
@@ -271,18 +285,8 @@ class FIMLProviderConfigurator:
         Returns:
             List of suggested fallback provider names
         """
-        # Common fallback providers (free and reliable)
-        common_fallbacks = ["yahoo_finance"]
-        
-        # Provider-specific fallbacks based on asset types
-        fallback_map = {
-            "alpha_vantage": ["yahoo_finance", "finnhub"],
-            "polygon": ["alpha_vantage", "yahoo_finance"],
-            "finnhub": ["alpha_vantage", "yahoo_finance"],
-            "fmp": ["alpha_vantage", "yahoo_finance"],
-        }
-        
-        suggestions = fallback_map.get(failed_provider, common_fallbacks)
+        # Use class constant for fallback mappings
+        suggestions = self.FALLBACK_MAP.get(failed_provider, self.FREE_PROVIDERS)
         
         logger.info(
             "Generated fallback suggestions",
@@ -302,17 +306,13 @@ class FIMLProviderConfigurator:
         Returns:
             True if provider is healthy, False otherwise
         """
-        # Known providers that are always available (no API key required)
-        free_providers = ["yahoo_finance"]
-        
-        if provider in free_providers:
+        # Free providers are always available (no API key required)
+        if provider in self.FREE_PROVIDERS:
             # Always consider free providers healthy
             return True
         
-        # For other providers, we could add more sophisticated health checks
-        # For now, assume they're healthy if they're in our list
-        known_providers = ["alpha_vantage", "polygon", "finnhub", "fmp"]
-        is_healthy = provider in known_providers
+        # For other providers, check if they're in our known list
+        is_healthy = provider in self.KNOWN_PROVIDERS
         
         logger.info(
             "Provider health check",
