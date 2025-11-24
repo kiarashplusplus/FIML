@@ -126,7 +126,7 @@ def docker_services(request):
     # Start services
     print("\n🐳 Starting test containers (Redis & PostgreSQL)...")
     subprocess.run(
-        ["docker-compose", "-f", compose_file, "up", "-d"],
+        ["docker", "compose", "-f", compose_file, "up", "-d"],
         cwd=project_root,
         check=True,
         capture_output=True
@@ -135,13 +135,13 @@ def docker_services(request):
     # Wait for services to be ready
     print("⏳ Waiting for Redis to be ready...")
     if not is_redis_ready():
-        subprocess.run(["docker-compose", "-f", compose_file, "down", "-v"], cwd=project_root)
+        subprocess.run(["docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root)
         pytest.exit("Redis failed to start within timeout period")
     print("✅ Redis is ready")
 
     print("⏳ Waiting for PostgreSQL to be ready...")
     if not is_postgres_ready():
-        subprocess.run(["docker-compose", "-f", compose_file, "down", "-v"], cwd=project_root)
+        subprocess.run(["docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root)
         pytest.exit("PostgreSQL failed to start within timeout period")
     print("✅ PostgreSQL is ready")
 
@@ -152,7 +152,7 @@ def docker_services(request):
     # Teardown: stop and remove containers
     print("\n🧹 Cleaning up test containers...")
     subprocess.run(
-        ["docker-compose", "-f", compose_file, "down", "-v"],
+        ["docker", "compose", "-f", compose_file, "down", "-v"],
         cwd=project_root,
         capture_output=True
     )
