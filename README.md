@@ -7,12 +7,15 @@
 > **Current State**: Phase 1 Complete ✅ | Phase 2 In Development 🚧 | **Version**: 0.2.1 | **Tests**: 🎉 **100% PASSING** (439 passed, 25 skipped) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
 > 
 > ✅ **Verified**: Tests pass identically with and without .env file (GitHub runner compatible)
+> 
+> 🔧 **CI/CD**: Component-based testing workflows for faster feedback ([CI Workflow Structure](CI_WORKFLOW_STRUCTURE.md))
 
 
 > 📊 **Quick Links**:
 > - 🎯 [Phase Evaluation Report](PHASE_EVALUATION_REPORT.md) - Visual summary and verification
 > - 📘 [Technical & Strategic Evaluation](TECHNICAL_STRATEGIC_EVALUATION.md) - Comprehensive 21KB analysis
 > - ⚡ [Current State Summary](CURRENT_STATE_SUMMARY.md) - TL;DR quick reference
+> - 🔧 [CI Workflow Structure](CI_WORKFLOW_STRUCTURE.md) - Component-based testing strategy
 
 ---
 
