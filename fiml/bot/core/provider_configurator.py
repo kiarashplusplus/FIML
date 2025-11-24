@@ -308,7 +308,6 @@ class FIMLProviderConfigurator:
         """
         # Free providers are always available (no API key required)
         if provider in self.FREE_PROVIDERS:
-            # Always consider free providers healthy
             return True
         
         # For other providers, check if they're in our known list
