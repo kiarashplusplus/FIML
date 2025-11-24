@@ -68,7 +68,9 @@ async def demo_key_management():
 
     # Get user config (empty)
     print("5. User Provider Configuration (New User):")
-    config = await configurator.get_user_provider_config("demo_user_123")
+    # Fetch user's keys first
+    user_keys = await key_manager.get_user_keys("demo_user_123")
+    config = configurator.get_user_provider_config("demo_user_123", user_keys=user_keys)
     print(f"   User ID: {config['user_id']}")
     print(f"   Free Tier: {config['free_tier']}")
     print(f"   Providers: {len(config['providers'])}")
