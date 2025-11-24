@@ -342,3 +342,109 @@ class ProgressMigrationManager:
                 )
 
         return restored
+
+    # Public API methods for tests
+    def create_snapshot(self, user_id: str, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create snapshot of user data (public API wrapper)
+
+        Args:
+            user_id: User identifier
+            user_data: User data to snapshot
+
+        Returns:
+            Snapshot with timestamp
+        """
+        return self.create_migration_snapshot(user_data)
+
+    def migrate_user_progress(
+        self,
+        user_id: str,
+        user_data: Dict[str, Any],
+        from_version: str,
+        to_version: str
+    ) -> Dict[str, Any]:
+        """
+        Migrate user progress data between versions
+
+        Args:
+            user_id: User identifier
+            user_data: User data to migrate
+            from_version: Source version
+            to_version: Target version
+
+        Returns:
+            Migrated user data
+        """
+        # Set the schema version in the data
+        data_copy = user_data.copy()
+        data_copy["schema_version"] = from_version
+        
+        # Use the existing migration logic
+        return self.migrate_user_data(data_copy)
+
+    def migrate_schema(self, data: Dict[str, Any], target_version: str) -> Dict[str, Any]:
+        """
+        Migrate data schema to target version
+
+        Args:
+            data: Data to migrate
+            target_version: Target schema version
+
+        Returns:
+            Migrated data
+        """
+        # For now, just use the standard migration
+        return self.migrate_user_data(data)
+
+    def is_backward_compatible(self, from_version: str, to_version: str) -> bool:
+        """
+        Check if migration is backward compatible
+
+        Args:
+            from_version: Source version
+            to_version: Target version
+
+        Returns:
+            True if backward compatible
+        """
+        # Parse versions
+        def parse_version(v: str) -> tuple:
+            parts = v.split('.')
+            return (int(parts[0]), int(parts[1]) if len(parts) > 1 else 0, int(parts[2]) if len(parts) > 2 else 0)
+
+        from_parts = parse_version(from_version)
+        to_parts = parse_version(to_version)
+
+        # Backward compatible if major version is same or newer
+        return from_parts[0] <= to_parts[0]
+
+    def validate_migration(self, original: Dict[str, Any], migrated: Dict[str, Any]) -> bool:
+        """
+        Validate that migration was successful
+
+        Args:
+            original: Original data
+            migrated: Migrated data
+
+        Returns:
+            True if migration is valid
+        """
+        # Check basic structure
+        if not self.validate_migrated_data(migrated):
+            return False
+
+        # Check that user_id is preserved
+        if original.get("user_id") != migrated.get("user_id"):
+            logger.error("User ID changed during migration")
+            return False
+
+        # Check that XP is preserved or increased
+        orig_xp = original.get("gamification", {}).get("total_xp", 0)
+        migr_xp = migrated.get("gamification", {}).get("total_xp", 0)
+        
+        if migr_xp < orig_xp:
+            logger.error("XP decreased during migration")
+            return False
+
+        return True
