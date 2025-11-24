@@ -1,4 +1,12 @@
 id: stock_basics_001
+version: "1.0"
+changelog:
+  - version: "1.0"
+    date: "2024-11-24"
+    changes:
+      - "Initial release with FIML live data integration"
+      - "Interactive quiz with 5 questions"
+      - "Real-world AAPL example"
 title: "Understanding Stock Prices"
 category: fundamentals
 difficulty: beginner
