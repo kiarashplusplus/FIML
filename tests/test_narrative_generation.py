@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fiml.core.models import AssetType
+from fiml.core.models import Asset, AssetType
 from fiml.llm.azure_client import AzureOpenAIClient
 from fiml.narrative.batch import BatchNarrativeGenerator
 from fiml.narrative.cache import NarrativeCache
@@ -477,7 +477,6 @@ class TestNarrativeCache:
     async def test_ttl_calculation_equity(self):
         """Test TTL calculation for equity assets"""
         cache = NarrativeCache()
-        from fiml.core.models import Asset
 
         # Equity during market hours
         equity = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
@@ -496,7 +495,6 @@ class TestNarrativeCache:
     async def test_ttl_calculation_crypto(self):
         """Test TTL calculation for crypto assets"""
         cache = NarrativeCache()
-        from fiml.core.models import Asset
 
         crypto = Asset(symbol="BTC/USD", asset_type=AssetType.CRYPTO)
         ttl = cache._calculate_ttl(crypto, volatility=None)

@@ -358,6 +358,7 @@ class NarrativeValidator:
             Removes investment advice language and predictive statements
         """
         sanitized = text
+        original_text = text  # Track original for comparison
 
         # Replace advice keywords with neutral language
         replacements = {
@@ -374,8 +375,9 @@ class NarrativeValidator:
         }
 
         for pattern, replacement in replacements.items():
+            before_replacement = sanitized
             sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
-            if sanitized != text:
+            if sanitized != before_replacement:
                 logger.warning(f"Sanitized pattern: {pattern}")
 
         return sanitized

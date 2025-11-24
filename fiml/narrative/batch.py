@@ -312,7 +312,7 @@ class BatchNarrativeGenerator:
         pre_market_start = time(12, 30)
         market_open = time(14, 30)
 
-        is_weekday = now.weekday() < 5  # Monday=0, Friday=4
+        is_weekday = now.weekday() < 5  # Monday=0, Tuesday=1, Wednesday=2, Thursday=3, Friday=4 (Saturday=5, Sunday=6 are excluded)
 
         return is_weekday and pre_market_start <= current_time <= market_open
 

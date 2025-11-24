@@ -424,7 +424,7 @@ class TemplateLibrary:
         """Emergency fallback when all template rendering fails"""
         symbol = context.get("symbol", "Asset")
         return (
-            f"Analysis for {symbol} is currently available. "
+            f"Analysis for {symbol} is currently unavailable. "
             f"This is not financial advice. FIML provides data analysis only."
         )
 
