@@ -7,9 +7,10 @@ Azure OpenAI credentials by using template-based fallbacks.
 """
 
 import asyncio
+
 from fiml.core.models import AssetType
 from fiml.narrative.cache import narrative_cache
-from fiml.narrative.models import ExpertiseLevel, Language
+from fiml.narrative.models import Language
 from fiml.narrative.templates import template_library
 from fiml.narrative.validator import narrative_validator
 
@@ -198,7 +199,7 @@ async def demo_narrative_cache():
     print("\n\n2. Cache Metrics")
     print("-" * 70)
     metrics = cache.get_metrics()
-    print(f"Cache Metrics:")
+    print("Cache Metrics:")
     print(f"  - Hit count: {metrics['hit_count']}")
     print(f"  - Miss count: {metrics['miss_count']}")
     print(f"  - Hit rate: {metrics['hit_rate']:.1f}%")
@@ -245,7 +246,7 @@ def demo_integration():
     narrative = template_library.render_template(
         "price_movement", Language.ENGLISH, market_data
     )
-    print(f"\n1. Generated Narrative:")
+    print("\n1. Generated Narrative:")
     print(f"   {narrative[:150]}...")
 
     # 2. Validate
@@ -256,12 +257,12 @@ def demo_integration():
         narrative = validator.auto_inject_disclaimer(narrative)
         is_valid, errors, warnings = validator.validate(narrative, min_length=10)
 
-    print(f"\n2. Validation Result:")
+    print("\n2. Validation Result:")
     print(f"   ✓ Valid: {is_valid}")
     print(f"   Errors: {len(errors)}")
     print(f"   Warnings: {len(warnings)}")
 
-    print(f"\n3. Ready for Caching and Distribution!")
+    print("\n3. Ready for Caching and Distribution!")
 
 
 def main():

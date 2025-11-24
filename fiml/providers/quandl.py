@@ -69,7 +69,7 @@ class QuandlProvider(BaseProvider):
 
         if params is None:
             params = {}
-        
+
         params["api_key"] = self.config.api_key
 
         try:
@@ -87,7 +87,7 @@ class QuandlProvider(BaseProvider):
                 elif response.status == 429:
                     raise ProviderRateLimitError("Quandl rate limit exceeded", retry_after=60)
                 elif response.status == 404:
-                    raise ProviderError(f"Data not found")
+                    raise ProviderError("Data not found")
                 else:
                     raise ProviderError(f"HTTP {response.status}: {await response.text()}")
 
@@ -106,21 +106,21 @@ class QuandlProvider(BaseProvider):
             # Quandl uses database/dataset format, e.g., WIKI/AAPL
             # Try common databases
             database = "WIKI"  # Free wiki database (end-of-day prices, historical)
-            
+
             endpoint = f"/datasets/{database}/{asset.symbol}.json"
             params = {"rows": "1"}  # Get most recent data
-            
+
             response_data = await self._make_request(endpoint, params)
 
             dataset = response_data.get("dataset", {})
             data_points = dataset.get("data", [])
-            
+
             if not data_points:
                 raise ProviderError(f"No price data available for {asset.symbol}")
 
             # Data format: [Date, Open, High, Low, Close, Volume, ...]
             latest = data_points[0]
-            
+
             data = {
                 "date": latest[0],
                 "open": float(latest[1]) if latest[1] is not None else 0.0,
@@ -161,15 +161,15 @@ class QuandlProvider(BaseProvider):
 
         try:
             database = "WIKI"
-            
+
             endpoint = f"/datasets/{database}/{asset.symbol}.json"
             params = {"rows": str(limit)}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             dataset = response_data.get("dataset", {})
             data_points = dataset.get("data", [])
-            
+
             if not data_points:
                 raise ProviderError(f"No OHLCV data available for {asset.symbol}")
 

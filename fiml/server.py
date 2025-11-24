@@ -10,11 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
 
+from fiml.alerts.router import alert_router
 from fiml.core.config import settings
 from fiml.core.exceptions import FIMLException
 from fiml.core.logging import get_logger
 from fiml.mcp.router import mcp_router
 from fiml.providers import provider_registry
+from fiml.web.dashboard import dashboard_router
 from fiml.websocket.router import websocket_router
 
 logger = get_logger(__name__)
@@ -99,11 +101,9 @@ app.include_router(mcp_router, prefix="/mcp", tags=["mcp"])
 app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Include Dashboard router
-from fiml.web.dashboard import dashboard_router
 app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 
 # Include Alert router
-from fiml.alerts.router import alert_router
 app.include_router(alert_router, prefix="/api", tags=["alerts"])
 
 

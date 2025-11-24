@@ -100,7 +100,7 @@ class TestAlertBuilder:
     def test_create_alert(self, alert_builder, sample_alert_config):
         """Test creating an alert"""
         created = alert_builder.create_alert(sample_alert_config)
-        
+
         assert created.alert_id == sample_alert_config.alert_id
         assert created.name == sample_alert_config.name
         assert created.enabled is True
@@ -108,14 +108,14 @@ class TestAlertBuilder:
     def test_create_duplicate_alert(self, alert_builder, sample_alert_config):
         """Test creating a duplicate alert fails"""
         alert_builder.create_alert(sample_alert_config)
-        
+
         with pytest.raises(ValueError, match="already exists"):
             alert_builder.create_alert(sample_alert_config)
 
     def test_get_alert(self, alert_builder, sample_alert_config):
         """Test retrieving an alert"""
         alert_builder.create_alert(sample_alert_config)
-        
+
         retrieved = alert_builder.get_alert(sample_alert_config.alert_id)
         assert retrieved is not None
         assert retrieved.alert_id == sample_alert_config.alert_id
@@ -128,7 +128,7 @@ class TestAlertBuilder:
     def test_list_alerts(self, alert_builder, sample_alert_config):
         """Test listing alerts"""
         alert_builder.create_alert(sample_alert_config)
-        
+
         alerts = alert_builder.list_alerts()
         assert len(alerts) == 1
         assert alerts[0].alert_id == sample_alert_config.alert_id
@@ -137,17 +137,17 @@ class TestAlertBuilder:
         """Test listing only enabled alerts"""
         # Create enabled alert
         alert_builder.create_alert(sample_alert_config)
-        
+
         # Create disabled alert
         disabled_config = sample_alert_config.model_copy(deep=True)
         disabled_config.alert_id = "disabled_alert"
         disabled_config.enabled = False
         alert_builder.create_alert(disabled_config)
-        
+
         # List all
         all_alerts = alert_builder.list_alerts()
         assert len(all_alerts) == 2
-        
+
         # List enabled only
         enabled_alerts = alert_builder.list_alerts(enabled_only=True)
         assert len(enabled_alerts) == 1
@@ -156,16 +156,16 @@ class TestAlertBuilder:
     def test_update_alert(self, alert_builder, sample_alert_config):
         """Test updating an alert"""
         alert_builder.create_alert(sample_alert_config)
-        
+
         # Update configuration
         updated_config = sample_alert_config.model_copy(deep=True)
         updated_config.name = "Updated Alert Name"
-        
+
         updated = alert_builder.update_alert(
             sample_alert_config.alert_id,
             updated_config
         )
-        
+
         assert updated.name == "Updated Alert Name"
 
     def test_update_nonexistent_alert(self, alert_builder, sample_alert_config):
@@ -176,10 +176,10 @@ class TestAlertBuilder:
     def test_delete_alert(self, alert_builder, sample_alert_config):
         """Test deleting an alert"""
         alert_builder.create_alert(sample_alert_config)
-        
+
         success = alert_builder.delete_alert(sample_alert_config.alert_id)
         assert success is True
-        
+
         # Verify deletion
         retrieved = alert_builder.get_alert(sample_alert_config.alert_id)
         assert retrieved is None
@@ -199,7 +199,7 @@ class TestAlertAPI:
             "/api/alerts",
             json=sample_alert_config.model_dump(mode="json")
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["alert_id"] == sample_alert_config.alert_id
@@ -212,10 +212,10 @@ class TestAlertAPI:
             "/api/alerts",
             json=sample_alert_config.model_dump(mode="json")
         )
-        
+
         # List alerts
         response = client.get("/api/alerts")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
@@ -228,10 +228,10 @@ class TestAlertAPI:
             "/api/alerts",
             json=sample_alert_config.model_dump(mode="json")
         )
-        
+
         # Get the alert
         response = client.get(f"/api/alerts/{sample_alert_config.alert_id}")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["alert_id"] == sample_alert_config.alert_id
@@ -248,16 +248,16 @@ class TestAlertAPI:
             "/api/alerts",
             json=sample_alert_config.model_dump(mode="json")
         )
-        
+
         # Update the alert
         updated_config = sample_alert_config.model_copy(deep=True)
         updated_config.name = "Updated via API"
-        
+
         response = client.put(
             f"/api/alerts/{sample_alert_config.alert_id}",
             json=updated_config.model_dump(mode="json")
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Updated via API"
@@ -269,10 +269,10 @@ class TestAlertAPI:
             "/api/alerts",
             json=sample_alert_config.model_dump(mode="json")
         )
-        
+
         # Delete the alert
         response = client.delete(f"/api/alerts/{sample_alert_config.alert_id}")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "deleted"
@@ -285,12 +285,12 @@ class TestAlertAPI:
             "/api/alerts",
             json=sample_alert_config.model_dump(mode="json")
         )
-        
+
         # Enable the alert
         response = client.post(
             f"/api/alerts/{sample_alert_config.alert_id}/enable"
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "enabled"
@@ -302,12 +302,12 @@ class TestAlertAPI:
             "/api/alerts",
             json=sample_alert_config.model_dump(mode="json")
         )
-        
+
         # Disable the alert
         response = client.post(
             f"/api/alerts/{sample_alert_config.alert_id}/disable"
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "disabled"
@@ -348,9 +348,9 @@ class TestAlertDeliveryConfigs:
         ]
         sample_alert_config.telegram_config = sample_telegram_config
         sample_alert_config.webhook_config = sample_webhook_config
-        
+
         created = alert_builder.create_alert(sample_alert_config)
-        
+
         assert len(created.delivery_methods) == 3
         assert DeliveryMethod.EMAIL in created.delivery_methods
         assert DeliveryMethod.TELEGRAM in created.delivery_methods

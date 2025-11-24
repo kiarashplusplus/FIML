@@ -90,7 +90,7 @@ class IntrinioProvider(BaseProvider):
                 elif response.status == 401:
                     raise ProviderError("Intrinio authentication failed")
                 elif response.status == 404:
-                    raise ProviderError(f"Symbol not found")
+                    raise ProviderError("Symbol not found")
                 else:
                     raise ProviderError(f"HTTP {response.status}: {await response.text()}")
 
@@ -107,7 +107,7 @@ class IntrinioProvider(BaseProvider):
 
         try:
             endpoint = f"/securities/{asset.symbol}/prices/realtime"
-            
+
             response_data = await self._make_request(endpoint)
 
             if not response_data:
@@ -157,13 +157,13 @@ class IntrinioProvider(BaseProvider):
             frequency = "daily"
             if timeframe == "1h":
                 frequency = "hourly"
-            
+
             endpoint = f"/securities/{asset.symbol}/prices"
             params = {
                 "frequency": frequency,
                 "page_size": str(min(limit, 10000)),
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             stock_prices = response_data.get("stock_prices", [])
@@ -218,7 +218,7 @@ class IntrinioProvider(BaseProvider):
         try:
             # Get company info
             endpoint = f"/companies/{asset.symbol}"
-            
+
             response_data = await self._make_request(endpoint)
 
             if not response_data:

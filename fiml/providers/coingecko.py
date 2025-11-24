@@ -71,19 +71,19 @@ class CoinGeckoProvider(BaseProvider):
     def _get_coin_id(self, symbol: str) -> str:
         """
         Convert symbol to CoinGecko coin ID.
-        
+
         First checks for direct mapping, then tries removing common trading
         pair suffixes only if a valid mapping exists for the result.
-        
+
         Note: For complex trading pairs or exotic symbols, users should
         provide the base cryptocurrency symbol directly (e.g., 'BTC' not 'BTCUSDT').
         """
         clean_symbol = symbol.upper()
-        
+
         # First check if we have a direct mapping for the full symbol
         if clean_symbol in self._symbol_to_id:
             return self._symbol_to_id[clean_symbol]
-        
+
         # Try removing common trading pair suffixes (only at the end)
         # Conservative suffix list to avoid incorrectly stripping valid symbols
         # (e.g., BTCETH should remain btceth, not be parsed as BTC)
@@ -92,7 +92,7 @@ class CoinGeckoProvider(BaseProvider):
                 potential_symbol = clean_symbol[:-len(suffix)]
                 if potential_symbol in self._symbol_to_id:
                     return self._symbol_to_id[potential_symbol]
-        
+
         # If no mapping found, return lowercase as coin ID (API will handle it)
         return clean_symbol.lower()
 
@@ -134,7 +134,7 @@ class CoinGeckoProvider(BaseProvider):
 
         try:
             coin_id = self._get_coin_id(asset.symbol)
-            
+
             endpoint = "/simple/price"
             params = {
                 "ids": coin_id,
@@ -143,14 +143,14 @@ class CoinGeckoProvider(BaseProvider):
                 "include_24hr_vol": "true",
                 "include_24hr_change": "true",
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if coin_id not in response_data:
                 raise ProviderError(f"No price data available for {asset.symbol}")
 
             coin_data = response_data[coin_id]
-            
+
             data = {
                 "price": float(coin_data.get("usd", 0.0)),
                 "market_cap": float(coin_data.get("usd_market_cap", 0.0)),
@@ -185,16 +185,16 @@ class CoinGeckoProvider(BaseProvider):
 
         try:
             coin_id = self._get_coin_id(asset.symbol)
-            
+
             # CoinGecko uses days for historical data
             days = min(limit, 365) if timeframe == "1d" else 30
-            
+
             endpoint = f"/coins/{coin_id}/ohlc"
             params = {
                 "vs_currency": "usd",
                 "days": str(days),
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if not isinstance(response_data, list):
@@ -241,7 +241,7 @@ class CoinGeckoProvider(BaseProvider):
 
         try:
             coin_id = self._get_coin_id(asset.symbol)
-            
+
             endpoint = f"/coins/{coin_id}"
             params = {
                 "localization": "false",
@@ -250,14 +250,14 @@ class CoinGeckoProvider(BaseProvider):
                 "community_data": "true",
                 "developer_data": "true",
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if not response_data or "id" not in response_data:
                 raise ProviderError(f"No fundamental data available for {asset.symbol}")
 
             market_data = response_data.get("market_data", {})
-            
+
             data = {
                 "symbol": response_data.get("symbol", "").upper(),
                 "name": response_data.get("name", ""),

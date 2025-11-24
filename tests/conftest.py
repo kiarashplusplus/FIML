@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # Load .env file first to get real configuration
 load_dotenv()
 
-from fiml.core.config import Settings
+from fiml.core.config import Settings  # noqa: E402
 
 # Set environment variables BEFORE any imports happen
 os.environ["POSTGRES_HOST"] = "localhost"

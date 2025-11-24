@@ -80,7 +80,7 @@ class WatchdogManager:
     def _default_config() -> Dict:
         """Default configuration for watchdogs (loads from settings)"""
         from fiml.core.config import settings
-        
+
         return {
             "earnings_anomaly": {
                 "enabled": settings.enable_earnings_anomaly_watchdog,

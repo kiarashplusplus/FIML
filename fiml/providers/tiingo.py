@@ -87,7 +87,7 @@ class TiingoProvider(BaseProvider):
                 elif response.status == 429:
                     raise ProviderRateLimitError("Tiingo rate limit exceeded", retry_after=60)
                 elif response.status == 404:
-                    raise ProviderError(f"Symbol not found")
+                    raise ProviderError("Symbol not found")
                 else:
                     raise ProviderError(f"HTTP {response.status}: {await response.text()}")
 
@@ -105,14 +105,14 @@ class TiingoProvider(BaseProvider):
         try:
             # Use IEX endpoint for real-time prices
             endpoint = f"/tiingo/daily/{asset.symbol}/prices"
-            
+
             response_data = await self._make_request(endpoint)
 
             if not isinstance(response_data, list) or not response_data:
                 raise ProviderError(f"No price data available for {asset.symbol}")
 
             latest = response_data[0]
-            
+
             data = {
                 "price": float(latest.get("close", 0.0)),
                 "open": float(latest.get("open", 0.0)),
@@ -155,13 +155,13 @@ class TiingoProvider(BaseProvider):
             from datetime import timedelta
             end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=limit if timeframe == "1d" else 365)
-            
+
             endpoint = f"/tiingo/daily/{asset.symbol}/prices"
             params = {
                 "startDate": start_date.strftime("%Y-%m-%d"),
                 "endDate": end_date.strftime("%Y-%m-%d"),
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if not isinstance(response_data, list) or not response_data:
@@ -215,7 +215,7 @@ class TiingoProvider(BaseProvider):
         try:
             # Get ticker metadata
             endpoint = f"/tiingo/daily/{asset.symbol}"
-            
+
             response_data = await self._make_request(endpoint)
 
             if not response_data:
@@ -263,7 +263,7 @@ class TiingoProvider(BaseProvider):
             response_data = await self._make_request(endpoint, params)
 
             if not isinstance(response_data, list):
-                raise ProviderError(f"Unexpected response format for news")
+                raise ProviderError("Unexpected response format for news")
 
             articles = []
             for article in response_data[:limit]:

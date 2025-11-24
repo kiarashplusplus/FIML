@@ -83,12 +83,12 @@ class CoinMarketCapProvider(BaseProvider):
 
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Check for API errors
                     if data.get("status", {}).get("error_code") != 0:
                         error_msg = data.get("status", {}).get("error_message", "Unknown error")
                         raise ProviderError(f"CoinMarketCap error: {error_msg}")
-                    
+
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
                     raise ProviderRateLimitError("CoinMarketCap rate limit exceeded", retry_after=60)
@@ -107,10 +107,10 @@ class CoinMarketCapProvider(BaseProvider):
     def _clean_symbol(self, symbol: str) -> str:
         """
         Remove common trading pair suffixes from symbol.
-        
+
         Only removes suffixes from the end if the resulting symbol
         would otherwise be too short or invalid.
-        
+
         Note: This is a best-effort approach for common crypto symbols.
         For complex cases like EURUSD or exotic trading pairs, users
         should provide the base symbol directly (e.g., 'EUR' not 'EURUSD').
@@ -128,21 +128,21 @@ class CoinMarketCapProvider(BaseProvider):
 
         try:
             clean_symbol = self._clean_symbol(asset.symbol)
-            
+
             endpoint = "/cryptocurrency/quotes/latest"
             params = {"symbol": clean_symbol}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             data_dict = response_data.get("data", {})
             symbol_key = params["symbol"]
-            
+
             if symbol_key not in data_dict:
                 raise ProviderError(f"No price data available for {asset.symbol}")
 
             coin_data = data_dict[symbol_key]
             quote = coin_data.get("quote", {}).get("USD", {})
-            
+
             data = {
                 "price": float(quote.get("price", 0.0)),
                 "volume_24h": float(quote.get("volume_24h", 0.0)),
@@ -195,20 +195,20 @@ class CoinMarketCapProvider(BaseProvider):
 
         try:
             clean_symbol = self._clean_symbol(asset.symbol)
-            
+
             endpoint = "/cryptocurrency/info"
             params = {"symbol": clean_symbol}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             data_dict = response_data.get("data", {})
             symbol_key = params["symbol"]
-            
+
             if symbol_key not in data_dict:
                 raise ProviderError(f"No fundamental data available for {asset.symbol}")
 
             coin_info = data_dict[symbol_key]
-            
+
             data = {
                 "symbol": coin_info.get("symbol", ""),
                 "name": coin_info.get("name", ""),

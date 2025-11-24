@@ -6,7 +6,7 @@ with multi-language support and adaptive expertise levels.
 """
 
 from fiml.narrative.batch import BatchNarrativeGenerator
-from fiml.narrative.cache import narrative_cache, NarrativeCache
+from fiml.narrative.cache import NarrativeCache, narrative_cache
 from fiml.narrative.generator import NarrativeGenerator
 from fiml.narrative.models import (
     ExpertiseLevel,
@@ -19,8 +19,8 @@ from fiml.narrative.models import (
     NarrativeType,
 )
 from fiml.narrative.prompts import PromptTemplateLibrary, prompt_library
-from fiml.narrative.templates import template_library, TemplateLibrary
-from fiml.narrative.validator import narrative_validator, NarrativeValidator
+from fiml.narrative.templates import TemplateLibrary, template_library
+from fiml.narrative.validator import NarrativeValidator, narrative_validator
 
 __all__ = [
     # Generator

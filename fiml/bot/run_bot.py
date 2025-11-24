@@ -3,15 +3,16 @@ FIML Educational Bot Entry Point
 Run the Telegram bot with BYOK support
 """
 
-import asyncio
+import logging
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-import structlog
 
+import structlog
+from dotenv import load_dotenv
+
+from fiml.bot.adapters.telegram_adapter import TelegramBotAdapter
 from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
-from fiml.bot.adapters.telegram_adapter import TelegramBotAdapter
 
 # Load environment variables
 load_dotenv()
@@ -34,7 +35,7 @@ logger = structlog.get_logger(__name__)
 
 def main():
     """Main entry point"""
-    
+
     # Get bot token from environment
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not bot_token:
@@ -43,37 +44,37 @@ def main():
         print("Set it in .env file or export it:")
         print("export TELEGRAM_BOT_TOKEN='your-bot-token-here'")
         return
-    
+
     # Get encryption key (or generate)
     encryption_key = os.getenv("ENCRYPTION_KEY")
     if encryption_key:
         encryption_key = encryption_key.encode()
-    
+
     # Setup storage path
     storage_path = os.getenv("KEY_STORAGE_PATH", "./data/keys")
     Path(storage_path).mkdir(parents=True, exist_ok=True)
-    
+
     logger.info("Starting FIML Educational Bot", storage_path=storage_path)
-    
+
     # Initialize components
     key_manager = UserProviderKeyManager(
         encryption_key=encryption_key,
         storage_path=storage_path
     )
-    
+
     provider_configurator = FIMLProviderConfigurator(key_manager)
-    
+
     telegram_bot = TelegramBotAdapter(
         token=bot_token,
         key_manager=key_manager,
         provider_configurator=provider_configurator
     )
-    
+
     # Run the bot
     logger.info("Bot initialized, starting polling...")
     print("🤖 FIML Educational Bot is starting...")
     print("Press Ctrl+C to stop")
-    
+
     try:
         telegram_bot.run()
     except KeyboardInterrupt:
@@ -82,5 +83,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import logging
     main()

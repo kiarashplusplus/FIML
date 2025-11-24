@@ -95,10 +95,10 @@ class Settings(BaseSettings):
     smtp_user: str | None = None
     smtp_password: str | None = None
     smtp_from_email: str | None = None
-    
+
     # Telegram Settings
     telegram_bot_token: str | None = None
-    
+
     # Monitoring
     sentry_dsn: str | None = None
     prometheus_port: int = 9090

@@ -22,7 +22,6 @@ from fiml.core.exceptions import ProviderError, RateLimitError
 from fiml.core.models import Asset, AssetType, DataType, Market
 from fiml.providers.newsapi import NewsAPIProvider, NewsArticle
 
-
 # Fixtures
 
 @pytest.fixture
@@ -91,9 +90,8 @@ async def test_newsapi_provider_initialization(mock_api_key):
 @pytest.mark.asyncio
 async def test_newsapi_provider_initialization_no_key():
     """Test NewsAPI provider fails without API key"""
-    with patch.dict(os.environ, {}, clear=True):
-        with pytest.raises(ValueError, match="API key is required"):
-            NewsAPIProvider()
+    with patch.dict(os.environ, {}, clear=True), pytest.raises(ValueError, match="API key is required"):
+        NewsAPIProvider()
 
 
 @pytest.mark.asyncio

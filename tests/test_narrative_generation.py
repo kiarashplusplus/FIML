@@ -9,9 +9,7 @@ Tests all components of the AI narrative generation system including:
 - Batch generation
 """
 
-import asyncio
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -19,10 +17,9 @@ from fiml.core.models import Asset, AssetType
 from fiml.llm.azure_client import AzureOpenAIClient
 from fiml.narrative.batch import BatchNarrativeGenerator
 from fiml.narrative.cache import NarrativeCache
-from fiml.narrative.models import ExpertiseLevel, Language
+from fiml.narrative.models import Language
 from fiml.narrative.templates import TemplateLibrary
 from fiml.narrative.validator import NarrativeValidator
-
 
 # =============================================================================
 # Fixtures
@@ -598,7 +595,7 @@ class TestNarrativeSystemIntegration:
 
         client = AzureOpenAIClient()
         validator = NarrativeValidator()
-        cache = NarrativeCache()
+        NarrativeCache()
 
         with patch.object(
             client, "_make_request", new_callable=AsyncMock

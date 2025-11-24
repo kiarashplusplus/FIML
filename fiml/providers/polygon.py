@@ -68,7 +68,7 @@ class PolygonProvider(BaseProvider):
 
         if params is None:
             params = {}
-        
+
         params["apiKey"] = self.config.api_key
 
         try:
@@ -82,11 +82,11 @@ class PolygonProvider(BaseProvider):
 
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Check for API errors
                     if data.get("status") == "ERROR":
                         raise ProviderError(f"Polygon error: {data.get('error', 'Unknown error')}")
-                    
+
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
                     raise ProviderRateLimitError("Polygon rate limit exceeded", retry_after=60)
@@ -113,7 +113,7 @@ class PolygonProvider(BaseProvider):
                 raise ProviderError(f"No price data available for {asset.symbol}")
 
             result = results[0]
-            
+
             data = {
                 "price": float(result.get("c", 0.0)),  # Close price
                 "open": float(result.get("o", 0.0)),
@@ -153,19 +153,19 @@ class PolygonProvider(BaseProvider):
             # Map timeframe to Polygon format
             multiplier = 1
             timespan = "day"
-            
+
             if timeframe == "1d":
                 multiplier, timespan = 1, "day"
             elif timeframe in ["1h", "60min"]:
                 multiplier, timespan = 1, "hour"
             elif timeframe == "5m":
                 multiplier, timespan = 5, "minute"
-            
+
             # Calculate date range
             from datetime import timedelta
             to_date = datetime.now(timezone.utc)
             from_date = to_date - timedelta(days=limit if timespan == "day" else 30)
-            
+
             # Format endpoint with dates
             from_date_str = from_date.strftime('%Y-%m-%d')
             to_date_str = to_date.strftime('%Y-%m-%d')
@@ -174,7 +174,7 @@ class PolygonProvider(BaseProvider):
                 f"{from_date_str}/{to_date_str}"
             )
             params = {"limit": str(limit), "sort": "desc"}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             results = response_data.get("results", [])

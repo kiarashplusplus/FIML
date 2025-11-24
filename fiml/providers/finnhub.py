@@ -69,7 +69,7 @@ class FinnhubProvider(BaseProvider):
 
         if params is None:
             params = {}
-        
+
         params["token"] = self.config.api_key
 
         try:
@@ -83,11 +83,11 @@ class FinnhubProvider(BaseProvider):
 
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Check for API errors
                     if isinstance(data, dict) and data.get("error"):
                         raise ProviderError(f"Finnhub error: {data.get('error')}")
-                    
+
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
                     raise ProviderRateLimitError("Finnhub rate limit exceeded", retry_after=60)
@@ -108,7 +108,7 @@ class FinnhubProvider(BaseProvider):
         try:
             endpoint = "/quote"
             params = {"symbol": asset.symbol}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if not response_data or response_data.get("c") == 0:
@@ -158,11 +158,11 @@ class FinnhubProvider(BaseProvider):
                 "5m": "5",
             }
             resolution = resolution_map.get(timeframe, "D")
-            
+
             # Calculate time range
             from datetime import timedelta
             to_timestamp = int(datetime.now(timezone.utc).timestamp())
-            
+
             # Adjust lookback based on timeframe
             if timeframe == "1d":
                 from_timestamp = int((datetime.now(timezone.utc) - timedelta(days=limit)).timestamp())
@@ -170,7 +170,7 @@ class FinnhubProvider(BaseProvider):
                 from_timestamp = int((datetime.now(timezone.utc) - timedelta(hours=limit)).timestamp())
             else:
                 from_timestamp = int((datetime.now(timezone.utc) - timedelta(days=7)).timestamp())
-            
+
             endpoint = "/stock/candle"
             params = {
                 "symbol": asset.symbol,
@@ -178,7 +178,7 @@ class FinnhubProvider(BaseProvider):
                 "from": str(from_timestamp),
                 "to": str(to_timestamp),
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if response_data.get("s") == "no_data":
@@ -191,7 +191,7 @@ class FinnhubProvider(BaseProvider):
             lows = response_data.get("l", [])
             closes = response_data.get("c", [])
             volumes = response_data.get("v", [])
-            
+
             for i in range(min(len(timestamps), limit)):
                 ohlcv_data.append({
                     "timestamp": timestamps[i],
@@ -235,7 +235,7 @@ class FinnhubProvider(BaseProvider):
             # Get company profile
             endpoint = "/stock/profile2"
             params = {"symbol": asset.symbol}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if not response_data or not response_data.get("ticker"):
@@ -245,9 +245,9 @@ class FinnhubProvider(BaseProvider):
             metrics_endpoint = "/stock/metric"
             metrics_params = {"symbol": asset.symbol, "metric": "all"}
             metrics_data = await self._make_request(metrics_endpoint, metrics_params)
-            
+
             metric = metrics_data.get("metric", {})
-            
+
             data = {
                 "symbol": response_data.get("ticker", ""),
                 "name": response_data.get("name", ""),
@@ -300,7 +300,7 @@ class FinnhubProvider(BaseProvider):
             from datetime import timedelta
             to_date = datetime.now(timezone.utc)
             from_date = to_date - timedelta(days=7)
-            
+
             endpoint = "/company-news"
             params = {
                 "symbol": asset.symbol,
@@ -311,7 +311,7 @@ class FinnhubProvider(BaseProvider):
             response_data = await self._make_request(endpoint, params)
 
             if not isinstance(response_data, list):
-                raise ProviderError(f"Unexpected response format for news")
+                raise ProviderError("Unexpected response format for news")
 
             articles = []
             for article in response_data[:limit]:

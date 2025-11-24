@@ -46,10 +46,10 @@ class TestDashboardStats:
     def test_get_dashboard_stats(self, client):
         """Test retrieving dashboard statistics"""
         response = client.get("/dashboard/stats")
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Check required fields
         assert "total_events" in data
         assert "events_by_severity" in data
@@ -57,7 +57,7 @@ class TestDashboardStats:
         assert "healthy_watchdogs" in data
         assert "active_subscriptions" in data
         assert "timestamp" in data
-        
+
         # Check types
         assert isinstance(data["total_events"], int)
         assert isinstance(data["events_by_severity"], dict)
@@ -71,12 +71,12 @@ class TestWatchdogStatus:
     def test_get_watchdog_status(self, client):
         """Test retrieving watchdog status"""
         response = client.get("/dashboard/watchdogs")
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert isinstance(data, list)
-        
+
         # If watchdogs exist, check structure
         if data:
             watchdog = data[0]
@@ -92,13 +92,13 @@ class TestWatchdogStatus:
         response = client.get("/dashboard/watchdogs")
         assert response.status_code == 200
         watchdogs = response.json()
-        
+
         if watchdogs:
             watchdog_name = watchdogs[0]["name"]
-            
+
             # Enable the watchdog
             response = client.post(f"/dashboard/watchdogs/{watchdog_name}/enable")
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["status"] == "enabled"
@@ -110,13 +110,13 @@ class TestWatchdogStatus:
         response = client.get("/dashboard/watchdogs")
         assert response.status_code == 200
         watchdogs = response.json()
-        
+
         if watchdogs:
             watchdog_name = watchdogs[0]["name"]
-            
+
             # Disable the watchdog
             response = client.post(f"/dashboard/watchdogs/{watchdog_name}/disable")
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["status"] == "disabled"
@@ -134,12 +134,12 @@ class TestEventRetrieval:
     def test_get_recent_events(self, client):
         """Test retrieving recent events"""
         response = client.get("/dashboard/events")
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert isinstance(data, list)
-        
+
         # Events might be empty initially
         # If events exist, check structure
         if data:
@@ -153,22 +153,22 @@ class TestEventRetrieval:
     def test_get_events_with_limit(self, client):
         """Test retrieving events with limit"""
         response = client.get("/dashboard/events?limit=10")
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert isinstance(data, list)
         assert len(data) <= 10
 
     def test_get_events_with_severity_filter(self, client):
         """Test filtering events by severity"""
         response = client.get("/dashboard/events?severity=high")
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert isinstance(data, list)
-        
+
         # All returned events should have high severity
         for event in data:
             assert event["severity"] == "high"
@@ -176,7 +176,7 @@ class TestEventRetrieval:
     def test_get_events_invalid_limit(self, client):
         """Test with invalid limit parameter"""
         response = client.get("/dashboard/events?limit=2000")
-        
+
         # Should return 422 validation error for out-of-range limit
         assert response.status_code == 422
 
@@ -195,16 +195,16 @@ class TestMultiAssetMonitoring:
                 "market": "US"
             }
         )
-        
+
         # May fail if no providers available in test environment
         # Accept both success and some error codes
         assert response.status_code in [200, 400, 500]
-        
+
         if response.status_code == 200:
             data = response.json()
             assert isinstance(data, list)
             assert len(data) == 1
-            
+
             asset_data = data[0]
             assert asset_data["symbol"] == "AAPL"
             assert asset_data["asset_type"] == "equity"
@@ -220,10 +220,10 @@ class TestMultiAssetMonitoring:
                 "market": "US"
             }
         )
-        
+
         # May fail if no providers available
         assert response.status_code in [200, 400, 500]
-        
+
         if response.status_code == 200:
             data = response.json()
             assert isinstance(data, list)
@@ -232,7 +232,7 @@ class TestMultiAssetMonitoring:
     def test_monitor_no_symbols(self, client):
         """Test monitoring with no symbols provided"""
         response = client.get("/dashboard/assets/monitor")
-        
+
         # Should return 422 validation error
         assert response.status_code == 422
 
@@ -246,10 +246,10 @@ class TestDashboardWebSocket:
             with client.websocket_connect("/dashboard/stream") as websocket:
                 # Should receive initial stats message
                 data = websocket.receive_json()
-                
+
                 assert "type" in data
                 assert data["type"] in ["stats", "event", "health"]
-                
+
                 # Send a ping to keep connection alive
                 websocket.send_text("ping")
         except Exception as e:

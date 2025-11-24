@@ -8,7 +8,6 @@ from datetime import time as time_obj
 from typing import Any, Dict, Optional
 
 from fiml.arbitration.engine import arbitration_engine
-from fiml.cache.manager import cache_manager
 from fiml.core.logging import get_logger
 from fiml.core.models import (
     AnalysisDepth,

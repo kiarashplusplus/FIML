@@ -13,7 +13,7 @@ Features:
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Annotated, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -67,12 +67,12 @@ class MultiAssetData(BaseModel):
 async def get_dashboard_stats() -> DashboardStats:
     """
     Get overall dashboard statistics
-    
+
     Returns real-time stats about events, watchdogs, and active connections.
     """
     event_stats = watchdog_manager.get_event_stats()
     status = watchdog_manager.get_status()
-    
+
     return DashboardStats(
         total_events=event_stats.get("total_events", 0),
         events_by_severity=event_stats.get("events_by_severity", {}),
@@ -87,11 +87,11 @@ async def get_dashboard_stats() -> DashboardStats:
 async def get_watchdog_status() -> List[WatchdogStatus]:
     """
     Get status of all watchdogs
-    
+
     Returns detailed health information for each watchdog.
     """
     health_data = watchdog_manager.get_health()
-    
+
     watchdog_statuses = []
     for name, health in health_data.items():
         watchdog = watchdog_manager.get_watchdog(name)
@@ -107,7 +107,7 @@ async def get_watchdog_status() -> List[WatchdogStatus]:
                     total_checks=health.total_checks,
                 )
             )
-    
+
     return watchdog_statuses
 
 
@@ -119,12 +119,12 @@ async def get_recent_events(
 ) -> List[WatchdogEvent]:
     """
     Get recent watchdog events
-    
+
     Args:
         limit: Maximum number of events to return (1-1000)
         severity: Filter by severity level
         event_type: Filter by event type
-    
+
     Returns:
         List of recent watchdog events
     """
@@ -140,17 +140,17 @@ async def get_recent_events(
                     status_code=400,
                     detail=f"Invalid event type: {event_type}"
                 )
-        
+
         event_filter = EventFilter(
             severities=[severity] if severity else None,
             event_types=event_types_list,
         )
-    
+
     events = watchdog_manager.get_recent_events(
         event_filter=event_filter,
         limit=limit,
     )
-    
+
     return events
 
 
@@ -158,17 +158,17 @@ async def get_recent_events(
 async def enable_watchdog(name: str) -> Dict:
     """
     Enable a specific watchdog
-    
+
     Args:
         name: Watchdog name
-    
+
     Returns:
         Success status
     """
     success = await watchdog_manager.enable_watchdog(name)
     if not success:
         raise HTTPException(status_code=404, detail=f"Watchdog '{name}' not found")
-    
+
     return {"status": "enabled", "watchdog": name}
 
 
@@ -176,17 +176,17 @@ async def enable_watchdog(name: str) -> Dict:
 async def disable_watchdog(name: str) -> Dict:
     """
     Disable a specific watchdog
-    
+
     Args:
         name: Watchdog name
-    
+
     Returns:
         Success status
     """
     success = await watchdog_manager.disable_watchdog(name)
     if not success:
         raise HTTPException(status_code=404, detail=f"Watchdog '{name}' not found")
-    
+
     return {"status": "disabled", "watchdog": name}
 
 
@@ -194,17 +194,17 @@ async def disable_watchdog(name: str) -> Dict:
 async def restart_watchdog(name: str) -> Dict:
     """
     Restart a specific watchdog
-    
+
     Args:
         name: Watchdog name
-    
+
     Returns:
         Success status
     """
     success = await watchdog_manager.restart_watchdog(name)
     if not success:
         raise HTTPException(status_code=404, detail=f"Watchdog '{name}' not found")
-    
+
     return {"status": "restarted", "watchdog": name}
 
 
@@ -213,12 +213,12 @@ async def restart_watchdog(name: str) -> Dict:
 async def dashboard_websocket(websocket: WebSocket):
     """
     WebSocket endpoint for real-time dashboard updates
-    
+
     Streams:
     - Watchdog events as they occur
     - System health updates
     - Asset price updates
-    
+
     Message format:
     {
         "type": "event" | "health" | "stats",
@@ -227,12 +227,12 @@ async def dashboard_websocket(websocket: WebSocket):
     """
     await websocket.accept()
     connection_id = f"dashboard_{datetime.now(timezone.utc).timestamp()}"
-    
+
     logger.info("Dashboard WebSocket connected", connection_id=connection_id)
-    
+
     # Subscribe to watchdog events
     subscription_id = None
-    
+
     try:
         # Subscribe to all watchdog events
         def event_callback(event: WatchdogEvent):
@@ -245,21 +245,21 @@ async def dashboard_websocket(websocket: WebSocket):
                     })
                 except Exception as e:
                     logger.error(f"Error sending event to dashboard: {e}")
-            
+
             asyncio.create_task(send_event())
-        
+
         subscription_id = watchdog_manager.subscribe_to_events(
             callback=event_callback,
             event_filter=None,  # Subscribe to all events
         )
-        
+
         # Send initial stats
         stats = await get_dashboard_stats()
         await websocket.send_json({
             "type": "stats",
             "data": stats.model_dump(mode="json"),
         })
-        
+
         # Keep connection alive and send periodic updates
         while True:
             try:
@@ -272,7 +272,7 @@ async def dashboard_websocket(websocket: WebSocket):
                     "type": "stats",
                     "data": stats.model_dump(mode="json"),
                 })
-    
+
     except WebSocketDisconnect:
         logger.info("Dashboard WebSocket disconnected", connection_id=connection_id)
     except Exception as e:
@@ -285,26 +285,26 @@ async def dashboard_websocket(websocket: WebSocket):
 
 @dashboard_router.get("/assets/monitor")
 async def get_monitored_assets(
-    symbols: List[str] = Query(..., description="List of symbols to monitor"),
-    asset_type: AssetType = Query(default=AssetType.EQUITY),
-    market: Market = Query(default=Market.US),
+    symbols: Annotated[List[str], Query(description="List of symbols to monitor")],
+    asset_type: Annotated[AssetType, Query()] = AssetType.EQUITY,
+    market: Annotated[Market, Query()] = Market.US,
 ) -> List[MultiAssetData]:
     """
     Get current data for multiple assets
-    
+
     Args:
         symbols: List of asset symbols
         asset_type: Type of assets
         market: Market for the assets
-    
+
     Returns:
         Current data for each asset
     """
     from fiml.arbitration.engine import arbitration_engine
     from fiml.core.models import DataType
-    
+
     results = []
-    
+
     for symbol in symbols:
         try:
             asset = Asset(
@@ -312,22 +312,22 @@ async def get_monitored_assets(
                 asset_type=asset_type,
                 market=market,
             )
-            
+
             # Get price data
             plan = await arbitration_engine.arbitrate_request(
                 asset=asset,
                 data_type=DataType.PRICE,
                 user_region="US",
             )
-            
+
             response = await arbitration_engine.execute_with_fallback(
                 plan=plan,
                 asset=asset,
                 data_type=DataType.PRICE,
             )
-            
+
             price_data = response.data
-            
+
             results.append(
                 MultiAssetData(
                     symbol=symbol,
@@ -338,7 +338,7 @@ async def get_monitored_assets(
                     timestamp=response.timestamp,
                 )
             )
-        
+
         except Exception as e:
             logger.error(f"Error fetching data for {symbol}: {e}")
             # Add placeholder data for failed fetch
@@ -352,5 +352,5 @@ async def get_monitored_assets(
                     timestamp=datetime.now(timezone.utc),
                 )
             )
-    
+
     return results

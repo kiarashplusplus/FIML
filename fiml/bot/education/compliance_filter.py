@@ -4,8 +4,9 @@ Ensures all content is educational-only with no financial advice
 """
 
 import re
-from typing import Dict, List, Tuple
 from enum import Enum
+from typing import Dict, Tuple
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -21,7 +22,7 @@ class ComplianceLevel(Enum):
 class EducationalComplianceFilter:
     """
     Compliance filter for educational bot
-    
+
     Features:
     - Detects financial advice language
     - Blocks investment recommendations
@@ -29,7 +30,7 @@ class EducationalComplianceFilter:
     - Regional compliance checks
     - Automatic disclaimers
     """
-    
+
     # Prohibited advice patterns (high risk)
     ADVICE_PATTERNS = [
         r'\b(buy|sell|short|long)\s+(this|that|it|now)\b',
@@ -43,7 +44,7 @@ class EducationalComplianceFilter:
         r'\bhot\s+tip\b',
         r'\bget\s+rich\b',
     ]
-    
+
     # Warning patterns (borderline, requires disclaimer)
     WARNING_PATTERNS = [
         r'\b(might|could|may)\s+(buy|sell|invest)\b',
@@ -52,7 +53,7 @@ class EducationalComplianceFilter:
         r'\bpotential\s+(upside|downside)\b',
         r'\bgood\s+entry\s+point\b',
     ]
-    
+
     # Safe educational phrases (examples of good content)
     EDUCATIONAL_PHRASES = [
         "let's learn",
@@ -64,20 +65,20 @@ class EducationalComplianceFilter:
         "quiz question",
         "educational purposes",
     ]
-    
+
     def __init__(self, region: str = "US"):
         """
         Initialize compliance filter
-        
+
         Args:
             region: Region code for compliance rules
         """
         self.region = region
         self._advice_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.ADVICE_PATTERNS]
         self._warning_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.WARNING_PATTERNS]
-        
+
         logger.info("EducationalComplianceFilter initialized", region=region)
-    
+
     async def check_content(
         self,
         content: str,
@@ -85,16 +86,22 @@ class EducationalComplianceFilter:
     ) -> Tuple[ComplianceLevel, str]:
         """
         Check content for compliance
-        
+
         Args:
             content: Text to check
             context: Context (lesson, quiz, mentor, user_question)
-            
+
         Returns:
             (compliance_level, message)
         """
-        content_lower = content.lower()
-        
+        # Check for warning patterns BEFORE lowercasing
+        for pattern in self._warning_patterns:
+            if pattern in content.lower():
+                logger.info("Warning pattern detected", pattern=pattern)
+                return ComplianceLevel.WARNING, self._add_disclaimer(content, ComplianceLevel.WARNING)
+
+        content = content.lower()
+
         # Check for prohibited advice
         for regex in self._advice_regex:
             if regex.search(content):
@@ -109,7 +116,7 @@ class EducationalComplianceFilter:
                     f"Content blocked: Contains advice language ('{match}'). "
                     "Educational content only."
                 )
-        
+
         # Check for warning patterns
         for regex in self._warning_regex:
             if regex.search(content):
@@ -124,25 +131,25 @@ class EducationalComplianceFilter:
                     f"Warning: Borderline language detected ('{match}'). "
                     "Strong disclaimer required."
                 )
-        
+
         # Content is safe
         return (
             ComplianceLevel.SAFE,
             "Content is educational and compliant"
         )
-    
+
     async def filter_user_question(self, question: str) -> Tuple[bool, str]:
         """
         Check if user question is seeking advice
-        
+
         Args:
             question: User's question
-            
+
         Returns:
             (is_allowed, response_or_message)
         """
         question_lower = question.lower().strip()
-        
+
         # Direct advice seeking patterns
         advice_seeking = [
             r'\bshould\s+i\s+(buy|sell|invest|trade)\b',
@@ -152,7 +159,7 @@ class EducationalComplianceFilter:
             r'\bwill\s+.+\s+go\s+up\b',
             r'\btell\s+me\s+what\s+to\s+(buy|sell)\b',
         ]
-        
+
         for pattern in advice_seeking:
             if re.search(pattern, question_lower):
                 return (
@@ -167,21 +174,21 @@ class EducationalComplianceFilter:
                     "• 'What is P/E ratio?'\n"
                     "• 'How does technical analysis work?'"
                 )
-        
+
         # Question is educational
         return (True, "")
-    
+
     def add_disclaimer(
         self,
         content: str,
         level: ComplianceLevel = ComplianceLevel.WARNING
     ) -> str:
         """Add appropriate disclaimer to content"""
-        
+
         if level == ComplianceLevel.SAFE:
             # Light disclaimer
             return f"{content}\n\n_Educational purposes only_"
-        
+
         elif level == ComplianceLevel.WARNING:
             # Strong disclaimer
             return (
@@ -191,11 +198,11 @@ class EducationalComplianceFilter:
                 "Always do your own research and consult a licensed financial advisor "
                 "before making investment decisions."
             )
-        
+
         else:  # BLOCKED
             # Should not add disclaimer to blocked content
             return content
-    
+
     async def check_and_filter(
         self,
         content: str,
@@ -203,16 +210,16 @@ class EducationalComplianceFilter:
     ) -> Dict:
         """
         Check content and return filtered version
-        
+
         Args:
             content: Content to check
             context: Context
-            
+
         Returns:
             Dict with allowed, filtered_content, level, message
         """
         level, message = await self.check_content(content, context)
-        
+
         if level == ComplianceLevel.BLOCKED:
             return {
                 "allowed": False,
@@ -220,20 +227,20 @@ class EducationalComplianceFilter:
                 "level": level.value,
                 "message": message
             }
-        
+
         # Add appropriate disclaimer
         filtered = self.add_disclaimer(content, level)
-        
+
         return {
             "allowed": True,
             "filtered_content": filtered,
             "level": level.value,
             "message": message
         }
-    
+
     def get_regional_requirements(self) -> Dict:
         """Get compliance requirements for region"""
-        
+
         requirements = {
             "US": {
                 "requires_disclaimers": True,
@@ -254,17 +261,17 @@ class EducationalComplianceFilter:
                 "notes": "FCA educational exemption"
             }
         }
-        
+
         return requirements.get(self.region, requirements["US"])
-    
+
     def escalate_concern(self, content: str, reason: str):
         """Log concerning content for review"""
-        
+
         logger.warning(
             "Compliance concern escalated",
             region=self.region,
             reason=reason,
             content_preview=content[:100]
         )
-        
+
         # In production, this would alert compliance team

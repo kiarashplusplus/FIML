@@ -358,7 +358,6 @@ class NarrativeValidator:
             Removes investment advice language and predictive statements
         """
         sanitized = text
-        original_text = text  # Track original for comparison
 
         # Replace advice keywords with neutral language
         replacements = {

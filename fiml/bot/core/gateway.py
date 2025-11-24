@@ -3,11 +3,11 @@ Component 3: Unified Bot Gateway
 Central message processing hub for multi-platform educational bot
 """
 
-import asyncio
-from typing import Dict, List, Optional, Any
-from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -35,7 +35,7 @@ class AbstractMessage:
     media: List[str] = None
     context: Dict[str, Any] = None
     timestamp: datetime = None
-    
+
     def __post_init__(self):
         if self.media is None:
             self.media = []
@@ -52,7 +52,7 @@ class AbstractResponse:
     media: List[str] = None
     actions: List[Dict] = None  # Buttons, keyboards
     metadata: Dict[str, Any] = None
-    
+
     def __post_init__(self):
         if self.media is None:
             self.media = []
@@ -94,7 +94,7 @@ class UserSession:
     preferences: Dict[str, Any] = None
     created_at: datetime = None
     updated_at: datetime = None
-    
+
     def __post_init__(self):
         if self.conversation_history is None:
             self.conversation_history = []
@@ -110,19 +110,19 @@ class UserSession:
 
 class SessionManager:
     """Manages user sessions across platforms"""
-    
+
     def __init__(self):
         # In-memory storage (should be Redis in production)
         self._sessions: Dict[str, UserSession] = {}
         logger.info("SessionManager initialized")
-    
+
     async def get_or_create(self, user_id: str, platform: str = "telegram") -> UserSession:
         """Get existing session or create new one"""
         if user_id in self._sessions:
             session = self._sessions[user_id]
             session.updated_at = datetime.utcnow()
             return session
-        
+
         # Create new session
         session = UserSession(
             user_id=user_id,
@@ -130,16 +130,16 @@ class SessionManager:
             state=SessionState.NEW_USER
         )
         self._sessions[user_id] = session
-        
+
         logger.info("New session created", user_id=user_id, platform=platform)
         return session
-    
+
     async def update(self, user_id: str, session: UserSession):
         """Update session"""
         session.updated_at = datetime.utcnow()
         self._sessions[user_id] = session
         logger.debug("Session updated", user_id=user_id)
-    
+
     async def delete(self, user_id: str):
         """Delete session"""
         if user_id in self._sessions:
@@ -149,36 +149,36 @@ class SessionManager:
 
 class IntentClassifier:
     """Classifies user messages into intents"""
-    
+
     # Command keywords
     COMMANDS = {
         "/start", "/help", "/lesson", "/quiz", "/mentor", "/market",
         "/addkey", "/listkeys", "/removekey", "/testkey", "/status",
         "/progress", "/cancel"
     }
-    
+
     # Lesson keywords
     LESSON_KEYWORDS = ["lesson", "learn", "teach", "explain", "course", "module"]
-    
+
     # Market keywords
     MARKET_KEYWORDS = ["price", "stock", "chart", "quote", "$", "market", "ticker"]
-    
+
     # Navigation keywords
     NAVIGATION_KEYWORDS = ["next", "back", "menu", "home", "continue", "skip"]
-    
+
     async def classify(self, message: AbstractMessage, session: UserSession) -> Intent:
         """
         Classify message intent based on content and context
-        
+
         Args:
             message: User message
             session: User session
-            
+
         Returns:
             Classified intent
         """
         text = message.text.lower().strip()
-        
+
         # Check for commands
         if text.startswith('/'):
             command = text.split()[0]
@@ -187,7 +187,7 @@ class IntentClassifier:
                 data={"command": command},
                 confidence=1.0
             )
-        
+
         # Context-based classification
         if session.state == SessionState.IN_QUIZ:
             return Intent(
@@ -195,7 +195,7 @@ class IntentClassifier:
                 data={"answer": message.text},
                 confidence=0.9
             )
-        
+
         if session.state == SessionState.IN_LESSON:
             if any(kw in text for kw in self.NAVIGATION_KEYWORDS):
                 return Intent(
@@ -203,7 +203,7 @@ class IntentClassifier:
                     data={"action": text},
                     confidence=0.8
                 )
-        
+
         # Keyword-based classification
         if any(kw in text for kw in self.MARKET_KEYWORDS):
             return Intent(
@@ -211,21 +211,21 @@ class IntentClassifier:
                 data={"query": message.text},
                 confidence=0.7
             )
-        
+
         if any(kw in text for kw in self.LESSON_KEYWORDS):
             return Intent(
                 type=IntentType.LESSON_REQUEST,
                 data={"query": message.text},
                 confidence=0.7
             )
-        
+
         if any(kw in text for kw in self.NAVIGATION_KEYWORDS):
             return Intent(
                 type=IntentType.NAVIGATION,
                 data={"action": text},
                 confidence=0.6
             )
-        
+
         # Default to AI question
         return Intent(
             type=IntentType.AI_QUESTION,
@@ -237,7 +237,7 @@ class IntentClassifier:
 class UnifiedBotGateway:
     """
     Central message processing hub for multi-platform bot
-    
+
     Features:
     - Platform-agnostic message handling
     - Intent classification
@@ -245,11 +245,11 @@ class UnifiedBotGateway:
     - Handler routing
     - Response formatting
     """
-    
+
     def __init__(self):
         self.session_manager = SessionManager()
         self.intent_classifier = IntentClassifier()
-        
+
         # Handlers will be set by components
         self.handlers = {
             IntentType.COMMAND: self.handle_command,
@@ -261,9 +261,9 @@ class UnifiedBotGateway:
             IntentType.NAVIGATION: self.handle_navigation,
             IntentType.UNKNOWN: self.handle_unknown,
         }
-        
+
         logger.info("UnifiedBotGateway initialized")
-    
+
     async def handle_message(
         self,
         platform: str,
@@ -273,13 +273,13 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """
         Main message processing pipeline
-        
+
         Args:
             platform: Platform identifier (telegram, web, whatsapp)
             user_id: User identifier
             text: Message text
             context: Additional context
-            
+
         Returns:
             Abstract response
         """
@@ -290,33 +290,33 @@ class UnifiedBotGateway:
             text=text,
             context=context or {}
         )
-        
+
         # 2. Load user session
         session = await self.session_manager.get_or_create(user_id, platform)
-        
+
         # 3. Classify intent
         intent = await self.intent_classifier.classify(message, session)
-        
+
         logger.info(
             "Message classified",
             user_id=user_id,
             intent_type=intent.type.value,
             confidence=intent.confidence
         )
-        
+
         # 4. Route to handler
         handler = self.handlers.get(intent.type, self.handle_unknown)
         response = await handler(message, session, intent)
-        
+
         # 5. Update session
         await self.session_manager.update(user_id, session)
-        
+
         # 6. Add metadata
         response.metadata["intent"] = intent.type.value
         response.metadata["confidence"] = intent.confidence
-        
+
         return response
-    
+
     async def handle_command(
         self,
         message: AbstractMessage,
@@ -325,14 +325,14 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle bot commands"""
         command = intent.data.get("command", "")
-        
+
         # These are handled by platform adapters
         # This is a fallback for when gateway receives commands
         return AbstractResponse(
             text=f"Command {command} should be handled by platform adapter",
             metadata={"handled_by": "gateway_fallback"}
         )
-    
+
     async def handle_lesson_request(
         self,
         message: AbstractMessage,
@@ -351,7 +351,7 @@ class UnifiedBotGateway:
                  "/help - See available commands\n"
                  "/addkey - Add API keys for market data"
         )
-    
+
     async def handle_lesson_navigation(
         self,
         message: AbstractMessage,
@@ -360,13 +360,13 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle lesson navigation"""
         action = intent.data.get("action", "")
-        
+
         # Placeholder
         return AbstractResponse(
             text=f"Lesson navigation: {action}\n\n"
                  "(Lesson system coming soon)"
         )
-    
+
     async def handle_quiz_answer(
         self,
         message: AbstractMessage,
@@ -379,7 +379,7 @@ class UnifiedBotGateway:
             text="Quiz system coming soon!\n\n"
                  "You'll be able to test your knowledge with interactive quizzes."
         )
-    
+
     async def handle_ai_question(
         self,
         message: AbstractMessage,
@@ -389,7 +389,7 @@ class UnifiedBotGateway:
         """Handle AI mentor questions"""
         # Placeholder - will be implemented by AIMentorService
         question = intent.data.get("question", "")
-        
+
         return AbstractResponse(
             text="🤖 **AI Mentor Coming Soon!**\n\n"
                  f"You asked: _{question}_\n\n"
@@ -399,7 +399,7 @@ class UnifiedBotGateway:
                  "- Guide your learning journey\n\n"
                  "For now, use /help to see what's available."
         )
-    
+
     async def handle_market_query(
         self,
         message: AbstractMessage,
@@ -409,7 +409,7 @@ class UnifiedBotGateway:
         """Handle market data queries"""
         # Placeholder - will be implemented by FIMLEducationalDataAdapter
         query = intent.data.get("query", "")
-        
+
         return AbstractResponse(
             text="📊 **Market Data Coming Soon!**\n\n"
                  f"You asked about: _{query}_\n\n"
@@ -418,7 +418,7 @@ class UnifiedBotGateway:
                  "/addkey - Add provider keys\n"
                  "/listkeys - View connected providers"
         )
-    
+
     async def handle_navigation(
         self,
         message: AbstractMessage,
@@ -427,12 +427,12 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle general navigation"""
         action = intent.data.get("action", "")
-        
+
         return AbstractResponse(
             text=f"Navigation: {action}\n\n"
                  "Use /help to see available commands"
         )
-    
+
     async def handle_unknown(
         self,
         message: AbstractMessage,
@@ -447,7 +447,7 @@ class UnifiedBotGateway:
                  "/lesson - Start learning (coming soon)\n"
                  "/addkey - Set up your API keys"
         )
-    
+
     def register_handler(self, intent_type: IntentType, handler):
         """Register custom handler for intent type"""
         self.handlers[intent_type] = handler

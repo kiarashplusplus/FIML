@@ -6,7 +6,7 @@ is unavailable. Supports multiple languages and variable substitution
 using Jinja2.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from jinja2 import Template
 

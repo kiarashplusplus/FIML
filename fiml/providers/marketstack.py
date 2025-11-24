@@ -68,7 +68,7 @@ class MarketstackProvider(BaseProvider):
 
         if params is None:
             params = {}
-        
+
         params["access_key"] = self.config.api_key
 
         try:
@@ -82,11 +82,11 @@ class MarketstackProvider(BaseProvider):
 
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Check for API errors
                     if "error" in data:
                         raise ProviderError(f"Marketstack error: {data['error'].get('message', 'Unknown error')}")
-                    
+
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
                     raise ProviderRateLimitError("Marketstack rate limit exceeded", retry_after=60)
@@ -107,7 +107,7 @@ class MarketstackProvider(BaseProvider):
         try:
             endpoint = "/eod/latest"
             params = {"symbols": asset.symbol}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             data_list = response_data.get("data", [])
@@ -115,7 +115,7 @@ class MarketstackProvider(BaseProvider):
                 raise ProviderError(f"No price data available for {asset.symbol}")
 
             latest = data_list[0]
-            
+
             data = {
                 "price": float(latest.get("close", 0.0)),
                 "open": float(latest.get("open", 0.0)),
@@ -158,7 +158,7 @@ class MarketstackProvider(BaseProvider):
                 "symbols": asset.symbol,
                 "limit": str(min(limit, 1000)),
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             data_list = response_data.get("data", [])

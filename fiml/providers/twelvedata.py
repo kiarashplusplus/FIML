@@ -69,7 +69,7 @@ class TwelvedataProvider(BaseProvider):
 
         if params is None:
             params = {}
-        
+
         params["apikey"] = self.config.api_key
 
         try:
@@ -83,11 +83,11 @@ class TwelvedataProvider(BaseProvider):
 
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     # Check for API errors
                     if isinstance(data, dict) and data.get("status") == "error":
                         raise ProviderError(f"Twelvedata error: {data.get('message', 'Unknown error')}")
-                    
+
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
                     raise ProviderRateLimitError("Twelvedata rate limit exceeded", retry_after=60)
@@ -108,7 +108,7 @@ class TwelvedataProvider(BaseProvider):
         try:
             endpoint = "/price"
             params = {"symbol": asset.symbol}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if not response_data or "price" not in response_data:
@@ -164,14 +164,14 @@ class TwelvedataProvider(BaseProvider):
                 "5m": "5min",
             }
             interval = interval_map.get(timeframe, "1day")
-            
+
             endpoint = "/time_series"
             params = {
                 "symbol": asset.symbol,
                 "interval": interval,
                 "outputsize": str(min(limit, 5000)),  # Max 5000
             }
-            
+
             response_data = await self._make_request(endpoint, params)
 
             values = response_data.get("values", [])
@@ -222,7 +222,7 @@ class TwelvedataProvider(BaseProvider):
             # Get company profile
             endpoint = "/profile"
             params = {"symbol": asset.symbol}
-            
+
             response_data = await self._make_request(endpoint, params)
 
             if not response_data or response_data.get("status") == "error":
@@ -234,7 +234,7 @@ class TwelvedataProvider(BaseProvider):
             stats_data = await self._make_request(stats_endpoint, stats_params)
             statistics = stats_data.get("statistics", {})
             valuations = statistics.get("valuations_metrics", {})
-            
+
             data = {
                 "symbol": response_data.get("symbol", ""),
                 "name": response_data.get("name", ""),
