@@ -39,12 +39,15 @@ class FIMLProviderConfigurator:
 
     def get_user_provider_config(self, user_id: str, user_keys: Dict = None) -> Dict:
         """
-        Get user's provider configuration for FIML
+        Get user's provider configuration for FIML (synchronous)
+
+        Note: This method is synchronous and does not fetch keys from key_manager.
+        If user_keys is None, defaults to empty dict for free-tier-only configuration.
 
         Args:
             user_id: User identifier
             user_keys: User keys dict (optional - if not provided, defaults to empty dict
-                       resulting in free-tier-only configuration)
+                resulting in free-tier-only configuration)
 
         Returns:
             Provider configuration dict
@@ -112,7 +115,7 @@ class FIMLProviderConfigurator:
 
         # Get user's stored API keys
         user_keys = await self.key_manager.get_user_keys(user_id)
-        
+
         # Get user's provider configuration
         config = self.get_user_provider_config(user_id, user_keys=user_keys)
 
