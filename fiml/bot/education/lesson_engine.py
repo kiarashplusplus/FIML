@@ -381,8 +381,8 @@ class LessonContentEngine:
     async def get_next_lesson(self, user_id: str, current_lesson_id: str) -> Optional[str]:
         """Get next recommended lesson"""
         current = await self.load_lesson(current_lesson_id)
-        if current and current.next_lesson:
-            return current.next_lesson
+        if current and current.get("next_lesson"):
+            return current.get("next_lesson")
         return None
 
     async def get_user_progress(self, user_id: str) -> Dict:
