@@ -110,7 +110,9 @@ jobs:
             tests/test_core.py \
             tests/test_cache.py \
             tests/test_cache_improved.py \
-            tests/test_cache_optimizations.py
+            tests/test_cache_optimizations.py \
+            tests/test_cache_comprehensive.py \
+            tests/test_cache_async_operations.py
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
