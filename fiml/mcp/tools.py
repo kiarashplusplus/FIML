@@ -260,7 +260,7 @@ async def get_cached_narrative(
     expertise: str,
 ) -> Optional[Dict[str, Any]]:
     """
-    Get cached narrative if available
+    Get cached narrative if available (uses NarrativeCache module)
 
     Args:
         symbol: Asset symbol
@@ -270,17 +270,13 @@ async def get_cached_narrative(
     Returns:
         Cached narrative data or None
     """
-    cache_key = f"narrative:{symbol.upper()}:{language}:{expertise}"
+    from fiml.narrative.cache import narrative_cache
 
-    try:
-        cached = await cache_manager.l1.get(cache_key)
-        if cached:
-            logger.debug("Narrative cache hit", symbol=symbol, language=language)
-            return cached
-    except Exception as e:
-        logger.warning(f"Narrative cache read error: {e}")
-
-    return None
+    return await narrative_cache.get(
+        symbol=symbol,
+        language=language,
+        expertise_level=expertise,
+    )
 
 
 async def cache_narrative(
@@ -291,7 +287,7 @@ async def cache_narrative(
     ttl: int,
 ) -> bool:
     """
-    Cache generated narrative
+    Cache generated narrative (uses NarrativeCache module)
 
     Args:
         symbol: Asset symbol
@@ -303,16 +299,19 @@ async def cache_narrative(
     Returns:
         True if cached successfully
     """
-    cache_key = f"narrative:{symbol.upper()}:{language}:{expertise}"
+    from fiml.core.models import AssetType
+    from fiml.narrative.cache import narrative_cache
 
-    try:
-        await cache_manager.l1.set(cache_key, narrative_data, ttl)
-        logger.debug("Narrative cached", symbol=symbol, ttl=ttl)
-        return True
-    except Exception as e:
-        logger.warning(f"Narrative cache write error: {e}")
-        return False
+    # Determine asset type from symbol
+    asset_type = AssetType.CRYPTO if "/" in symbol else AssetType.EQUITY
 
+    return await narrative_cache.set(
+        symbol=symbol,
+        narrative_data=narrative_data,
+        language=language,
+        expertise_level=expertise,
+        asset_type=asset_type,
+    )
 
 async def search_by_symbol(
     symbol: str,
