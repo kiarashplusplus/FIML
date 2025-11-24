@@ -1,0 +1,189 @@
+id: income_001
+title: "Dividend Investing: Getting Paid to Own Stocks"
+category: income_investing
+difficulty: beginner
+duration_minutes: 6
+learning_objectives:
+  - Understand what dividends are
+  - Learn about dividend yield
+  - Identify dividend-paying stocks
+  - Recognize dividend sustainability
+prerequisites:
+  - stock_basics_001
+  - valuation_001
+sections:
+  - type: introduction
+    content: |
+      What if your stocks paid you cash every quarter just for owning them? That's dividends!
+      
+      **Dividend** = A portion of company profits paid to shareholders
+      
+      Think of it like rent from real estate:
+      - You own the property (stock)
+      - It generates income (dividends)
+      - You can reinvest or spend the income
+      - The property might also appreciate in value
+      
+      **Two ways to profit from stocks:**
+      1. Capital gains (stock price goes up)
+      2. Dividends (regular cash payments)
+
+  - type: live_example
+    content: |
+      **Live Example: {symbol}**
+      
+      Current Price: ${price}
+      Annual Dividend: ${annual_dividend}
+      Dividend Yield: {dividend_yield}%
+      
+      **What this means:**
+      If you own 100 shares at ${price}:
+      - Investment: ${total_investment}
+      - Annual dividend income: ${annual_income}
+      - Quarterly payment: ${quarterly_payment}
+      
+      Plus, you still own the stock which may appreciate!
+    fiml_query:
+      symbol: JNJ
+      metrics:
+        - price
+        - dividend_yield
+        - dividend_per_share
+
+  - type: explanation
+    content: |
+      **📊 Understanding Dividend Yield:**
+      
+      **Formula:** Dividend Yield = (Annual Dividend ÷ Price) × 100%
+      
+      **Example:**
+      - Stock Price: $100
+      - Annual Dividend: $4
+      - Yield: 4%
+      
+      **Yield Categories:**
+      - 🟢 **High Yield** (> 4%): More income, but often slower growth
+      - 🟡 **Medium Yield** (2-4%): Balanced income and growth
+      - 🟠 **Low Yield** (< 2%): More growth-focused
+      - ⚫ **No Dividend** (0%): All growth, no income (like AMZN, GOOGL)
+      
+      **⚠️ Dividend Trap:**
+      Super high yields (> 8%) can be dangerous!
+      - May indicate company in trouble
+      - Dividend might be cut
+      - Stock price falling faster than dividend
+      
+      **Example of a Trap:**
+      - Stock was $100, dividend $4 (4% yield)
+      - Stock falls to $50 (company struggling)
+      - Dividend still $4 → Now 8% yield!
+      - Looks attractive, but dividend likely to be cut
+
+  - type: explanation
+    content: |
+      **🎯 Dividend Aristocrats:**
+      
+      **Who are they?**
+      Companies that have increased dividends for 25+ consecutive years
+      
+      **Why it matters:**
+      - Demonstrates financial stability
+      - Management committed to shareholders
+      - Survived multiple recessions
+      - Quality businesses
+      
+      **Examples of Dividend Aristocrats:**
+      - Coca-Cola (KO): 60+ years
+      - Johnson & Johnson (JNJ): 60+ years
+      - Procter & Gamble (PG): 60+ years
+      - 3M (MMM): 60+ years
+      
+      **Dividend Growth Strategy:**
+      Instead of chasing high yields, buy stocks with:
+      - Moderate current yield (2-3%)
+      - Strong dividend growth history (8-10% per year)
+      - Sustainable payout ratio (< 60%)
+      
+      **Power of Dividend Growth:**
+      Buy at 3% yield, dividend grows 8% annually:
+      - Year 5: 4.4% yield on your original investment
+      - Year 10: 6.5% yield
+      - Year 20: 14% yield!
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. **Dividends** = Regular cash payments from company profits
+      2. **Dividend Yield** = Annual dividend ÷ stock price
+      3. High yields (> 8%) may be traps—investigate before buying
+      4. Dividend Aristocrats = 25+ years of increases
+      5. Reinvesting dividends compounds wealth over time
+      
+      💡 **Dividend Reinvestment (DRIP):**
+      Automatically use dividends to buy more shares
+      → Compounds returns over decades
+      → $10,000 at 7% total return for 30 years:
+         - No DRIP: ~$76,000
+         - With DRIP: ~$100,000
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "A stock costs $50 and pays $2 annual dividend. What is the dividend yield?"
+    options:
+      - text: "4%"
+        is_correct: true
+      - text: "2%"
+        is_correct: false
+      - text: "$2"
+        is_correct: false
+      - text: "25%"
+        is_correct: false
+    explanation: "Dividend Yield = ($2 ÷ $50) × 100% = 4%"
+    xp_reward: 10
+
+  - id: q2
+    type: true_false
+    text: "A 10% dividend yield is always better than a 3% dividend yield."
+    correct_answer: false
+    explanation: "False! Very high yields often indicate a distressed company. The dividend may be cut, causing losses."
+    xp_reward: 10
+
+  - id: q3
+    type: multiple_choice
+    text: "What is a Dividend Aristocrat?"
+    options:
+      - text: "A company that has increased dividends for 25+ consecutive years"
+        is_correct: true
+      - text: "Any stock with a high dividend yield"
+        is_correct: false
+      - text: "A company that never pays dividends"
+        is_correct: false
+      - text: "A stock worth over $1,000 per share"
+        is_correct: false
+    explanation: "Dividend Aristocrats have demonstrated 25+ years of dividend growth, showing quality and stability."
+    xp_reward: 10
+
+  - id: q4
+    type: multiple_choice
+    text: "What happens when you reinvest dividends (DRIP)?"
+    options:
+      - text: "Dividends automatically buy more shares, compounding returns"
+        is_correct: true
+      - text: "Dividends are taxed at a lower rate"
+        is_correct: false
+      - text: "You lose access to dividend cash"
+        is_correct: false
+      - text: "The dividend yield increases"
+        is_correct: false
+    explanation: "DRIP uses dividends to purchase additional shares, compounding your returns over time through more shares generating more dividends."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - dividends
+  - income-investing
+  - dividend-yield
+  - dividend-aristocrats
+  - passive-income

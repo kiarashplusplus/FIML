@@ -1,0 +1,216 @@
+id: portfolio_002
+title: "Index Funds vs. Individual Stocks"
+category: portfolio_management
+difficulty: beginner
+duration_minutes: 6
+learning_objectives:
+  - Understand what index funds are
+  - Compare active vs. passive investing
+  - Learn when to use each approach
+  - Recognize cost advantages of indexing
+prerequisites:
+  - stock_basics_004
+  - portfolio_001
+sections:
+  - type: introduction
+    content: |
+      **The Great Investing Debate:**
+      
+      Should you:
+      A) Buy individual stocks and try to beat the market? (Active)
+      B) Buy the whole market via index funds? (Passive)
+      
+      **Spoiler:** Most professional fund managers can't beat the market over 10+ years!
+      
+      **Index Fund** = A fund that owns ALL stocks in an index (like S&P 500)
+      - Buys and holds
+      - Ultra-low fees
+      - Market returns guaranteed
+      
+      **Individual Stocks** = Picking specific companies
+      - Requires research
+      - Higher risk and reward potential
+      - Time-intensive
+      
+      "Don't look for the needle in the haystack. Just buy the haystack!" - Jack Bogle
+
+  - type: explanation
+    content: |
+      **📊 Index Funds Explained:**
+      
+      **What They Are:**
+      - Own every stock in an index proportionally
+      - S&P 500 fund = owns all 500 companies
+      - Total Market fund = owns ALL US stocks (3,000+)
+      - Rebalances automatically
+      
+      **Advantages:**
+      ✅ Instant diversification
+      ✅ Ultra-low fees (0.03-0.20% vs 1-2% for active funds)
+      ✅ Tax efficient
+      ✅ No research required
+      ✅ Beats 80-90% of active managers long-term
+      ✅ Set it and forget it
+      
+      **Disadvantages:**
+      ❌ Can't beat the market (you ARE the market)
+      ❌ You own bad companies too
+      ❌ No downside protection
+      ❌ Less exciting
+      
+      **Popular Index Funds:**
+      - SPY, VOO, IVV (S&P 500)
+      - VTI (Total US Market)
+      - VT (Total World)
+      - QQQ (Nasdaq 100)
+      
+      **Historical Performance:**
+      S&P 500 average annual return: ~10% (since 1926)
+
+  - type: explanation
+    content: |
+      **🎯 Individual Stock Picking:**
+      
+      **What It Requires:**
+      - Research and analysis
+      - Time commitment
+      - Emotional discipline
+      - Risk tolerance
+      - Continuous monitoring
+      
+      **Advantages:**
+      ✅ Can beat the market (if skilled)
+      ✅ Choose exactly what you own
+      ✅ Avoid bad companies
+      ✅ More control
+      ✅ More engaging/educational
+      
+      **Disadvantages:**
+      ❌ Time-intensive
+      ❌ Higher risk
+      ❌ Emotionally challenging
+      ❌ Most fail to beat indexes
+      ❌ Requires knowledge
+      
+      **Reality Check:**
+      - 85% of active fund managers underperform S&P 500 over 10 years
+      - After fees and taxes, even fewer beat it
+      - Warren Buffett recommends index funds for most people
+      
+      **The Math of Fees:**
+      $100,000 invested for 30 years at 10% annual return:
+      - 0.05% fee (index fund): $1,637,000
+      - 1.00% fee (active fund): $1,327,000
+      - 2.00% fee (hedge fund): $1,089,000
+      
+      Higher fees = $548,000 less wealth!
+
+  - type: explanation
+    content: |
+      **💡 The Hybrid Approach (Best for Many):**
+      
+      **Core-Satellite Strategy:**
+      - **Core (70-80%)**: Index funds for stability
+      - **Satellite (20-30%)**: Individual stocks for outperformance
+      
+      **Example Portfolio:**
+      - 60% S&P 500 Index Fund
+      - 20% International Index Fund
+      - 15% Individual stocks (your best ideas)
+      - 5% Cash
+      
+      **When to Use Index Funds:**
+      ✅ You're a beginner
+      ✅ Limited time for research
+      ✅ Retirement accounts
+      ✅ Want market returns with no effort
+      ✅ Don't enjoy stock analysis
+      
+      **When to Pick Individual Stocks:**
+      ✅ You enjoy research
+      ✅ Have time to analyze companies
+      ✅ Can handle volatility
+      ✅ Want to potentially beat market
+      ✅ Willing to accept underperformance risk
+      
+      **Golden Rule:**
+      If you can't beat a simple index fund, don't try!
+      There's no shame in passive investing—it beats most "experts."
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. **Index funds** own the entire market, guarantee market returns
+      2. **85% of professionals** fail to beat index funds long-term
+      3. Low fees (< 0.20%) are critical to long-term wealth
+      4. Core-satellite approach = index funds + select stocks
+      5. No wrong choice—both have merits
+      
+      💡 **Beginner Recommendation:**
+      Start with index funds. Learn by doing. Add individual stocks only after 
+      you understand markets and have emergency fund + debt paid off.
+      
+      **Warren Buffett's Advice:**
+      "Put 10% in short-term government bonds and 90% in a very low-cost S&P 500 index fund."
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "What percentage of professional fund managers beat the S&P 500 over 10 years?"
+    options:
+      - text: "About 15%"
+        is_correct: true
+      - text: "About 50%"
+        is_correct: false
+      - text: "About 75%"
+        is_correct: false
+      - text: "Almost all of them"
+        is_correct: false
+    explanation: "Studies show 85% of active managers underperform the S&P 500 over 10+ years, meaning only ~15% beat it."
+    xp_reward: 10
+
+  - id: q2
+    type: multiple_choice
+    text: "What is the main advantage of index funds?"
+    options:
+      - text: "Low fees and guaranteed market returns"
+        is_correct: true
+      - text: "They beat the market every year"
+        is_correct: false
+      - text: "No risk of losses"
+        is_correct: false
+      - text: "They only own winning stocks"
+        is_correct: false
+    explanation: "Index funds have ultra-low fees and deliver market returns by owning the entire market, which historically beats most active approaches."
+    xp_reward: 10
+
+  - id: q3
+    type: true_false
+    text: "If you invest in an S&P 500 index fund, you own all 500 companies in proportion to their market cap."
+    correct_answer: true
+    explanation: "True! Index funds own every company in the index, weighted by market capitalization."
+    xp_reward: 10
+
+  - id: q4
+    type: multiple_choice
+    text: "What is the 'core-satellite' strategy?"
+    options:
+      - text: "70-80% index funds + 20-30% individual stocks"
+        is_correct: true
+      - text: "100% individual stocks"
+        is_correct: false
+      - text: "100% index funds"
+        is_correct: false
+      - text: "50% stocks + 50% bonds"
+        is_correct: false
+    explanation: "Core-satellite uses index funds for stable core returns, with select individual stocks as satellites for potential outperformance."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - index-funds
+  - passive-investing
+  - active-vs-passive
+  - portfolio-strategy
+  - bogleheads

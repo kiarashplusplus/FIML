@@ -1,0 +1,171 @@
+id: stock_basics_004
+title: "Understanding Market Cap"
+category: fundamentals
+difficulty: beginner
+duration_minutes: 6
+learning_objectives:
+  - Understand what market capitalization means
+  - Differentiate between large-cap, mid-cap, and small-cap stocks
+  - Recognize risk/reward profiles by market cap
+  - Learn how market cap affects investment strategy
+prerequisites:
+  - stock_basics_001
+sections:
+  - type: introduction
+    content: |
+      When people say "Apple is a bigger company than Tesla," what do they mean? How do we 
+      measure a company's size in the stock market?
+      
+      **Market Capitalization (Market Cap)** is the total value of all a company's outstanding shares.
+      
+      **Formula:**
+      Market Cap = Share Price × Total Shares Outstanding
+      
+      It tells you how much it would cost to buy the entire company at current prices.
+
+  - type: live_example
+    content: |
+      **Live Example: {symbol}**
+      
+      Current Price: ${price}
+      Shares Outstanding: {shares_outstanding:,}
+      
+      **Market Cap: ${market_cap}**
+      
+      Category: {market_cap_category}
+      
+      This means to buy every single share of {symbol} at current prices, 
+      you'd need ${market_cap}!
+    fiml_query:
+      symbol: AAPL
+      metrics:
+        - price
+        - shares_outstanding
+        - market_cap
+
+  - type: explanation
+    content: |
+      **📊 Market Cap Categories:**
+      
+      **🏢 Large-Cap (> $10 Billion)**
+      - Examples: Apple, Microsoft, Amazon, Google
+      - Characteristics: Stable, established, widely owned
+      - Pros: Lower risk, steady growth, liquid
+      - Cons: Slower growth potential
+      - Best for: Conservative investors, beginners
+      
+      **🏭 Mid-Cap ($2B - $10B)**
+      - Examples: Square, Etsy, DocuSign
+      - Characteristics: Growing companies, moderate risk
+      - Pros: Growth potential, increasing stability
+      - Cons: More volatile than large-caps
+      - Best for: Balanced portfolios
+      
+      **🏪 Small-Cap ($300M - $2B)**
+      - Examples: Many emerging tech companies
+      - Characteristics: High growth potential, higher risk
+      - Pros: Can multiply in value quickly
+      - Cons: Volatile, less liquid, can fail
+      - Best for: Risk-tolerant investors
+      
+      **🏠 Micro-Cap (< $300M)**
+      - Examples: Penny stocks, startups
+      - Characteristics: Extremely risky, very volatile
+      - Pros: Massive upside potential
+      - Cons: Can lose everything, manipulation risk
+      - Best for: Experienced speculators only
+
+  - type: explanation
+    content: |
+      **🎯 Common Misconceptions:**
+      
+      ❌ **WRONG:** "Stock A is $500 and Stock B is $50, so Stock A is bigger"
+      ✅ **CORRECT:** Market cap determines size, not share price!
+      
+      **Example:**
+      - Company A: $500/share × 1M shares = $500M market cap (small)
+      - Company B: $50/share × 100M shares = $5B market cap (mid-cap, BIGGER)
+      
+      **Why This Matters:**
+      Share price alone is meaningless. A $5 stock can be a large-cap if it has billions of 
+      shares outstanding. A $500 stock can be a small-cap if it has few shares.
+      
+      **Investment Implications:**
+      - Large-caps: Buy for stability and dividends
+      - Mid-caps: Buy for balanced growth
+      - Small-caps: Buy for high growth (with higher risk)
+      - Micro-caps: Speculative only (most investors should avoid)
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. **Market Cap** = Share Price × Shares Outstanding
+      2. Market cap measures total company value, not share price
+      3. Large-cap = Stable, Mid-cap = Balanced, Small-cap = Risky
+      4. Beginners should focus on large-cap stocks first
+      5. Diversify across market caps for balanced risk/reward
+      
+      💡 **Pro Tip:** A company's market cap can change daily as its stock price moves, 
+      even if nothing else about the company changes!
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "How do you calculate market capitalization?"
+    options:
+      - text: "Share Price × Shares Outstanding"
+        is_correct: true
+      - text: "Share Price ÷ Shares Outstanding"
+        is_correct: false
+      - text: "Total Revenue × Share Price"
+        is_correct: false
+      - text: "Shares Outstanding ÷ Share Price"
+        is_correct: false
+    explanation: "Market Cap = Share Price × Shares Outstanding. It represents the total value of all company shares."
+    xp_reward: 10
+
+  - id: q2
+    type: multiple_choice
+    text: "Which market cap category is generally safest for beginners?"
+    options:
+      - text: "Large-cap (> $10B)"
+        is_correct: true
+      - text: "Small-cap ($300M - $2B)"
+        is_correct: false
+      - text: "Micro-cap (< $300M)"
+        is_correct: false
+      - text: "All are equally safe"
+        is_correct: false
+    explanation: "Large-cap stocks are established companies with lower volatility and risk, making them better for beginners."
+    xp_reward: 10
+
+  - id: q3
+    type: true_false
+    text: "A $10 stock is always from a smaller company than a $100 stock."
+    correct_answer: false
+    explanation: "False! Share price doesn't determine company size. A $10 stock with 10B shares ($100B market cap) is much bigger than a $100 stock with 100M shares ($10B market cap)."
+    xp_reward: 10
+
+  - id: q4
+    type: multiple_choice
+    text: "Company X has 50M shares at $40/share. Company Y has 1B shares at $5/share. Which is larger by market cap?"
+    options:
+      - text: "Company Y ($5 billion)"
+        is_correct: true
+      - text: "Company X ($2 billion)"
+        is_correct: false
+      - text: "They are the same size"
+        is_correct: false
+      - text: "Cannot determine from this information"
+        is_correct: false
+    explanation: "Company X: 50M × $40 = $2B. Company Y: 1B × $5 = $5B. Company Y is larger despite the lower share price."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - market-cap
+  - company-size
+  - risk-assessment
+  - fundamentals
+  - investment-strategy
