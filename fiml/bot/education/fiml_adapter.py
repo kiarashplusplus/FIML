@@ -5,6 +5,8 @@ Formats market data with educational context and explanations
 
 from typing import Dict, Optional
 import structlog
+from fiml.arbitration.engine import DataArbitrationEngine
+from fiml.core.models import Asset, DataType
 
 logger = structlog.get_logger(__name__)
 
@@ -18,10 +20,18 @@ class FIMLEducationalDataAdapter:
     - Context and interpretation for all metrics
     - Educational narratives
     - Platform-specific formatting
+    - Integration with FIML arbitration engine
     """
     
-    def __init__(self):
-        logger.info("FIMLEducationalDataAdapter initialized")
+    def __init__(self, arbitration_engine: Optional[DataArbitrationEngine] = None):
+        """
+        Initialize adapter with FIML arbitration engine
+        
+        Args:
+            arbitration_engine: FIML data arbitration engine (creates new if None)
+        """
+        self.arbitration_engine = arbitration_engine or DataArbitrationEngine()
+        logger.info("FIMLEducationalDataAdapter initialized with FIML integration")
     
     async def get_educational_snapshot(
         self,
@@ -30,20 +40,89 @@ class FIMLEducationalDataAdapter:
         context: str = "lesson"
     ) -> Dict:
         """
-        Get market data formatted for education
+        Get market data formatted for education using FIML arbitration
         
         Args:
             symbol: Stock/crypto symbol
-            user_id: User identifier
+            user_id: User identifier  
             context: Context (lesson, quiz, mentor)
             
         Returns:
-            Educational data dict
+            Educational data dict with live FIML data and educational interpretations
         """
-        # TODO: Integrate with actual FIML client
-        # For now, returning template structure
+        try:
+            # Create asset and get data via FIML arbitration
+            asset = Asset(symbol=symbol, asset_class="stock")
+            
+            # Get arbitration plan (will use user's keys via FIMLProviderConfigurator)
+            plan = await self.arbitration_engine.arbitrate_request(
+                asset=asset,
+                data_type=DataType.QUOTE,
+                user_region="US"
+            )
+            
+            # Execute the plan to get actual data
+            from fiml.providers.registry import provider_registry
+            provider = provider_registry.get_provider(plan.primary_provider)
+            response = await provider.get_quote(asset)
+            
+            # Extract data from response
+            quote = response.data
+            current_price = quote.get("price", 0)
+            open_price = quote.get("open", current_price)
+            change = current_price - open_price
+            change_percent = (change / open_price * 100) if open_price > 0 else 0
+            volume = quote.get("volume", 0)
+            avg_volume = quote.get("avg_volume", volume)
+            
+            # Build educational snapshot with live data
+            educational_data = {
+                "symbol": symbol,
+                "name": quote.get("name", f"{symbol} Inc."),
+                "price": {
+                    "current": current_price,
+                    "change": change,
+                    "change_percent": change_percent,
+                    "explanation": self.explain_price_movement(change_percent)
+                },
+                "volume": {
+                    "current": volume,
+                    "average": avg_volume,
+                    "interpretation": self.explain_volume(volume, avg_volume)
+                },
+                "fundamentals": {
+                    "pe_ratio": quote.get("pe_ratio"),
+                    "market_cap": quote.get("market_cap"),
+                    "explanation": self.explain_fundamentals(quote.get("pe_ratio"))
+                },
+                "disclaimer": "📚 Live market data for educational purposes only",
+                "data_source": f"Via FIML from {plan.primary_provider}",
+                "timestamp": quote.get("timestamp"),
+                "freshness_seconds": (quote.get("timestamp") - quote.get("fetched_at")).total_seconds() if quote.get("timestamp") and quote.get("fetched_at") else None
+            }
+            
+            logger.info(
+                "Educational snapshot created with live FIML data",
+                symbol=symbol,
+                user_id=user_id,
+                provider=plan.primary_provider,
+                context=context
+            )
+            
+        except Exception as e:
+            # Fallback to template data if FIML integration fails
+            logger.warning(
+                "Failed to get live data, using template",
+                symbol=symbol,
+                error=str(e)
+            )
+            educational_data = self._get_template_snapshot(symbol)
         
-        educational_data = {
+        return educational_data
+    
+    def _get_template_snapshot(self, symbol: str) -> Dict:
+        """Fallback template data when FIML is unavailable"""
+        return {
             "symbol": symbol,
             "name": f"{symbol} Inc.",
             "price": {
@@ -62,11 +141,9 @@ class FIMLEducationalDataAdapter:
                 "market_cap": "2.5T",
                 "explanation": "P/E ratio of 28.5 suggests investors expect growth"
             },
-            "disclaimer": "Live data for educational purposes only",
-            "data_source": "Via FIML from user providers"
+            "disclaimer": "📚 Sample data for educational purposes",
+            "data_source": "Template (FIML integration pending)"
         }
-        
-        return educational_data
     
     def explain_price_movement(self, change_percent: float) -> str:
         """Educational interpretation of price change"""
