@@ -6,7 +6,7 @@ Renders lessons with live FIML market data
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 import yaml
@@ -163,7 +163,9 @@ class LessonContentEngine:
             logger.error("Failed to load lesson", lesson_id=lesson_id, error=str(e))
             return None
 
-    async def render_lesson(self, lesson: Any, user_id: str, include_fiml_data: bool = True) -> str:
+    async def render_lesson(
+        self, lesson: Union[Lesson, Dict[str, Any]], user_id: str, include_fiml_data: bool = True
+    ) -> str:
         """
         Render lesson with live data
 
@@ -193,7 +195,9 @@ class LessonContentEngine:
 
         # Header
         output.append(f"📚 **{lesson_title}**\n")
-        output.append(f"⏱️ {lesson_duration} minutes | " f"📊 {lesson_difficulty.title()}\n")
+        # Safely handle difficulty title case
+        difficulty_display = str(lesson_difficulty).title() if lesson_difficulty else "Unknown"
+        output.append(f"⏱️ {lesson_duration} minutes | " f"📊 {difficulty_display}\n")
 
         # Learning objectives
         if lesson_objectives:

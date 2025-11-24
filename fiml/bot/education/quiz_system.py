@@ -3,6 +3,7 @@ Component 7: Quiz System
 Interactive quizzes with scoring and XP rewards
 """
 
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
@@ -294,7 +295,7 @@ class QuizSystem:
         for q_dict in questions:
             # Convert options to dict format if they are strings
             options = q_dict.get("options", [])
-            if options and isinstance(options[0], str):
+            if options and len(options) > 0 and isinstance(options[0], str):
                 # Options are strings, convert to dict format
                 options = [{"text": opt} for opt in options]
 
@@ -311,7 +312,8 @@ class QuizSystem:
                 )
             )
 
-        session_id = f"{user_id}_{lesson_id}_{datetime.now(UTC).timestamp()}"
+        # Generate unique session ID using UUID and timestamp
+        session_id = f"{user_id}_{lesson_id}_{uuid.uuid4().hex[:8]}_{int(datetime.now(UTC).timestamp() * 1000000)}"
 
         session = QuizSession(
             session_id=session_id,
