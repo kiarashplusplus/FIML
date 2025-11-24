@@ -2256,3 +2256,596 @@ class TestL1CacheErrorHandling:
         result = await cache.get_ttl("test_key")
         
         assert result is None
+
+
+class TestL2CacheMockedOperations:
+    """Tests for L2Cache operations with mocked database"""
+
+    @pytest.mark.asyncio
+    async def test_get_price_success(self):
+        """Test get_price with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        # Create mock result row
+        mock_row = (
+            datetime.now(timezone.utc),  # time
+            1,  # asset_id
+            "yfinance",  # provider
+            150.0,  # price
+            2.5,  # change
+            1.7,  # change_percent
+            1000000,  # volume
+            0.95,  # confidence
+            {"extra": "data"},  # metadata
+        )
+        
+        mock_result = MagicMock()
+        mock_result.fetchone = MagicMock(return_value=mock_row)
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_price(asset_id=1, provider="yfinance")
+        
+        assert result is not None
+        assert result["price"] == 150.0
+        assert result["provider"] == "yfinance"
+
+    @pytest.mark.asyncio
+    async def test_get_price_not_found(self):
+        """Test get_price when no price found"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_result = MagicMock()
+        mock_result.fetchone = MagicMock(return_value=None)
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_price(asset_id=1)
+        
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_price_exception(self):
+        """Test get_price when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_price(asset_id=1)
+        
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_set_price_success(self):
+        """Test set_price with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock()
+        mock_session.commit = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.set_price(
+            asset_id=1,
+            provider="yfinance",
+            price=150.0,
+            change=2.5,
+            change_percent=1.7
+        )
+        
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_set_price_exception(self):
+        """Test set_price when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.set_price(asset_id=1, provider="yfinance", price=150.0)
+        
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_get_ohlcv_success(self):
+        """Test get_ohlcv with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        # Create mock result rows
+        mock_rows = [
+            (datetime.now(timezone.utc), 1, "yfinance", 150.0, 155.0, 145.0, 152.0, 1000000, "1d"),
+            (datetime.now(timezone.utc), 1, "yfinance", 148.0, 152.0, 147.0, 150.0, 900000, "1d"),
+        ]
+        
+        mock_result = MagicMock()
+        mock_result.fetchall = MagicMock(return_value=mock_rows)
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_ohlcv(asset_id=1, timeframe="1d", limit=10)
+        
+        assert len(result) == 2
+        assert result[0]["open"] == 150.0
+
+    @pytest.mark.asyncio
+    async def test_get_ohlcv_exception(self):
+        """Test get_ohlcv when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_ohlcv(asset_id=1)
+        
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_get_fundamentals_success(self):
+        """Test get_fundamentals with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_row = (1, 1, "yfinance", {"pe_ratio": 25.0}, datetime.now(timezone.utc), 3600)
+        
+        mock_result = MagicMock()
+        mock_result.fetchone = MagicMock(return_value=mock_row)
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_fundamentals(asset_id=1)
+        
+        assert result is not None
+        assert result["data"] == {"pe_ratio": 25.0}
+
+    @pytest.mark.asyncio
+    async def test_get_fundamentals_exception(self):
+        """Test get_fundamentals when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_fundamentals(asset_id=1)
+        
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_set_fundamentals_success(self):
+        """Test set_fundamentals with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock()
+        mock_session.commit = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.set_fundamentals(
+            asset_id=1,
+            provider="yfinance",
+            data={"pe_ratio": 25.0}
+        )
+        
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_set_fundamentals_exception(self):
+        """Test set_fundamentals when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.set_fundamentals(asset_id=1, provider="yfinance", data={})
+        
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_cleanup_expired_success(self):
+        """Test cleanup_expired with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_result = MagicMock()
+        mock_result.rowcount = 5
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.commit = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.cleanup_expired()
+        
+        assert result == 5
+
+    @pytest.mark.asyncio
+    async def test_cleanup_expired_exception(self):
+        """Test cleanup_expired when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.cleanup_expired()
+        
+        assert result == 0
+
+    @pytest.mark.asyncio
+    async def test_set_generic_success(self):
+        """Test generic set with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock()
+        mock_session.commit = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.set("test_key", {"data": "value"}, ttl_seconds=60)
+        
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_set_generic_exception(self):
+        """Test generic set when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.set("test_key", {"data": "value"})
+        
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_get_generic_success(self):
+        """Test generic get with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_row = ({"data": "value"},)
+        
+        mock_result = MagicMock()
+        mock_result.fetchone = MagicMock(return_value=mock_row)
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get("test_key")
+        
+        assert result == {"data": "value"}
+
+    @pytest.mark.asyncio
+    async def test_get_generic_not_found(self):
+        """Test generic get when key not found"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_result = MagicMock()
+        mock_result.fetchone = MagicMock(return_value=None)
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get("test_key")
+        
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_generic_exception(self):
+        """Test generic get when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get("test_key")
+        
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_delete_generic_success(self):
+        """Test generic delete with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_result = MagicMock()
+        mock_result.rowcount = 1
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.commit = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.delete("test_key")
+        
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_delete_generic_exception(self):
+        """Test generic delete when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.delete("test_key")
+        
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_exists_generic_success(self):
+        """Test generic exists with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_result = MagicMock()
+        mock_result.fetchone = MagicMock(return_value=(1,))
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.exists("test_key")
+        
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_exists_generic_exception(self):
+        """Test generic exists when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.exists("test_key")
+        
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_clear_success(self):
+        """Test clear with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_result = MagicMock()
+        mock_result.rowcount = 10
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.commit = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.clear()
+        
+        assert result == 10
+
+    @pytest.mark.asyncio
+    async def test_clear_exception(self):
+        """Test clear when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.clear()
+        
+        assert result == 0
+
+    @pytest.mark.asyncio
+    async def test_clear_pattern_success(self):
+        """Test clear_pattern with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_result = MagicMock()
+        mock_result.rowcount = 5
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=mock_result)
+        mock_session.commit = AsyncMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.clear_pattern("test:%")
+        
+        assert result == 5
+
+    @pytest.mark.asyncio
+    async def test_clear_pattern_exception(self):
+        """Test clear_pattern when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.clear_pattern("test:%")
+        
+        assert result == 0
+
+    @pytest.mark.asyncio
+    async def test_get_stats_success(self):
+        """Test get_stats with mocked session"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_count_result = MagicMock()
+        mock_count_result.scalar = MagicMock(return_value=100)
+        
+        mock_expired_result = MagicMock()
+        mock_expired_result.scalar = MagicMock(return_value=10)
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=[mock_count_result, mock_expired_result])
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_stats()
+        
+        assert result["status"] == "initialized"
+        assert result["total_entries"] == 100
+        assert result["expired_entries"] == 10
+
+    @pytest.mark.asyncio
+    async def test_get_stats_exception(self):
+        """Test get_stats when exception occurs"""
+        cache = L2Cache()
+        cache._initialized = True
+        
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+        
+        mock_session_maker = MagicMock(return_value=mock_session)
+        cache._session_maker = mock_session_maker
+        
+        result = await cache.get_stats()
+        
+        assert result["status"] == "error"
