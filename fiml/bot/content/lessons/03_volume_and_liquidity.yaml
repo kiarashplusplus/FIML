@@ -1,0 +1,161 @@
+id: stock_basics_003
+title: "Volume and Liquidity"
+category: fundamentals
+difficulty: beginner
+duration_minutes: 5
+learning_objectives:
+  - Understand what trading volume represents
+  - Learn how liquidity affects your trades
+  - Identify high-volume vs. low-volume stocks
+  - Recognize volume patterns
+prerequisites:
+  - stock_basics_001
+sections:
+  - type: introduction
+    content: |
+      Imagine trying to sell a rare collectible vs. selling cash. Cash is easy to trade—everyone 
+      wants it! That's high liquidity. A rare collectible might take weeks to find a buyer. That's low liquidity.
+      
+      In the stock market, **volume** and **liquidity** tell you how easy it is to trade a stock 
+      without affecting its price.
+      
+      **Volume** = Number of shares traded in a period
+      **Liquidity** = How easily you can buy/sell without moving the price
+
+  - type: live_example
+    content: |
+      **Live Data for {symbol}:**
+      
+      Current Price: ${price}
+      Today's Volume: {volume:,} shares
+      Average Volume (30-day): {avg_volume:,} shares
+      
+      **Volume Analysis:**
+      {volume_analysis}
+      
+      **What this means:**
+      - High volume = More buyers and sellers = Easier to trade
+      - Low volume = Fewer participants = Harder to trade at good prices
+    fiml_query:
+      symbol: AAPL
+      metrics:
+        - price
+        - volume
+        - avg_volume
+
+  - type: explanation
+    content: |
+      **📊 Why Volume Matters:**
+      
+      **1. Price Impact**
+      - High-volume stock: You can buy 1,000 shares without moving the price
+      - Low-volume stock: Buying 1,000 shares might push the price up 5%
+      
+      **2. Bid-Ask Spread**
+      - High volume → Narrow spread → Lower trading costs
+      - Low volume → Wide spread → Higher trading costs
+      
+      **3. Trade Execution**
+      - High volume → Orders fill quickly at expected prices
+      - Low volume → Orders may partially fill or take hours/days
+      
+      **Volume Categories:**
+      - 🔥 **High Volume**: > 5 million shares/day (large caps like AAPL, TSLA)
+      - 📊 **Medium Volume**: 1-5 million shares/day (mid caps)
+      - 📉 **Low Volume**: < 1 million shares/day (small caps, risky for large trades)
+
+  - type: explanation
+    content: |
+      **🚨 Volume Spikes Signal Activity**
+      
+      Volume can reveal important market events:
+      
+      **📈 Volume > Average:**
+      - Earnings announcement
+      - Major news event
+      - Institutional buying/selling
+      - Breakout or breakdown
+      
+      **📉 Volume < Average:**
+      - Holiday periods
+      - Low interest/indecision
+      - Potential reversal coming
+      
+      **Example:**
+      A stock typically trades 2M shares/day.
+      Today it's trading 10M shares (5x normal).
+      → Something significant is happening! Check the news.
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. **Volume** = Total shares traded (indicates activity level)
+      2. **Liquidity** = Ease of trading without affecting price
+      3. High-volume stocks are safer and cheaper to trade
+      4. Low-volume stocks have wider spreads and more slippage
+      5. Volume spikes signal important events—investigate before trading
+      
+      💡 **Rule of Thumb:** Only trade stocks with average volume > 500K shares/day unless 
+      you're an experienced investor.
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "What does high trading volume indicate?"
+    options:
+      - text: "High liquidity and easier trading"
+        is_correct: true
+      - text: "The stock price will go up"
+        is_correct: false
+      - text: "The stock is overpriced"
+        is_correct: false
+      - text: "The stock is risky"
+        is_correct: false
+    explanation: "High volume means many shares are being traded, indicating high liquidity and making it easier to buy/sell without affecting price."
+    xp_reward: 10
+
+  - id: q2
+    type: multiple_choice
+    text: "A stock normally trades 2M shares/day. Today it's trading 12M shares. What should you do?"
+    options:
+      - text: "Check news and announcements for the cause"
+        is_correct: true
+      - text: "Immediately buy the stock"
+        is_correct: false
+      - text: "Ignore it, volume doesn't matter"
+        is_correct: false
+      - text: "Sell all your shares immediately"
+        is_correct: false
+    explanation: "Volume spikes (6x normal) signal significant events. Always investigate the cause before making trading decisions."
+    xp_reward: 10
+
+  - id: q3
+    type: true_false
+    text: "Low-volume stocks typically have wider bid-ask spreads."
+    correct_answer: true
+    explanation: "True! Low volume means fewer buyers and sellers, resulting in wider spreads and higher trading costs."
+    xp_reward: 10
+
+  - id: q4
+    type: multiple_choice
+    text: "Which stock is generally safer for a beginner to trade?"
+    options:
+      - text: "A stock with 10 million shares traded daily"
+        is_correct: true
+      - text: "A stock with 100,000 shares traded daily"
+        is_correct: false
+      - text: "Volume doesn't affect safety"
+        is_correct: false
+      - text: "Lower volume is always better"
+        is_correct: false
+    explanation: "Higher volume stocks are more liquid, have tighter spreads, and are easier to enter/exit—safer for beginners."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - volume
+  - liquidity
+  - market-mechanics
+  - trading-basics
+  - risk-management

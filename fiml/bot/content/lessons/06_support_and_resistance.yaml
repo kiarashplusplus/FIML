@@ -1,0 +1,208 @@
+id: technical_001
+title: "Support and Resistance Basics"
+category: technical_analysis
+difficulty: intermediate
+duration_minutes: 8
+learning_objectives:
+  - Understand support and resistance concepts
+  - Identify support and resistance levels on charts
+  - Recognize breakouts and breakdowns
+  - Apply S/R to trading decisions
+prerequisites:
+  - stock_basics_001
+  - stock_basics_003
+sections:
+  - type: introduction
+    content: |
+      Imagine a ball bouncing in a room. It hits the floor (support) and bounces up. 
+      It hits the ceiling (resistance) and bounces down. Stock prices behave similarly!
+      
+      **Support** = A price level where buying interest is strong enough to prevent further decline
+      **Resistance** = A price level where selling pressure is strong enough to prevent further rise
+      
+      These levels form because of:
+      - Trader psychology (fear and greed)
+      - Historical price memory
+      - Round numbers (psychological barriers)
+      - Previous highs and lows
+
+  - type: explanation
+    content: |
+      **📊 Support Levels:**
+      
+      A support level is a price floor where the stock tends to bounce back up.
+      
+      **Why Support Forms:**
+      1. **Buyers Remember**: "Last time it hit $100, it bounced. I'll buy at $100 again!"
+      2. **Stop Losses**: Short sellers place protective orders around support
+      3. **Value Perception**: "At $100, this stock is a bargain"
+      
+      **Identifying Support:**
+      - Look for price levels where stock bounced multiple times
+      - Previous lows often become support
+      - Round numbers ($100, $50, $25)
+      - Moving averages (50-day, 200-day)
+      
+      **Example:**
+      A stock drops from $150 to $130 (bounces), then $160 to $130 (bounces again).
+      → $130 is a support level.
+      
+      **⚠️ Support Breaks:**
+      If price falls THROUGH support (with high volume), it often continues falling.
+      Old support becomes new resistance!
+
+  - type: explanation
+    content: |
+      **📊 Resistance Levels:**
+      
+      A resistance level is a price ceiling where selling pressure stops upward movement.
+      
+      **Why Resistance Forms:**
+      1. **Profit Taking**: "I bought at $80, now at $120 I'll sell and take profits"
+      2. **Bag Holders**: "I bought at $120 and it fell. If it gets back to $120, I'm selling!"
+      3. **Fear Patterns**: Previous highs create fear of rejection
+      
+      **Identifying Resistance:**
+      - Previous highs where price reversed
+      - Round numbers ($100, $150, $200)
+      - Failed breakout attempts
+      - Moving average resistance
+      
+      **Example:**
+      Stock rises from $80 to $100 (rejected), then $90 to $100 (rejected again).
+      → $100 is a resistance level.
+      
+      **✅ Resistance Breaks:**
+      When price breaks THROUGH resistance (with high volume):
+      - Old resistance becomes new support
+      - Often leads to strong continuation
+      - Called a "breakout"
+
+  - type: live_example
+    content: |
+      **{symbol} Support & Resistance Analysis:**
+      
+      Current Price: ${price}
+      
+      **Recent Support Levels:**
+      {support_levels}
+      
+      **Recent Resistance Levels:**
+      {resistance_levels}
+      
+      **Current Position:**
+      {position_analysis}
+      
+      **Key Insight:**
+      Watch these levels! A bounce off support or rejection at resistance confirms 
+      the level's strength. A break through (with volume) signals a significant move.
+    fiml_query:
+      symbol: TSLA
+      metrics:
+        - price
+        - day_low
+        - day_high
+        - week_52_low
+        - week_52_high
+
+  - type: explanation
+    content: |
+      **🎯 Trading with Support & Resistance:**
+      
+      **Strategy 1: Bounce Plays**
+      - Stock approaches support → Buy
+      - Stock approaches resistance → Sell/Short
+      - Risk: Support/resistance can break!
+      
+      **Strategy 2: Breakout Plays**
+      - Stock breaks ABOVE resistance → Buy (new uptrend)
+      - Stock breaks BELOW support → Sell/Short (new downtrend)
+      - Confirm with high volume!
+      
+      **Strategy 3: Failed Breaks (Fakeouts)**
+      - Stock breaks resistance but immediately falls back → Short signal
+      - Stock breaks support but immediately recovers → Buy signal
+      - Common trap for novice traders!
+      
+      **⚠️ Risk Management:**
+      - Always use stop losses below support (for longs)
+      - Always use stop losses above resistance (for shorts)
+      - Wait for confirmation (volume, multiple candle closes)
+      - Beware of "false breakouts"
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. **Support** = Price floor where buying emerges
+      2. **Resistance** = Price ceiling where selling emerges
+      3. Multiple bounces strengthen support/resistance
+      4. Breaks through S/R levels (with volume) signal big moves
+      5. Old support becomes new resistance (and vice versa)
+      
+      💡 **Pro Tips:**
+      - Support and resistance are zones, not exact prices
+      - Volume confirms the strength of breaks
+      - The more times a level is tested, the stronger it is
+      - Round numbers (psychologically important) often act as S/R
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "A stock bounces off $50 three times. What is $50?"
+    options:
+      - text: "A support level"
+        is_correct: true
+      - text: "A resistance level"
+        is_correct: false
+      - text: "A breakout point"
+        is_correct: false
+      - text: "An average price"
+        is_correct: false
+    explanation: "When price bounces UP from a level multiple times, that level is support."
+    xp_reward: 10
+
+  - id: q2
+    type: multiple_choice
+    text: "What happens when a stock breaks through resistance with high volume?"
+    options:
+      - text: "Old resistance often becomes new support"
+        is_correct: true
+      - text: "The stock will immediately crash"
+        is_correct: false
+      - text: "Nothing significant"
+        is_correct: false
+      - text: "Old resistance remains resistance"
+        is_correct: false
+    explanation: "When resistance is broken (especially with volume), it often becomes a new support level as traders remember that price point."
+    xp_reward: 10
+
+  - id: q3
+    type: true_false
+    text: "Support and resistance levels must be exact prices to be valid."
+    correct_answer: false
+    explanation: "False! Support and resistance are price ZONES, not exact prices. There's usually a range of a few cents or dollars."
+    xp_reward: 10
+
+  - id: q4
+    type: multiple_choice
+    text: "A stock breaks below support at $100 but immediately recovers above $100. This is called:"
+    options:
+      - text: "A false breakout (fakeout)"
+        is_correct: true
+      - text: "Confirmation of breakdown"
+        is_correct: false
+      - text: "A resistance break"
+        is_correct: false
+      - text: "A double top"
+        is_correct: false
+    explanation: "A 'fakeout' or 'false breakout' occurs when price briefly breaks a level but quickly reverses, trapping traders who acted on the break."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - technical-analysis
+  - support-resistance
+  - chart-patterns
+  - trading-strategy
+  - price-action

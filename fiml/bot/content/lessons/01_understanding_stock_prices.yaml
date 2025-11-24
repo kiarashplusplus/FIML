@@ -1,0 +1,126 @@
+id: stock_basics_001
+version: "1.0"
+changelog:
+  - version: "1.0"
+    date: "2024-11-24"
+    changes:
+      - "Initial release with FIML live data integration"
+      - "Interactive quiz with 5 questions"
+      - "Real-world AAPL example"
+title: "Understanding Stock Prices"
+category: fundamentals
+difficulty: beginner
+duration_minutes: 5
+learning_objectives:
+  - Understand what stock prices represent
+  - Learn the difference between bid and ask prices
+  - Identify the bid-ask spread
+  - Recognize how supply and demand affect prices
+prerequisites: []
+sections:
+  - type: introduction
+    content: |
+      Every second, millions of trades happen across global stock markets. But what exactly 
+      determines a stock's price? 
+      
+      A stock price represents the current market value of one share of a company. It's the 
+      price at which buyers and sellers agree to exchange ownership. Unlike a product in a 
+      store with a fixed price tag, stock prices constantly fluctuate based on supply and demand.
+      
+      Think of it like an auction: when more people want to buy a stock (high demand), the 
+      price goes up. When more people want to sell (high supply), the price goes down.
+
+  - type: live_example
+    content: |
+      Let's look at a real stock right now: {symbol}
+      
+      Current Price: ${price}
+      Bid (highest buy offer): ${bid}
+      Ask (lowest sell offer): ${ask}
+      Spread: ${spread}
+      
+      The "bid" is what buyers are willing to pay right now.
+      The "ask" is what sellers are demanding right now.
+      The "spread" is the difference between them.
+    fiml_query:
+      symbol: AAPL
+      metrics:
+        - price
+        - bid
+        - ask
+
+  - type: explanation
+    content: |
+      **Why the Bid-Ask Spread Matters:**
+      
+      The spread represents the cost of executing a trade instantly. If you want to buy 
+      immediately, you pay the ask price. If you want to sell immediately, you receive the bid price.
+      
+      📊 **Spread Size Indicates:**
+      - **Narrow spread** (< $0.10): Highly liquid stock, easy to trade
+      - **Wide spread** (> $0.50): Less liquid, harder to trade at good prices
+      
+      **Example:**
+      - Bid: $100.00
+      - Ask: $100.05
+      - Spread: $0.05
+      
+      If you buy at $100.05 and immediately sell at $100.00, you lose $0.05 per share!
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. Stock prices are determined by supply and demand, not company decisions
+      2. Bid = highest price buyers will pay right now
+      3. Ask = lowest price sellers will accept right now
+      4. The spread is your "cost of entry" for instant trades
+      5. Narrow spreads indicate high liquidity and easier trading
+      
+      💡 **Remember:** The price you see quoted is usually the last traded price, which may 
+      differ from the current bid or ask!
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "If the Bid is $100.00 and the Ask is $100.05, what is the bid-ask spread?"
+    options:
+      - text: "$0.05"
+        is_correct: true
+      - text: "$100.05"
+        is_correct: false
+      - text: "$100.00"
+        is_correct: false
+      - text: "$200.05"
+        is_correct: false
+    explanation: "The spread is Ask - Bid = $100.05 - $100.00 = $0.05"
+    xp_reward: 10
+
+  - id: q2
+    type: multiple_choice
+    text: "What happens to a stock's price when more people want to buy than sell?"
+    options:
+      - text: "Price goes up"
+        is_correct: true
+      - text: "Price goes down"
+        is_correct: false
+      - text: "Price stays the same"
+        is_correct: false
+      - text: "The spread increases"
+        is_correct: false
+    explanation: "High demand with limited supply pushes prices higher, as buyers compete by offering higher prices."
+    xp_reward: 10
+
+  - id: q3
+    type: true_false
+    text: "A wide bid-ask spread indicates a highly liquid stock that's easy to trade."
+    correct_answer: false
+    explanation: "False! A wide spread indicates LOW liquidity. Highly liquid stocks have narrow spreads because there are many buyers and sellers."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - stock-basics
+  - market-mechanics
+  - bid-ask
+  - liquidity

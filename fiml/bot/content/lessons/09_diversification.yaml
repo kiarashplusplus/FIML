@@ -1,0 +1,203 @@
+id: portfolio_001
+title: "Diversification: Don't Put All Eggs in One Basket"
+category: portfolio_management
+difficulty: beginner
+duration_minutes: 7
+learning_objectives:
+  - Understand the principle of diversification
+  - Learn how to diversify across sectors and asset classes
+  - Recognize over-diversification vs. under-diversification
+  - Build a balanced portfolio strategy
+prerequisites:
+  - stock_basics_004
+  - risk_001
+sections:
+  - type: introduction
+    content: |
+      **The Diversification Principle:**
+      
+      Imagine you own 10 different businesses:
+      - 3 do amazing (3x return)
+      - 4 do okay (1.2x return)
+      - 2 do poorly (0.5x return)
+      - 1 fails completely (0x return)
+      
+      Overall portfolio: Still profitable!
+      
+      Now imagine you own just ONE business and it fails: 100% loss.
+      
+      **Diversification** = Spreading investments across different assets to reduce risk.
+      
+      "Don't put all your eggs in one basket" - The oldest wisdom in investing!
+
+  - type: explanation
+    content: |
+      **📊 Why Diversification Works:**
+      
+      **Reduces Specific Risk:**
+      - Company-specific risks (CEO resignation, product failure, scandal)
+      - Industry risks (regulatory changes, tech disruption)
+      - Geographic risks (local economic problems)
+      
+      **Example:**
+      - 100% in one stock → If it drops 50%, you're down 50%
+      - 10% in each of 10 stocks → If one drops 50%, you're only down 5%
+      
+      **The Math of Diversification:**
+      ```
+      1 stock = 100% concentration = Maximum risk
+      5 stocks = 20% each = High risk
+      10 stocks = 10% each = Moderate risk
+      20 stocks = 5% each = Lower risk
+      50+ stocks = ~2% each = Diminishing returns (over-diversified)
+      ```
+      
+      **⚠️ Important:** Diversification reduces risk, but also reduces maximum gains!
+      - All money in one winner = 10x return
+      - Equal split across 10 stocks, one is 10x = Only 1.9x total return
+
+  - type: explanation
+    content: |
+      **🎯 Dimensions of Diversification:**
+      
+      **1. Across Companies**
+      Own multiple stocks, not just one
+      Minimum: 8-10 stocks
+      Optimal: 15-25 stocks
+      
+      **2. Across Sectors**
+      Don't own 10 tech stocks and call it diversified!
+      
+      ✅ **11 Market Sectors:**
+      - Technology (AAPL, MSFT, GOOGL)
+      - Healthcare (JNJ, PFE, UNH)
+      - Financials (JPM, BAC, V)
+      - Consumer Discretionary (AMZN, TSLA, HD)
+      - Consumer Staples (PG, KO, WMT)
+      - Energy (XOM, CVX, COP)
+      - Industrials (BA, CAT, GE)
+      - Materials (NEM, FCX, LIN)
+      - Real Estate (AMT, PLD, SPG)
+      - Utilities (NEE, DUK, SO)
+      - Communications (T, VZ, DIS)
+      
+      **Balanced Portfolio:**
+      Spread across 4-6 different sectors
+      
+      **3. Across Market Caps**
+      - 60-70%: Large-cap (stability)
+      - 20-30%: Mid-cap (growth)
+      - 5-10%: Small-cap (high growth/risk)
+      
+      **4. Across Asset Classes**
+      - Stocks (growth)
+      - Bonds (stability, income)
+      - Real Estate (inflation hedge)
+      - Commodities (diversification)
+      - Cash (opportunity fund)
+
+  - type: explanation
+    content: |
+      **⚠️ Diversification Mistakes:**
+      
+      **Mistake #1: False Diversification**
+      - Owning AAPL, MSFT, GOOGL, META, NVDA = All tech = Not diversified!
+      - Correlation matters: If they all move together, no protection
+      
+      **Mistake #2: Over-Diversification**
+      - Owning 100 stocks = Can't possibly track them all
+      - Dilutes returns from your best ideas
+      - Creates an expensive index fund
+      - "Diworsification"
+      
+      **Mistake #3: Under-Diversification**
+      - 3-4 stocks = One bad quarter destroys portfolio
+      - No protection from company-specific risk
+      
+      **Mistake #4: Ignoring Correlation**
+      - All growth stocks crash together in bear markets
+      - All oil stocks move with oil prices
+      - Need true independence
+      
+      **✅ Sweet Spot:**
+      15-25 stocks across 5-7 sectors with low correlation
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. **Diversification reduces portfolio volatility and risk**
+      2. Own 15-25 stocks across multiple sectors
+      3. Don't confuse # of stocks with true diversification
+      4. Balance large, mid, and small-cap exposure
+      5. Consider other asset classes (bonds, real estate)
+      
+      💡 **Beginner Portfolio Example:**
+      - 5 large-cap stocks (different sectors)
+      - 3 mid-cap stocks
+      - 1-2 small-cap stocks (optional)
+      - 1-2 sector ETFs for broad exposure
+      - Cash reserve (10-20% for opportunities)
+      
+      "Diversification is the only free lunch in investing." - Harry Markowitz (Nobel Prize winner)
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "What is the primary benefit of diversification?"
+    options:
+      - text: "Reduces portfolio risk and volatility"
+        is_correct: true
+      - text: "Guarantees profits"
+        is_correct: false
+      - text: "Maximizes returns"
+        is_correct: false
+      - text: "Eliminates all risk"
+        is_correct: false
+    explanation: "Diversification reduces the impact of any single investment's poor performance on your overall portfolio."
+    xp_reward: 10
+
+  - id: q2
+    type: true_false
+    text: "Owning 10 different technology stocks is good diversification."
+    correct_answer: false
+    explanation: "False! All tech stocks tend to move together. True diversification requires different sectors with low correlation."
+    xp_reward: 10
+
+  - id: q3
+    type: multiple_choice
+    text: "What is 'diworsification'?"
+    options:
+      - text: "Over-diversifying to the point of diluting returns"
+        is_correct: true
+      - text: "Not diversifying enough"
+        is_correct: false
+      - text: "A new investment strategy"
+        is_correct: false
+      - text: "Diversifying only in one sector"
+        is_correct: false
+    explanation: "Owning too many stocks (50+) makes it impossible to track them all and dilutes the impact of your best ideas."
+    xp_reward: 10
+
+  - id: q4
+    type: multiple_choice
+    text: "What is the recommended number of stocks for a balanced portfolio?"
+    options:
+      - text: "15-25 stocks across multiple sectors"
+        is_correct: true
+      - text: "5 stocks maximum"
+        is_correct: false
+      - text: "100+ stocks"
+        is_correct: false
+      - text: "Just buy one index fund"
+        is_correct: false
+    explanation: "15-25 stocks provides good diversification while remaining manageable and allowing your best ideas to shine."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - diversification
+  - portfolio-management
+  - risk-reduction
+  - asset-allocation
+  - sector-allocation

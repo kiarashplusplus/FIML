@@ -1,0 +1,165 @@
+id: stock_basics_002
+title: "Market Orders vs. Limit Orders"
+category: fundamentals
+difficulty: beginner
+duration_minutes: 6
+learning_objectives:
+  - Understand the difference between market and limit orders
+  - Learn when to use each order type
+  - Recognize the risks and benefits of each approach
+  - Master order execution concepts
+prerequisites:
+  - stock_basics_001
+sections:
+  - type: introduction
+    content: |
+      When you're ready to buy or sell a stock, you have choices in HOW you execute that trade. 
+      The two most common order types are **market orders** and **limit orders**. 
+      
+      Understanding the difference can save you money and help you get better prices!
+      
+      Think of it like shopping:
+      - **Market Order**: "I'll buy it right now at whatever the current price is"
+      - **Limit Order**: "I'll only buy it if the price drops to $X or lower"
+
+  - type: explanation
+    content: |
+      **📊 Market Order**
+      
+      A market order executes immediately at the best available price.
+      
+      ✅ **Pros:**
+      - Guaranteed execution (almost always fills)
+      - Fast and simple
+      - No waiting
+      
+      ❌ **Cons:**
+      - You don't control the exact price
+      - Can get a worse price than expected (slippage)
+      - Risky for volatile stocks
+      
+      **Example:**
+      You place a market order to buy AAPL. Current ask is $150.00.
+      - Your order executes at $150.05 (someone else bought first)
+      - You got "slippage" of $0.05
+
+  - type: explanation
+    content: |
+      **🎯 Limit Order**
+      
+      A limit order only executes at your specified price or better.
+      
+      ✅ **Pros:**
+      - You control the maximum price you pay (or minimum you receive)
+      - No unpleasant surprises
+      - Better for volatile stocks
+      
+      ❌ **Cons:**
+      - May never execute if price doesn't reach your limit
+      - Could miss the trade entirely
+      - Requires patience
+      
+      **Example:**
+      You place a limit order to buy AAPL at $149.50 (current price: $150.00).
+      - Your order sits and waits
+      - If price drops to $149.50 → executes
+      - If price rises to $155 → order never fills
+
+  - type: live_example
+    content: |
+      **Live Example with {symbol}:**
+      
+      Current Bid: ${bid}
+      Current Ask: ${ask}
+      
+      **Market Buy Order:**
+      - You'd pay: ${ask} (immediately)
+      - Execution: Instant
+      
+      **Limit Buy Order at ${limit_price}:**
+      - You'd pay: ${limit_price} (if it reaches this level)
+      - Execution: Only if ask drops to ${limit_price} or lower
+      
+      **Which to use?**
+      - Need shares NOW → Market Order
+      - Willing to wait for a better price → Limit Order
+    fiml_query:
+      symbol: MSFT
+      metrics:
+        - bid
+        - ask
+    metadata:
+      limit_price_offset: -0.50
+
+  - type: key_takeaways
+    content: |
+      🎯 **Key Takeaways:**
+      
+      1. **Market Order** = Speed & certainty of execution (but not price)
+      2. **Limit Order** = Control over price (but not execution)
+      3. Use market orders for highly liquid stocks when speed matters
+      4. Use limit orders for volatile stocks or when price matters more than timing
+      5. Never use market orders during pre-market or after-hours (low liquidity)
+      
+      💡 **Pro Tip:** For large orders, limit orders help avoid moving the market against you!
+
+quiz:
+  - id: q1
+    type: multiple_choice
+    text: "What is the main advantage of a market order?"
+    options:
+      - text: "Guaranteed execution at the best available price"
+        is_correct: true
+      - text: "You get the exact price you want"
+        is_correct: false
+      - text: "Lower commissions"
+        is_correct: false
+      - text: "Better for volatile stocks"
+        is_correct: false
+    explanation: "Market orders execute immediately at the current market price, almost always filling. You sacrifice price control for execution certainty."
+    xp_reward: 10
+
+  - id: q2
+    type: multiple_choice
+    text: "You want to buy a stock but only if it drops to $50. Which order type should you use?"
+    options:
+      - text: "Limit order with a limit price of $50"
+        is_correct: true
+      - text: "Market order"
+        is_correct: false
+      - text: "Stop order"
+        is_correct: false
+      - text: "It's impossible to do this"
+        is_correct: false
+    explanation: "A limit buy order at $50 will only execute if the stock price reaches $50 or lower."
+    xp_reward: 10
+
+  - id: q3
+    type: true_false
+    text: "A limit order is guaranteed to execute as long as you set a reasonable price."
+    correct_answer: false
+    explanation: "False! A limit order only executes IF the market price reaches your limit. If it never does, your order won't fill."
+    xp_reward: 10
+
+  - id: q4
+    type: multiple_choice
+    text: "When is a market order most risky?"
+    options:
+      - text: "During pre-market or after-hours trading"
+        is_correct: true
+      - text: "During regular market hours"
+        is_correct: false
+      - text: "For highly liquid stocks"
+        is_correct: false
+      - text: "Market orders are never risky"
+        is_correct: false
+    explanation: "During extended hours, liquidity is low and spreads are wide. A market order could execute at a much worse price than expected."
+    xp_reward: 10
+
+xp_reward: 50
+tags:
+  - order-types
+  - market-order
+  - limit-order
+  - execution
+  - trading-basics
