@@ -23,30 +23,32 @@ class FIMLProviderConfigurator:
     - Usage tracking and quota management
     """
 
-    def __init__(self, key_manager: UserProviderKeyManager = None):
+    def __init__(self, key_manager=None):
         """
         Initialize configurator
 
         Args:
             key_manager: User provider key manager instance (optional, created if not provided)
         """
-        self.key_manager = key_manager or UserProviderKeyManager()
+        if key_manager is None:
+            key_manager = UserProviderKeyManager()
+        self.key_manager = key_manager
         logger.info("FIMLProviderConfigurator initialized")
 
-    async def get_user_provider_config(self, user_id: str, user_keys: Dict = None) -> Dict:
+    def get_user_provider_config(self, user_id: str, user_keys: Dict = None) -> Dict:
         """
         Get user's provider configuration for FIML
 
         Args:
             user_id: User identifier
-            user_keys: Optional user keys dict (if not provided, fetches from key_manager)
+            user_keys: User keys dict (required - must be provided explicitly)
 
         Returns:
             Provider configuration dict
         """
-        # Get user's stored API keys
+        # User keys must be provided explicitly for synchronous operation
         if user_keys is None:
-            user_keys = await self.key_manager.get_user_keys(user_id)
+            user_keys = {}
 
         config = {
             "user_id": user_id,
@@ -105,8 +107,11 @@ class FIMLProviderConfigurator:
         """
         from fiml.arbitration.engine import DataArbitrationEngine
 
+        # Get user's stored API keys
+        user_keys = await self.key_manager.get_user_keys(user_id)
+        
         # Get user's provider configuration
-        config = await self.get_user_provider_config(user_id)
+        config = self.get_user_provider_config(user_id, user_keys=user_keys)
 
         # Initialize providers
         providers = []
@@ -249,6 +254,67 @@ class FIMLProviderConfigurator:
                 "fallback": "yahoo_finance",
                 "action": "retry_later"
             }
+
+    def get_fallback_suggestions(self, failed_provider: str) -> List[str]:
+        """
+        Get fallback provider suggestions when a provider fails
+
+        Args:
+            failed_provider: Name of the provider that failed
+
+        Returns:
+            List of suggested fallback provider names
+        """
+        # Common fallback providers (free and reliable)
+        common_fallbacks = ["yahoo_finance"]
+        
+        # Provider-specific fallbacks based on asset types
+        fallback_map = {
+            "alpha_vantage": ["yahoo_finance", "finnhub"],
+            "polygon": ["alpha_vantage", "yahoo_finance"],
+            "finnhub": ["alpha_vantage", "yahoo_finance"],
+            "fmp": ["alpha_vantage", "yahoo_finance"],
+        }
+        
+        suggestions = fallback_map.get(failed_provider, common_fallbacks)
+        
+        logger.info(
+            "Generated fallback suggestions",
+            failed_provider=failed_provider,
+            suggestions=suggestions
+        )
+        
+        return suggestions
+
+    def check_provider_health(self, provider: str) -> bool:
+        """
+        Check if a provider is healthy and available
+
+        Args:
+            provider: Provider name to check
+
+        Returns:
+            True if provider is healthy, False otherwise
+        """
+        # Known providers that are always available (no API key required)
+        free_providers = ["yahoo_finance"]
+        
+        if provider in free_providers:
+            # Always consider free providers healthy
+            return True
+        
+        # For other providers, we could add more sophisticated health checks
+        # For now, assume they're healthy if they're in our list
+        known_providers = ["alpha_vantage", "polygon", "finnhub", "fmp"]
+        is_healthy = provider in known_providers
+        
+        logger.info(
+            "Provider health check",
+            provider=provider,
+            is_healthy=is_healthy
+        )
+        
+        return is_healthy
 
     async def get_provider_status(self, user_id: str) -> List[Dict]:
         """
