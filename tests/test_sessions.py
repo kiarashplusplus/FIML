@@ -2,7 +2,7 @@
 Tests for session management system
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -98,7 +98,7 @@ class TestSessionModels:
         session = Session(
             type=SessionType.CRYPTO,
             assets=["BTC"],
-            expires_at=datetime.utcnow() - timedelta(hours=1),
+            expires_at=datetime.now(UTC) - timedelta(hours=1),
         )
 
         assert session.is_expired
@@ -109,7 +109,7 @@ class TestSessionModels:
         session = Session(
             type=SessionType.PORTFOLIO,
             assets=["AAPL"],
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
 
         original_expiry = session.expires_at
@@ -127,6 +127,7 @@ class TestSessionModels:
 
         original_accessed = session.last_accessed_at
         import time
+
         time.sleep(0.1)
         session.touch()
 
@@ -162,9 +163,7 @@ class TestSessionModels:
 
         # Add some data
         session.state.update_context("key", "value")
-        session.add_query(
-            QueryRecord(query_type="test", parameters={"test": True})
-        )
+        session.add_query(QueryRecord(query_type="test", parameters={"test": True}))
 
         # Convert to dict
         data = session.to_dict()
@@ -244,9 +243,7 @@ class TestSessionStore:
 
         # Modify session
         session.state.update_context("test_key", "test_value")
-        session.add_query(
-            QueryRecord(query_type="price", parameters={"symbol": "TSLA"})
-        )
+        session.add_query(QueryRecord(query_type="price", parameters={"symbol": "TSLA"}))
 
         # Update in store
         await session_store.update_session(session.id, session)
@@ -321,9 +318,7 @@ class TestSessionStore:
         )
 
         # Add some history
-        session.add_query(
-            QueryRecord(query_type="price", parameters={"symbol": "AAPL"})
-        )
+        session.add_query(QueryRecord(query_type="price", parameters={"symbol": "AAPL"}))
         await session_store.update_session(session.id, session)
 
         # Archive session
@@ -345,7 +340,7 @@ class TestSessionStore:
         )
 
         # Manually expire it
-        session.expires_at = datetime.utcnow() - timedelta(hours=1)
+        session.expires_at = datetime.now(UTC) - timedelta(hours=1)
         await session_store.update_session(session.id, session)
 
         # Run cleanup
