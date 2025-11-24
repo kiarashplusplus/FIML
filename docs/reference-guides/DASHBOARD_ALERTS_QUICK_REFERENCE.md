@@ -366,5 +366,5 @@ The Dashboard and Alert systems integrate seamlessly with:
 ## See Also
 
 - [Watchdog Quick Reference](WATCHDOG_QUICK_REFERENCE.md)
-- [WebSocket Streaming Examples](examples/websocket_streaming.py)
-- [Dashboard and Alert Examples](examples/dashboard_alerts_demo.py)
+- WebSocket Streaming Examples: `examples/websocket_streaming.py`
+- Dashboard and Alert Examples: `examples/dashboard_alerts_demo.py`

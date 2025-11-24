@@ -252,9 +252,9 @@ class ComponentName:
 ## Quick Links
 
 - 📄 [Full Master Plan](./UNIFIED_EDUCATIONAL_BOT_MASTER_PLAN.md)
-- 📘 [FIML Blueprint](../../BLUEPRINT.md)
+- 📘 [FIML Blueprint](../project/blueprint.md)
 - 📚 [Trading Education Use Case](../use-cases/trading-education-bot.md)
-- 🏠 [FIML README](../../README.md)
+- 🏠 [FIML README](../index.md)
 
 ---
 

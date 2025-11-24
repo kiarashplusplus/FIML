@@ -401,9 +401,9 @@ FMP_RATE_LIMIT=300           # Premium tier
 
 ## Next Steps
 
-- Explore the [ARCHITECTURE.md](ARCHITECTURE.md) for system design details
-- Read [BLUEPRINT.md](BLUEPRINT.md) for the 10-year vision
-- Check [CONTRIBUTING.md](CONTRIBUTING.md) to contribute
+- Explore the [ARCHITECTURE.md](../architecture/overview.md) for system design details
+- Read [BLUEPRINT.md](blueprint.md) for the 10-year vision
+- Check [CONTRIBUTING.md](../development/contributing.md) to contribute
 - Review test files in `tests/` for usage examples
 
 ## Support

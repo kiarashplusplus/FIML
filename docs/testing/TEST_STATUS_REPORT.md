@@ -503,8 +503,8 @@ def check_error(response_data, status_code):
 ## 🔗 Related Documentation
 - [Testing Quickstart](TESTING_QUICKSTART.md)
 - [Test Documentation Index](TEST_DOCUMENTATION_INDEX.md)
-- [CI Pipeline Structure](CI_WORKFLOW_STRUCTURE.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
+- [CI Pipeline Structure](../development/CI_WORKFLOW_STRUCTURE.md)
+- [Contributing Guidelines](../development/contributing.md)
 
 ---
 

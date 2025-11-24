@@ -155,10 +155,10 @@ Additional roadmaps will be added here as new initiatives are planned.
 
 ## Quick Links
 
-- 🏠 [FIML Home](../../README.md)
-- 📘 [FIML Blueprint](../../BLUEPRINT.md)
+- 🏠 [FIML Home](../index.md)
+- 📘 [FIML Blueprint](../project/blueprint.md)
 - 📚 [Educational Use Case](../use-cases/trading-education-bot.md)
-- 🧪 [Test Report](../../TEST_REPORT.md)
+- 🧪 [Test Report](../testing/TEST_REPORT.md)
 
 ---
 

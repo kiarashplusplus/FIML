@@ -488,8 +488,8 @@ Build order:
 
 - 📄 [Full Master Plan](./UNIFIED_EDUCATIONAL_BOT_MASTER_PLAN.md)
 - ⚡ [Quick Reference](./EDUCATIONAL_BOT_QUICK_REFERENCE.md)
-- 📘 [FIML Blueprint](../../BLUEPRINT.md)
-- 🏠 [FIML README](../../README.md)
+- 📘 [FIML Blueprint](../project/blueprint.md)
+- 🏠 [FIML README](../index.md)
 
 ---
 

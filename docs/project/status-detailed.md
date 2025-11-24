@@ -5,8 +5,8 @@
 **Status**: 🟢 **PRODUCTION READY** - Phase 1 Complete & Validated
 
 > 📋 **For detailed implementation report, see [PROJECT_STATUS.md](PROJECT_STATUS.md)**  
-> 📊 **For test coverage, see [TEST_REPORT.md](TEST_REPORT.md)**  
-> ✅ **For live validation, see [LIVE_TEST_SUMMARY.md](LIVE_TEST_SUMMARY.md)**
+> 📊 **For test coverage, see [TEST_REPORT.md](../testing/TEST_REPORT.md)**  
+> ✅ **For live validation, see [LIVE_TEST_SUMMARY.md](../implementation-summaries/LIVE_TEST_SUMMARY.md)**
 
 ---
 
@@ -113,7 +113,7 @@ FIML (Financial Intelligence Meta-Layer) has successfully completed Phase 1 deve
 
 ## 🧪 Testing & Validation
 
-### Test Coverage (see [TEST_REPORT.md](TEST_REPORT.md))
+### Test Coverage (see [TEST_REPORT.md](../testing/TEST_REPORT.md))
 - **Total Tests**: 169
 - **Passing**: 140 (83% success rate) ✅
 - **Skipped**: 25 (infrastructure-dependent)
@@ -127,7 +127,7 @@ FIML (Financial Intelligence Meta-Layer) has successfully completed Phase 1 deve
 - ✅ **MCP Coverage** - Protocol compliance
 - ✅ **DSL Coverage** - Query execution
 
-### Live Validation (see [LIVE_TEST_SUMMARY.md](LIVE_TEST_SUMMARY.md))
+### Live Validation (see [LIVE_TEST_SUMMARY.md](../implementation-summaries/LIVE_TEST_SUMMARY.md))
 - ✅ Real stock data: AAPL ($271.49), TSLA ($391.09), MSFT ($425.57)
 - ✅ Real crypto data: BTC, ETH with live prices
 - ✅ Multi-provider arbitration working

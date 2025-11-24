@@ -311,11 +311,11 @@ Phase 2 features are **planned but not implemented**:
 
 For more details, see:
 
-- **[README.md](README.md)** - Quick start and overview
-- **[TECHNICAL_STRATEGIC_EVALUATION.md](TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
-- **[CURRENT_STATE_SUMMARY.md](CURRENT_STATE_SUMMARY.md)** - Quick reference
+- **[README.md](../index.md)** - Quick start and overview
+- **[TECHNICAL_STRATEGIC_EVALUATION.md](../development/TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
+- **[CURRENT_STATE_SUMMARY.md](../implementation-summaries/CURRENT_STATE_SUMMARY.md)** - Quick reference
 - **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Implementation details
-- **[TEST_REPORT.md](TEST_REPORT.md)** - Test coverage
+- **[TEST_REPORT.md](../testing/TEST_REPORT.md)** - Test coverage
 
 ---
 

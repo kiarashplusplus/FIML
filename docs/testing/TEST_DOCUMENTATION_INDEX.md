@@ -23,11 +23,11 @@ This directory contains comprehensive test analysis and fix guides:
 - Recommendations
 - 20-30 minute read
 
-### 3. 🤖 [AI_FIX_PROMPTS.md](./AI_FIX_PROMPTS.md)
-**Ready-to-use AI prompts for fixing failures**
-- 22 copy-paste AI prompts
-- Organized by issue type
-- Verification steps
+### 3. 📊 Test Reports and Analysis
+**Current test status and coverage**
+- Test execution results
+- Organized by module
+- Coverage metrics
 - Progress checklist
 - Reference guide
 
@@ -54,10 +54,10 @@ This directory contains comprehensive test analysis and fix guides:
    cat QUICKSTART_TEST_FIXES.md
    ```
 
-2. **Get the AI prompts** (1 min)
+2. **Review test reports** (1 min)
    ```bash
-   # Open the prompts file
-   cat AI_FIX_PROMPTS.md
+   # Open the test status report
+   cat TEST_STATUS_REPORT.md
    ```
 
 3. **Fix and verify** (varies)
@@ -65,8 +65,8 @@ This directory contains comprehensive test analysis and fix guides:
    # Run tests to see current status
    pytest tests/bot/ -v
    
-   # Use AI prompts to fix issues
-   # (copy-paste from AI_FIX_PROMPTS.md)
+   # Fix issues based on error messages
+   # Use TEST_STATUS_REPORT.md for detailed analysis
    
    # Verify fixes work
    pytest tests/bot/ -v
@@ -119,7 +119,7 @@ Module Status:
 → Read **QUICKSTART_TEST_FIXES.md** (Section: Test Failure Breakdown)
 
 #### ...fix the tests
-→ Use **AI_FIX_PROMPTS.md** (Copy-paste prompts to AI assistant)
+→ Read **TEST_STATUS_REPORT.md** (Detailed analysis and recommendations)
 
 #### ...see detailed analysis
 → Read **TEST_STATUS_REPORT.md** (Complete analysis)
@@ -131,7 +131,7 @@ Module Status:
 → Read **TEST_STATUS_REPORT.md** (Section: Code Coverage Report)
 
 #### ...track progress
-→ Use **AI_FIX_PROMPTS.md** (Section: Summary Checklist)
+→ Use **QUICKSTART_TEST_FIXES.md** (Section: Priority Fix Order)
 
 ---
 
@@ -154,11 +154,11 @@ cat QUICKSTART_TEST_FIXES.md
 # 1. Identify the issue
 pytest tests/bot/test_gateway.py -v
 
-# 2. Find relevant AI prompt
-grep -A 20 "Gateway Issues" AI_FIX_PROMPTS.md
+# 2. Review detailed analysis
+cat TEST_STATUS_REPORT.md | grep -A 20 "Gateway"
 
-# 3. Apply fix with AI assistance
-# (use the prompt in your AI tool)
+# 3. Apply fix based on error messages
+# (analyze the test failures and error output)
 
 # 4. Verify fix
 pytest tests/bot/test_gateway.py -v
@@ -172,11 +172,10 @@ pytest tests/ -v -m "not live"
 # 1. Read the priority order
 cat QUICKSTART_TEST_FIXES.md | grep -A 20 "Priority Fix Order"
 
-# 2. Work through each priority
-# Use AI_FIX_PROMPTS.md for each issue
+# 2. Work through each priority using detailed analysis
+cat TEST_STATUS_REPORT.md
 
-# 3. Track progress
-# Mark completed items in AI_FIX_PROMPTS.md checklist
+# 3. Track progress in your notes
 
 # 4. Final verification
 pytest tests/ -v -m "not live"
@@ -264,7 +263,7 @@ make clean         # Clean artifacts
 
 ### What You SHOULD Do
 
-✅ Use the AI prompts provided - they're ready to use  
+✅ Use the detailed analysis in TEST_STATUS_REPORT.md  
 ✅ Fix one issue at a time  
 ✅ Run tests after each fix  
 ✅ Read error messages carefully  
@@ -351,7 +350,7 @@ Bot Module: 41/41 passing (100%)
 Core FIML: 620/620 passing (100%)
 ```
 
-Track your progress in AI_FIX_PROMPTS.md checklist!
+Track your progress as you fix tests!
 
 ---
 
@@ -371,7 +370,7 @@ After fixing tests:
 1. Run full test suite: `pytest tests/ -v -m "not live"`
 2. Update metrics in this file
 3. Update QUICKSTART_TEST_FIXES.md with new status
-4. Move fixed items in AI_FIX_PROMPTS.md checklist
+4. Update TEST_STATUS_REPORT.md with new results
 5. Commit changes
 
 ---

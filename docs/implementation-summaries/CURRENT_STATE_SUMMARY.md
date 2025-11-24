@@ -161,10 +161,10 @@ This is a **real, working financial intelligence platform** with:
 
 ## Key Documents
 
-- **[README.md](README.md)** - Project overview and quick start
-- **[TECHNICAL_STRATEGIC_EVALUATION.md](TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
-- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Detailed implementation status
-- **[TEST_REPORT.md](TEST_REPORT.md)** - Test coverage report
+- **[README.md](../index.md)** - Project overview and quick start
+- **[TECHNICAL_STRATEGIC_EVALUATION.md](../development/TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
+- **[PROJECT_STATUS.md](../project/PROJECT_STATUS.md)** - Detailed implementation status
+- **[TEST_REPORT.md](../testing/TEST_REPORT.md)** - Test coverage report
 
 ---
 

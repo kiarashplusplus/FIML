@@ -568,7 +568,7 @@ fiml/
 
 ### Test Coverage ✅ PRODUCTION READY
 
-**Test Statistics** (see [TEST_REPORT.md](TEST_REPORT.md) and [LIVE_TEST_SUMMARY.md](LIVE_TEST_SUMMARY.md)):
+**Test Statistics** (see [TEST_REPORT.md](../testing/TEST_REPORT.md) and [LIVE_TEST_SUMMARY.md](../implementation-summaries/LIVE_TEST_SUMMARY.md)):
 - **Total Tests**: 169
 - **Passing**: 140 (83% success rate)
 - **Skipped**: 25 (infrastructure-dependent)
@@ -597,7 +597,7 @@ pytest tests/test_live_system.py -v -m live
 ./live_demo.sh
 ```
 
-**Live Validation** ([LIVE_TEST_SUMMARY.md](LIVE_TEST_SUMMARY.md)):
+**Live Validation** ([LIVE_TEST_SUMMARY.md](../implementation-summaries/LIVE_TEST_SUMMARY.md)):
 - ✅ Real stock data: AAPL ($271.49), TSLA ($391.09), MSFT ($425.57)
 - ✅ Real crypto data: BTC, ETH with live prices
 - ✅ Multi-provider arbitration working
@@ -784,11 +784,11 @@ make lint
 
 ## 📚 Documentation
 
-- **[README.md](README.md)** - Project overview and quick start
-- **[BLUEPRINT.md](BLUEPRINT.md)** - Comprehensive system blueprint
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and module structure
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment guide for production
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
+- **[README.md](../index.md)** - Project overview and quick start
+- **[BLUEPRINT.md](blueprint.md)** - Comprehensive system blueprint
+- **[ARCHITECTURE.md](../architecture/overview.md)** - System architecture and module structure
+- **[DEPLOYMENT.md](../development/deployment.md)** - Deployment guide for production
+- **[CONTRIBUTING.md](../development/contributing.md)** - Contribution guidelines
 - **[LICENSE](LICENSE)** - Apache 2.0 License
 
 ---

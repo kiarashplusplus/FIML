@@ -1,9 +1,9 @@
 # Financial Intelligence Meta-Layer (FIML)  
 ## 10-Year Extensible AI-Native Multi-Market Framework Blueprint  
   
-> 📋 **New User?** Start with [README.md](README.md) for installation, quick start, and usage examples.  
-> 📊 **Current Status**: Phase 1 Complete - See [TEST_REPORT.md](TEST_REPORT.md) for validation results.  
-> 🚀 **Try It Now**: Run `./quickstart.sh` or `./live_demo.sh` to see FIML in action.  
+> 📋 **New User?** Start with [README.md](../index.md) for installation, quick start, and usage examples.  
+> 📊 **Current Status**: Phase 1 Complete - See [TEST_REPORT.md](../testing/TEST_REPORT.md) for validation results.  
+> 🚀 **Try It Now**: Run `./quickstart.sh` to see FIML in action.  
   
 ---  
   
@@ -19,7 +19,7 @@
   
 **Core Value Proposition**: Every AI agent gets the best possible financial answer through intelligent data arbitration, multi-source fusion, and context-aware analysis—without managing individual provider APIs.  
   
-**What's Working Today**: FIML is a production-ready MCP server with intelligent data arbitration, multi-provider support (Yahoo Finance, Alpha Vantage, FMP, CCXT), real-time WebSocket streaming, L1/L2 caching infrastructure, FK-DSL query language, and comprehensive test coverage (140/169 tests passing). See [README.md](README.md) for quick start and usage examples.  
+**What's Working Today**: FIML is a production-ready MCP server with intelligent data arbitration, multi-provider support (Yahoo Finance, Alpha Vantage, FMP, CCXT), real-time WebSocket streaming, L1/L2 caching infrastructure, FK-DSL query language, and comprehensive test coverage (140/169 tests passing). See [README.md](../index.md) for quick start and usage examples.  
   
 ---  
   
@@ -4924,8 +4924,8 @@ class EvaluationSuite:
 - **Documentation**: Complete with examples and live demos  
 - **Infrastructure**: Fully containerized and monitored  
   
-See [README.md](README.md) for current features, quick start, and usage examples.  
-See [TEST_REPORT.md](TEST_REPORT.md) for detailed test results.  
+See [README.md](../index.md) for current features, quick start, and usage examples.  
+See [TEST_REPORT.md](../testing/TEST_REPORT.md) for detailed test results.  
   
 ---  
   
@@ -5086,10 +5086,10 @@ The roadmap ahead includes:
 FIML is already the **universal financial intelligence interface** for AI agents and developers—trusted, transparent, and ready to use.  
   
 **Get Started Today:**  
-1. See [README.md](README.md) for installation and usage  
+1. See [README.md](../index.md) for installation and usage  
 2. Run `./quickstart.sh` for automated setup  
-3. Check [TEST_REPORT.md](TEST_REPORT.md) for validation results  
-4. Review [live_demo.sh](live_demo.sh) for live examples  
+3. Check [TEST_REPORT.md](../testing/TEST_REPORT.md) for validation results  
+4. Review the examples directory for live demonstrations  
 5. Join the community and contribute  
   
 ---  
@@ -5101,9 +5101,9 @@ FIML is already the **universal financial intelligence interface** for AI agents
 **Built By:** Human + AI Collaboration  
   
 **Quick Links:**  
-- [README.md](README.md) - Get started with FIML  
-- [TEST_REPORT.md](TEST_REPORT.md) - Test coverage and results  
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines  
+- [README.md](../index.md) - Get started with FIML  
+- [TEST_REPORT.md](../testing/TEST_REPORT.md) - Test coverage and results  
+- [CONTRIBUTING.md](../development/contributing.md) - Contribution guidelines  
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current project status  
   
 ---  
