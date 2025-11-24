@@ -6,7 +6,7 @@ Renders lessons with live FIML market data
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 import yaml
@@ -164,13 +164,13 @@ class LessonContentEngine:
             return None
 
     async def render_lesson(
-        self, lesson: Lesson, user_id: str, include_fiml_data: bool = True
+        self, lesson: Union[Lesson, Dict[str, Any]], user_id: str, include_fiml_data: bool = True
     ) -> str:
         """
         Render lesson with live data
 
         Args:
-            lesson: Lesson to render
+            lesson: Lesson object or dict to render
             user_id: User identifier
             include_fiml_data: Whether to fetch live FIML data
 
@@ -179,57 +179,91 @@ class LessonContentEngine:
         """
         output = []
 
+        # Handle both dict and Lesson object
+        if isinstance(lesson, dict):
+            lesson_title = lesson.get("title", "Untitled")
+            lesson_duration = lesson.get("duration_minutes", 0)
+            lesson_difficulty = lesson.get("difficulty", "unknown")
+            lesson_objectives = lesson.get("learning_objectives", [])
+            lesson_sections = lesson.get("sections", [])
+        else:
+            lesson_title = lesson.title
+            lesson_duration = lesson.duration_minutes
+            lesson_difficulty = lesson.difficulty
+            lesson_objectives = lesson.learning_objectives
+            lesson_sections = lesson.sections
+
         # Header
-        output.append(f"📚 **{lesson.title}**\n")
-        output.append(f"⏱️ {lesson.duration_minutes} minutes | " f"📊 {lesson.difficulty.title()}\n")
+        output.append(f"📚 **{lesson_title}**\n")
+        # Safely handle difficulty title case
+        difficulty_display = str(lesson_difficulty).title() if lesson_difficulty else "Unknown"
+        output.append(f"⏱️ {lesson_duration} minutes | " f"📊 {difficulty_display}\n")
 
         # Learning objectives
-        if lesson.learning_objectives:
+        if lesson_objectives:
             output.append("\n**Learning Objectives:**")
-            for obj in lesson.learning_objectives:
+            for obj in lesson_objectives:
                 output.append(f"• {obj}")
             output.append("")
 
         # Render sections
-        for section in lesson.sections:
-            if section.type == "introduction":
-                output.append(section.content)
+        for section in lesson_sections:
+            # Handle both dict and LessonSection object
+            if isinstance(section, dict):
+                section_type = section.get("type")
+                section_content = section.get("content", "")
+                section_fiml_query = section.get("fiml_query")
+            else:
+                section_type = section.type
+                section_content = section.content
+                section_fiml_query = section.fiml_query
+
+            if section_type == "introduction":
+                output.append(section_content)
                 output.append("")
 
-            elif section.type == "live_example":
+            elif section_type == "live_example":
                 output.append("📊 **Live Example:**")
 
-                if include_fiml_data and section.fiml_query:
+                if include_fiml_data and section_fiml_query:
                     # Placeholder for FIML data
                     output.append("\n_[Live market data would appear here]_")
-                    output.append(f"_Query: {section.fiml_query.get('symbol', 'N/A')}_\n")
+                    if isinstance(section_fiml_query, dict):
+                        output.append(f"_Query: {section_fiml_query.get('symbol', 'N/A')}_\n")
 
-                output.append(section.content)
+                output.append(section_content)
                 output.append("")
 
-            elif section.type == "explanation":
-                output.append(section.content)
+            elif section_type == "explanation":
+                output.append(section_content)
                 output.append("")
 
-            elif section.type == "chart":
+            elif section_type == "chart":
                 output.append("📈 **Chart:**")
                 output.append("_[Chart would be generated here]_\n")
-                output.append(section.content)
+                output.append(section_content)
                 output.append("")
 
-            elif section.type == "key_takeaways":
+            elif section_type == "key_takeaways":
                 output.append("🔑 **Key Takeaways:**")
                 # Parse content as bullet points
-                for line in section.content.split("\n"):
+                for line in section_content.split("\n"):
                     if line.strip():
                         output.append(f"• {line.strip()}")
                 output.append("")
 
         # Footer
-        output.append(f"✨ Complete this lesson to earn **{lesson.xp_reward} XP**")
+        if isinstance(lesson, dict):
+            lesson_xp = lesson.get("xp_reward", 0)
+            lesson_quiz = lesson.get("quiz", {}).get("questions", [])
+        else:
+            lesson_xp = lesson.xp_reward
+            lesson_quiz = lesson.quiz_questions
 
-        if lesson.quiz_questions:
-            output.append(f"📝 Quiz: {len(lesson.quiz_questions)} questions")
+        output.append(f"✨ Complete this lesson to earn **{lesson_xp} XP**")
+
+        if lesson_quiz:
+            output.append(f"📝 Quiz: {len(lesson_quiz)} questions")
 
         return "\n".join(output)
 
