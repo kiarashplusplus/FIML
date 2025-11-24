@@ -408,10 +408,18 @@ class ProgressMigrationManager:
         Returns:
             True if backward compatible
         """
-        # Parse versions
+        # Parse versions with error handling
         def parse_version(v: str) -> tuple:
-            parts = v.split('.')
-            return (int(parts[0]), int(parts[1]) if len(parts) > 1 else 0, int(parts[2]) if len(parts) > 2 else 0)
+            try:
+                parts = v.split('.')
+                return (
+                    int(parts[0]) if len(parts) > 0 else 0,
+                    int(parts[1]) if len(parts) > 1 else 0,
+                    int(parts[2]) if len(parts) > 2 else 0
+                )
+            except (ValueError, IndexError):
+                logger.warning("Invalid version format", version=v)
+                return (0, 0, 0)
 
         from_parts = parse_version(from_version)
         to_parts = parse_version(to_version)

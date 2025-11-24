@@ -331,12 +331,12 @@ class LessonVersionManager:
         Returns:
             List of change descriptions
         """
-        if lesson_id and lesson_id not in self._version_cache:
-            self._load_lesson_versions(lesson_id)
-
+        # If no lesson_id provided, return empty list
         if not lesson_id:
-            # If no lesson_id provided, return empty list
             return []
+
+        if lesson_id not in self._version_cache:
+            self._load_lesson_versions(lesson_id)
 
         versions = self._version_cache.get(lesson_id, [])
 
