@@ -154,7 +154,7 @@ class Session(BaseModel):
             "created_at": self.created_at.isoformat(),
             "expires_at": self.expires_at.isoformat(),
             "last_accessed_at": self.last_accessed_at.isoformat(),
-            "state": self.state.model_dump(mode='json'),
+            "state": self.state.model_dump(mode="json"),
             "is_archived": self.is_archived,
             "tags": self.tags,
         }

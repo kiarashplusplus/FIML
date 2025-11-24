@@ -2,7 +2,6 @@
 Tests for LessonContentEngine (Component 6) and QuizSystem (Component 7)
 """
 
-
 from datetime import datetime, timedelta
 
 import pytest
@@ -29,12 +28,7 @@ class TestLessonContentEngine:
             "title": "Test Lesson",
             "difficulty": "beginner",
             "duration_minutes": 5,
-            "sections": [
-                {
-                    "type": "introduction",
-                    "content": "This is a test lesson."
-                }
-            ],
+            "sections": [{"type": "introduction", "content": "This is a test lesson."}],
             "quiz": {
                 "questions": [
                     {
@@ -42,15 +36,15 @@ class TestLessonContentEngine:
                         "text": "What is 2+2?",
                         "options": ["3", "4", "5"],
                         "correct_answer": "4",
-                        "explanation": "2+2 equals 4"
+                        "explanation": "2+2 equals 4",
                     }
                 ]
             },
-            "xp_reward": 50
+            "xp_reward": 50,
         }
 
         lesson_file = tmp_path / "test_lesson_001.yaml"
-        with open(lesson_file, 'w') as f:
+        with open(lesson_file, "w") as f:
             yaml.dump(lesson_data, f)
 
         return lesson_file
@@ -96,10 +90,7 @@ class TestLessonContentEngine:
         user_id = "test_user_prereq"
 
         # Lesson with prerequisites
-        lesson = {
-            "id": "advanced_lesson",
-            "prerequisites": ["basic_lesson_001"]
-        }
+        lesson = {"id": "advanced_lesson", "prerequisites": ["basic_lesson_001"]}
 
         # Should not be available without prerequisites
         can_access = lesson_engine.can_access_lesson(user_id, lesson)
@@ -130,7 +121,7 @@ class TestQuizSystem:
                 "type": "multiple_choice",
                 "text": "What is 2+2?",
                 "options": ["3", "4", "5"],
-                "correct_answer": "4"
+                "correct_answer": "4",
             }
         ]
 
@@ -153,7 +144,7 @@ class TestQuizSystem:
                 "options": ["3", "4", "5"],
                 "correct_answer": "4",
                 "explanation": "2+2 equals 4",
-                "xp_reward": 10
+                "xp_reward": 10,
             }
         ]
 
@@ -174,7 +165,7 @@ class TestQuizSystem:
                 "text": "What is 2+2?",
                 "options": ["3", "4", "5"],
                 "correct_answer": "4",
-                "explanation": "2+2 equals 4"
+                "explanation": "2+2 equals 4",
             }
         ]
 
@@ -190,24 +181,9 @@ class TestQuizSystem:
         """Test quiz score calculation"""
         user_id = "test_user_score"
         questions = [
-            {
-                "type": "multiple_choice",
-                "text": "Q1",
-                "correct_answer": "A",
-                "xp_reward": 10
-            },
-            {
-                "type": "multiple_choice",
-                "text": "Q2",
-                "correct_answer": "B",
-                "xp_reward": 10
-            },
-            {
-                "type": "multiple_choice",
-                "text": "Q3",
-                "correct_answer": "C",
-                "xp_reward": 10
-            }
+            {"type": "multiple_choice", "text": "Q1", "correct_answer": "A", "xp_reward": 10},
+            {"type": "multiple_choice", "text": "Q2", "correct_answer": "B", "xp_reward": 10},
+            {"type": "multiple_choice", "text": "Q3", "correct_answer": "C", "xp_reward": 10},
         ]
 
         session_id = quiz_system.create_session(user_id, "lesson_001", questions)
@@ -227,13 +203,7 @@ class TestQuizSystem:
     async def test_true_false_question(self, quiz_system):
         """Test true/false question type"""
         user_id = "test_user_tf"
-        questions = [
-            {
-                "type": "true_false",
-                "text": "The sky is blue.",
-                "correct_answer": "true"
-            }
-        ]
+        questions = [{"type": "true_false", "text": "The sky is blue.", "correct_answer": "true"}]
 
         session_id = quiz_system.create_session(user_id, "lesson_001", questions)
 
@@ -254,7 +224,7 @@ class TestQuizSystem:
                 "type": "numeric",
                 "text": "What is 10% of 100?",
                 "correct_answer": 10.0,
-                "tolerance": 0.1
+                "tolerance": 0.1,
             }
         ]
 

@@ -2,7 +2,6 @@
 Integration tests for bot components working together
 """
 
-
 from datetime import datetime, timedelta
 
 import pytest
@@ -31,10 +30,7 @@ class TestBotIntegration:
             "difficulty": "beginner",
             "duration_minutes": 5,
             "sections": [
-                {
-                    "type": "introduction",
-                    "content": "Learn about P/E ratios and valuation."
-                }
+                {"type": "introduction", "content": "Learn about P/E ratios and valuation."}
             ],
             "quiz": {
                 "questions": [
@@ -44,29 +40,29 @@ class TestBotIntegration:
                         "options": ["Price vs Earnings", "Profit vs Equity", "Price vs Expenses"],
                         "correct_answer": "Price vs Earnings",
                         "explanation": "P/E = Price per share / Earnings per share",
-                        "xp_reward": 10
+                        "xp_reward": 10,
                     },
                     {
                         "type": "true_false",
                         "text": "A high P/E ratio always means a stock is overvalued.",
                         "correct_answer": "false",
                         "explanation": "High P/E can indicate growth expectations.",
-                        "xp_reward": 10
-                    }
+                        "xp_reward": 10,
+                    },
                 ]
             },
-            "xp_reward": 50
+            "xp_reward": 50,
         }
 
         lesson_file = lesson_path / "integration_test_001.yaml"
-        with open(lesson_file, 'w') as f:
+        with open(lesson_file, "w") as f:
             yaml.dump(lesson_data, f)
 
         return {
             "lesson_engine": LessonContentEngine(lessons_path=str(lesson_path)),
             "quiz_system": QuizSystem(),
             "gamification": GamificationEngine(),
-            "compliance": EducationalComplianceFilter()
+            "compliance": EducationalComplianceFilter(),
         }
 
     async def test_complete_lesson_flow(self, bot_components):
@@ -145,10 +141,7 @@ class TestBotIntegration:
         gamification = bot_components["gamification"]
 
         # Create advanced lesson with prerequisites
-        advanced_lesson = {
-            "id": "advanced_001",
-            "prerequisites": ["integration_test_001"]
-        }
+        advanced_lesson = {"id": "advanced_001", "prerequisites": ["integration_test_001"]}
 
         # User starts as Novice
         level = gamification.get_user_level(user_id)
