@@ -6,6 +6,7 @@ Handles collection, validation, and secure storage of user API keys (BYOK model)
 import json
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import structlog
@@ -75,7 +76,7 @@ class UserProviderKeyManager:
         """
         self.encryption_key = encryption_key or Fernet.generate_key()
         self.cipher = Fernet(self.encryption_key)
-        self.storage_path = storage_path
+        self.storage_path = Path(storage_path)
 
         # In-memory cache for decrypted keys (session-scoped)
         self._key_cache: Dict[str, Dict[str, str]] = {}
@@ -316,7 +317,7 @@ class UserProviderKeyManager:
             import os
             os.makedirs(self.storage_path, exist_ok=True)
 
-            user_file = f"{self.storage_path}/{user_id}.json"
+            user_file = self.storage_path / f"{user_id}.json"
 
             # Load existing keys
             if os.path.exists(user_file):
@@ -368,7 +369,7 @@ class UserProviderKeyManager:
             return self._key_cache[user_id].copy()
 
         # Load from storage
-        user_file = f"{self.storage_path}/{user_id}.json"
+        user_file = self.storage_path / f"{user_id}.json"
 
         try:
             import os
@@ -406,7 +407,7 @@ class UserProviderKeyManager:
             True if removed successfully
         """
         try:
-            user_file = f"{self.storage_path}/{user_id}.json"
+            user_file = self.storage_path / f"{user_id}.json"
 
             import os
             if not os.path.exists(user_file):
@@ -450,7 +451,7 @@ class UserProviderKeyManager:
         Returns:
             List of provider info dicts
         """
-        user_file = f"{self.storage_path}/{user_id}.json"
+        user_file = self.storage_path / f"{user_id}.json"
 
         try:
             import os
@@ -573,7 +574,7 @@ class UserProviderKeyManager:
 
         # Load from storage
         import os
-        user_file = f"{self.storage_path}/{user_id}.json"
+        user_file = self.storage_path / f"{user_id}.json"
 
         if not os.path.exists(user_file):
             return None
@@ -611,7 +612,7 @@ class UserProviderKeyManager:
             List of provider identifiers
         """
         import os
-        user_file = f"{self.storage_path}/{user_id}.json"
+        user_file = self.storage_path / f"{user_id}.json"
 
         if not os.path.exists(user_file):
             return []
@@ -638,7 +639,7 @@ class UserProviderKeyManager:
             True if removed successfully
         """
         import os
-        user_file = f"{self.storage_path}/{user_id}.json"
+        user_file = self.storage_path / f"{user_id}.json"
 
         if not os.path.exists(user_file):
             return False
