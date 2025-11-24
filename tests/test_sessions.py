@@ -2,7 +2,7 @@
 Tests for session management system
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -98,7 +98,7 @@ class TestSessionModels:
         session = Session(
             type=SessionType.CRYPTO,
             assets=["BTC"],
-            expires_at=datetime.utcnow() - timedelta(hours=1),
+            expires_at=datetime.now(UTC) - timedelta(hours=1),
         )
 
         assert session.is_expired
@@ -109,7 +109,7 @@ class TestSessionModels:
         session = Session(
             type=SessionType.PORTFOLIO,
             assets=["AAPL"],
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
         )
 
         original_expiry = session.expires_at
@@ -345,7 +345,7 @@ class TestSessionStore:
         )
 
         # Manually expire it
-        session.expires_at = datetime.utcnow() - timedelta(hours=1)
+        session.expires_at = datetime.now(UTC) - timedelta(hours=1)
         await session_store.update_session(session.id, session)
 
         # Run cleanup
