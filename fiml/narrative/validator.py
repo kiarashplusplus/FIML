@@ -60,6 +60,16 @@ class NarrativeValidator:
         "data analysis only",
         "informational purposes only",
         "past performance",
+        # Spanish
+        "no es asesoramiento financiero",
+        "no es consejo de inversión",
+        "solo proporciona análisis",
+        "solo con fines informativos",
+        # French
+        "n'est pas un conseil financier",
+        "n'est pas un conseil d'investissement",
+        "analyse de données uniquement",
+        "à des fins d'information uniquement",
     ]
 
     def __init__(self):

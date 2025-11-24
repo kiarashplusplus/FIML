@@ -132,7 +132,7 @@ class TestLiveCache:
             value = {"price": 100.0, "timestamp": datetime.now(timezone.utc).isoformat()}
 
             # Set value
-            await cache_manager.set(key, value, ttl=60)
+            await cache_manager.set(key, value, ttl_seconds=60)
 
             # Get value
             cached = await cache_manager.get(key)
@@ -155,7 +155,7 @@ class TestLiveCache:
             value = {"test": "data"}
 
             # Set with very short TTL
-            await cache_manager.set(key, value, ttl=1)
+            await cache_manager.set(key, value, ttl_seconds=1)
 
             # Should exist immediately
             cached = await cache_manager.get(key)
