@@ -337,6 +337,7 @@ class GamificationEngine:
 
         return {
             "user_id": user_id,
+            "xp": stats.total_xp,
             "level": stats.level,
             "level_title": self.get_level_title(stats.level),
             "total_xp": stats.total_xp,
