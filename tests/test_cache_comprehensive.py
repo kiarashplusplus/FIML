@@ -5,7 +5,6 @@ This test module covers all untested code paths in the cache module.
 """
 
 import asyncio
-import json
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -232,12 +231,13 @@ class TestCacheAnalyticsExtended:
     def test_detect_cache_pollution(self):
         """Test cache pollution detection"""
         analytics = CacheAnalytics(enable_prometheus=False)
-        # Add some old single-access keys (use naive datetime to match analytics.py)
+        # NOTE: Using datetime.utcnow() to match analytics.py which uses naive datetimes
+        # The analytics module compares these timestamps, so we need to match its format
         old_time = datetime.utcnow() - timedelta(hours=2)
         for i in range(10):
             analytics.single_access_keys[f"old_key_{i}"] = old_time
 
-        # Add some new keys
+        # Add some new keys (also naive datetime to match analytics.py)
         for i in range(5):
             analytics.single_access_keys[f"new_key_{i}"] = datetime.utcnow()
 
@@ -284,7 +284,7 @@ class TestCacheAnalyticsExtended:
         analytics = CacheAnalytics(enable_prometheus=False)
         analytics.total_hits = 90
         analytics.total_misses = 10
-        # Create pollution scenario (use naive datetime)
+        # NOTE: Using datetime.utcnow() to match analytics.py naive datetime format
         old_time = datetime.utcnow() - timedelta(hours=2)
         for i in range(100):
             analytics.single_access_keys[f"key_{i}"] = old_time
@@ -438,10 +438,13 @@ class TestL1CacheExtended:
         """Test initializing when already initialized"""
         cache = L1Cache()
         cache._initialized = True
-        
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(cache.initialize())
-        
+
+        # Using pytest.mark.asyncio would require the whole test to be async
+        # This test specifically needs to call without await to test re-initialization
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(cache.initialize())
+        loop.close()
+
         assert "already initialized" in caplog.text.lower() or cache._initialized
 
     @pytest.mark.asyncio
@@ -590,7 +593,7 @@ class TestL1CacheExtended:
         """Test logging eviction"""
         cache = L1Cache()
         cache._log_eviction("evicted_key", 5, "manual_lfu")
-        
+
         assert cache._eviction_count == 1
         assert len(cache._eviction_log) == 1
         assert cache._eviction_log[0]["key"] == "evicted_key"
@@ -722,8 +725,9 @@ class TestL2CacheExtended:
     def test_get_stats_not_initialized(self):
         """Test get_stats when cache not initialized"""
         cache = L2Cache()
-        import asyncio
-        stats = asyncio.get_event_loop().run_until_complete(cache.get_stats())
+        loop = asyncio.new_event_loop()
+        stats = loop.run_until_complete(cache.get_stats())
+        loop.close()
         assert stats["status"] == "not_initialized"
 
 
@@ -735,7 +739,7 @@ class TestCacheManagerExtended:
         manager = CacheManager()
         manager._track_l2_latency(25.5)
         manager._track_l2_latency(30.0)
-        
+
         assert len(manager._l2_latencies) == 2
         assert 25.5 in manager._l2_latencies
 
@@ -1012,7 +1016,7 @@ class TestBatchUpdateSchedulerExtended:
             (sample_crypto_asset, DataType.PRICE, "ccxt", 3),
         ]
         await scheduler.schedule_updates_batch(updates)
-        
+
         assert len(scheduler.pending_requests) == 2
         assert scheduler.total_requests == 2
 
@@ -1027,9 +1031,9 @@ class TestBatchUpdateSchedulerExtended:
             UpdateRequest(sample_crypto_asset, DataType.PRICE, "yfinance"),
             UpdateRequest(sample_asset, DataType.FUNDAMENTALS, "yfinance"),
         ]
-        
+
         grouped = scheduler._group_requests_by_batch_key(requests)
-        
+
         assert "price:yfinance" in grouped
         assert "fundamentals:yfinance" in grouped
         assert len(grouped["price:yfinance"]) == 2
@@ -1060,7 +1064,7 @@ class TestBatchUpdateSchedulerExtended:
         )
 
         batch = scheduler._get_next_batch()
-        
+
         assert len(batch) == 2
         # Higher priority should be first
         assert batch[0].priority == 10
@@ -1081,7 +1085,7 @@ class TestBatchUpdateSchedulerExtended:
         scheduler.failed_updates = 2
 
         stats = scheduler.get_stats()
-        
+
         assert stats["pending_requests"] == 1
         assert stats["total_requests"] == 10
         assert stats["batches_processed"] == 5
@@ -1103,7 +1107,7 @@ class TestBatchUpdateSchedulerExtended:
         )
 
         count = scheduler.clear_pending()
-        
+
         assert count == 2
         assert len(scheduler.pending_requests) == 0
 
@@ -1118,7 +1122,7 @@ class TestCacheWarmerExtended:
         warmer._warming_in_progress = True
 
         result = await warmer.warm_cache()
-        
+
         assert result["status"] == "skipped"
         assert result["reason"] == "warming_in_progress"
 
@@ -1131,7 +1135,7 @@ class TestCacheWarmerExtended:
         # Mock the cache manager
         with patch('fiml.cache.warmer.cache_manager') as mock_manager:
             mock_manager.set_price = AsyncMock(return_value=True)
-            
+
             result = await warmer.warm_cache(
                 assets=[Asset(
                     symbol="TEST",
@@ -1143,7 +1147,7 @@ class TestCacheWarmerExtended:
                 )],
                 force=True
             )
-            
+
             assert result["status"] == "completed"
 
     @pytest.mark.asyncio
@@ -1154,7 +1158,7 @@ class TestCacheWarmerExtended:
         with patch.object(warmer, 'warm_cache', new_callable=AsyncMock) as mock_warm:
             mock_warm.return_value = {"status": "completed"}
             result = await warmer.warm_on_startup()
-            
+
             mock_warm.assert_called_once()
             assert result["status"] == "completed"
 
@@ -1166,7 +1170,7 @@ class TestCacheIntegration:
     async def test_l1_cache_full_lifecycle(self):
         """Test L1 cache through full lifecycle with mocked Redis"""
         cache = L1Cache()
-        
+
         # Mock Redis
         mock_redis = MagicMock()
         mock_redis.ping = AsyncMock(return_value=True)
@@ -1182,7 +1186,7 @@ class TestCacheIntegration:
             "keyspace_misses": 10
         })
         mock_redis.aclose = AsyncMock()
-        
+
         with patch('redis.asyncio.Redis', return_value=mock_redis):
             await cache.initialize()
             assert cache._initialized is True
@@ -1220,7 +1224,7 @@ class TestCacheIntegration:
         """Test cache manager tracking analytics"""
         manager = CacheManager()
         manager._initialized = True
-        
+
         # Mock L1 cache
         manager.l1._initialized = True
         manager.l1._redis = MagicMock()
@@ -1267,7 +1271,7 @@ class TestBatchSchedulerProcessing:
         scheduler.pending_requests.append(
             UpdateRequest(sample_asset, DataType.PRICE, "yfinance")
         )
-        
+
         # During high load with few requests, should skip
         await scheduler._run_batch_cycle()
 
@@ -1279,14 +1283,14 @@ class TestBatchSchedulerProcessing:
             provider_registry=MagicMock(),
             batch_interval_seconds=1
         )
-        
+
         # Start scheduler
         await scheduler.start()
         assert scheduler.is_running is True
-        
+
         # Give it time to run
         await asyncio.sleep(0.1)
-        
+
         # Stop scheduler
         await scheduler.stop()
         assert scheduler.is_running is False
@@ -1299,7 +1303,7 @@ class TestBatchSchedulerProcessing:
             provider_registry=MagicMock()
         )
         scheduler.is_running = True
-        
+
         await scheduler.start()
         # Should warn about already running
 
@@ -1312,12 +1316,12 @@ class TestPredictiveCacheWarmerProcessing:
         """Test warming symbol when no provider found"""
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=None)
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=MagicMock(),
             provider_registry=mock_registry
         )
-        
+
         # Should return True even if provider not found (graceful handling)
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
         # When provider returns None, the warming should not fail
@@ -1331,7 +1335,7 @@ class TestPredictiveCacheWarmerProcessing:
             provider_registry=MagicMock(),
             warming_schedule=[25]  # Hour that doesn't exist
         )
-        
+
         await warmer.run_warming_cycle()
         # Should skip without error
 
@@ -1344,7 +1348,7 @@ class TestPredictiveCacheWarmerProcessing:
             warming_schedule=list(range(24)),  # All hours
             min_request_threshold=1000
         )
-        
+
         await warmer.run_warming_cycle()
         # Should complete without error
 
@@ -1356,7 +1360,7 @@ class TestPredictiveCacheWarmerProcessing:
             provider_registry=MagicMock()
         )
         warmer.is_running = True
-        
+
         await warmer.start_background_warming()
         # Should warn about already running
 
@@ -1367,11 +1371,11 @@ class TestPredictiveCacheWarmerProcessing:
             cache_manager=MagicMock(),
             provider_registry=MagicMock()
         )
-        
+
         await warmer.start_background_warming(interval_minutes=1)
         await asyncio.sleep(0.1)
         await warmer.stop_background_warming()
-        
+
         assert warmer.is_running is False
 
 
@@ -1382,13 +1386,13 @@ class TestCacheWarmerScheduled:
     async def test_scheduled_warm(self):
         """Test scheduled warming"""
         warmer = CacheWarmer()
-        
+
         # Run scheduled warming in background
         task = asyncio.create_task(warmer.scheduled_warm(interval_seconds=1))
-        
+
         # Let it run for a moment
         await asyncio.sleep(0.1)
-        
+
         # Cancel the task
         task.cancel()
         try:
@@ -1405,20 +1409,20 @@ class TestL1CacheBatchAndEviction:
         """Test get_many with mocked Redis pipeline"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         # Create mock pipeline
         mock_pipe = MagicMock()
         mock_pipe.get = MagicMock()
         mock_pipe.execute = AsyncMock(return_value=['{"key1": "value1"}', None, '{"key3": "value3"}'])
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         cache._redis = mock_redis
-        
+
         results = await cache.get_many(["key1", "key2", "key3"])
-        
+
         assert len(results) == 3
         assert results[0] == {"key1": "value1"}
         assert results[1] is None
@@ -1429,7 +1433,7 @@ class TestL1CacheBatchAndEviction:
         """Test set_many with mocked Redis pipeline"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         # Create mock pipeline
         mock_pipe = MagicMock()
         mock_pipe.set = MagicMock()
@@ -1437,16 +1441,16 @@ class TestL1CacheBatchAndEviction:
         mock_pipe.execute = AsyncMock(return_value=[True, True])
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         cache._redis = mock_redis
-        
+
         count = await cache.set_many([
             ("key1", {"value": 1}, 60),
             ("key2", {"value": 2}, None)
         ])
-        
+
         assert count == 2
 
     @pytest.mark.asyncio
@@ -1454,17 +1458,17 @@ class TestL1CacheBatchAndEviction:
         """Test clear_pattern with keys found"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         # Mock scan_iter to return keys
         async def mock_scan_iter(*args, **kwargs):
             yield "test:key1"
             yield "test:key2"
-        
+
         mock_redis = MagicMock()
         mock_redis.scan_iter = mock_scan_iter
         mock_redis.delete = AsyncMock(return_value=2)
         cache._redis = mock_redis
-        
+
         deleted = await cache.clear_pattern("test:*")
         assert deleted == 2
 
@@ -1473,22 +1477,23 @@ class TestL1CacheBatchAndEviction:
         """Test manual eviction of least used keys"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         # Set up access counts
+        # NOTE: Using datetime.utcnow() to match l1_cache.py _track_access() format
         cache._access_counts = {"key1": 1, "key2": 10, "key3": 5}
         cache._last_access = {
             "key1": datetime.utcnow(),
             "key2": datetime.utcnow(),
             "key3": datetime.utcnow()
         }
-        
+
         mock_redis = MagicMock()
         mock_redis.exists = AsyncMock(return_value=True)
         mock_redis.delete = AsyncMock(return_value=1)
         cache._redis = mock_redis
-        
+
         evicted = await cache.evict_least_used(count=1)
-        
+
         # Should evict key1 (lowest access count)
         assert evicted == 1
         assert "key1" not in cache._access_counts
@@ -1498,18 +1503,18 @@ class TestL1CacheBatchAndEviction:
         """Test that protected keys are not evicted"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         # Set up access counts
         cache._access_counts = {"protected_key": 1, "normal_key": 2}
         cache._protected_keys.add("protected_key")
-        
+
         mock_redis = MagicMock()
         mock_redis.exists = AsyncMock(return_value=True)
         mock_redis.delete = AsyncMock(return_value=1)
         cache._redis = mock_redis
-        
+
         evicted = await cache.evict_least_used(count=2)
-        
+
         # Protected key should be skipped
         assert "protected_key" in cache._access_counts or evicted == 1
 
@@ -1523,14 +1528,14 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         # Mock Redis to return price
         mock_redis = MagicMock()
         mock_redis.get = AsyncMock(return_value='{"price": 150.0, "change": 2.5}')
         manager.l1._redis = mock_redis
-        
+
         result = await manager.get_price(sample_asset)
-        
+
         assert result is not None
         assert result["price"] == 150.0
 
@@ -1540,14 +1545,14 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         # Mock Redis to return None (cache miss)
         mock_redis = MagicMock()
         mock_redis.get = AsyncMock(return_value=None)
         manager.l1._redis = mock_redis
-        
+
         result = await manager.get_price(sample_asset)
-        
+
         assert result is None
 
     @pytest.mark.asyncio
@@ -1556,14 +1561,14 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.setex = AsyncMock(return_value=True)
         manager.l1._redis = mock_redis
-        
+
         price_data = {"price": 150.0, "change": 2.5}
         result = await manager.set_price(sample_asset, "yfinance", price_data)
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -1572,13 +1577,13 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.get = AsyncMock(return_value='{"pe_ratio": 25.0, "eps": 6.5}')
         manager.l1._redis = mock_redis
-        
+
         result = await manager.get_fundamentals(sample_asset)
-        
+
         assert result is not None
         assert result["pe_ratio"] == 25.0
 
@@ -1588,14 +1593,14 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.setex = AsyncMock(return_value=True)
         manager.l1._redis = mock_redis
-        
+
         fundamentals = {"pe_ratio": 25.0, "eps": 6.5}
         result = await manager.set_fundamentals(sample_asset, "yfinance", fundamentals)
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -1604,18 +1609,18 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         async def mock_scan_iter(*args, **kwargs):
             yield f"price:{sample_asset.symbol}:yfinance"
             yield f"fundamentals:{sample_asset.symbol}:yfinance"
-        
+
         mock_redis = MagicMock()
         mock_redis.scan_iter = mock_scan_iter
         mock_redis.delete = AsyncMock(return_value=2)
         manager.l1._redis = mock_redis
-        
+
         deleted = await manager.invalidate_asset(sample_asset)
-        
+
         assert deleted == 2
 
     @pytest.mark.asyncio
@@ -1624,7 +1629,7 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         # Create mock pipeline
         mock_pipe = MagicMock()
         mock_pipe.get = MagicMock()
@@ -1634,13 +1639,13 @@ class TestCacheManagerPricesAndReadThrough:
         ])
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         manager.l1._redis = mock_redis
-        
+
         results = await manager.get_prices_batch([sample_asset, sample_crypto_asset])
-        
+
         assert len(results) == 2
         assert manager._l1_hits == 2
 
@@ -1650,25 +1655,25 @@ class TestCacheManagerPricesAndReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         # Create mock pipeline
         mock_pipe = MagicMock()
         mock_pipe.setex = MagicMock()
         mock_pipe.execute = AsyncMock(return_value=[True, True])
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         manager.l1._redis = mock_redis
-        
+
         items = [
             (sample_asset, "yfinance", {"price": 150.0}),
             (sample_crypto_asset, "ccxt", {"price": 50000.0})
         ]
-        
+
         count = await manager.set_prices_batch(items)
-        
+
         assert count == 2
 
 
@@ -1683,9 +1688,9 @@ class TestCacheAnalyticsPrometheus:
     def test_record_access_updates_hourly_stats(self):
         """Test that recording access updates hourly stats"""
         analytics = CacheAnalytics(enable_prometheus=False)
-        
+
         analytics.record_cache_access(DataType.PRICE, True, 10.0, "l1")
-        
+
         # Check hourly stats are updated
         assert len(analytics.hourly_stats) > 0
         current_hour_key = datetime.utcnow().strftime("%Y-%m-%d-%H")
@@ -1712,7 +1717,7 @@ class TestEvictionTrackerPolicy:
         """Test getting candidates with unsupported policy"""
         tracker = EvictionTracker(policy=EvictionPolicy.TTL, max_entries=10)
         tracker.track_access("key1")
-        
+
         # For TTL policy, candidates method returns empty (not implemented)
         candidates = tracker.get_eviction_candidates(count=5)
         assert candidates == []
@@ -1724,16 +1729,16 @@ class TestCacheUtilsPercentile:
     def test_percentile_edge_cases(self):
         """Test percentile calculation edge cases"""
         from fiml.cache.utils import calculate_percentile
-        
+
         # Empty list
         assert calculate_percentile([], 50) == 0.0
-        
+
         # Single element
         assert calculate_percentile([10.0], 50) == 10.0
-        
+
         # Two elements
         assert calculate_percentile([10.0, 20.0], 50) == 10.0
-        
+
         # P0 and P100
         data = [10.0, 20.0, 30.0, 40.0, 50.0]
         assert calculate_percentile(data, 0) == 10.0
@@ -1741,13 +1746,13 @@ class TestCacheUtilsPercentile:
     def test_percentile_high_values(self):
         """Test percentile calculation for high percentiles"""
         from fiml.cache.utils import calculate_percentile
-        
+
         data = list(range(1, 101))  # 1 to 100
         data = [float(x) for x in data]
-        
+
         p97 = calculate_percentile(data, 97)
         p99 = calculate_percentile(data, 99)
-        
+
         assert p97 >= 97.0
         assert p99 >= 99.0
 
@@ -1760,16 +1765,16 @@ class TestBatchSchedulerProcessBatch:
         """Test processing batch when provider not found"""
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=None)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=MagicMock(),
             provider_registry=mock_registry
         )
-        
+
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "unknown_provider")]
-        
+
         stats = await scheduler._process_batch(batch)
-        
+
         assert stats["failed"] == 1
         assert stats["success"] == 0
 
@@ -1781,25 +1786,25 @@ class TestBatchSchedulerProcessBatch:
             {"price": 150.0},
             {"price": 50000.0}
         ])
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_prices_batch = AsyncMock(return_value=2)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry
         )
-        
+
         batch = [
             UpdateRequest(sample_asset, DataType.PRICE, "yfinance"),
             UpdateRequest(sample_crypto_asset, DataType.PRICE, "yfinance"),
         ]
-        
+
         stats = await scheduler._process_batch(batch)
-        
+
         assert stats["success"] == 2
         assert stats["api_calls"] == 1
         assert stats["api_calls_saved"] == 1
@@ -1810,23 +1815,24 @@ class TestBatchSchedulerProcessBatch:
         mock_provider = MagicMock()
         # No get_prices_batch method
         mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-        delattr(mock_provider, 'get_prices_batch') if hasattr(mock_provider, 'get_prices_batch') else None
-        
+        if hasattr(mock_provider, 'get_prices_batch'):
+            delattr(mock_provider, 'get_prices_batch')
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_price = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry
         )
-        
+
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "yfinance")]
-        
+
         stats = await scheduler._process_batch(batch)
-        
+
         assert stats["success"] == 1
         assert stats["api_calls"] == 1
 
@@ -1835,19 +1841,19 @@ class TestBatchSchedulerProcessBatch:
         """Test processing batch when individual price fetch fails"""
         mock_provider = MagicMock()
         mock_provider.get_price = AsyncMock(side_effect=Exception("API error"))
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=MagicMock(),
             provider_registry=mock_registry
         )
-        
+
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "yfinance")]
-        
+
         stats = await scheduler._process_batch(batch)
-        
+
         assert stats["failed"] == 1
 
     @pytest.mark.asyncio
@@ -1855,22 +1861,22 @@ class TestBatchSchedulerProcessBatch:
         """Test processing batch with fundamentals data type"""
         mock_provider = MagicMock()
         mock_provider.get_fundamentals = AsyncMock(return_value={"pe_ratio": 25.0})
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_fundamentals = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry
         )
-        
+
         batch = [UpdateRequest(sample_asset, DataType.FUNDAMENTALS, "yfinance")]
-        
+
         stats = await scheduler._process_batch(batch)
-        
+
         assert stats["success"] == 1
 
     @pytest.mark.asyncio
@@ -1878,19 +1884,19 @@ class TestBatchSchedulerProcessBatch:
         """Test processing batch when fundamentals fetch fails"""
         mock_provider = MagicMock()
         mock_provider.get_fundamentals = AsyncMock(side_effect=Exception("API error"))
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=MagicMock(),
             provider_registry=mock_registry
         )
-        
+
         batch = [UpdateRequest(sample_asset, DataType.FUNDAMENTALS, "yfinance")]
-        
+
         stats = await scheduler._process_batch(batch)
-        
+
         assert stats["failed"] == 1
 
     @pytest.mark.asyncio
@@ -1898,16 +1904,16 @@ class TestBatchSchedulerProcessBatch:
         """Test processing batch when general exception occurs"""
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(side_effect=Exception("Registry error"))
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=MagicMock(),
             provider_registry=mock_registry
         )
-        
+
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "yfinance")]
-        
+
         stats = await scheduler._process_batch(batch)
-        
+
         assert stats["failed"] == 1
 
 
@@ -1919,26 +1925,26 @@ class TestBatchSchedulerRunCycle:
         """Test running a complete batch cycle"""
         mock_provider = MagicMock()
         mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_price = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry,
             low_load_hours=list(range(24)),  # All hours are low load
             batch_size=10
         )
-        
+
         # Add a request
         await scheduler.schedule_update(sample_asset, DataType.PRICE, "yfinance")
-        
+
         # Run the batch cycle
         await scheduler._run_batch_cycle()
-        
+
         assert scheduler.batches_processed == 1
 
 
@@ -1952,9 +1958,9 @@ class TestBatchSchedulerFlush:
             cache_manager=MagicMock(),
             provider_registry=MagicMock()
         )
-        
+
         stats = await scheduler.flush_pending()
-        
+
         assert stats["batches"] == 0
 
     @pytest.mark.asyncio
@@ -1962,24 +1968,24 @@ class TestBatchSchedulerFlush:
         """Test flushing with pending requests"""
         mock_provider = MagicMock()
         mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_price = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
-        
+
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry
         )
-        
+
         # Add requests
         await scheduler.schedule_update(sample_asset, DataType.PRICE, "yfinance")
-        
+
         # Flush all pending
         stats = await scheduler.flush_pending()
-        
+
         assert stats["batches"] >= 1
 
 
@@ -1992,20 +1998,20 @@ class TestPredictiveCacheWarmerWarmSymbol:
         mock_provider = MagicMock()
         mock_provider.name = "test_provider"
         mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_price = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry
         )
-        
+
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
-        
+
         assert result is True
         assert warmer.successful_warms == 1
 
@@ -2015,20 +2021,20 @@ class TestPredictiveCacheWarmerWarmSymbol:
         mock_provider = MagicMock()
         mock_provider.name = "test_provider"
         mock_provider.get_fundamentals = AsyncMock(return_value={"pe_ratio": 25.0})
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_fundamentals = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry
         )
-        
+
         result = await warmer.warm_symbol("AAPL", [DataType.FUNDAMENTALS])
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -2036,17 +2042,17 @@ class TestPredictiveCacheWarmerWarmSymbol:
         """Test warming symbol when fetch fails"""
         mock_provider = MagicMock()
         mock_provider.get_price = AsyncMock(return_value=None)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=MagicMock(),
             provider_registry=mock_registry
         )
-        
+
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
-        
+
         assert result is False
         assert warmer.failed_warms == 1
 
@@ -2055,17 +2061,17 @@ class TestPredictiveCacheWarmerWarmSymbol:
         """Test warming symbol when exception occurs"""
         mock_provider = MagicMock()
         mock_provider.get_price = AsyncMock(side_effect=Exception("API error"))
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=MagicMock(),
             provider_registry=mock_registry
         )
-        
+
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
-        
+
         assert result is False
 
 
@@ -2078,20 +2084,20 @@ class TestPredictiveCacheWarmerBatch:
         mock_provider = MagicMock()
         mock_provider.name = "test_provider"
         mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_price = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry
         )
-        
+
         results = await warmer.warm_cache_batch(["AAPL", "MSFT"], concurrency=2)
-        
+
         assert len(results) == 2
         assert "AAPL" in results
         assert "MSFT" in results
@@ -2106,24 +2112,24 @@ class TestPredictiveCacheWarmerWarmingCycle:
         mock_provider = MagicMock()
         mock_provider.name = "test_provider"
         mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-        
+
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_price = AsyncMock(return_value=True)
-        
+
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry,
             warming_schedule=list(range(24)),  # All hours
             min_request_threshold=1
         )
-        
+
         # Add enough accesses to qualify
         for _ in range(5):
             warmer.record_cache_access("AAPL", DataType.PRICE)
-        
+
         await warmer.run_warming_cycle()
 
 
@@ -2136,20 +2142,20 @@ class TestCacheManagerReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.get = AsyncMock(return_value='{"price": 150.0}')
         manager.l1._redis = mock_redis
-        
+
         fetch_fn = AsyncMock(return_value={"price": 200.0})
-        
+
         result = await manager.get_with_read_through(
             key="test_key",
             data_type=DataType.PRICE,
             fetch_fn=fetch_fn,
             asset=sample_asset
         )
-        
+
         assert result == {"price": 150.0}
         assert manager._l1_hits == 1
         fetch_fn.assert_not_called()  # Should not fetch if cache hit
@@ -2160,21 +2166,21 @@ class TestCacheManagerReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.get = AsyncMock(return_value=None)
         mock_redis.setex = AsyncMock(return_value=True)
         manager.l1._redis = mock_redis
-        
+
         fetch_fn = AsyncMock(return_value={"price": 200.0})
-        
+
         result = await manager.get_with_read_through(
             key="test_key",
             data_type=DataType.PRICE,
             fetch_fn=fetch_fn,
             asset=sample_asset
         )
-        
+
         assert result == {"price": 200.0}
         assert manager._l1_misses == 1
         fetch_fn.assert_called_once()
@@ -2185,20 +2191,20 @@ class TestCacheManagerReadThrough:
         manager = CacheManager()
         manager._initialized = True
         manager.l1._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.get = AsyncMock(return_value=None)
         manager.l1._redis = mock_redis
-        
+
         fetch_fn = AsyncMock(side_effect=Exception("Fetch error"))
-        
+
         result = await manager.get_with_read_through(
             key="test_key",
             data_type=DataType.PRICE,
             fetch_fn=fetch_fn,
             asset=sample_asset
         )
-        
+
         assert result is None
 
 
@@ -2210,13 +2216,13 @@ class TestL1CacheErrorHandling:
         """Test get when JSON parsing fails"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.get = AsyncMock(return_value="invalid json{")
         cache._redis = mock_redis
-        
+
         result = await cache.get("test_key")
-        
+
         # Should return None on parse error
         assert result is None
 
@@ -2225,19 +2231,19 @@ class TestL1CacheErrorHandling:
         """Test get_many when JSON parsing fails"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         mock_pipe = MagicMock()
         mock_pipe.get = MagicMock()
         mock_pipe.execute = AsyncMock(return_value=['{"valid": 1}', 'invalid{', '{"also_valid": 2}'])
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         cache._redis = mock_redis
-        
+
         results = await cache.get_many(["key1", "key2", "key3"])
-        
+
         assert len(results) == 3
         assert results[0] == {"valid": 1}
         assert results[1] is None  # Parse error
@@ -2248,13 +2254,13 @@ class TestL1CacheErrorHandling:
         """Test get_ttl when key has no TTL (returns negative)"""
         cache = L1Cache()
         cache._initialized = True
-        
+
         mock_redis = MagicMock()
         mock_redis.ttl = AsyncMock(return_value=-1)
         cache._redis = mock_redis
-        
+
         result = await cache.get_ttl("test_key")
-        
+
         assert result is None
 
 
@@ -2266,7 +2272,7 @@ class TestL2CacheMockedOperations:
         """Test get_price with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         # Create mock result row
         mock_row = (
             datetime.now(timezone.utc),  # time
@@ -2279,20 +2285,20 @@ class TestL2CacheMockedOperations:
             0.95,  # confidence
             {"extra": "data"},  # metadata
         )
-        
+
         mock_result = MagicMock()
         mock_result.fetchone = MagicMock(return_value=mock_row)
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_price(asset_id=1, provider="yfinance")
-        
+
         assert result is not None
         assert result["price"] == 150.0
         assert result["provider"] == "yfinance"
@@ -2302,20 +2308,20 @@ class TestL2CacheMockedOperations:
         """Test get_price when no price found"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_result = MagicMock()
         mock_result.fetchone = MagicMock(return_value=None)
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_price(asset_id=1)
-        
+
         assert result is None
 
     @pytest.mark.asyncio
@@ -2323,17 +2329,17 @@ class TestL2CacheMockedOperations:
         """Test get_price when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_price(asset_id=1)
-        
+
         assert result is None
 
     @pytest.mark.asyncio
@@ -2341,16 +2347,16 @@ class TestL2CacheMockedOperations:
         """Test set_price with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock()
         mock_session.commit = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.set_price(
             asset_id=1,
             provider="yfinance",
@@ -2358,7 +2364,7 @@ class TestL2CacheMockedOperations:
             change=2.5,
             change_percent=1.7
         )
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -2366,17 +2372,17 @@ class TestL2CacheMockedOperations:
         """Test set_price when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.set_price(asset_id=1, provider="yfinance", price=150.0)
-        
+
         assert result is False
 
     @pytest.mark.asyncio
@@ -2384,26 +2390,26 @@ class TestL2CacheMockedOperations:
         """Test get_ohlcv with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         # Create mock result rows
         mock_rows = [
             (datetime.now(timezone.utc), 1, "yfinance", 150.0, 155.0, 145.0, 152.0, 1000000, "1d"),
             (datetime.now(timezone.utc), 1, "yfinance", 148.0, 152.0, 147.0, 150.0, 900000, "1d"),
         ]
-        
+
         mock_result = MagicMock()
         mock_result.fetchall = MagicMock(return_value=mock_rows)
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_ohlcv(asset_id=1, timeframe="1d", limit=10)
-        
+
         assert len(result) == 2
         assert result[0]["open"] == 150.0
 
@@ -2412,17 +2418,17 @@ class TestL2CacheMockedOperations:
         """Test get_ohlcv when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_ohlcv(asset_id=1)
-        
+
         assert result == []
 
     @pytest.mark.asyncio
@@ -2430,22 +2436,22 @@ class TestL2CacheMockedOperations:
         """Test get_fundamentals with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_row = (1, 1, "yfinance", {"pe_ratio": 25.0}, datetime.now(timezone.utc), 3600)
-        
+
         mock_result = MagicMock()
         mock_result.fetchone = MagicMock(return_value=mock_row)
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_fundamentals(asset_id=1)
-        
+
         assert result is not None
         assert result["data"] == {"pe_ratio": 25.0}
 
@@ -2454,17 +2460,17 @@ class TestL2CacheMockedOperations:
         """Test get_fundamentals when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_fundamentals(asset_id=1)
-        
+
         assert result is None
 
     @pytest.mark.asyncio
@@ -2472,22 +2478,22 @@ class TestL2CacheMockedOperations:
         """Test set_fundamentals with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock()
         mock_session.commit = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.set_fundamentals(
             asset_id=1,
             provider="yfinance",
             data={"pe_ratio": 25.0}
         )
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -2495,17 +2501,17 @@ class TestL2CacheMockedOperations:
         """Test set_fundamentals when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.set_fundamentals(asset_id=1, provider="yfinance", data={})
-        
+
         assert result is False
 
     @pytest.mark.asyncio
@@ -2513,21 +2519,21 @@ class TestL2CacheMockedOperations:
         """Test cleanup_expired with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_result = MagicMock()
         mock_result.rowcount = 5
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.commit = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.cleanup_expired()
-        
+
         assert result == 5
 
     @pytest.mark.asyncio
@@ -2535,17 +2541,17 @@ class TestL2CacheMockedOperations:
         """Test cleanup_expired when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.cleanup_expired()
-        
+
         assert result == 0
 
     @pytest.mark.asyncio
@@ -2553,18 +2559,18 @@ class TestL2CacheMockedOperations:
         """Test generic set with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock()
         mock_session.commit = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.set("test_key", {"data": "value"}, ttl_seconds=60)
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -2572,17 +2578,17 @@ class TestL2CacheMockedOperations:
         """Test generic set when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.set("test_key", {"data": "value"})
-        
+
         assert result is False
 
     @pytest.mark.asyncio
@@ -2590,22 +2596,22 @@ class TestL2CacheMockedOperations:
         """Test generic get with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_row = ({"data": "value"},)
-        
+
         mock_result = MagicMock()
         mock_result.fetchone = MagicMock(return_value=mock_row)
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get("test_key")
-        
+
         assert result == {"data": "value"}
 
     @pytest.mark.asyncio
@@ -2613,20 +2619,20 @@ class TestL2CacheMockedOperations:
         """Test generic get when key not found"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_result = MagicMock()
         mock_result.fetchone = MagicMock(return_value=None)
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get("test_key")
-        
+
         assert result is None
 
     @pytest.mark.asyncio
@@ -2634,17 +2640,17 @@ class TestL2CacheMockedOperations:
         """Test generic get when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get("test_key")
-        
+
         assert result is None
 
     @pytest.mark.asyncio
@@ -2652,21 +2658,21 @@ class TestL2CacheMockedOperations:
         """Test generic delete with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_result = MagicMock()
         mock_result.rowcount = 1
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.commit = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.delete("test_key")
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -2674,17 +2680,17 @@ class TestL2CacheMockedOperations:
         """Test generic delete when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.delete("test_key")
-        
+
         assert result is False
 
     @pytest.mark.asyncio
@@ -2692,20 +2698,20 @@ class TestL2CacheMockedOperations:
         """Test generic exists with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_result = MagicMock()
         mock_result.fetchone = MagicMock(return_value=(1,))
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.exists("test_key")
-        
+
         assert result is True
 
     @pytest.mark.asyncio
@@ -2713,17 +2719,17 @@ class TestL2CacheMockedOperations:
         """Test generic exists when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.exists("test_key")
-        
+
         assert result is False
 
     @pytest.mark.asyncio
@@ -2731,21 +2737,21 @@ class TestL2CacheMockedOperations:
         """Test clear with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_result = MagicMock()
         mock_result.rowcount = 10
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.commit = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.clear()
-        
+
         assert result == 10
 
     @pytest.mark.asyncio
@@ -2753,17 +2759,17 @@ class TestL2CacheMockedOperations:
         """Test clear when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.clear()
-        
+
         assert result == 0
 
     @pytest.mark.asyncio
@@ -2771,21 +2777,21 @@ class TestL2CacheMockedOperations:
         """Test clear_pattern with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_result = MagicMock()
         mock_result.rowcount = 5
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.commit = AsyncMock()
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.clear_pattern("test:%")
-        
+
         assert result == 5
 
     @pytest.mark.asyncio
@@ -2793,17 +2799,17 @@ class TestL2CacheMockedOperations:
         """Test clear_pattern when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.clear_pattern("test:%")
-        
+
         assert result == 0
 
     @pytest.mark.asyncio
@@ -2811,23 +2817,23 @@ class TestL2CacheMockedOperations:
         """Test get_stats with mocked session"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_count_result = MagicMock()
         mock_count_result.scalar = MagicMock(return_value=100)
-        
+
         mock_expired_result = MagicMock()
         mock_expired_result.scalar = MagicMock(return_value=10)
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=[mock_count_result, mock_expired_result])
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_stats()
-        
+
         assert result["status"] == "initialized"
         assert result["total_entries"] == 100
         assert result["expired_entries"] == 10
@@ -2837,15 +2843,15 @@ class TestL2CacheMockedOperations:
         """Test get_stats when exception occurs"""
         cache = L2Cache()
         cache._initialized = True
-        
+
         mock_session = MagicMock()
         mock_session.execute = AsyncMock(side_effect=Exception("DB error"))
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
-        
+
         mock_session_maker = MagicMock(return_value=mock_session)
         cache._session_maker = mock_session_maker
-        
+
         result = await cache.get_stats()
-        
+
         assert result["status"] == "error"
