@@ -502,3 +502,452 @@ class AzureOpenAIClient:
                 self._last_request_time.isoformat() if self._last_request_time else None
             ),
         }
+
+    # ==========================================================================
+    # Market-Specific Narrative Generation Methods
+    # ==========================================================================
+
+    async def generate_market_summary(
+        self,
+        data: Dict[str, Any],
+        style: str = "professional",
+    ) -> str:
+        """
+        Generate market summary narrative for an asset
+
+        Args:
+            data: Market data containing price, volume, metrics
+            style: Narrative style (professional, concise, detailed)
+
+        Returns:
+            Market summary narrative
+
+        Raises:
+            ProviderError: On API errors
+
+        Example:
+            >>> data = {
+            ...     "symbol": "AAPL",
+            ...     "price": 175.50,
+            ...     "change": 4.25,
+            ...     "change_percent": 2.48,
+            ...     "volume": 75000000,
+            ... }
+            >>> summary = await client.generate_market_summary(data)
+        """
+        logger.info("Generating market summary", symbol=data.get("symbol"))
+
+        system_message = {
+            "role": "system",
+            "content": (
+                "You are a financial analyst providing factual market insights. "
+                "Use clear, professional language. Avoid predictive statements - use 'currently', "
+                "'historically', 'as of today'. Include data sources when available. "
+                "IMPORTANT: End with: 'This is not financial advice. FIML provides data analysis only.'"
+            ),
+        }
+
+        user_message = {
+            "role": "user",
+            "content": (
+                f"Generate a {style} market summary for {data.get('symbol', 'this asset')}:\n"
+                f"{json.dumps(data, indent=2)}\n\n"
+                "Include: current price, price movement, volume analysis, 52-week position."
+            ),
+        }
+
+        try:
+            max_tokens = {"concise": 300, "professional": 500, "detailed": 800}.get(
+                style, 500
+            )
+
+            response = await self._make_request(
+                messages=[system_message, user_message],
+                temperature=0.5,
+                max_tokens=max_tokens,
+            )
+
+            summary = response["choices"][0]["message"]["content"]
+            logger.info("Market summary generated", length=len(summary))
+            return summary  # type: ignore[return-value]
+
+        except Exception as e:
+            logger.error("Failed to generate market summary", error=str(e))
+            # Fallback to template-based narrative
+            return self._fallback_market_summary(data)
+
+    async def explain_price_movement(
+        self,
+        symbol: str,
+        change_pct: float,
+        volume: int,
+        news: Optional[list] = None,
+    ) -> str:
+        """
+        Explain price movement with context
+
+        Args:
+            symbol: Asset symbol
+            change_pct: Price change percentage
+            volume: Trading volume
+            news: Optional news headlines
+
+        Returns:
+            Price movement explanation
+
+        Example:
+            >>> explanation = await client.explain_price_movement(
+            ...     "AAPL", 2.48, 75000000, ["Q4 earnings beat estimates"]
+            ... )
+        """
+        logger.info("Explaining price movement", symbol=symbol, change_pct=change_pct)
+
+        system_message = {
+            "role": "system",
+            "content": (
+                "You are a financial analyst explaining price movements. "
+                "Provide factual analysis based on provided data. "
+                "Avoid speculation about future prices. Use terms like 'currently', 'today'. "
+                "Cite data sources. End with compliance disclaimer."
+            ),
+        }
+
+        news_context = ""
+        if news:
+            news_context = f"\nRecent news: {', '.join(news[:3])}"
+
+        user_message = {
+            "role": "user",
+            "content": (
+                f"Explain the price movement for {symbol}:\n"
+                f"- Change: {change_pct:+.2f}%\n"
+                f"- Volume: {volume:,}{news_context}\n\n"
+                "Provide clear explanation of what drove this movement."
+            ),
+        }
+
+        try:
+            response = await self._make_request(
+                messages=[system_message, user_message],
+                temperature=0.6,
+                max_tokens=400,
+            )
+
+            explanation = response["choices"][0]["message"]["content"]
+            logger.info("Price movement explained", length=len(explanation))
+            return explanation  # type: ignore[return-value]
+
+        except Exception as e:
+            logger.error("Failed to explain price movement", error=str(e))
+            return self._fallback_price_movement(symbol, change_pct, volume)
+
+    async def interpret_technical_indicators(
+        self,
+        rsi: Optional[float] = None,
+        macd: Optional[Dict[str, float]] = None,
+        bollinger: Optional[Dict[str, float]] = None,
+    ) -> str:
+        """
+        Interpret technical indicators
+
+        Args:
+            rsi: RSI value (0-100)
+            macd: MACD values {macd, signal, histogram}
+            bollinger: Bollinger bands {upper, middle, lower, current}
+
+        Returns:
+            Technical indicator interpretation
+
+        Example:
+            >>> interpretation = await client.interpret_technical_indicators(
+            ...     rsi=65.3,
+            ...     macd={"macd": 2.45, "signal": 1.92, "histogram": 0.53}
+            ... )
+        """
+        logger.info("Interpreting technical indicators")
+
+        indicators_data = {}
+        if rsi is not None:
+            indicators_data["RSI"] = rsi
+        if macd:
+            indicators_data["MACD"] = macd
+        if bollinger:
+            indicators_data["Bollinger Bands"] = bollinger
+
+        system_message = {
+            "role": "system",
+            "content": (
+                "You are a technical analyst interpreting indicators. "
+                "Explain what indicators currently show. Avoid predictions. "
+                "Use 'indicates', 'suggests', 'historically'. "
+                "Include disclaimer: 'This is technical analysis, not investment advice.'"
+            ),
+        }
+
+        user_message = {
+            "role": "user",
+            "content": (
+                f"Interpret these technical indicators:\n{json.dumps(indicators_data, indent=2)}\n\n"
+                "Explain what each indicator shows and overall technical picture."
+            ),
+        }
+
+        try:
+            response = await self._make_request(
+                messages=[system_message, user_message],
+                temperature=0.4,
+                max_tokens=500,
+            )
+
+            interpretation = response["choices"][0]["message"]["content"]
+            logger.info("Technical indicators interpreted", length=len(interpretation))
+            return interpretation  # type: ignore[return-value]
+
+        except Exception as e:
+            logger.error("Failed to interpret technical indicators", error=str(e))
+            return self._fallback_technical_interpretation(rsi, macd, bollinger)
+
+    async def assess_risk_profile(
+        self,
+        volatility: float,
+        beta: Optional[float] = None,
+        var: Optional[float] = None,
+    ) -> str:
+        """
+        Assess risk profile of an asset
+
+        Args:
+            volatility: Historical volatility
+            beta: Beta coefficient vs market
+            var: Value at Risk (95%)
+
+        Returns:
+            Risk profile assessment
+
+        Example:
+            >>> risk = await client.assess_risk_profile(
+            ...     volatility=0.25, beta=1.15, var=0.05
+            ... )
+        """
+        logger.info("Assessing risk profile", volatility=volatility)
+
+        risk_data = {"volatility": volatility}
+        if beta is not None:
+            risk_data["beta"] = beta
+        if var is not None:
+            risk_data["value_at_risk_95"] = var
+
+        system_message = {
+            "role": "system",
+            "content": (
+                "You are a risk analyst assessing asset risk profiles. "
+                "Provide factual risk assessment based on metrics. "
+                "Use clear risk categories (low, moderate, high). "
+                "End with: 'Past volatility does not guarantee future risk levels.'"
+            ),
+        }
+
+        user_message = {
+            "role": "user",
+            "content": (
+                f"Assess the risk profile based on:\n{json.dumps(risk_data, indent=2)}\n\n"
+                "Explain risk level and what investors should understand."
+            ),
+        }
+
+        try:
+            response = await self._make_request(
+                messages=[system_message, user_message],
+                temperature=0.3,
+                max_tokens=400,
+            )
+
+            assessment = response["choices"][0]["message"]["content"]
+            logger.info("Risk profile assessed", length=len(assessment))
+            return assessment  # type: ignore[return-value]
+
+        except Exception as e:
+            logger.error("Failed to assess risk profile", error=str(e))
+            return self._fallback_risk_assessment(volatility, beta, var)
+
+    async def compare_assets(
+        self,
+        asset1_data: Dict[str, Any],
+        asset2_data: Dict[str, Any],
+    ) -> str:
+        """
+        Compare two assets
+
+        Args:
+            asset1_data: First asset's data
+            asset2_data: Second asset's data
+
+        Returns:
+            Comparative analysis
+
+        Example:
+            >>> comparison = await client.compare_assets(
+            ...     {"symbol": "AAPL", "pe_ratio": 28.5, "growth": 15.8},
+            ...     {"symbol": "MSFT", "pe_ratio": 32.1, "growth": 12.3}
+            ... )
+        """
+        logger.info(
+            "Comparing assets",
+            asset1=asset1_data.get("symbol"),
+            asset2=asset2_data.get("symbol"),
+        )
+
+        system_message = {
+            "role": "system",
+            "content": (
+                "You are a financial analyst comparing assets. "
+                "Provide objective comparison based on metrics. "
+                "Avoid recommendations (don't say 'better' or 'should buy'). "
+                "Use comparative language: 'higher', 'lower', 'more volatile'. "
+                "End with: 'This comparison is for informational purposes only.'"
+            ),
+        }
+
+        user_message = {
+            "role": "user",
+            "content": (
+                f"Compare these two assets:\n\n"
+                f"Asset 1: {json.dumps(asset1_data, indent=2)}\n\n"
+                f"Asset 2: {json.dumps(asset2_data, indent=2)}\n\n"
+                "Provide factual comparison of metrics."
+            ),
+        }
+
+        try:
+            response = await self._make_request(
+                messages=[system_message, user_message],
+                temperature=0.4,
+                max_tokens=600,
+            )
+
+            comparison = response["choices"][0]["message"]["content"]
+            logger.info("Assets compared", length=len(comparison))
+            return comparison  # type: ignore[return-value]
+
+        except Exception as e:
+            logger.error("Failed to compare assets", error=str(e))
+            return self._fallback_comparison(asset1_data, asset2_data)
+
+    # ==========================================================================
+    # Fallback Template-Based Narratives
+    # ==========================================================================
+
+    def _fallback_market_summary(self, data: Dict[str, Any]) -> str:
+        """Generate fallback market summary when API fails"""
+        symbol = data.get("symbol", "Asset")
+        price = data.get("price", 0)
+        change = data.get("change", 0)
+        change_pct = data.get("change_percent", 0)
+        volume = data.get("volume", 0)
+
+        direction = "up" if change > 0 else "down"
+        return (
+            f"{symbol} is currently trading at ${price:.2f}, {direction} "
+            f"${abs(change):.2f} ({change_pct:+.2f}%) in the last 24 hours. "
+            f"Trading volume is {volume:,} shares. "
+            f"This is not financial advice. FIML provides data analysis only."
+        )
+
+    def _fallback_price_movement(
+        self, symbol: str, change_pct: float, volume: int
+    ) -> str:
+        """Generate fallback price movement explanation"""
+        direction = "gained" if change_pct > 0 else "declined"
+        magnitude = "significantly" if abs(change_pct) > 3 else "moderately"
+
+        return (
+            f"{symbol} has {direction} {magnitude} by {abs(change_pct):.2f}% "
+            f"on volume of {volume:,} shares. This movement reflects current "
+            f"market conditions. This is not financial advice."
+        )
+
+    def _fallback_technical_interpretation(
+        self,
+        rsi: Optional[float],
+        macd: Optional[Dict[str, float]],
+        bollinger: Optional[Dict[str, float]],
+    ) -> str:
+        """Generate fallback technical interpretation"""
+        parts = []
+
+        if rsi is not None:
+            if rsi > 70:
+                parts.append(f"RSI at {rsi:.1f} indicates overbought conditions")
+            elif rsi < 30:
+                parts.append(f"RSI at {rsi:.1f} indicates oversold conditions")
+            else:
+                parts.append(f"RSI at {rsi:.1f} indicates neutral momentum")
+
+        if macd and "histogram" in macd:
+            if macd["histogram"] > 0:
+                parts.append("MACD shows bullish momentum")
+            else:
+                parts.append("MACD shows bearish momentum")
+
+        if not parts:
+            parts.append("Technical indicators are available for analysis")
+
+        return (
+            ". ".join(parts)
+            + ". This is technical analysis, not investment advice."
+        )
+
+    def _fallback_risk_assessment(
+        self,
+        volatility: float,
+        beta: Optional[float],
+        var: Optional[float],
+    ) -> str:
+        """Generate fallback risk assessment"""
+        if volatility < 0.15:
+            risk_level = "low to moderate"
+        elif volatility < 0.30:
+            risk_level = "moderate"
+        else:
+            risk_level = "high"
+
+        beta_text = ""
+        if beta is not None:
+            if beta > 1.2:
+                beta_text = f" The beta of {beta:.2f} indicates higher volatility than the market."
+            elif beta < 0.8:
+                beta_text = f" The beta of {beta:.2f} indicates lower volatility than the market."
+
+        return (
+            f"Based on historical volatility of {volatility:.2%}, this asset shows "
+            f"{risk_level} risk.{beta_text} Past volatility does not guarantee future risk levels."
+        )
+
+    def _fallback_comparison(
+        self,
+        asset1_data: Dict[str, Any],
+        asset2_data: Dict[str, Any],
+    ) -> str:
+        """Generate fallback asset comparison"""
+        symbol1 = asset1_data.get("symbol", "Asset 1")
+        symbol2 = asset2_data.get("symbol", "Asset 2")
+
+        parts = [f"Comparing {symbol1} and {symbol2}:"]
+
+        # Compare P/E ratios if available
+        pe1 = asset1_data.get("pe_ratio")
+        pe2 = asset2_data.get("pe_ratio")
+        if pe1 and pe2:
+            higher = symbol1 if pe1 > pe2 else symbol2
+            parts.append(f"{higher} has a higher P/E ratio")
+
+        # Compare growth rates
+        growth1 = asset1_data.get("growth")
+        growth2 = asset2_data.get("growth")
+        if growth1 and growth2:
+            faster = symbol1 if growth1 > growth2 else symbol2
+            parts.append(f"{faster} shows faster growth")
+
+        return (
+            ". ".join(parts) + ". This comparison is for informational purposes only."
+        )
