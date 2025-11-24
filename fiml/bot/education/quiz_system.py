@@ -290,3 +290,23 @@ class QuizSystem:
             output.append("Enter a number:")
 
         return "\n".join(output)
+
+    # Alias for compatibility with tests
+    async def create_session(
+        self,
+        user_id: str,
+        lesson_id: str,
+        questions: List[QuizQuestion]
+    ) -> QuizSession:
+        """
+        Create a new quiz session (alias for start_quiz)
+
+        Args:
+            user_id: User identifier
+            lesson_id: Associated lesson
+            questions: List of questions
+
+        Returns:
+            Quiz session
+        """
+        return await self.start_quiz(user_id, lesson_id, questions)

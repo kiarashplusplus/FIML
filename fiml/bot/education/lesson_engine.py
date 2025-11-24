@@ -355,3 +355,142 @@ class LessonContentEngine:
 
         logger.info("Sample lesson created", lesson_id=lesson_id)
         return lesson_file
+
+    # Methods expected by tests
+    def load_lesson_from_file(self, file_path: str) -> Optional[Dict]:
+        """
+        Load lesson from YAML file (synchronous version for tests)
+
+        Args:
+            file_path: Path to lesson YAML file
+
+        Returns:
+            Lesson data dictionary or None
+        """
+        try:
+            with open(file_path, 'r') as f:
+                lesson_data = yaml.safe_load(f)
+            return lesson_data
+        except Exception as e:
+            logger.error("Failed to load lesson from file", file_path=file_path, error=str(e))
+            return None
+
+    def validate_lesson(self, lesson_data: Dict) -> bool:
+        """
+        Validate lesson structure
+
+        Args:
+            lesson_data: Lesson data dictionary
+
+        Returns:
+            True if valid
+        """
+        required_fields = ["id", "title"]
+        for field in required_fields:
+            if field not in lesson_data:
+                logger.error("Missing required field", field=field)
+                return False
+        return True
+
+    def mark_lesson_started(self, user_id: str, lesson_id: str):
+        """
+        Mark lesson as started for user
+
+        Args:
+            user_id: User identifier
+            lesson_id: Lesson identifier
+        """
+        if user_id not in self._user_progress:
+            self._user_progress[user_id] = {}
+
+        if "lessons" not in self._user_progress[user_id]:
+            self._user_progress[user_id]["lessons"] = {}
+
+        self._user_progress[user_id]["lessons"][lesson_id] = {
+            "status": "in_progress",
+            "started_at": datetime.utcnow().isoformat()
+        }
+
+        logger.info("Lesson started", user_id=user_id, lesson_id=lesson_id)
+
+    def mark_lesson_completed(self, user_id: str, lesson_id: str):
+        """
+        Mark lesson as completed for user
+
+        Args:
+            user_id: User identifier
+            lesson_id: Lesson identifier
+        """
+        if user_id not in self._user_progress:
+            self._user_progress[user_id] = {}
+
+        if "lessons" not in self._user_progress[user_id]:
+            self._user_progress[user_id]["lessons"] = {}
+
+        self._user_progress[user_id]["lessons"][lesson_id] = {
+            "status": "completed",
+            "completed_at": datetime.utcnow().isoformat()
+        }
+
+        logger.info("Lesson completed", user_id=user_id, lesson_id=lesson_id)
+
+    def is_lesson_in_progress(self, user_id: str, lesson_id: str) -> bool:
+        """
+        Check if lesson is in progress for user
+
+        Args:
+            user_id: User identifier
+            lesson_id: Lesson identifier
+
+        Returns:
+            True if in progress
+        """
+        if user_id not in self._user_progress:
+            return False
+
+        lessons = self._user_progress[user_id].get("lessons", {})
+        lesson_data = lessons.get(lesson_id, {})
+
+        return lesson_data.get("status") == "in_progress"
+
+    def is_lesson_completed(self, user_id: str, lesson_id: str) -> bool:
+        """
+        Check if lesson is completed for user
+
+        Args:
+            user_id: User identifier
+            lesson_id: Lesson identifier
+
+        Returns:
+            True if completed
+        """
+        if user_id not in self._user_progress:
+            return False
+
+        lessons = self._user_progress[user_id].get("lessons", {})
+        lesson_data = lessons.get(lesson_id, {})
+
+        return lesson_data.get("status") == "completed"
+
+    def can_access_lesson(self, user_id: str, lesson: Dict) -> bool:
+        """
+        Check if user can access lesson (prerequisites met)
+
+        Args:
+            user_id: User identifier
+            lesson: Lesson data dictionary
+
+        Returns:
+            True if can access
+        """
+        prerequisites = lesson.get("prerequisites", [])
+
+        if not prerequisites:
+            return True
+
+        # Check if all prerequisites are completed
+        for prereq_id in prerequisites:
+            if not self.is_lesson_completed(user_id, prereq_id):
+                return False
+
+        return True
