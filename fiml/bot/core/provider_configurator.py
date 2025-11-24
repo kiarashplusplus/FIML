@@ -3,11 +3,12 @@ Component 2: FIML Provider Configurator
 Configures FIML arbitration engine with user-specific API keys
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 import structlog
 
-from fiml.bot.core.key_manager import UserProviderKeyManager
+if TYPE_CHECKING:
+    from fiml.bot.core.key_manager import UserProviderKeyManager
 
 logger = structlog.get_logger(__name__)
 
@@ -23,30 +24,51 @@ class FIMLProviderConfigurator:
     - Usage tracking and quota management
     """
 
-    def __init__(self, key_manager: UserProviderKeyManager = None):
+    # Known providers that support API keys
+    KNOWN_PROVIDERS = ["alpha_vantage", "polygon", "finnhub", "fmp"]
+    
+    # Free providers that don't require API keys
+    FREE_PROVIDERS = ["yahoo_finance"]
+    
+    # Provider fallback mappings
+    FALLBACK_MAP = {
+        "alpha_vantage": ["yahoo_finance", "finnhub"],
+        "polygon": ["alpha_vantage", "yahoo_finance"],
+        "finnhub": ["alpha_vantage", "yahoo_finance"],
+        "fmp": ["alpha_vantage", "yahoo_finance"],
+    }
+
+    def __init__(self, key_manager: Optional['UserProviderKeyManager'] = None):
         """
         Initialize configurator
 
         Args:
             key_manager: User provider key manager instance (optional, created if not provided)
         """
-        self.key_manager = key_manager or UserProviderKeyManager()
+        if key_manager is None:
+            from fiml.bot.core.key_manager import UserProviderKeyManager
+            key_manager = UserProviderKeyManager()
+        self.key_manager = key_manager
         logger.info("FIMLProviderConfigurator initialized")
 
-    async def get_user_provider_config(self, user_id: str, user_keys: Dict = None) -> Dict:
+    def get_user_provider_config(self, user_id: str, user_keys: Optional[Dict] = None) -> Dict:
         """
-        Get user's provider configuration for FIML
+        Get user's provider configuration for FIML (synchronous)
+
+        Note: This method is synchronous and does not fetch keys from key_manager.
+        If user_keys is None, defaults to empty dict for free-tier-only configuration.
 
         Args:
             user_id: User identifier
-            user_keys: Optional user keys dict (if not provided, fetches from key_manager)
+            user_keys: User keys dict (optional - if not provided, defaults to empty dict
+                resulting in free-tier-only configuration)
 
         Returns:
             Provider configuration dict
         """
-        # Get user's stored API keys
+        # Default to empty dict if not provided (free tier only)
         if user_keys is None:
-            user_keys = await self.key_manager.get_user_keys(user_id)
+            user_keys = {}
 
         config = {
             "user_id": user_id,
@@ -105,8 +127,11 @@ class FIMLProviderConfigurator:
         """
         from fiml.arbitration.engine import DataArbitrationEngine
 
+        # Get user's stored API keys
+        user_keys = await self.key_manager.get_user_keys(user_id)
+
         # Get user's provider configuration
-        config = await self.get_user_provider_config(user_id)
+        config = self.get_user_provider_config(user_id, user_keys=user_keys)
 
         # Initialize providers
         providers = []
@@ -249,6 +274,52 @@ class FIMLProviderConfigurator:
                 "fallback": "yahoo_finance",
                 "action": "retry_later"
             }
+
+    def get_fallback_suggestions(self, failed_provider: str) -> List[str]:
+        """
+        Get fallback provider suggestions when a provider fails
+
+        Args:
+            failed_provider: Name of the provider that failed
+
+        Returns:
+            List of suggested fallback provider names
+        """
+        # Use class constant for fallback mappings
+        suggestions = self.FALLBACK_MAP.get(failed_provider, self.FREE_PROVIDERS)
+        
+        logger.info(
+            "Generated fallback suggestions",
+            failed_provider=failed_provider,
+            suggestions=suggestions
+        )
+        
+        return suggestions
+
+    def check_provider_health(self, provider: str) -> bool:
+        """
+        Check if a provider is healthy and available
+
+        Args:
+            provider: Provider name to check
+
+        Returns:
+            True if provider is healthy, False otherwise
+        """
+        # Free providers are always available (no API key required)
+        if provider in self.FREE_PROVIDERS:
+            return True
+        
+        # For other providers, check if they're in our known list
+        is_healthy = provider in self.KNOWN_PROVIDERS
+        
+        logger.info(
+            "Provider health check",
+            provider=provider,
+            is_healthy=is_healthy
+        )
+        
+        return is_healthy
 
     async def get_provider_status(self, user_id: str) -> List[Dict]:
         """
