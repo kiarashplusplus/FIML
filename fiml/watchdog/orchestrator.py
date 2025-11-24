@@ -354,6 +354,13 @@ class WatchdogManager:
 
     def get_event_stats(self) -> Dict:
         """Get event stream statistics"""
+        if self._event_stream is None:
+            return {
+                "total_events": 0,
+                "events_by_type": {},
+                "events_by_priority": {},
+                "recent_events": []
+            }
         return self._event_stream.get_stats()
 
     def get_recent_events(
@@ -362,6 +369,8 @@ class WatchdogManager:
         limit: int = 100,
     ) -> List[WatchdogEvent]:
         """Get recent events from event stream"""
+        if self._event_stream is None:
+            return []
         return self._event_stream.get_history(event_filter=event_filter, limit=limit)
 
     def subscribe_to_events(
@@ -379,10 +388,15 @@ class WatchdogManager:
         Returns:
             Subscription ID
         """
+        if self._event_stream is None:
+            logger.warning("Event stream not initialized, cannot subscribe to events")
+            return ""
         return self._event_stream.subscribe(callback=callback, event_filter=event_filter)
 
     def unsubscribe_from_events(self, subscription_id: str) -> bool:
         """Unsubscribe from events"""
+        if self._event_stream is None:
+            return False
         return self._event_stream.unsubscribe(subscription_id)
 
     def get_status(self) -> Dict:
