@@ -214,7 +214,7 @@ class TestAzureClientEnhancements:
         assert "MACD" in tech
 
         # Test risk assessment fallback
-        risk = client._fallback_risk_assessment(0.25, 1.15, 0.05)
+        risk = client._fallback_risk_assessment(0.25, 1.25, 0.05)
         assert "volatility" in risk.lower()
         assert "beta" in risk.lower()
 
