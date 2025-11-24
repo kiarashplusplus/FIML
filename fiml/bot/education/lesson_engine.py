@@ -63,6 +63,23 @@ class Lesson:
             self.quiz_questions = []
 
 
+@dataclass
+class RenderedLesson:
+    """Rendered lesson content with metadata"""
+
+    title: str
+    content: str
+    metadata: Dict[str, Any]
+
+    def __str__(self):
+        """Return the rendered content when converted to string"""
+        return self.content
+    
+    def __contains__(self, item):
+        """Support 'in' operator for backward compatibility"""
+        return item in self.content
+
+
 class LessonContentEngine:
     """
     Manages and renders educational lessons
@@ -205,7 +222,7 @@ class LessonContentEngine:
 
     async def render_lesson(
         self, lesson: Union[Lesson, Dict[str, Any]], user_id: str, include_fiml_data: bool = True
-    ) -> str:
+    ) -> RenderedLesson:
         """
         Render lesson with live data
 
@@ -215,21 +232,25 @@ class LessonContentEngine:
             include_fiml_data: Whether to fetch live FIML data
 
         Returns:
-            Rendered lesson text
+            RenderedLesson object with title, content, and metadata
         """
         output = []
 
         # Handle both dict and Lesson object
         if isinstance(lesson, dict):
+            lesson_id = lesson.get("id", "")
             lesson_title = lesson.get("title", "Untitled")
             lesson_duration = lesson.get("duration_minutes", 0)
             lesson_difficulty = lesson.get("difficulty", "unknown")
+            lesson_category = lesson.get("category", "general")
             lesson_objectives = lesson.get("learning_objectives", [])
             lesson_sections = lesson.get("sections", [])
         else:
+            lesson_id = lesson.id
             lesson_title = lesson.title
             lesson_duration = lesson.duration_minutes
             lesson_difficulty = lesson.difficulty
+            lesson_category = lesson.category
             lesson_objectives = lesson.learning_objectives
             lesson_sections = lesson.sections
 
@@ -305,7 +326,25 @@ class LessonContentEngine:
         if lesson_quiz:
             output.append(f"📝 Quiz: {len(lesson_quiz)} questions")
 
-        return "\n".join(output)
+        content = "\n".join(output)
+        
+        # Build metadata
+        metadata = {
+            "lesson_id": lesson_id,
+            "category": lesson_category,
+            "difficulty": lesson_difficulty,
+            "duration_minutes": lesson_duration,
+            "xp_reward": lesson_xp,
+            "user_id": user_id,
+            "rendered_at": datetime.now(UTC).isoformat(),
+            "include_fiml_data": include_fiml_data,
+        }
+        
+        return RenderedLesson(
+            title=lesson_title,
+            content=content,
+            metadata=metadata
+        )
 
     async def check_prerequisites(self, user_id: str, lesson: Lesson) -> tuple[bool, List[str]]:
         """
