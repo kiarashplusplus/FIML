@@ -92,6 +92,7 @@ class UserSession:
     conversation_history: List[Dict] = None
     progress: Dict[str, Any] = None
     preferences: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None
     created_at: datetime = None
     updated_at: datetime = None
 
@@ -102,6 +103,8 @@ class UserSession:
             self.progress = {}
         if self.preferences is None:
             self.preferences = {"mentor": "maya"}
+        if self.metadata is None:
+            self.metadata = {}
         if self.created_at is None:
             self.created_at = datetime.utcnow()
         if self.updated_at is None:
@@ -145,6 +148,10 @@ class SessionManager:
         if user_id in self._sessions:
             del self._sessions[user_id]
             logger.info("Session deleted", user_id=user_id)
+
+    def get_session(self, user_id: str) -> Optional[UserSession]:
+        """Get session without creating if it doesn't exist"""
+        return self._sessions.get(user_id)
 
 
 class IntentClassifier:
@@ -205,16 +212,16 @@ class IntentClassifier:
                 )
 
         # Keyword-based classification
-        if any(kw in text for kw in self.MARKET_KEYWORDS):
+        if any(kw in text for kw in self.LESSON_KEYWORDS):
             return Intent(
-                type=IntentType.MARKET_QUERY,
+                type=IntentType.LESSON_REQUEST,
                 data={"query": message.text},
                 confidence=0.7
             )
 
-        if any(kw in text for kw in self.LESSON_KEYWORDS):
+        if any(kw in text for kw in self.MARKET_KEYWORDS):
             return Intent(
-                type=IntentType.LESSON_REQUEST,
+                type=IntentType.MARKET_QUERY,
                 data={"query": message.text},
                 confidence=0.7
             )
@@ -263,6 +270,19 @@ class UnifiedBotGateway:
         }
 
         logger.info("UnifiedBotGateway initialized")
+
+    async def classify(self, message: AbstractMessage, session: UserSession) -> Intent:
+        """
+        Classify message intent
+
+        Args:
+            message: User message
+            session: User session
+
+        Returns:
+            Classified intent
+        """
+        return await self.intent_classifier.classify(message, session)
 
     async def handle_message(
         self,
