@@ -95,7 +95,7 @@ class TestGamificationEngine:
         user_id = "test_user_badges"
 
         # Award badge
-        awarded = await gamification.award_badge(user_id, "first_lesson")
+        awarded = gamification.award_badge(user_id, "first_lesson")
         assert awarded is True
 
         # Check badge in stats
@@ -107,11 +107,11 @@ class TestGamificationEngine:
         user_id = "test_user_dedup"
 
         # Award badge
-        awarded = await gamification.award_badge(user_id, "first_lesson")
+        awarded = gamification.award_badge(user_id, "first_lesson")
         assert awarded is True
 
         # Try to award again
-        awarded = await gamification.award_badge(user_id, "first_lesson")
+        awarded = gamification.award_badge(user_id, "first_lesson")
         assert awarded is False
 
     async def test_xp_rewards_by_action(self, gamification):

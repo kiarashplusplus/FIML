@@ -61,7 +61,9 @@ class TestEducationalComplianceFilter:
         ]
 
         for question in advice_seeking_questions:
-            allowed, response = await compliance_filter.filter_user_question(question)
+            result = await compliance_filter.filter_user_question(question)
+            allowed = result.is_allowed
+            response = result.message
     async def test_allowed_educational_questions(self, compliance_filter):
         """Test that educational questions are allowed"""
         educational_questions = [
@@ -72,7 +74,9 @@ class TestEducationalComplianceFilter:
         ]
 
         for question in educational_questions:
-            allowed, response = await compliance_filter.filter_user_question(question)
+            result = await compliance_filter.filter_user_question(question)
+            allowed = result.is_allowed
+            response = result.message
     async def test_disclaimer_injection(self, compliance_filter):
         """Test automatic disclaimer injection"""
         content = "High P/E ratios might indicate growth stocks."
@@ -142,7 +146,9 @@ class TestEducationalComplianceFilter:
     async def test_suggestion_alternatives(self, compliance_filter):
         """Test alternative suggestions for blocked questions"""
         question = "Should I buy AAPL?"
-        allowed, response = await compliance_filter.filter_user_question(question)
+        result = await compliance_filter.filter_user_question(question)
+        allowed = result.is_allowed
+        response = result.message
 
         assert not allowed
         # Response should suggest educational alternatives

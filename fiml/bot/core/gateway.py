@@ -167,6 +167,10 @@ class IntentClassifier:
     # Lesson keywords
     LESSON_KEYWORDS = ["lesson", "learn", "teach", "explain", "course", "module"]
 
+    # Educational question patterns (high priority)
+    EDUCATIONAL_PATTERNS = ["what is", "how do", "can you explain", "what's the difference", 
+                          "how does", "why does", "tell me about", "what are"]
+
     # Market keywords
     MARKET_KEYWORDS = ["price", "stock", "chart", "quote", "$", "market", "ticker"]
 
@@ -210,6 +214,14 @@ class IntentClassifier:
                     data={"action": text},
                     confidence=0.8
                 )
+
+        # Check for educational questions first (higher priority than market keywords)
+        if any(pattern in text for pattern in self.EDUCATIONAL_PATTERNS):
+            return Intent(
+                type=IntentType.AI_QUESTION,
+                data={"question": message.text},
+                confidence=0.8
+            )
 
         # Keyword-based classification
         if any(kw in text for kw in self.LESSON_KEYWORDS):
