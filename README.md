@@ -501,11 +501,31 @@ Access monitoring dashboards (when Docker services are running):
 
 ## 🧪 Testing
 
+> 📊 **Current Status**: 620/701 tests passing (88.4%) | [Full Test Report](TEST_STATUS_REPORT.md)  
+> ✅ Core FIML: 100% passing | ⚠️ Bot Platform: 41 failures (fixes available)  
+> 🤖 **Quick Fix**: See [AI Fix Prompts](AI_FIX_PROMPTS.md) for automated solutions
+
+### Quick Test Status Check
+
+```bash
+# Run quick test status check
+./check_test_status.sh
+
+# Or manually run tests
+pytest tests/ -v -m "not live"
+```
+
 ### Quick Test Commands
 
 ```bash
 # Run all unit tests (exclude live tests)
 pytest tests/ -v -m "not live"
+
+# Run only core tests (100% passing)
+pytest tests/ -v -m "not live" --ignore=tests/bot/
+
+# Run bot tests (to see failures)
+pytest tests/bot/ -v
 
 # Run E2E API tests
 pytest tests/test_e2e_api.py -v
@@ -536,20 +556,34 @@ This will test:
 
 ### Test Coverage
 
-- **Total Tests**: 236 passing, 24 skipped
-- **Pass Rate**: 100%
+- **Total Tests**: 701 collected
+- **✅ Passing**: 620 tests (88.4%) - All core FIML functionality
+- **❌ Failing**: 41 tests (5.8%) - Bot education platform only
+- **⏭️ Skipped**: 28 tests (4.0%)
 - **Coverage**: 67% of codebase
-- **Quality**: Production-ready
+- **Core Quality**: Production-ready (100% core tests passing)
 
-Tests cover:
-- Core components (97%+)
-- All 5 providers (73% avg)
-- Arbitration engine (59%)
-- MCP tools (89%)
-- WebSocket streaming (85%)
-- Compliance framework (92%)
+**Module Status**:
+- ✅ Core components (97%+ coverage) - **100% tests passing**
+- ✅ Data providers (73% avg coverage) - **100% tests passing**
+- ✅ Arbitration engine (59% coverage) - **100% tests passing**
+- ✅ MCP protocol (89% coverage) - **100% tests passing**
+- ✅ WebSocket streaming (85% coverage) - **100% tests passing**
+- ✅ Compliance framework (92% coverage) - **100% tests passing**
+- ⚠️ Bot education platform - **41 tests failing** (fixes available)
 
-See [TEST_REPORT.md](TEST_REPORT.md) for detailed coverage and [TECHNICAL_STRATEGIC_EVALUATION.md](TECHNICAL_STRATEGIC_EVALUATION.md) for comprehensive analysis.
+### Test Documentation
+
+Comprehensive test analysis and fix guides available:
+
+- 📋 **[QUICKSTART_TEST_FIXES.md](QUICKSTART_TEST_FIXES.md)** - Start here! Quick summary and action plan
+- 📊 **[TEST_STATUS_REPORT.md](TEST_STATUS_REPORT.md)** - Detailed test analysis and breakdown
+- 🤖 **[AI_FIX_PROMPTS.md](AI_FIX_PROMPTS.md)** - 22 ready-to-use AI prompts to fix all failures
+- 📚 **[TEST_DOCUMENTATION_INDEX.md](TEST_DOCUMENTATION_INDEX.md)** - Complete documentation index
+- 📖 **[TESTING_QUICKSTART.md](TESTING_QUICKSTART.md)** - Original testing guide
+- 📈 **[TEST_REPORT.md](TEST_REPORT.md)** - Historical test baseline
+
+See [TEST_STATUS_REPORT.md](TEST_STATUS_REPORT.md) for detailed coverage and [TECHNICAL_STRATEGIC_EVALUATION.md](TECHNICAL_STRATEGIC_EVALUATION.md) for comprehensive analysis.
 
 ## 📝 API Documentation
 
