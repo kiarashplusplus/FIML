@@ -2,7 +2,7 @@
 Session data models for FIML analysis workflows
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -23,7 +23,7 @@ class SessionType(str, Enum):
 class QueryRecord(BaseModel):
     """Individual query in session history"""
 
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     query_type: str  # e.g., "price", "fundamentals", "technical"
     parameters: Dict[str, Any] = Field(default_factory=dict)
     result_summary: Optional[str] = None
@@ -77,7 +77,7 @@ class SessionState(BaseModel):
     def update_context(self, key: str, value: Any) -> None:
         """Update session context"""
         self.context[key] = value
-        self.metadata["last_updated"] = datetime.utcnow().isoformat()
+        self.metadata["last_updated"] = datetime.now(UTC).isoformat()
 
     def get_context(self, key: str, default: Any = None) -> Any:
         """Get context value"""
@@ -87,7 +87,7 @@ class SessionState(BaseModel):
         """Store intermediate analysis result"""
         self.intermediate_results[key] = {
             "result": result,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_intermediate_result(self, key: str) -> Optional[Any]:
@@ -103,9 +103,9 @@ class Session(BaseModel):
     user_id: Optional[str] = None
     type: SessionType
     assets: List[str] = Field(default_factory=list)  # Symbols being analyzed
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime
-    last_accessed_at: datetime = Field(default_factory=datetime.utcnow)
+    last_accessed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     state: SessionState = Field(default_factory=SessionState)
     is_archived: bool = False
     tags: List[str] = Field(default_factory=list)  # User-defined tags
@@ -113,18 +113,18 @@ class Session(BaseModel):
     def __init__(self, **data: Any) -> None:
         # Set default expiration if not provided
         if "expires_at" not in data:
-            data["expires_at"] = datetime.utcnow() + timedelta(hours=24)
+            data["expires_at"] = datetime.now(UTC) + timedelta(hours=24)
         super().__init__(**data)
 
     @property
     def is_expired(self) -> bool:
         """Check if session has expired"""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     @property
     def time_remaining(self) -> timedelta:
         """Get time remaining before expiration"""
-        return self.expires_at - datetime.utcnow()
+        return self.expires_at - datetime.now(UTC)
 
     @property
     def duration(self) -> timedelta:
@@ -133,11 +133,11 @@ class Session(BaseModel):
 
     def extend(self, hours: int = 24) -> None:
         """Extend session expiration"""
-        self.expires_at = datetime.utcnow() + timedelta(hours=hours)
+        self.expires_at = datetime.now(UTC) + timedelta(hours=hours)
 
     def touch(self) -> None:
         """Update last accessed timestamp"""
-        self.last_accessed_at = datetime.utcnow()
+        self.last_accessed_at = datetime.now(UTC)
 
     def add_query(self, query: QueryRecord) -> None:
         """Add a query to the session history"""

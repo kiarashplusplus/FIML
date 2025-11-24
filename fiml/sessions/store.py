@@ -3,7 +3,7 @@ Session store with Redis (active) and PostgreSQL (archived) backends
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import List, Optional
 from uuid import UUID
 
@@ -132,7 +132,7 @@ class SessionStore:
                 user_id=user_id,
                 type=session_type,
                 assets=assets,
-                expires_at=datetime.utcnow() + timedelta(hours=ttl_hours),
+                expires_at=datetime.now(UTC) + timedelta(hours=ttl_hours),
                 tags=tags or [],
             )
 
@@ -368,7 +368,7 @@ class SessionStore:
             async with self._session_maker() as db_session:
                 record = self._record_from_session(session)
                 record.is_archived = True
-                record.archived_at = datetime.utcnow()
+                record.archived_at = datetime.now(UTC)
 
                 db_session.add(record)
                 await db_session.commit()
