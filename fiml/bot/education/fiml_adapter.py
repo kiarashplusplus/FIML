@@ -93,13 +93,23 @@ class FIMLEducationalDataAdapter:
                 "fundamentals": {
                     "pe_ratio": quote.get("pe_ratio"),
                     "market_cap": quote.get("market_cap"),
-                    "explanation": self.explain_fundamentals(quote.get("pe_ratio"))
+                    "explanation": self.explain_pe_ratio(quote.get("pe_ratio")) if quote.get("pe_ratio") else "P/E ratio not available"
                 },
                 "disclaimer": "📚 Live market data for educational purposes only",
                 "data_source": f"Via FIML from {plan.primary_provider}",
-                "timestamp": quote.get("timestamp"),
-                "freshness_seconds": (quote.get("timestamp") - quote.get("fetched_at")).total_seconds() if quote.get("timestamp") and quote.get("fetched_at") else None
+                "timestamp": quote.get("timestamp")
             }
+            
+            # Safely calculate freshness if timestamps available
+            if quote.get("timestamp") and quote.get("fetched_at"):
+                try:
+                    from datetime import datetime
+                    ts = quote.get("timestamp")
+                    fetched = quote.get("fetched_at")
+                    if isinstance(ts, datetime) and isinstance(fetched, datetime):
+                        educational_data["freshness_seconds"] = (fetched - ts).total_seconds()
+                except Exception:
+                    pass  # Skip freshness if calculation fails
             
             logger.info(
                 "Educational snapshot created with live FIML data",
