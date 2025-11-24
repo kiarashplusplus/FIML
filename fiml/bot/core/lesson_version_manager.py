@@ -224,6 +224,56 @@ class LessonVersionManager:
             logger.warning("Invalid version format", version=version)
             return (0, 0, 0)
 
+    def parse_version(self, version: str) -> Tuple[int, int, int]:
+        """
+        Parse semantic version string (public API)
+
+        Args:
+            version: Version string (e.g., "1.2.3")
+
+        Returns:
+            Tuple of (major, minor, patch)
+        """
+        return self._parse_version(version)
+
+    def is_compatible(self, from_version: str, to_version: str) -> bool:
+        """
+        Check if two versions are compatible
+
+        Args:
+            from_version: Starting version
+            to_version: Target version
+
+        Returns:
+            True if compatible (no breaking changes)
+        """
+        from_parts = self._parse_version(from_version)
+        to_parts = self._parse_version(to_version)
+
+        # Compatible if major version is the same
+        return from_parts[0] == to_parts[0]
+
+    def compare_versions(self, version1: str, version2: str) -> int:
+        """
+        Compare two version strings
+
+        Args:
+            version1: First version
+            version2: Second version
+
+        Returns:
+            -1 if version1 < version2, 0 if equal, 1 if version1 > version2
+        """
+        v1_parts = self._parse_version(version1)
+        v2_parts = self._parse_version(version2)
+
+        if v1_parts < v2_parts:
+            return -1
+        elif v1_parts > v2_parts:
+            return 1
+        else:
+            return 0
+
     def get_migration_path(self, from_version: str, to_version: str) -> List[str]:
         """
         Get list of versions between two versions
@@ -241,17 +291,17 @@ class LessonVersionManager:
 
     def should_notify_user(
         self,
-        lesson_id: str,
         user_version: str,
-        current_version: str
+        current_version: str,
+        lesson_id: Optional[str] = None
     ) -> bool:
         """
         Determine if user should be notified of changes
 
         Args:
-            lesson_id: Lesson identifier
             user_version: Version user has
             current_version: Current version
+            lesson_id: Optional lesson identifier (for logging)
 
         Returns:
             True if significant changes warrant notification
@@ -269,18 +319,22 @@ class LessonVersionManager:
         # Don't notify on patch changes
         return False
 
-    def get_changelog(self, lesson_id: str, from_version: str, to_version: str) -> List[str]:
+    def get_changelog(self, from_version: str, to_version: str, lesson_id: Optional[str] = None) -> List[str]:
         """
         Get list of changes between two versions
 
         Args:
-            lesson_id: Lesson identifier
             from_version: Starting version
             to_version: Ending version
+            lesson_id: Optional lesson identifier
 
         Returns:
             List of change descriptions
         """
+        # If no lesson_id provided, return empty list
+        if not lesson_id:
+            return []
+
         if lesson_id not in self._version_cache:
             self._load_lesson_versions(lesson_id)
 

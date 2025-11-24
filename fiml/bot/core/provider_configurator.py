@@ -23,47 +23,48 @@ class FIMLProviderConfigurator:
     - Usage tracking and quota management
     """
 
-    def __init__(self, key_manager: UserProviderKeyManager):
+    def __init__(self, key_manager: UserProviderKeyManager = None):
         """
         Initialize configurator
 
         Args:
-            key_manager: User provider key manager instance
+            key_manager: User provider key manager instance (optional, created if not provided)
         """
-        self.key_manager = key_manager
+        self.key_manager = key_manager or UserProviderKeyManager()
         logger.info("FIMLProviderConfigurator initialized")
 
-    async def get_user_provider_config(self, user_id: str) -> Dict:
+    async def get_user_provider_config(self, user_id: str, user_keys: Dict = None) -> Dict:
         """
         Get user's provider configuration for FIML
 
         Args:
             user_id: User identifier
+            user_keys: Optional user keys dict (if not provided, fetches from key_manager)
 
         Returns:
             Provider configuration dict
         """
         # Get user's stored API keys
-        user_keys = await self.key_manager.get_user_keys(user_id)
+        if user_keys is None:
+            user_keys = await self.key_manager.get_user_keys(user_id)
 
         config = {
             "user_id": user_id,
             "providers": [],
             "fallback_enabled": True,
+            "fallback_provider": "yahoo_finance",
             "free_tier": len(user_keys) == 0
         }
 
         # Add user's providers (Priority 1-2)
-        for provider, api_key in user_keys.items():
-            # Determine if paid or free tier
-            # This should be from metadata stored during key addition
-            providers_list = await self.key_manager.list_user_providers(user_id)
-            provider_meta = next(
-                (p for p in providers_list if p["provider"] == provider),
-                {}
-            )
-
-            tier = provider_meta.get("metadata", {}).get("tier", "free")
+        for provider, key_data in user_keys.items():
+            # Handle both dict format and string format
+            if isinstance(key_data, dict):
+                api_key = key_data.get("key", "")
+                tier = key_data.get("tier", "free")
+            else:
+                api_key = key_data
+                tier = "free"
 
             config["providers"].append({
                 "name": provider,

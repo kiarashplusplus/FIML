@@ -205,14 +205,16 @@ class FIMLEducationalDataAdapter:
     def explain_market_cap(self, market_cap: float) -> str:
         """Explain market cap categories"""
 
-        # Assuming market_cap in billions
-        if market_cap < 0.3:
+        # Convert to billions for easier comparison
+        market_cap_billions = market_cap / 1_000_000_000
+        
+        if market_cap_billions < 0.3:
             return "Micro-cap (< $300M) - very small, high risk"
-        elif market_cap < 2:
+        elif market_cap_billions < 2:
             return "Small-cap ($300M - $2B) - small company, higher risk"
-        elif market_cap < 10:
+        elif market_cap_billions < 10:
             return "Mid-cap ($2B - $10B) - medium-sized, balanced risk"
-        elif market_cap < 200:
+        elif market_cap_billions < 200:
             return "Large-cap ($10B - $200B) - large established company"
         else:
             return "Mega-cap (> $200B) - massive company, lower volatility"

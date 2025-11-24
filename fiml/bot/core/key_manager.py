@@ -540,3 +540,132 @@ class UserProviderKeyManager:
         )
 
         # In production, write to dedicated audit log storage
+
+    # Public API methods expected by tests
+    async def add_key(self, user_id: str, provider: str, api_key: str) -> bool:
+        """
+        Add/store an API key for a user (alias for store_user_key)
+
+        Args:
+            user_id: User identifier
+            provider: Provider identifier
+            api_key: API key to store
+
+        Returns:
+            True if stored successfully
+        """
+        return await self.store_user_key(user_id, provider, api_key)
+
+    async def get_key(self, user_id: str, provider: str) -> Optional[str]:
+        """
+        Retrieve decrypted API key for user/provider
+
+        Args:
+            user_id: User identifier
+            provider: Provider identifier
+
+        Returns:
+            Decrypted API key or None
+        """
+        # Check cache first
+        if user_id in self._key_cache and provider in self._key_cache[user_id]:
+            return self._key_cache[user_id][provider]
+
+        # Load from storage
+        import os
+        user_file = f"{self.storage_path}/{user_id}.json"
+
+        if not os.path.exists(user_file):
+            return None
+
+        try:
+            with open(user_file, "r") as f:
+                user_keys = json.load(f)
+
+            if provider not in user_keys:
+                return None
+
+            # Decrypt key
+            encrypted_key = user_keys[provider]["encrypted_key"].encode()
+            decrypted_key = self.cipher.decrypt(encrypted_key).decode()
+
+            # Cache it
+            if user_id not in self._key_cache:
+                self._key_cache[user_id] = {}
+            self._key_cache[user_id][provider] = decrypted_key
+
+            return decrypted_key
+
+        except Exception as e:
+            logger.error("Failed to retrieve key", user_id=user_id, provider=provider, error=str(e))
+            return None
+
+    async def list_user_keys(self, user_id: str) -> List[str]:
+        """
+        List all providers for which user has stored keys
+
+        Args:
+            user_id: User identifier
+
+        Returns:
+            List of provider identifiers
+        """
+        import os
+        user_file = f"{self.storage_path}/{user_id}.json"
+
+        if not os.path.exists(user_file):
+            return []
+
+        try:
+            with open(user_file, "r") as f:
+                user_keys = json.load(f)
+
+            return list(user_keys.keys())
+
+        except Exception as e:
+            logger.error("Failed to list keys", user_id=user_id, error=str(e))
+            return []
+
+    async def remove_key(self, user_id: str, provider: str) -> bool:
+        """
+        Remove a stored API key
+
+        Args:
+            user_id: User identifier
+            provider: Provider identifier
+
+        Returns:
+            True if removed successfully
+        """
+        import os
+        user_file = f"{self.storage_path}/{user_id}.json"
+
+        if not os.path.exists(user_file):
+            return False
+
+        try:
+            with open(user_file, "r") as f:
+                user_keys = json.load(f)
+
+            if provider not in user_keys:
+                return False
+
+            # Remove key
+            del user_keys[provider]
+
+            # Save
+            with open(user_file, "w") as f:
+                json.dump(user_keys, f, indent=2)
+
+            # Clear from cache
+            if user_id in self._key_cache and provider in self._key_cache[user_id]:
+                del self._key_cache[user_id][provider]
+
+            logger.info("Key removed", user_id=user_id, provider=provider)
+            await self._audit_log(user_id, f"Removed {provider} key")
+
+            return True
+
+        except Exception as e:
+            logger.error("Failed to remove key", user_id=user_id, provider=provider, error=str(e))
+            return False

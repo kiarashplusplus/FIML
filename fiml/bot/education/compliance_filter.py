@@ -48,10 +48,12 @@ class EducationalComplianceFilter:
     # Warning patterns (borderline, requires disclaimer)
     WARNING_PATTERNS = [
         r'\b(might|could|may)\s+(buy|sell|invest)\b',
+        r'\b(might|could|may)\s+be\s+a\s+(good|great)\s+(investment|opportunity)\b',
         r'\b(consider|look\s+at|check\s+out)\s+(buying|selling)\b',
         r'\b(bullish|bearish)\s+on\b',
         r'\bpotential\s+(upside|downside)\b',
         r'\bgood\s+entry\s+point\b',
+        r'\b(will|going\s+to)\s+(go\s+up|rise|increase|moon)\b',
     ]
 
     # Safe educational phrases (examples of good content)
@@ -95,10 +97,10 @@ class EducationalComplianceFilter:
             (compliance_level, message)
         """
         # Check for warning patterns BEFORE lowercasing
-        for pattern in self._warning_patterns:
-            if pattern in content.lower():
-                logger.info("Warning pattern detected", pattern=pattern)
-                return ComplianceLevel.WARNING, self._add_disclaimer(content, ComplianceLevel.WARNING)
+        for pattern in self._warning_regex:
+            if pattern.search(content.lower()):
+                logger.info("Warning pattern detected", pattern=pattern.pattern)
+                return ComplianceLevel.WARNING, self.add_disclaimer(content, ComplianceLevel.WARNING)
 
         content = content.lower()
 
