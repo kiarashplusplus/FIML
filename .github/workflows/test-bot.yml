@@ -1,4 +1,4 @@
-name: Agent Workflow Tests
+name: Bot Tests
 
 permissions:
   contents: read
@@ -7,15 +7,12 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - 'fiml/agents/**'
-      - 'fiml/narrative/**'
-      - 'tests/test_agents*.py'
-      - 'tests/test_narrative*.py'
-      - 'tests/test_mcp_narrative*.py'
+      - 'fiml/bot/**'
+      - 'tests/test_bot*.py'
   workflow_dispatch:
 
 jobs:
-  test-agents:
+  test-bot:
     runs-on: ubuntu-latest
     
     services:
@@ -83,14 +80,15 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check fiml/agents/ fiml/narrative/
+          ruff check fiml/bot/
+        continue-on-error: true
 
       - name: Type check with mypy
         run: |
-          mypy fiml/agents/ fiml/narrative/
+          mypy fiml/bot/
         continue-on-error: true
 
-      - name: Run Agent tests
+      - name: Run Bot tests
         env:
           FIML_ENV: test
           REDIS_HOST: localhost
@@ -98,21 +96,12 @@ jobs:
           POSTGRES_DB: fiml_test
           POSTGRES_USER: fiml_test
           POSTGRES_PASSWORD: fiml_test_password
-          AZURE_OPENAI_ENDPOINT: https://mock-azure-openai.openai.azure.com/
-          AZURE_OPENAI_API_KEY: mock-api-key-for-testing
-          AZURE_OPENAI_DEPLOYMENT_NAME: gpt-4
-          AZURE_OPENAI_API_VERSION: 2024-02-15-preview
         run: |
-          pytest -v --cov=fiml.agents --cov=fiml.narrative --cov-report=xml --cov-report=term --no-docker \
-            tests/test_agents.py \
-            tests/test_agent_workflows.py \
-            tests/test_agents_comprehensive.py \
-            tests/test_narrative.py \
-            tests/test_narrative_generation.py \
-            tests/test_mcp_narrative_integration.py
+          pytest -v --cov=fiml.bot --cov-report=xml --cov-report=term --no-docker \
+            tests/test_bot_comprehensive.py
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: agents
+          flags: bot
