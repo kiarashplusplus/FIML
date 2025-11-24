@@ -23,6 +23,7 @@ class QuizQuestion:
     correct_answer: Any = None
     explanation: str = ""
     xp_reward: int = 10
+    tolerance: float = 0.01  # For numeric questions
 
     def __post_init__(self):
         if self.options is None:
@@ -200,8 +201,9 @@ class QuizSystem:
             try:
                 answer_num = float(answer)
                 correct_num = float(question.correct_answer)
-                # Allow small tolerance for floating point
-                return abs(answer_num - correct_num) < 0.01
+                # Use tolerance from question or default
+                tolerance = question.tolerance if hasattr(question, 'tolerance') else 0.01
+                return abs(answer_num - correct_num) <= tolerance
             except (ValueError, TypeError):
                 return False
 
@@ -275,18 +277,212 @@ class QuizSystem:
         return "\n".join(output)
 
     # Alias for compatibility with tests
-    async def create_session(
-        self, user_id: str, lesson_id: str, questions: List[QuizQuestion]
-    ) -> QuizSession:
+    def create_session(
+        self, user_id: str, lesson_id: str, questions: List[Dict]
+    ) -> str:
         """
-        Create a new quiz session (alias for start_quiz)
+        Create a new quiz session (synchronous version for tests)
 
         Args:
             user_id: User identifier
             lesson_id: Associated lesson
-            questions: List of questions
+            questions: List of question dicts
 
         Returns:
-            Quiz session
+            Session ID string
         """
-        return await self.start_quiz(user_id, lesson_id, questions)
+        # Convert question dicts to QuizQuestion objects
+        quiz_questions = []
+        for q_dict in questions:
+            # Convert options to dict format if they are strings
+            options = q_dict.get("options", [])
+            if options and isinstance(options[0], str):
+                # Options are strings, convert to dict format
+                options = [{"text": opt} for opt in options]
+            
+            quiz_questions.append(
+                QuizQuestion(
+                    id=q_dict.get("id", f"q_{len(quiz_questions)}"),
+                    type=q_dict.get("type", "multiple_choice"),
+                    text=q_dict.get("text", ""),
+                    options=options,
+                    correct_answer=q_dict.get("correct_answer"),
+                    explanation=q_dict.get("explanation", ""),
+                    xp_reward=q_dict.get("xp_reward", 10),
+                    tolerance=q_dict.get("tolerance", 0.01),
+                )
+            )
+
+        session_id = f"{user_id}_{lesson_id}_{datetime.now(UTC).timestamp()}"
+
+        session = QuizSession(
+            session_id=session_id,
+            user_id=user_id,
+            lesson_id=lesson_id,
+            questions=quiz_questions,
+        )
+
+        self._active_sessions[session_id] = session
+
+        logger.info(
+            "Quiz session created",
+            user_id=user_id,
+            lesson_id=lesson_id,
+            num_questions=len(quiz_questions),
+        )
+
+        return session_id
+
+    def get_session(self, session_id: str) -> Optional[Dict]:
+        """
+        Retrieve an existing quiz session
+
+        Args:
+            session_id: Quiz session ID
+
+        Returns:
+            Session data as dict or None if not found
+        """
+        # Check active sessions
+        if session_id in self._active_sessions:
+            session = self._active_sessions[session_id]
+            return {
+                "session_id": session.session_id,
+                "user_id": session.user_id,
+                "lesson_id": session.lesson_id,
+                "questions": [
+                    {
+                        "id": q.id,
+                        "type": q.type,
+                        "text": q.text,
+                        "options": q.options,
+                        "correct_answer": q.correct_answer,
+                        "explanation": q.explanation,
+                        "xp_reward": q.xp_reward,
+                    }
+                    for q in session.questions
+                ],
+                "current_question_index": session.current_question_index,
+                "answers": session.answers,
+                "score": session.score,
+                "total_xp": session.total_xp,
+                "started_at": session.started_at.isoformat() if session.started_at else None,
+                "completed_at": session.completed_at.isoformat() if session.completed_at else None,
+            }
+
+        # Check completed sessions
+        for user_sessions in self._completed_sessions.values():
+            for session in user_sessions:
+                if session.session_id == session_id:
+                    return {
+                        "session_id": session.session_id,
+                        "user_id": session.user_id,
+                        "lesson_id": session.lesson_id,
+                        "questions": [
+                            {
+                                "id": q.id,
+                                "type": q.type,
+                                "text": q.text,
+                                "options": q.options,
+                                "correct_answer": q.correct_answer,
+                                "explanation": q.explanation,
+                                "xp_reward": q.xp_reward,
+                            }
+                            for q in session.questions
+                        ],
+                        "current_question_index": session.current_question_index,
+                        "answers": session.answers,
+                        "score": session.score,
+                        "total_xp": session.total_xp,
+                        "started_at": session.started_at.isoformat() if session.started_at else None,
+                        "completed_at": session.completed_at.isoformat() if session.completed_at else None,
+                    }
+
+        return None
+
+    def answer_question(self, session_id: str, question_id: int, answer: Any) -> Dict[str, Any]:
+        """
+        Record user's answer to a question (synchronous version for tests)
+
+        Args:
+            session_id: Quiz session ID
+            question_id: Question index (0-based)
+            answer: User's answer
+
+        Returns:
+            Result dict with correct/incorrect, explanation, XP
+        """
+        session = self._active_sessions.get(session_id)
+        if not session:
+            return {"error": "Session not found"}
+
+        # Validate question_id
+        if question_id < 0 or question_id >= len(session.questions):
+            return {"error": "Invalid question ID"}
+
+        current_q = session.questions[question_id]
+
+        # Check answer
+        is_correct = self._check_answer(current_q, answer)
+
+        # Store answer
+        session.answers[current_q.id] = {
+            "answer": answer,
+            "correct": is_correct,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+
+        # Update score
+        if is_correct:
+            session.score += 1
+            session.total_xp += current_q.xp_reward
+
+        logger.info(
+            "Question answered",
+            session_id=session_id,
+            question_id=question_id,
+            correct=is_correct,
+        )
+
+        return {
+            "correct": is_correct,
+            "explanation": current_q.explanation if current_q.explanation else ("Correct!" if is_correct else "Incorrect"),
+            "xp_earned": current_q.xp_reward if is_correct else 0,
+        }
+
+    def get_quiz_score(self, session_id: str) -> Optional[Dict]:
+        """
+        Get the current score for a quiz session
+
+        Args:
+            session_id: Quiz session ID
+
+        Returns:
+            Score data dict or None if not found
+        """
+        # Check active sessions
+        if session_id in self._active_sessions:
+            session = self._active_sessions[session_id]
+            total = len(session.questions)
+            correct = session.score
+            return {
+                "total_questions": total,
+                "correct_answers": correct,
+                "percentage": (correct / total * 100) if total > 0 else 0,
+                "total_xp": session.total_xp,
+            }
+
+        # Check completed sessions
+        for user_sessions in self._completed_sessions.values():
+            for session in user_sessions:
+                if session.session_id == session_id:
+                    total = len(session.questions)
+                    correct = session.score
+                    return {
+                        "total_questions": total,
+                        "correct_answers": correct,
+                        "percentage": (correct / total * 100) if total > 0 else 0,
+                        "total_xp": session.total_xp,
+                    }
+
+        return None
