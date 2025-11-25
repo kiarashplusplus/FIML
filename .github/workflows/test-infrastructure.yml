@@ -13,11 +13,14 @@ on:
       - 'fiml/sessions/**'
       - 'fiml/tasks/**'
       - 'fiml/websocket/**'
+      - 'fiml/monitoring/**'
       - 'tests/test_compliance.py'
       - 'tests/test_alerts.py'
       - 'tests/test_watchdog.py'
       - 'tests/test_sessions.py'
+      - 'tests/test_session_analytics.py'
       - 'tests/test_tasks.py'
+      - 'tests/test_task_registry*.py'
       - 'tests/test_websocket.py'
       - 'tests/test_workers_integration.py'
   workflow_dispatch:
@@ -91,11 +94,11 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check fiml/compliance/ fiml/alerts/ fiml/watchdog/ fiml/sessions/ fiml/tasks/ fiml/websocket/
+          ruff check fiml/compliance/ fiml/alerts/ fiml/watchdog/ fiml/sessions/ fiml/tasks/ fiml/websocket/ fiml/monitoring/
 
       - name: Type check with mypy
         run: |
-          mypy fiml/compliance/ fiml/alerts/ fiml/watchdog/ fiml/sessions/ fiml/tasks/ fiml/websocket/
+          mypy fiml/compliance/ fiml/alerts/ fiml/watchdog/ fiml/sessions/ fiml/tasks/ fiml/websocket/ fiml/monitoring/
         continue-on-error: true
 
       - name: Run Infrastructure tests
@@ -111,12 +114,15 @@ jobs:
           AZURE_OPENAI_DEPLOYMENT_NAME: gpt-4
           AZURE_OPENAI_API_VERSION: 2024-02-15-preview
         run: |
-          pytest -v --cov=fiml.compliance --cov=fiml.alerts --cov=fiml.watchdog --cov=fiml.sessions --cov=fiml.tasks --cov=fiml.websocket --cov-report=xml --cov-report=term --no-docker \
+          pytest -v --cov=fiml.compliance --cov=fiml.alerts --cov=fiml.watchdog --cov=fiml.sessions --cov=fiml.tasks --cov=fiml.websocket --cov=fiml.monitoring --cov-report=xml --cov-report=term --no-docker \
             tests/test_compliance.py \
             tests/test_alerts.py \
             tests/test_watchdog.py \
             tests/test_sessions.py \
+            tests/test_session_analytics.py \
             tests/test_tasks.py \
+            tests/test_task_registry.py \
+            tests/test_task_registry_integration.py \
             tests/test_websocket.py \
             tests/test_workers_integration.py
 
