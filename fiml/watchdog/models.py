@@ -143,6 +143,8 @@ class WatchdogHealth(BaseModel):
         events_emitted: Total events emitted
         errors: Recent error count
         uptime_seconds: Uptime in seconds
+        consecutive_failures: Number of consecutive check failures
+        total_checks: Total number of checks performed
         metadata: Additional health info
     """
 
@@ -153,6 +155,8 @@ class WatchdogHealth(BaseModel):
     events_emitted: int = 0
     errors: int = 0
     uptime_seconds: float = 0.0
+    consecutive_failures: int = 0
+    total_checks: int = 0
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -165,5 +169,7 @@ class WatchdogHealth(BaseModel):
             "events_emitted": self.events_emitted,
             "errors": self.errors,
             "uptime_seconds": self.uptime_seconds,
+            "consecutive_failures": self.consecutive_failures,
+            "total_checks": self.total_checks,
             "metadata": self.metadata,
         }

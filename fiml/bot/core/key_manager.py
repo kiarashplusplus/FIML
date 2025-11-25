@@ -82,7 +82,7 @@ class UserProviderKeyManager:
         self._key_cache: Dict[str, Dict[str, str]] = {}
 
         # Quota tracking (in-memory for now, should be Redis in production)
-        self._quota_usage: Dict[str, Dict[str, int]] = {}
+        self._quota_usage: Dict[str, int] = {}
 
         logger.info("UserProviderKeyManager initialized", storage_path=storage_path)
 

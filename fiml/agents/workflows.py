@@ -387,11 +387,15 @@ Please provide:
 Be specific, data-driven, and actionable."""
 
             # Generate narrative using LLM
+            # Build context with all required information
+            narrative_context = {
+                "asset": asset.symbol,
+                "asset_type": asset.asset_type.value,
+                "prompt": prompt,
+                **context,
+            }
             narrative = await self.llm_client.generate_narrative(
-                asset=asset,
-                analysis_data=context,
-                prompt=prompt,
-                max_tokens=1500,
+                context=narrative_context,
             )
 
             return narrative
@@ -807,11 +811,16 @@ Provide:
 3. Trading Outlook
 4. Risk Factors"""
 
+            # Build context with all required information
+            narrative_context = {
+                "asset": asset.symbol,
+                "pair": asset.pair,
+                "prompt": prompt,
+                "price": price_data,
+                "sentiment": sentiment,
+            }
             narrative = await self.llm_client.generate_narrative(
-                asset=asset,
-                analysis_data={"price": price_data, "sentiment": sentiment},
-                prompt=prompt,
-                max_tokens=1000,
+                context=narrative_context,
             )
             return narrative
         except Exception as e:

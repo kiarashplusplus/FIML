@@ -144,7 +144,9 @@ class BaseWatchdog(ABC):
 
                 # Update health
                 self._health.last_check = datetime.now(timezone.utc)
+                self._health.total_checks += 1
                 self._consecutive_errors = 0
+                self._health.consecutive_failures = 0
 
                 # Emit event if anomaly detected
                 if event:
@@ -157,6 +159,8 @@ class BaseWatchdog(ABC):
                 logger.error(f"Error in {self.name} monitoring loop: {e}", exc_info=True)
                 self._consecutive_errors += 1
                 self._health.errors += 1
+                self._health.total_checks += 1
+                self._health.consecutive_failures += 1
                 self._update_health_status()
 
             # Wait for next check (with early exit on shutdown)
