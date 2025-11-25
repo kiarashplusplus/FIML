@@ -52,7 +52,7 @@ class WorkerMetrics:
     error_messages: List[str] = field(default_factory=list)
 
     # Timestamps
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     last_task_at: Optional[datetime] = None
 
     @property

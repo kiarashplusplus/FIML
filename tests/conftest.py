@@ -195,13 +195,16 @@ def mock_azure_openai_httpx():
     
     The fixture is autouse=True, so it applies to all tests automatically
     when the mock endpoint is configured.
+    
+    NOTE: This only mocks calls to the Azure OpenAI endpoint, not all httpx calls.
     """
     # Only mock if we're using the mock endpoint
-    if os.environ.get("AZURE_OPENAI_ENDPOINT", "").startswith("https://mock"):
+    azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+    if azure_endpoint.startswith("https://mock"):
         # Create a mock response that mimics Azure OpenAI's response format
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
+        mock_openai_response = MagicMock()
+        mock_openai_response.status_code = 200
+        mock_openai_response.json.return_value = {
             "choices": [
                 {
                     "message": {
@@ -219,11 +222,27 @@ def mock_azure_openai_httpx():
             },
         }
         
-        # Create async mock for httpx.AsyncClient.post
-        async_mock_post = AsyncMock(return_value=mock_response)
+        # Store the original post method to use for non-Azure OpenAI calls
+        original_post = None
         
-        # Patch httpx.AsyncClient.post to return our mock
-        with patch("httpx.AsyncClient.post", async_mock_post):
+        async def selective_mock_post(self, url, *args, **kwargs):
+            """Only mock Azure OpenAI calls, pass through others"""
+            url_str = str(url)
+            # Check if this is an Azure OpenAI call
+            if "openai.azure.com" in url_str or "mock-azure-openai" in url_str:
+                return mock_openai_response
+            # For all other calls, use the original method
+            if original_post is not None:
+                return await original_post(self, url, *args, **kwargs)
+            # Fallback for cases where original wasn't captured
+            raise RuntimeError(f"Unmocked httpx call to: {url_str}")
+        
+        # Get the original method before patching
+        import httpx
+        original_post = httpx.AsyncClient.post
+        
+        # Patch with our selective mock
+        with patch.object(httpx.AsyncClient, "post", selective_mock_post):
             yield
     else:
         # If using real endpoint, don't mock anything
@@ -283,4 +302,30 @@ async def init_session_db():
     finally:
         await engine.dispose()
 
+
+@pytest.fixture(autouse=True)
+def reset_cache_singletons():
+    """
+    Reset cache singletons after each test to prevent test pollution.
+    
+    Some tests mock the global l1_cache and cache_manager singletons,
+    which can pollute other tests. This fixture ensures a clean state
+    for each test by resetting critical state after the test completes.
+    """
+    yield
+    
+    # Reset L1 cache singleton state after each test
+    from fiml.cache.l1_cache import l1_cache
+    from fiml.cache.manager import cache_manager
+    
+    # Only reset if the cache was mocked (has a MagicMock redis)
+    if hasattr(l1_cache, '_redis') and l1_cache._redis is not None:
+        # Check if _redis is a MagicMock
+        if type(l1_cache._redis).__name__ == 'MagicMock':
+            l1_cache._redis = None
+            l1_cache._initialized = False
+            l1_cache._access_counts.clear()
+            l1_cache._last_access.clear()
+            # Also reset cache_manager only when L1 was mocked
+            cache_manager._initialized = False
 

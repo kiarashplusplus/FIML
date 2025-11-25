@@ -5,7 +5,7 @@ This test module covers all untested code paths in the cache module.
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -231,15 +231,14 @@ class TestCacheAnalyticsExtended:
     def test_detect_cache_pollution(self):
         """Test cache pollution detection"""
         analytics = CacheAnalytics(enable_prometheus=False)
-        # NOTE: Using datetime.utcnow() to match analytics.py which uses naive datetimes
-        # The analytics module compares these timestamps, so we need to match its format
-        old_time = datetime.utcnow() - timedelta(hours=2)
+        # Using datetime.now(UTC) to match analytics.py which uses timezone-aware datetimes
+        old_time = datetime.now(UTC) - timedelta(hours=2)
         for i in range(10):
             analytics.single_access_keys[f"old_key_{i}"] = old_time
 
-        # Add some new keys (also naive datetime to match analytics.py)
+        # Add some new keys (also timezone-aware datetime to match analytics.py)
         for i in range(5):
-            analytics.single_access_keys[f"new_key_{i}"] = datetime.utcnow()
+            analytics.single_access_keys[f"new_key_{i}"] = datetime.now(UTC)
 
         pollution = analytics.detect_cache_pollution()
         assert pollution["single_access_keys"] == 15
@@ -284,8 +283,8 @@ class TestCacheAnalyticsExtended:
         analytics = CacheAnalytics(enable_prometheus=False)
         analytics.total_hits = 90
         analytics.total_misses = 10
-        # NOTE: Using datetime.utcnow() to match analytics.py naive datetime format
-        old_time = datetime.utcnow() - timedelta(hours=2)
+        # Using datetime.now(UTC) to match analytics.py timezone-aware datetime format
+        old_time = datetime.now(UTC) - timedelta(hours=2)
         for i in range(100):
             analytics.single_access_keys[f"key_{i}"] = old_time
 
@@ -828,7 +827,7 @@ class TestQueryPattern:
         for _ in range(50):
             pattern.record_access(DataType.PRICE, 14)
 
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(UTC)
         score = pattern.get_priority_score(now, set())
         assert score > 0
 
@@ -838,7 +837,7 @@ class TestQueryPattern:
         for _ in range(10):
             pattern.record_access(DataType.PRICE, 14)
 
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(UTC)
         score_without_event = pattern.get_priority_score(now, set())
         score_with_event = pattern.get_priority_score(now, {"AAPL"})
 
@@ -923,11 +922,11 @@ class TestPredictiveCacheWarmerExtended:
         )
         # Create old pattern
         warmer.query_patterns["OLD"] = QueryPattern("OLD")
-        warmer.query_patterns["OLD"].last_accessed = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=10)
+        warmer.query_patterns["OLD"].last_accessed = datetime.now(UTC) - timedelta(days=10)
 
         # Create new pattern
         warmer.query_patterns["NEW"] = QueryPattern("NEW")
-        warmer.query_patterns["NEW"].last_accessed = datetime.now(timezone.utc).replace(tzinfo=None)
+        warmer.query_patterns["NEW"].last_accessed = datetime.now(UTC)
 
         removed = warmer.clear_old_patterns(days=7)
         assert removed == 1
@@ -1479,12 +1478,12 @@ class TestL1CacheBatchAndEviction:
         cache._initialized = True
 
         # Set up access counts
-        # NOTE: Using datetime.utcnow() to match l1_cache.py _track_access() format
+        # Using datetime.now(UTC) to match l1_cache.py _track_access() format
         cache._access_counts = {"key1": 1, "key2": 10, "key3": 5}
         cache._last_access = {
-            "key1": datetime.utcnow(),
-            "key2": datetime.utcnow(),
-            "key3": datetime.utcnow()
+            "key1": datetime.now(UTC),
+            "key2": datetime.now(UTC),
+            "key3": datetime.now(UTC)
         }
 
         mock_redis = MagicMock()
@@ -1693,7 +1692,7 @@ class TestCacheAnalyticsPrometheus:
 
         # Check hourly stats are updated
         assert len(analytics.hourly_stats) > 0
-        current_hour_key = datetime.utcnow().strftime("%Y-%m-%d-%H")
+        current_hour_key = datetime.now(UTC).strftime("%Y-%m-%d-%H")
         assert current_hour_key in analytics.hourly_stats
         assert analytics.hourly_stats[current_hour_key]["hits"] == 1
 
