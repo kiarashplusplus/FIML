@@ -2,6 +2,7 @@
 Test configuration for FIML
 """
 
+import contextlib
 import os
 import subprocess
 import time
@@ -188,14 +189,14 @@ def test_settings():
 def mock_azure_openai_httpx():
     """
     Automatically mock httpx calls to Azure OpenAI when using mock endpoint.
-    
+
     This prevents tests from making actual HTTP calls to the non-existent
     mock endpoint (https://mock-azure-openai.openai.azure.com/), which would
     cause timeouts and slow down tests significantly.
-    
+
     The fixture is autouse=True, so it applies to all tests automatically
     when the mock endpoint is configured.
-    
+
     NOTE: This only mocks calls to the Azure OpenAI endpoint, not all httpx calls.
     """
     # Only mock if we're using the mock endpoint
@@ -221,10 +222,10 @@ def mock_azure_openai_httpx():
                 "total_tokens": 30,
             },
         }
-        
+
         # Store the original post method to use for non-Azure OpenAI calls
         original_post = None
-        
+
         async def selective_mock_post(self, url, *args, **kwargs):
             """Only mock Azure OpenAI calls, pass through others"""
             url_str = str(url)
@@ -241,13 +242,13 @@ def mock_azure_openai_httpx():
                 # OR be exactly "openai.azure.com"
                 is_azure_domain = (
                     hostname == "openai.azure.com" or
-                    (len(hostname) > len(".openai.azure.com") and 
+                    (len(hostname) > len(".openai.azure.com") and
                      hostname[-(len(".openai.azure.com")):] == ".openai.azure.com")
                 )
                 is_azure_openai = is_azure_domain
             except Exception:
                 is_azure_openai = False
-            
+
             if is_azure_openai:
                 return mock_openai_response
             # For all other calls, use the original method
@@ -255,11 +256,11 @@ def mock_azure_openai_httpx():
                 return await original_post(self, url, *args, **kwargs)
             # Fallback for cases where original wasn't captured
             raise RuntimeError(f"Unmocked httpx call to: {url_str}")
-        
+
         # Get the original method before patching
         import httpx
         original_post = httpx.AsyncClient.post
-        
+
         # Patch with our selective mock
         with patch.object(httpx.AsyncClient, "post", selective_mock_post):
             yield
@@ -326,7 +327,7 @@ async def init_session_db():
 def reset_cache_singletons():
     """
     Reset cache singletons after each test to prevent test pollution.
-    
+
     Some tests mock the global l1_cache and cache_manager singletons,
     which can pollute other tests. This fixture captures the initial state
     and restores it after each test.
@@ -334,38 +335,294 @@ def reset_cache_singletons():
     from fiml.cache.l1_cache import l1_cache
     from fiml.cache.l2_cache import l2_cache
     from fiml.cache.manager import cache_manager
-    
+
     # Capture initial state before test
     initial_l1_initialized = l1_cache._initialized
     initial_l1_redis = l1_cache._redis
     initial_l2_initialized = l2_cache._initialized
     initial_cm_initialized = cache_manager._initialized
-    
+
     yield
-    
+
     # Restore state after test if it was corrupted by mocking
     # Check if _redis was changed to a different object (mock or otherwise)
     redis_was_changed = (
         (initial_l1_redis is None and l1_cache._redis is not None) or
         (initial_l1_redis is not None and l1_cache._redis is not initial_l1_redis)
     )
-    
+
     if l1_cache._initialized and redis_was_changed:
         # The cache was mocked - reset to initial state
         l1_cache._redis = initial_l1_redis
         l1_cache._initialized = initial_l1_initialized
         l1_cache._access_counts.clear()
         l1_cache._last_access.clear()
-    
+
     # Also check if _initialized was set without proper initialization
     if l1_cache._initialized and l1_cache._redis is None:
         l1_cache._initialized = False
-    
+
     # Reset L2 cache if polluted
     if l2_cache._initialized != initial_l2_initialized and l2_cache._engine is None:
         l2_cache._initialized = initial_l2_initialized
-    
+
     # Reset cache manager if L1 was reset
     if cache_manager._initialized != initial_cm_initialized:
         cache_manager._initialized = initial_cm_initialized
+
+
+@pytest.fixture(autouse=True)
+def mock_yfinance_network_calls():
+    """
+    Mock yfinance network calls to prevent tests from making real HTTP requests.
+
+    This fixture is autouse=True, so it applies to all tests automatically,
+    preventing Yahoo Finance API calls during testing. Tests that need real
+    API calls should use the @pytest.mark.live marker.
+    """
+    # Create mock data for yfinance
+    mock_info = {
+        "currentPrice": 150.25,
+        "regularMarketChange": 2.50,
+        "regularMarketChangePercent": 1.69,
+        "volume": 50000000,
+        "marketCap": 2500000000000,
+        "previousClose": 147.75,
+        "trailingPE": 28.5,
+        "forwardPE": 25.2,
+        "pegRatio": 2.1,
+        "priceToBook": 45.6,
+        "trailingEps": 5.28,
+        "beta": 1.2,
+        "dividendYield": 0.005,
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "fullTimeEmployees": 150000,
+        "fiftyTwoWeekHigh": 180.0,
+        "fiftyTwoWeekLow": 120.0,
+    }
+
+    mock_history_data = {
+        "Open": [150.0, 151.0, 152.0],
+        "High": [155.0, 156.0, 157.0],
+        "Low": [148.0, 149.0, 150.0],
+        "Close": [153.0, 154.0, 155.0],
+        "Volume": [1000000, 1100000, 1200000],
+    }
+
+    mock_news = [
+        {
+            "title": "Test News Article",
+            "link": "https://example.com/news",
+            "publisher": "Test Publisher",
+            "providerPublishTime": 1700000000,
+            "type": "STORY",
+        }
+    ]
+
+    class MockTicker:
+        """Mock yfinance Ticker class"""
+        def __init__(self, symbol):
+            self.symbol = symbol
+            self._info = mock_info.copy()
+            self._news = mock_news.copy()
+
+        @property
+        def info(self):
+            return self._info
+
+        @property
+        def news(self):
+            return self._news
+
+        def history(self, period=None, interval=None):
+            # Note: pandas import is done at module level in conftest.py,
+            # but since we're in a MockTicker class, we import locally
+            # to avoid polluting the module namespace
+            import pandas as pd
+            index = pd.date_range(start="2024-01-01", periods=3, freq="D")
+            return pd.DataFrame(mock_history_data, index=index)
+
+    patches = []
+
+    # Patch yfinance.Ticker at multiple locations to ensure coverage
+    # Patch the main yfinance module
+    p1 = patch("yfinance.Ticker", MockTicker)
+    p1.start()
+    patches.append(p1)
+
+    # Also patch at the provider level to handle cases where yfinance is
+    # already imported
+    with contextlib.suppress(AttributeError, ImportError, ModuleNotFoundError):
+        p2 = patch("fiml.providers.yahoo_finance.yf.Ticker", MockTicker)
+        p2.start()
+        patches.append(p2)
+
+    yield
+
+    # Stop all patches
+    for p in patches:
+        with contextlib.suppress(Exception):
+            p.stop()
+
+
+@pytest.fixture(autouse=True)
+def mock_ccxt_network_calls():
+    """
+    Mock CCXT network calls to prevent tests from making real HTTP requests
+    to cryptocurrency exchanges like Binance.
+
+    This fixture is autouse=True, so it applies to all tests automatically.
+    """
+    # Create a factory function that creates mock exchange instances
+    def create_mock_exchange():
+        mock_exchange = AsyncMock()
+        mock_exchange.load_markets = AsyncMock(return_value=None)
+        mock_exchange.markets = {
+            "BTC/USDT": {"symbol": "BTC/USDT", "base": "BTC", "quote": "USDT"},
+            "ETH/USDT": {"symbol": "ETH/USDT", "base": "ETH", "quote": "USDT"},
+        }
+        mock_exchange.fetch_ticker = AsyncMock(return_value={
+            "last": 43250.50,
+            "bid": 43248.00,
+            "ask": 43252.00,
+            "high": 44000.00,
+            "low": 42500.00,
+            "open": 43000.00,
+            "close": 43250.50,
+            "baseVolume": 15000.5,
+            "quoteVolume": 650000000,
+            "change": 250.50,
+            "percentage": 0.58,
+            "timestamp": 1705334400000,
+            "datetime": "2024-01-15T12:00:00.000Z",
+        })
+        mock_exchange.fetch_status = AsyncMock(return_value={"status": "ok"})
+        mock_exchange.close = AsyncMock()
+        return mock_exchange
+
+    # Create a mock class that returns mock exchange instances
+    class MockExchangeClass:
+        def __init__(self, *args, **kwargs):
+            self._mock = create_mock_exchange()
+
+        def __getattr__(self, name):
+            return getattr(self._mock, name)
+
+    # Patch at multiple levels to ensure coverage
+    patches = []
+    exchanges_to_patch = ["binance", "coinbase", "kraken", "bybit", "okx", "huobi"]
+
+    # Patch ccxt.async_support module to return mock classes
+    for exchange_name in exchanges_to_patch:
+        with contextlib.suppress(AttributeError, ImportError, ModuleNotFoundError):
+            # Patch in ccxt.async_support
+            p = patch(f"ccxt.async_support.{exchange_name}", MockExchangeClass)
+            p.start()
+            patches.append(p)
+            # Also patch direct ccxt module
+            p2 = patch(f"ccxt.{exchange_name}", MockExchangeClass)
+            p2.start()
+            patches.append(p2)
+
+    # Most importantly - patch the ccxt module reference used in ccxt_provider.py
+    # This is the key fix: patch 'fiml.providers.ccxt_provider.ccxt' which is where
+    # the module is actually accessed in the provider code
+    try:
+        import ccxt.async_support as ccxt_module
+
+        # Create a mock module that returns our mock class for any exchange
+        class MockCCXTModule:
+            def __getattr__(self, name):
+                if name in exchanges_to_patch:
+                    return MockExchangeClass
+                return getattr(ccxt_module, name)
+
+        p = patch("fiml.providers.ccxt_provider.ccxt", MockCCXTModule())
+        p.start()
+        patches.append(p)
+    except (AttributeError, ImportError, ModuleNotFoundError):
+        # ccxt not installed - skip this patch
+        pass
+
+    yield
+
+    # Stop all patches
+    for p in patches:
+        with contextlib.suppress(Exception):
+            p.stop()
+
+
+@pytest.fixture(autouse=True)
+def mock_aiohttp_for_providers():
+    """
+    Mock aiohttp.ClientSession.get for provider API calls to external services.
+
+    This prevents tests from making real HTTP requests to third-party APIs
+    like CoinGecko, NewsAPI, Polygon, Finnhub, etc.
+
+    Note: This only mocks specific financial data API domains, not all HTTP calls.
+    """
+    # List of domains to mock (financial data providers and their dependencies)
+    provider_domains = [
+        # Financial data providers
+        "api.coingecko.com",
+        "pro-api.coinmarketcap.com",
+        "api.polygon.io",
+        "finnhub.io",
+        "api.twelvedata.com",
+        "api.tiingo.com",
+        "api.intrinio.com",
+        "api.marketstack.com",
+        "www.quandl.com",
+        "data.nasdaq.com",
+        "newsapi.org",
+        "www.alphavantage.co",
+        "financialmodelingprep.com",
+        # Yahoo Finance domains
+        "fc.yahoo.com",
+        "guce.yahoo.com",
+        "query1.finance.yahoo.com",
+        "query2.finance.yahoo.com",
+        "finance.yahoo.com",
+        # Cryptocurrency exchanges
+        "api.binance.com",
+        "api.coinbase.com",
+        "api.kraken.com",
+        "api.bybit.com",
+        "api.huobi.pro",
+        "www.okx.com",
+    ]
+
+    # Create a mock response
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.json = AsyncMock(return_value={"status": "ok", "data": {}})
+    mock_response.text = AsyncMock(return_value='{"status": "ok"}')
+    mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+    mock_response.__aexit__ = AsyncMock(return_value=None)
+
+    original_get = None
+
+    async def selective_mock_get(self, url, *args, **kwargs):
+        """Only mock calls to financial data provider domains"""
+        url_str = str(url)
+
+        # Check if this is a call to a provider domain
+        for domain in provider_domains:
+            if domain in url_str:
+                return mock_response
+
+        # For all other calls, use the original method
+        if original_get is not None:
+            return await original_get(self, url, *args, **kwargs)
+
+        # Fallback: return mock response to be safe
+        return mock_response
+
+    import aiohttp
+    original_get = aiohttp.ClientSession.get
+
+    with patch.object(aiohttp.ClientSession, "get", selective_mock_get):
+        yield
 

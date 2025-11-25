@@ -240,18 +240,26 @@ async def test_retry_on_timeout(newsapi_provider):
     """Test retry logic on timeout"""
     await newsapi_provider.initialize()
 
-    mock_session = MagicMock(spec=ClientSession)
-    newsapi_provider._session = mock_session
+    # Create a properly configured async mock for the session
+    mock_session = AsyncMock(spec=ClientSession)
 
     # First call times out, second succeeds
     mock_response = AsyncMock()
     mock_response.status = 200
     mock_response.json = AsyncMock(return_value={"status": "ok", "articles": []})
 
-    mock_session.get.return_value.__aenter__.side_effect = [
-        Exception("Timeout"),
-        mock_response
-    ]
+    # Create async context manager mocks for the get calls
+    timeout_cm = AsyncMock()
+    timeout_cm.__aenter__.side_effect = Exception("Timeout")
+    timeout_cm.__aexit__ = AsyncMock(return_value=None)
+
+    success_cm = AsyncMock()
+    success_cm.__aenter__ = AsyncMock(return_value=mock_response)
+    success_cm.__aexit__ = AsyncMock(return_value=None)
+
+    # Set up the session.get to return the context managers in sequence
+    mock_session.get = MagicMock(side_effect=[timeout_cm, success_cm])
+    newsapi_provider._session = mock_session
 
     with patch.object(newsapi_provider, "_check_rate_limit", new_callable=AsyncMock):
         result = await newsapi_provider._make_request("test", {})
