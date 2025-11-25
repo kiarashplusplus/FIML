@@ -58,9 +58,9 @@ class NarrativeSection(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(..., min_length=10, max_length=5000)
     section_type: NarrativeType
-    confidence: float = Field(1.0, ge=0.0, le=1.0)
-    word_count: int = Field(0, ge=0)
-    readability_score: Optional[float] = Field(None, ge=0.0, le=100.0)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    word_count: int = Field(default=0, ge=0)
+    readability_score: Optional[float] = Field(default=None, ge=0.0, le=100.0)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     generated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
@@ -97,9 +97,9 @@ class Narrative(BaseModel):
     disclaimer: str = Field(..., min_length=10)
     language: Language = Language.ENGLISH
     expertise_level: ExpertiseLevel = ExpertiseLevel.INTERMEDIATE
-    total_word_count: int = Field(0, ge=0)
-    generation_time_ms: Optional[float] = Field(None, ge=0.0)
-    confidence: float = Field(1.0, ge=0.0, le=1.0)
+    total_word_count: int = Field(default=0, ge=0)
+    generation_time_ms: Optional[float] = Field(default=None, ge=0.0)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     generated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
@@ -179,7 +179,7 @@ class NarrativeContext(BaseModel):
 
     # Generation preferences
     preferences: NarrativePreferences = Field(
-        default_factory=NarrativePreferences
+        default_factory=lambda: NarrativePreferences()
     )
 
     # Compliance and regional settings

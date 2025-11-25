@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from fiml.core.logging import get_logger
-from fiml.core.models import Asset, DataType
+from fiml.core.models import Asset, AssetType, DataType
 
 logger = get_logger(__name__)
 
@@ -215,7 +215,7 @@ class PredictiveCacheWarmer:
             True if successful
         """
         data_types = data_types or [DataType.PRICE, DataType.FUNDAMENTALS]
-        asset = Asset(symbol=symbol, asset_type="equity")
+        asset = Asset(symbol=symbol, asset_type=AssetType.EQUITY)
 
         success = True
 

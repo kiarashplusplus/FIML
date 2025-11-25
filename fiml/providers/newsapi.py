@@ -146,8 +146,9 @@ class NewsAPIProvider(BaseProvider):
 
         for attempt in range(max_retries):
             try:
+                timeout = aiohttp.ClientTimeout(total=self.config.timeout_seconds)
                 async with self._session.get(
-                    url, params=params, timeout=self.config.timeout_seconds
+                    url, params=params, timeout=timeout
                 ) as response:
                     if response.status == 429:
                         # Rate limited

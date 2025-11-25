@@ -4,7 +4,7 @@ Interactive quizzes with scoring and XP rewards
 """
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
@@ -20,15 +20,11 @@ class QuizQuestion:
     id: str
     type: str  # multiple_choice, true_false, numeric
     text: str
-    options: Optional[List[Dict[str, Any]]] = None
+    options: List[Dict[str, Any]] = field(default_factory=list)
     correct_answer: Any = None
     explanation: str = ""
     xp_reward: int = 10
     tolerance: float = 0.01  # For numeric questions
-
-    def __post_init__(self) -> None:
-        if self.options is None:
-            self.options = []
 
 
 @dataclass
@@ -40,17 +36,11 @@ class QuizSession:
     lesson_id: str
     questions: List[QuizQuestion]
     current_question_index: int = 0
-    answers: Optional[Dict[str, Any]] = None
+    answers: Dict[str, Any] = field(default_factory=dict)
     score: int = 0
     total_xp: int = 0
-    started_at: Optional[datetime] = None
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     completed_at: Optional[datetime] = None
-
-    def __post_init__(self) -> None:
-        if self.answers is None:
-            self.answers = {}
-        if self.started_at is None:
-            self.started_at = datetime.now(UTC)
 
 
 class QuizSystem:
