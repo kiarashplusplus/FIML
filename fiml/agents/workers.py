@@ -5,7 +5,7 @@ Each worker fetches real data from providers, performs calculations,
 and leverages Azure OpenAI for interpretation and insights.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -208,7 +208,7 @@ Provide a JSON response with:
                 "confidence": round(confidence, 2),
                 "interpretation": interpretation,
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -218,7 +218,7 @@ Provide a JSON response with:
                 "analysis_type": "fundamentals",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -474,7 +474,7 @@ Provide a JSON response with:
                 "confidence": round(confidence, 2),
                 "pattern_analysis": pattern_analysis,
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -484,7 +484,7 @@ Provide a JSON response with:
                 "analysis_type": "technical",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -531,10 +531,11 @@ class MacroWorker(BaseWorker):
                         if response.is_valid:
                             macro_data["interest_rate"] = response.data.get("price", 4.5)
                             break
-                    except:
+                    except Exception as e:
+                        self.logger.debug(f"Provider failed for treasury: {e}")
                         continue
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to fetch macro data: {e}")
 
             # Set defaults for macro indicators
             factors = {
@@ -567,10 +568,11 @@ class MacroWorker(BaseWorker):
                                 elif volatility < 0.2:
                                     correlation_impact = "low"
                             break
-                    except:
+                    except Exception as e:
+                        self.logger.debug(f"Provider failed for OHLCV: {e}")
                         continue
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to analyze correlation: {e}")
 
             # Use Azure OpenAI for macro impact assessment
             environment = "moderately_positive"
@@ -656,7 +658,7 @@ Provide a JSON response with:
                 "confidence": round(confidence, 2),
                 "narrative": narrative,
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -666,7 +668,7 @@ Provide a JSON response with:
                 "analysis_type": "macro",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -722,7 +724,7 @@ class SentimentWorker(BaseWorker):
                     "confidence": 0.3,
                     "articles_analyzed": 0,
                     "score": 5.0,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
 
             # Analyze sentiment using Azure OpenAI
@@ -841,7 +843,7 @@ class SentimentWorker(BaseWorker):
                 "articles_analyzed": len(analyzed_articles),
                 "top_articles": analyzed_articles[:5],
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -851,7 +853,7 @@ class SentimentWorker(BaseWorker):
                 "analysis_type": "sentiment",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -917,7 +919,8 @@ class CorrelationWorker(BaseWorker):
                                 benchmark_prices[bench_name] = np.array(response.data.get("close", []))
                                 self.logger.info("Fetched benchmark", benchmark=bench_name, points=len(benchmark_prices[bench_name]))
                                 break
-                        except:
+                        except Exception as e:
+                            self.logger.debug(f"Provider failed for benchmark {bench_name}: {e}")
                             continue
                 except Exception as e:
                     self.logger.warning("Failed to fetch benchmark", benchmark=bench_name, error=str(e))
@@ -1007,7 +1010,7 @@ class CorrelationWorker(BaseWorker):
                 "correlation_shift": correlation_shift,
                 "diversification_score": round(diversification_score, 2),
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -1017,7 +1020,7 @@ class CorrelationWorker(BaseWorker):
                 "analysis_type": "correlation",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -1220,7 +1223,7 @@ Provide a JSON response with:
                 "warnings": warnings,
                 "confidence": round(confidence, 2),
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -1230,7 +1233,7 @@ Provide a JSON response with:
                 "analysis_type": "risk",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -1285,7 +1288,7 @@ class NewsWorker(BaseWorker):
                     "event_count": 0,
                     "overall_sentiment": 0.0,
                     "score": 5.0,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
 
             # Analyze articles using Azure OpenAI
@@ -1447,7 +1450,7 @@ Provide a JSON response with:
                 "event_count": event_count,
                 "market_moving_count": market_moving_count,
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -1457,7 +1460,7 @@ Provide a JSON response with:
                 "analysis_type": "news",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -1677,7 +1680,7 @@ Provide a JSON response with:
                     ],
                 },
                 "score": round(score, 1),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
         except Exception as e:
@@ -1687,7 +1690,7 @@ Provide a JSON response with:
                 "analysis_type": "options",
                 "error": str(e),
                 "score": 5.0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
     async def _analyze_historical_volatility(self, asset: Asset) -> Dict[str, Any]:
@@ -1728,7 +1731,7 @@ Provide a JSON response with:
                             "confidence": 0.5,
                             "interpretation": f"Historical volatility: {hist_vol*100:.2f}%. No options data available.",
                             "score": 5.0,
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now(UTC).isoformat(),
                         }
                 except Exception:
                     continue
@@ -1741,6 +1744,6 @@ Provide a JSON response with:
             "analysis_type": "options",
             "error": "No data available",
             "score": 5.0,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 

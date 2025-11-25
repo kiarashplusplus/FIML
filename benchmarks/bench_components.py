@@ -90,7 +90,7 @@ class TestProviderBenchmarks:
 
         try:
             await provider.initialize()
-        except:
+        except Exception:
             pytest.skip("CCXT not available in test environment")
 
         asset = Asset(

@@ -2,7 +2,7 @@
 Celery tasks for session management
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from celery import shared_task
 
@@ -36,7 +36,7 @@ async def cleanup_expired_sessions() -> dict:
         return {
             "status": "success",
             "cleaned_count": cleaned_count,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -44,7 +44,7 @@ async def cleanup_expired_sessions() -> dict:
         return {
             "status": "error",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -72,7 +72,7 @@ async def delete_old_archived_sessions() -> dict:
             raise RuntimeError("SessionStore not initialized")
 
         # Calculate cutoff date based on retention policy
-        cutoff_date = datetime.utcnow() - timedelta(days=settings.session_retention_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=settings.session_retention_days)
 
         async with session_store._session_maker() as db_session:
             # Delete old archived sessions
@@ -93,7 +93,7 @@ async def delete_old_archived_sessions() -> dict:
             "deleted_count": deleted_count,
             "cutoff_date": cutoff_date.isoformat(),
             "retention_days": settings.session_retention_days,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -101,7 +101,7 @@ async def delete_old_archived_sessions() -> dict:
         return {
             "status": "error",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -133,7 +133,7 @@ async def generate_session_metrics() -> dict:
         # Get recently archived sessions that don't have metrics yet
         async with session_store._session_maker() as db_session:
             # Find archived sessions from last 24 hours
-            cutoff = datetime.utcnow() - timedelta(hours=24)
+            cutoff = datetime.now(UTC) - timedelta(hours=24)
             stmt = select(SessionRecord).where(
                 SessionRecord.is_archived,
                 SessionRecord.archived_at >= cutoff,
@@ -154,7 +154,7 @@ async def generate_session_metrics() -> dict:
         return {
             "status": "success",
             "metrics_generated": metrics_count,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     except Exception as e:
@@ -162,7 +162,7 @@ async def generate_session_metrics() -> dict:
         return {
             "status": "error",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 

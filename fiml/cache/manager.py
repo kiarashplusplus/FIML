@@ -3,7 +3,7 @@ Cache Manager - Coordinates L1 and L2 caches
 """
 
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from datetime import time as time_obj
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -343,7 +343,7 @@ class CacheManager:
         base_ttl = ttl_map.get(data_type, 300)
 
         # Check if market is currently open
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         current_time = now.time()
         is_weekday = now.weekday() < 5  # Monday = 0, Sunday = 6
 

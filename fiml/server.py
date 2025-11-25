@@ -58,16 +58,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         from fiml.agents.orchestrator import agent_orchestrator
         if agent_orchestrator.initialized:
             await agent_orchestrator.shutdown()
-    except:
-        pass
+    except (ImportError, Exception) as e:
+        logger.debug(f"Agent orchestrator shutdown skipped: {e}")
 
     await provider_registry.shutdown()
 
     try:
         from fiml.cache.manager import cache_manager
         await cache_manager.shutdown()
-    except:
-        pass
+    except (ImportError, Exception) as e:
+        logger.debug(f"Cache manager shutdown skipped: {e}")
 
 
 # Create FastAPI application

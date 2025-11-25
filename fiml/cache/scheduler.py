@@ -6,7 +6,7 @@ Reduces API calls by batching similar requests during low-load periods
 import asyncio
 import contextlib
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from fiml.core.logging import get_logger
@@ -29,7 +29,7 @@ class UpdateRequest:
         self.data_type = data_type
         self.provider = provider
         self.priority = priority
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(UTC)
 
     def get_batch_key(self) -> str:
         """Get key for grouping similar requests"""
@@ -294,7 +294,7 @@ class BatchUpdateScheduler:
     async def _run_batch_cycle(self) -> None:
         """Run a single batch processing cycle"""
         # Check if we should process during this hour
-        current_hour = datetime.utcnow().hour
+        current_hour = datetime.now(UTC).hour
         is_low_load = current_hour in self.low_load_hours
 
         if not is_low_load and len(self.pending_requests) < self.batch_size * 2:

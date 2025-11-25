@@ -7,7 +7,7 @@ Provides health checks, metrics collection, and monitoring for workers.
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -81,32 +81,32 @@ class WorkerMetrics:
         self.total_execution_time += execution_time
         self.min_execution_time = min(self.min_execution_time, execution_time)
         self.max_execution_time = max(self.max_execution_time, execution_time)
-        self.last_task_at = datetime.utcnow()
-        self.last_heartbeat = datetime.utcnow()
+        self.last_task_at = datetime.now(UTC)
+        self.last_heartbeat = datetime.now(UTC)
 
     def record_task_failure(self, error_message: str) -> None:
         """Record a failed task"""
         self.tasks_failed += 1
-        self.error_messages.append(f"{datetime.utcnow().isoformat()}: {error_message}")
+        self.error_messages.append(f"{datetime.now(UTC).isoformat()}: {error_message}")
         # Keep only last 10 errors
         if len(self.error_messages) > 10:
             self.error_messages = self.error_messages[-10:]
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(UTC)
 
     def record_task_timeout(self) -> None:
         """Record a task timeout"""
         self.tasks_timeout += 1
         self.tasks_failed += 1
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(UTC)
 
     def update_heartbeat(self) -> None:
         """Update last heartbeat timestamp"""
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(UTC)
 
     def update_status(self, status: WorkerStatus) -> None:
         """Update worker health status"""
         self.status = status
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(UTC)
 
     def is_healthy(self, max_heartbeat_age_seconds: int = 120) -> bool:
         """Check if worker is healthy based on metrics"""
@@ -114,7 +114,7 @@ class WorkerMetrics:
         if self.last_heartbeat is None:
             return False
 
-        heartbeat_age = (datetime.utcnow() - self.last_heartbeat).total_seconds()
+        heartbeat_age = (datetime.now(UTC) - self.last_heartbeat).total_seconds()
         if heartbeat_age > max_heartbeat_age_seconds:
             return False
 
@@ -298,7 +298,7 @@ class WorkerHealthMonitor:
             "total_failures": total_tasks - total_successes,
             "overall_success_rate": total_successes / total_tasks if total_tasks > 0 else 1.0,
             "by_type": type_stats,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_unhealthy_workers(self) -> List[str]:

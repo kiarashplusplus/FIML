@@ -4,7 +4,7 @@ Central message processing hub for multi-platform educational bot
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -42,7 +42,7 @@ class AbstractMessage:
         if self.context is None:
             self.context = {}
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(UTC)
 
 
 @dataclass
@@ -106,9 +106,9 @@ class UserSession:
         if self.metadata is None:
             self.metadata = {}
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(UTC)
         if self.updated_at is None:
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(UTC)
 
 
 class SessionManager:
@@ -123,7 +123,7 @@ class SessionManager:
         """Get existing session or create new one"""
         if user_id in self._sessions:
             session = self._sessions[user_id]
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(UTC)
             return session
 
         # Create new session
@@ -139,7 +139,7 @@ class SessionManager:
 
     async def update(self, user_id: str, session: UserSession):
         """Update session"""
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(UTC)
         self._sessions[user_id] = session
         logger.debug("Session updated", user_id=user_id)
 

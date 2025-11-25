@@ -6,7 +6,7 @@ Provides health checks, metrics collection, and monitoring for watchdogs.
 
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, List, Optional
 
 from fiml.core.logging import get_logger
@@ -71,7 +71,7 @@ class WatchdogMetrics:
     @property
     def uptime_seconds(self) -> float:
         """Calculate uptime in seconds"""
-        return (datetime.utcnow() - self.started_at).total_seconds()
+        return (datetime.now(UTC) - self.started_at).total_seconds()
 
     def record_check_success(self, check_time: float, event_detected: bool = False, severity: Optional[str] = None) -> None:
         """Record a successful check"""
@@ -79,12 +79,12 @@ class WatchdogMetrics:
         self.total_check_time += check_time
         self.min_check_time = min(self.min_check_time, check_time)
         self.max_check_time = max(self.max_check_time, check_time)
-        self.last_check_at = datetime.utcnow()
+        self.last_check_at = datetime.now(UTC)
         self.consecutive_failures = 0
 
         if event_detected:
             self.events_detected += 1
-            self.last_event_at = datetime.utcnow()
+            self.last_event_at = datetime.now(UTC)
 
             # Track by severity
             if severity == "critical":
@@ -100,8 +100,8 @@ class WatchdogMetrics:
         """Record a failed check"""
         self.checks_failed += 1
         self.consecutive_failures += 1
-        self.last_error = f"{datetime.utcnow().isoformat()}: {error_message}"
-        self.last_check_at = datetime.utcnow()
+        self.last_error = f"{datetime.now(UTC).isoformat()}: {error_message}"
+        self.last_check_at = datetime.now(UTC)
 
         # Mark as unhealthy if too many consecutive failures (default: 3)
         if self.consecutive_failures >= 3:
@@ -228,7 +228,7 @@ class WatchdogHealthMonitor:
                 "low": total_low,
             },
             "detection_rate": total_events / total_checks if total_checks > 0 else 0.0,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_unhealthy_watchdogs(self) -> List[str]:
@@ -242,7 +242,7 @@ class WatchdogHealthMonitor:
     def get_stale_watchdogs(self, max_age_seconds: int = 300) -> List[str]:
         """Get list of watchdogs that haven't checked recently"""
         stale = []
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         for name, metrics in self._metrics.items():
             if not metrics.is_enabled:

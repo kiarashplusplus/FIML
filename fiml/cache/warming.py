@@ -6,7 +6,7 @@ Analyzes query patterns and pre-warms cache during off-peak hours
 import asyncio
 import contextlib
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from fiml.core.logging import get_logger
@@ -21,14 +21,14 @@ class QueryPattern:
     def __init__(self, symbol: str):
         self.symbol = symbol
         self.request_count = 0
-        self.last_accessed = datetime.utcnow()
+        self.last_accessed = datetime.now(UTC)
         self.hourly_distribution: Dict[int, int] = defaultdict(int)  # hour -> count
         self.data_types_requested: Dict[DataType, int] = defaultdict(int)
 
     def record_access(self, data_type: DataType, hour: int) -> None:
         """Record a cache access"""
         self.request_count += 1
-        self.last_accessed = datetime.utcnow()
+        self.last_accessed = datetime.now(UTC)
         self.hourly_distribution[hour] += 1
         self.data_types_requested[data_type] += 1
 
@@ -139,7 +139,7 @@ class PredictiveCacheWarmer:
         if symbol not in self.query_patterns:
             self.query_patterns[symbol] = QueryPattern(symbol)
 
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(UTC)
         hour = timestamp.hour
 
         self.query_patterns[symbol].record_access(data_type, hour)
@@ -177,7 +177,7 @@ class PredictiveCacheWarmer:
         Returns:
             List of (symbol, priority_score) tuples, sorted by priority
         """
-        now = now or datetime.utcnow()
+        now = now or datetime.now(UTC)
         limit = limit or self.max_symbols_per_batch
 
         # Filter symbols meeting threshold
@@ -306,7 +306,7 @@ class PredictiveCacheWarmer:
 
     async def run_warming_cycle(self) -> None:
         """Run a single warming cycle"""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Check if we should run warming at this hour
         if now.hour not in self.warming_schedule:
@@ -408,7 +408,7 @@ class PredictiveCacheWarmer:
         Returns:
             Number of patterns removed
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         old_patterns = [
             symbol
             for symbol, pattern in self.query_patterns.items()

@@ -5,7 +5,7 @@ Handles collection, validation, and secure storage of user API keys (BYOK model)
 
 import json
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -309,7 +309,7 @@ class UserProviderKeyManager:
             key_data = {
                 "provider": provider,
                 "encrypted_key": encrypted_key.decode(),
-                "added_at": datetime.utcnow().isoformat(),
+                "added_at": datetime.now(UTC).isoformat(),
                 "metadata": metadata or {}
             }
 
@@ -486,7 +486,7 @@ class UserProviderKeyManager:
             provider: Provider used
         """
         # In-memory tracking (should be Redis in production)
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
         key = f"{user_id}:{provider}:{today}"
 
         if key not in self._quota_usage:
@@ -521,7 +521,7 @@ class UserProviderKeyManager:
 
     async def get_usage(self, user_id: str, provider: str) -> int:
         """Get current usage for user/provider"""
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
         key = f"{user_id}:{provider}:{today}"
         return self._quota_usage.get(key, 0)
 
@@ -537,7 +537,7 @@ class UserProviderKeyManager:
             "Key management audit",
             user_id=user_id,
             action=action,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(UTC).isoformat()
         )
 
         # In production, write to dedicated audit log storage

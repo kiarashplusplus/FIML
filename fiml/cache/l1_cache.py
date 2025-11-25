@@ -5,7 +5,7 @@ Target: 10-100ms latency
 
 import json
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional, Set
 
 import redis.asyncio as redis
@@ -354,7 +354,7 @@ class L1Cache:
     def _track_access(self, key: str) -> None:
         """Track key access for LFU policy"""
         self._access_counts[key] += 1
-        self._last_access[key] = datetime.utcnow()
+        self._last_access[key] = datetime.now(UTC)
 
     def protect_key(self, key: str) -> None:
         """
@@ -450,7 +450,7 @@ class L1Cache:
             "access_count": access_count,
             "last_access": self._last_access.get(key),
             "reason": reason,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(UTC),
         }
 
         self._eviction_log.append(eviction_record)

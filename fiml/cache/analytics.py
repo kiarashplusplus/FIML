@@ -4,7 +4,7 @@ Tracks hit/miss rates, latency, and exports metrics to Prometheus
 """
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from fiml.core.logging import get_logger
@@ -213,7 +213,7 @@ class CacheAnalytics:
             self.total_misses += 1
 
         # Update hourly stats
-        hour_key = datetime.utcnow().strftime("%Y-%m-%d-%H")
+        hour_key = datetime.now(UTC).strftime("%Y-%m-%d-%H")
         self.hourly_stats[hour_key]["requests"] += 1
         if is_hit:
             self.hourly_stats[hour_key]["hits"] += 1
@@ -227,7 +227,7 @@ class CacheAnalytics:
                 del self.single_access_keys[key]
             else:
                 # First access - track it
-                self.single_access_keys[key] = datetime.utcnow()
+                self.single_access_keys[key] = datetime.now(UTC)
 
         # Update Prometheus metrics
         if self.enable_prometheus:
@@ -330,7 +330,7 @@ class CacheAnalytics:
             Dict with pollution metrics and problematic patterns
         """
         # Clean old single-access keys (>1 hour old)
-        cutoff = datetime.utcnow() - timedelta(hours=1)
+        cutoff = datetime.now(UTC) - timedelta(hours=1)
         old_keys = [
             key for key, timestamp in self.single_access_keys.items()
             if timestamp < cutoff
@@ -356,7 +356,7 @@ class CacheAnalytics:
         Returns:
             List of hourly stats
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         trends = []
 
         for i in range(hours):
@@ -432,7 +432,7 @@ class CacheAnalytics:
     def get_comprehensive_report(self) -> Dict[str, Any]:
         """Get comprehensive analytics report"""
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "overall": self.get_overall_stats(),
             "by_data_type": self.get_data_type_stats(),
             "pollution": self.detect_cache_pollution(),

@@ -2,7 +2,7 @@
 Session analytics and metrics tracking
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, Optional
 
 from sqlalchemy import func, select
@@ -96,7 +96,7 @@ class SessionAnalytics:
         try:
             async with self._session_maker() as db_session:
                 # Build query
-                cutoff_date = datetime.utcnow() - timedelta(days=days)
+                cutoff_date = datetime.now(UTC) - timedelta(days=days)
                 query = select(SessionMetrics).where(SessionMetrics.created_at >= cutoff_date)
 
                 if user_id:
@@ -174,7 +174,7 @@ class SessionAnalytics:
         try:
             async with self._session_maker() as db_session:
                 # Get session type breakdown
-                cutoff_date = datetime.utcnow() - timedelta(days=days)
+                cutoff_date = datetime.now(UTC) - timedelta(days=days)
                 query = (
                     select(
                         SessionMetrics.session_type,

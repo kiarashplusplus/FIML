@@ -180,7 +180,7 @@ class FKDSLTransformer(Transformer):
     def value(self, v: Any) -> float | str:
         try:
             return float(v)
-        except:
+        except (ValueError, TypeError):
             return str(v).strip('"')
 
     def condition_list(self, *conditions: Any) -> list:
