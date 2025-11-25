@@ -4,7 +4,7 @@ Current project status and metrics.
 
 ## Version
 
-**Current**: 0.2.1
+**Current**: 0.2.2
 
 ## Phase Status
 
@@ -32,6 +32,12 @@ Current project status and metrics.
 - **Dependencies**: All stable
 
 ## Recent Updates
+
+### November 25, 2025 - Version 0.2.2
+
+- ✅ All tests passing (100%)
+- ✅ CI/CD badges added
+- ✅ Documentation updated
 
 ### November 23, 2025 - Version 0.2.1
 

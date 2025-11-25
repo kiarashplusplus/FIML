@@ -2,7 +2,7 @@
 
 **Created**: November 25, 2025  
 **Goal**: Prepare FIML for a soft launch with early users  
-**Current Version**: 0.2.1  
+**Current Version**: 0.2.2  
 
 ---
 

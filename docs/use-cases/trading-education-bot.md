@@ -1326,4 +1326,4 @@ Ready to build the future of trading education?
 
 *Last Updated: November 23, 2025*  
 *Document Version: 1.0*  
-*FIML Version: 0.2.1*
+*FIML Version: 0.2.2*

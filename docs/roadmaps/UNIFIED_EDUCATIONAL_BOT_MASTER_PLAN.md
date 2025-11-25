@@ -4,7 +4,7 @@
 **Document Version:** 1.0  
 **Created:** November 24, 2025  
 **Status:** Planning Phase  
-**FIML Version:** 0.2.1
+**FIML Version:** 0.2.2
 
 ---
 

@@ -3,7 +3,7 @@
 **An AI-Native Financial Data MCP Server with Intelligent Provider Orchestration**
 
 !!! info "Project Status"
-    ✅ **PHASE 1 COMPLETE** | 🚧 **PHASE 2 IN DEVELOPMENT (60%)** | **Version**: 0.2.1 | **Tests**: 439 passed (100% success rate)
+    ✅ **PHASE 1 COMPLETE** | 🚧 **PHASE 2 IN DEVELOPMENT (60%)** | **Version**: 0.2.2 | **Tests**: 439 passed (100% success rate)
     
     [![FIML CI/CD Pipeline](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml)
     [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
