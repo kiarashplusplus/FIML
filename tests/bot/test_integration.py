@@ -108,7 +108,7 @@ class TestBotIntegration:
 
         # Step 7: Award perfect quiz badge
         if score["percentage"] == 100.0:
-            gamification.award_badge(user_id, "perfect_score", "100% on quiz")
+            gamification.award_badge_sync(user_id, "perfect_score", "100% on quiz")
 
         # Verify final state
         total_xp = gamification.get_user_xp(user_id)
@@ -176,11 +176,11 @@ class TestBotIntegration:
         assert streak["current_streak"] == 1
 
         # Award first lesson badge
-        if not gamification.has_badge(user_id, "first_steps"):
-            gamification.award_badge(user_id, "first_steps", "Complete first lesson")
+        if not gamification.has_badge(user_id, "first_lesson"):
+            await gamification.award_badge(user_id, "first_lesson")
 
         badges = gamification.get_user_badges(user_id)
-        assert any(b["id"] == "first_steps" for b in badges)
+        assert any(b["id"] == "first_lesson" for b in badges)
 
     async def test_level_up_notification(self, bot_components):
         """Test detecting when user levels up"""
