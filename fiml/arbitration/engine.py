@@ -23,6 +23,7 @@ from fiml.core.models import (
 )
 from fiml.providers.base import BaseProvider, ProviderResponse
 from fiml.providers.registry import provider_registry
+from typing import Optional
 
 logger = get_logger(__name__)
 
@@ -39,8 +40,9 @@ class DataArbitrationEngine:
     5. Resolve conflicts when providers disagree
     """
 
-    def __init__(self) -> None:
+    def __init__(self, providers: Optional[List[BaseProvider]] = None) -> None:
         self.provider_registry = provider_registry
+        self.custom_providers = providers
 
     async def arbitrate_request(
         self,

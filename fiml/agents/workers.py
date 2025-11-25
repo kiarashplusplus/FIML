@@ -6,7 +6,7 @@ and leverages Azure OpenAI for interpretation and insights.
 """
 
 from datetime import UTC, datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -199,7 +199,7 @@ Provide a JSON response with:
 
             score = max(0.0, min(10.0, score))  # Clamp to 0-10
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "fundamentals",
                 "metrics": metrics,
@@ -210,6 +210,7 @@ Provide a JSON response with:
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("Fundamentals analysis failed", error=str(e), exc_info=True)
@@ -265,6 +266,7 @@ class TechnicalWorker(BaseWorker):
                 self.logger.warning("No OHLCV data available")
                 raise ValueError("No OHLCV data available")
 
+
             # Convert to DataFrame
             df = pd.DataFrame(ohlcv_data)
 
@@ -275,7 +277,7 @@ class TechnicalWorker(BaseWorker):
                     raise ValueError(f"Missing required column: {col}")
 
             # Calculate indicators
-            indicators = {}
+            indicators: Dict[str, Any] = {}
 
             # Use pandas-ta if available, otherwise fallback
             if PANDAS_TA_AVAILABLE:
@@ -321,10 +323,10 @@ class TechnicalWorker(BaseWorker):
 
             else:
                 # Fallback calculations without pandas-ta
-                close = df["close"].values
+                close_prices: np.ndarray = df["close"].values
 
                 # RSI calculation
-                delta = np.diff(close)
+                delta = np.diff(close_prices)
                 gain = np.where(delta > 0, delta, 0)
                 loss = np.where(delta < 0, -delta, 0)
                 avg_gain = np.mean(gain[-14:]) if len(gain) >= 14 else 0
@@ -333,8 +335,8 @@ class TechnicalWorker(BaseWorker):
                 indicators["rsi"] = 100 - (100 / (1 + rs))
 
                 # Simple MACD
-                ema12 = pd.Series(close).ewm(span=12, adjust=False).mean()
-                ema26 = pd.Series(close).ewm(span=26, adjust=False).mean()
+                ema12 = pd.Series(close_prices).ewm(span=12, adjust=False).mean()
+                ema26 = pd.Series(close_prices).ewm(span=26, adjust=False).mean()
                 macd_line = ema12 - ema26
                 signal_line = macd_line.ewm(span=9, adjust=False).mean()
 
@@ -345,8 +347,8 @@ class TechnicalWorker(BaseWorker):
                 }
 
                 # Bollinger Bands
-                sma20 = pd.Series(close).rolling(20).mean()
-                std20 = pd.Series(close).rolling(20).std()
+                sma20 = pd.Series(close_prices).rolling(20).mean()
+                std20 = pd.Series(close_prices).rolling(20).std()
                 indicators["bollinger"] = {
                     "upper": float(sma20.iloc[-1] + 2 * std20.iloc[-1]),
                     "middle": float(sma20.iloc[-1]),
@@ -354,9 +356,9 @@ class TechnicalWorker(BaseWorker):
                 }
 
                 # Moving averages
-                indicators["sma_20"] = float(pd.Series(close).rolling(20).mean().iloc[-1])
-                indicators["sma_50"] = float(pd.Series(close).rolling(50).mean().iloc[-1]) if len(close) >= 50 else float(np.mean(close))
-                indicators["sma_200"] = float(pd.Series(close).rolling(200).mean().iloc[-1]) if len(close) >= 200 else float(np.mean(close))
+                indicators["sma_20"] = float(pd.Series(close_prices).rolling(20).mean().iloc[-1])
+                indicators["sma_50"] = float(pd.Series(close_prices).rolling(50).mean().iloc[-1]) if len(close_prices) >= 50 else float(np.mean(close_prices))
+                indicators["sma_200"] = float(pd.Series(close_prices).rolling(200).mean().iloc[-1]) if len(close_prices) >= 200 else float(np.mean(close_prices))
                 indicators["ema_12"] = float(ema12.iloc[-1])
                 indicators["ema_26"] = float(ema26.iloc[-1])
 
@@ -465,7 +467,7 @@ Provide a JSON response with:
 
             score = max(0.0, min(10.0, score))
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "technical",
                 "indicators": {k: round(v, 2) if isinstance(v, (int, float)) else v for k, v in indicators.items()},
@@ -476,6 +478,7 @@ Provide a JSON response with:
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("Technical analysis failed", error=str(e), exc_info=True)
@@ -648,7 +651,7 @@ Provide a JSON response with:
 
             score = max(0.0, min(10.0, score))
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "macro",
                 "factors": factors,
@@ -660,6 +663,7 @@ Provide a JSON response with:
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("Macro analysis failed", error=str(e), exc_info=True)
@@ -700,7 +704,7 @@ class SentimentWorker(BaseWorker):
             # Fetch news articles
             providers = await provider_registry.get_providers_for_asset(asset, DataType.NEWS)
 
-            articles = []
+            articles: List[Dict[str, Any]] = []
             for provider in providers:
                 try:
                     response = await provider.fetch_news(asset, limit=20)
@@ -728,8 +732,8 @@ class SentimentWorker(BaseWorker):
                 }
 
             # Analyze sentiment using Azure OpenAI
-            sentiment_scores = []
-            analyzed_articles = []
+            sentiment_scores: List[float] = []
+            analyzed_articles: List[Dict[str, Any]] = []
 
             try:
                 azure_client = AzureOpenAIClient()
@@ -804,6 +808,7 @@ class SentimentWorker(BaseWorker):
 
                 # Create basic analyzed articles
                 for article in articles[:5]:
+                    article = cast(Dict[str, Any], article)
                     analyzed_articles.append({
                         "title": article.get("title", ""),
                         "sentiment": 0.0,
@@ -833,7 +838,7 @@ class SentimentWorker(BaseWorker):
 
             score = max(0.0, min(10.0, score))
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "sentiment",
                 "sentiment_score": round(avg_sentiment, 2),
@@ -845,6 +850,7 @@ class SentimentWorker(BaseWorker):
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("Sentiment analysis failed", error=str(e), exc_info=True)
@@ -1001,7 +1007,7 @@ class CorrelationWorker(BaseWorker):
 
             score = max(0.0, min(10.0, score))
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "correlation",
                 "correlations": correlations,
@@ -1012,6 +1018,7 @@ class CorrelationWorker(BaseWorker):
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("Correlation analysis failed", error=str(e), exc_info=True)
@@ -1130,7 +1137,7 @@ class RiskWorker(BaseWorker):
 
             # Use Azure OpenAI for risk assessment
             risk_assessment = ""
-            warnings = []
+            warnings: List[str] = []
             confidence = 0.75
 
             try:
@@ -1214,7 +1221,7 @@ Provide a JSON response with:
 
             score = max(0.0, min(10.0, score))
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "risk",
                 "metrics": metrics,
@@ -1225,6 +1232,7 @@ Provide a JSON response with:
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("Risk analysis failed", error=str(e), exc_info=True)
@@ -1266,7 +1274,7 @@ class NewsWorker(BaseWorker):
             # Fetch news articles
             providers = await provider_registry.get_providers_for_asset(asset, DataType.NEWS)
 
-            articles = []
+            articles: List[Dict[str, Any]] = []
             for provider in providers:
                 try:
                     response = await provider.fetch_news(asset, limit=25)
@@ -1292,8 +1300,8 @@ class NewsWorker(BaseWorker):
                 }
 
             # Analyze articles using Azure OpenAI
-            analyzed_articles = []
-            timeline_events = []
+            analyzed_articles: List[Dict[str, Any]] = []
+            timeline_events: List[Dict[str, Any]] = []
 
             try:
                 azure_client = AzureOpenAIClient()
@@ -1441,7 +1449,7 @@ Provide a JSON response with:
 
             score = max(0.0, min(10.0, score))
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "news",
                 "articles": analyzed_articles[:10],  # Top 10
@@ -1452,6 +1460,7 @@ Provide a JSON response with:
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("News analysis failed", error=str(e), exc_info=True)
@@ -1653,7 +1662,7 @@ Provide a JSON response with:
 
             score = max(0.0, min(10.0, score))
 
-            return {
+            result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "options",
                 "metrics": metrics,
@@ -1677,11 +1686,12 @@ Provide a JSON response with:
                             "open_interest": opt.get("open_interest"),
                         }
                         for opt in unusual_puts[:5]
-                    ],
+                    ]
                 },
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
+            return result
 
         except Exception as e:
             self.logger.error("Options analysis failed", error=str(e), exc_info=True)

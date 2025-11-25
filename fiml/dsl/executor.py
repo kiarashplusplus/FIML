@@ -10,7 +10,7 @@ Implements the execution engine for FK-DSL queries, supporting:
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, cast, Set
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -114,7 +114,7 @@ class TaskExecutor:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-    async def _fetch_ohlcv(self, task: ExecutionTask, context: Dict) -> List[Dict]:
+    async def _fetch_ohlcv(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Fetch OHLCV (candlestick) data"""
         await asyncio.sleep(0.2)
 
@@ -137,7 +137,7 @@ class TaskExecutor:
 
         return data
 
-    async def _fetch_fundamentals(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _fetch_fundamentals(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Fetch fundamental data (PE, EPS, etc.)"""
         await asyncio.sleep(0.3)
 
@@ -152,7 +152,7 @@ class TaskExecutor:
             "dividend_yield": 0.005,
         }
 
-    async def _fetch_news(self, task: ExecutionTask, context: Dict) -> List[Dict]:
+    async def _fetch_news(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Fetch news articles"""
         await asyncio.sleep(0.15)
 
@@ -192,7 +192,7 @@ class TaskExecutor:
 
     # ================== Computation Tasks ==================
 
-    async def _compute_technical(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _compute_technical(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Compute technical indicators (RSI, MACD, etc.)"""
         await asyncio.sleep(0.1)
 
@@ -241,7 +241,7 @@ class TaskExecutor:
 
         return result
 
-    async def _compute_sentiment(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _compute_sentiment(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Compute sentiment analysis from news/social data"""
         await asyncio.sleep(0.15)
 
@@ -253,7 +253,7 @@ class TaskExecutor:
             "sample_size": 150,
         }
 
-    async def _compute_volatility(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _compute_volatility(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Compute volatility metrics"""
         await asyncio.sleep(0.1)
 
@@ -264,7 +264,7 @@ class TaskExecutor:
             "beta": 1.15,
         }
 
-    async def _compute_correlation(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _compute_correlation(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Compute correlation between assets"""
         await asyncio.sleep(0.2)
 
@@ -288,7 +288,7 @@ class TaskExecutor:
             "window": window,
         }
 
-    async def _compute_regression(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _compute_regression(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Compute regression analysis"""
         await asyncio.sleep(0.3)
 
@@ -313,7 +313,7 @@ class TaskExecutor:
 
     # ================== Analysis Tasks ==================
 
-    async def _filter_assets(self, task: ExecutionTask, context: Dict) -> List[Dict]:
+    async def _filter_assets(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Filter assets by conditions"""
         await asyncio.sleep(0.05)
 
@@ -326,7 +326,7 @@ class TaskExecutor:
             {"symbol": "MSFT", "matches": True, "conditions_met": len(conditions)},
         ]
 
-    async def _compare_metrics(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _compare_metrics(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Compare metrics across multiple assets"""
         await asyncio.sleep(0.05)
 
@@ -344,7 +344,7 @@ class TaskExecutor:
 
         return {"comparison": comparison, "metrics": metrics}
 
-    async def _scan_market(self, task: ExecutionTask, context: Dict) -> List[Dict]:
+    async def _scan_market(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Scan market for assets matching conditions"""
         await asyncio.sleep(0.5)
 
@@ -359,7 +359,7 @@ class TaskExecutor:
             {"symbol": "TSLA", "market": market, "volume": 120000000, "change": 6.1},
         ]
 
-    async def _aggregate(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _aggregate(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Aggregate results from multiple tasks"""
         await asyncio.sleep(0.05)
 
@@ -382,7 +382,7 @@ class TaskExecutor:
 
         return aggregated
 
-    async def _generate_narrative(self, task: ExecutionTask, context: Dict) -> Dict:
+    async def _generate_narrative(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate narrative summary from analysis results"""
         await asyncio.sleep(0.1)
 
@@ -555,7 +555,7 @@ class FKDSLExecutor:
         if internal_info.status == TaskStatus.FAILED:
             raise FKDSLExecutionError(internal_info.error)
 
-        return internal_info.result if internal_info.result else {}
+        return cast(Dict[str, Any], internal_info.result if internal_info.result else {})
 
 
 # Global executor instance

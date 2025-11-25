@@ -775,7 +775,7 @@ class NarrativeGenerator:
             if len(summary) < 50:
                 summary = f"Analysis of {context.asset_symbol}: " + summary
 
-            return summary
+            return str(summary)
 
         except Exception as e:
             logger.error("Failed to generate summary", error=str(e))

@@ -7,6 +7,7 @@ import logging
 import os
 from pathlib import Path
 
+from typing import Optional
 import structlog
 from dotenv import load_dotenv
 
@@ -33,7 +34,7 @@ structlog.configure(
 logger = structlog.get_logger(__name__)
 
 
-def main():
+def main() -> None:
     """Main entry point"""
 
     # Get bot token from environment
@@ -46,9 +47,10 @@ def main():
         return
 
     # Get encryption key (or generate)
-    encryption_key = os.getenv("ENCRYPTION_KEY")
-    if encryption_key:
-        encryption_key = encryption_key.encode()
+    encryption_key_str = os.getenv("ENCRYPTION_KEY")
+    encryption_key_bytes: Optional[bytes] = None
+    if encryption_key_str:
+        encryption_key_bytes = encryption_key_str.encode()
 
     # Setup storage path
     storage_path = os.getenv("KEY_STORAGE_PATH", "./data/keys")
@@ -58,7 +60,7 @@ def main():
 
     # Initialize components
     key_manager = UserProviderKeyManager(
-        encryption_key=encryption_key,
+        encryption_key=encryption_key_bytes,
         storage_path=storage_path
     )
 

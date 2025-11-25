@@ -3,12 +3,13 @@ Component 2: FIML Provider Configurator
 Configures FIML arbitration engine with user-specific API keys
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import structlog
 
 if TYPE_CHECKING:
     from fiml.bot.core.key_manager import UserProviderKeyManager
+    from fiml.arbitration.engine import DataArbitrationEngine
 
 logger = structlog.get_logger(__name__)
 
@@ -70,7 +71,7 @@ class FIMLProviderConfigurator:
         if user_keys is None:
             user_keys = {}
 
-        config = {
+        config: Dict[str, Any] = {
             "user_id": user_id,
             "providers": [],
             "fallback_enabled": True,
@@ -115,7 +116,7 @@ class FIMLProviderConfigurator:
 
         return config
 
-    async def get_fiml_client_for_user(self, user_id: str):
+    async def get_fiml_client_for_user(self, user_id: str) -> 'DataArbitrationEngine':
         """
         Get FIML client configured for user's providers
 
@@ -134,7 +135,7 @@ class FIMLProviderConfigurator:
         config = self.get_user_provider_config(user_id, user_keys=user_keys)
 
         # Initialize providers
-        providers = []
+        providers: List[Any] = []
         for provider_config in config["providers"]:
             try:
                 provider_name = provider_config["name"]
@@ -143,7 +144,7 @@ class FIMLProviderConfigurator:
                 # Get provider instance
                 if provider_name == "yahoo_finance":
                     from fiml.providers.yahoo_finance import YahooFinanceProvider
-                    provider = YahooFinanceProvider()
+                    provider: Any = YahooFinanceProvider()
                 elif provider_name == "alpha_vantage" and api_key:
                     from fiml.providers.alpha_vantage import AlphaVantageProvider
                     provider = AlphaVantageProvider(api_key=api_key)
@@ -188,7 +189,7 @@ class FIMLProviderConfigurator:
         user_id: str,
         provider: str,
         query_type: str
-    ):
+    ) -> Dict[str, Any]:
         """
         Track API usage for quota management
 

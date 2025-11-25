@@ -7,7 +7,7 @@ import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import structlog
@@ -87,11 +87,11 @@ class UserProviderKeyManager:
 
         logger.info("UserProviderKeyManager initialized", storage_path=storage_path)
 
-    def get_provider_info(self, provider: str) -> Optional[Dict]:
+    def get_provider_info(self, provider: str) -> Optional[Dict[str, Any]]:
         """Get information about a provider for user guidance"""
         return self.PROVIDER_INFO.get(provider)
 
-    def list_supported_providers(self) -> List[Dict]:
+    def list_supported_providers(self) -> List[Dict[str, Any]]:
         """List all supported providers with their information"""
         return [
             {"id": key, **value}
@@ -123,7 +123,7 @@ class UserProviderKeyManager:
         )
         return is_valid
 
-    async def test_provider_key(self, provider: str, api_key: str) -> Dict:
+    async def test_provider_key(self, provider: str, api_key: str) -> Dict[str, Any]:
         """
         Test API key by making actual API call
 
@@ -159,7 +159,7 @@ class UserProviderKeyManager:
                 "message": f"Test failed: {str(e)}"
             }
 
-    async def _test_alpha_vantage(self, api_key: str) -> Dict:
+    async def _test_alpha_vantage(self, api_key: str) -> Dict[str, Any]:
         """Test Alpha Vantage API key"""
         url = "https://www.alphavantage.co/query"
         params = {
@@ -199,7 +199,7 @@ class UserProviderKeyManager:
                     "message": "Unexpected response from API"
                 }
 
-    async def _test_polygon(self, api_key: str) -> Dict:
+    async def _test_polygon(self, api_key: str) -> Dict[str, Any]:
         """Test Polygon.io API key"""
         url = "https://api.polygon.io/v2/aggs/ticker/AAPL/prev"
         headers = {"Authorization": f"Bearer {api_key}"}
@@ -225,7 +225,7 @@ class UserProviderKeyManager:
                     "message": f"API returned status {resp.status}"
                 }
 
-    async def _test_finnhub(self, api_key: str) -> Dict:
+    async def _test_finnhub(self, api_key: str) -> Dict[str, Any]:
         """Test Finnhub API key"""
         url = f"https://finnhub.io/api/v1/quote?symbol=AAPL&token={api_key}"
 
@@ -252,7 +252,7 @@ class UserProviderKeyManager:
                     "message": "Unexpected response"
                 }
 
-    async def _test_fmp(self, api_key: str) -> Dict:
+    async def _test_fmp(self, api_key: str) -> Dict[str, Any]:
         """Test Financial Modeling Prep API key"""
         url = f"https://financialmodelingprep.com/api/v3/quote/AAPL?apikey={api_key}"
 
@@ -284,7 +284,7 @@ class UserProviderKeyManager:
         user_id: str,
         provider: str,
         api_key: str,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
         Encrypt and store user API key
@@ -438,7 +438,7 @@ class UserProviderKeyManager:
             logger.error("Failed to remove key", user_id=user_id, provider=provider, error=str(e))
             return False
 
-    async def list_user_providers(self, user_id: str) -> List[Dict]:
+    async def list_user_providers(self, user_id: str) -> List[Dict[str, Any]]:
         """
         List all providers user has keys for
 
@@ -474,7 +474,7 @@ class UserProviderKeyManager:
             logger.error("Failed to list providers", user_id=user_id, error=str(e))
             return []
 
-    async def track_usage(self, user_id: str, provider: str):
+    async def track_usage(self, user_id: str, provider: str) -> Dict[str, Any]:
         """
         Track API usage for quota management
 
@@ -522,7 +522,7 @@ class UserProviderKeyManager:
         key = f"{user_id}:{provider}:{today}"
         return self._quota_usage.get(key, 0)
 
-    async def _audit_log(self, user_id: str, action: str):
+    async def _audit_log(self, user_id: str, action: str) -> None:
         """
         Log key management actions for audit trail
 

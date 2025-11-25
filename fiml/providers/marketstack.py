@@ -69,7 +69,8 @@ class MarketstackProvider(BaseProvider):
         if params is None:
             params = {}
 
-        params["access_key"] = self.config.api_key
+        if self.config.api_key:
+            params["access_key"] = self.config.api_key
 
         try:
             url = f"{self.BASE_URL}{endpoint}"

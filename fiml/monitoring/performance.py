@@ -115,7 +115,7 @@ class PerformanceMonitor:
 
         # Task metrics
         self._tasks_completed = 0
-        self._tasks_failed = 0
+        self._tasks_failed: int = 0
 
     @contextmanager
     def track(self, operation: str, threshold: Optional[float] = None) -> Generator[None, None, None]:
@@ -169,7 +169,7 @@ class PerformanceMonitor:
 
     def _record_slow_query(self, operation: str, elapsed: float) -> None:
         """Record slow query"""
-        slow_query = {
+        slow_query: Dict[str, Any] = {
             "operation": operation,
             "duration_seconds": elapsed,
             "timestamp": datetime.now().isoformat(),
@@ -234,11 +234,11 @@ class PerformanceMonitor:
         """Record DSL execution time"""
         DSL_EXECUTION_TIME.labels(query_type=query_type).observe(elapsed)
 
-    def get_slow_queries(self, limit: int = 100) -> List[Dict]:
+    def get_slow_queries(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent slow queries"""
         return self._slow_queries[-limit:]
 
-    def get_operation_stats(self, operation: str) -> Optional[Dict]:
+    def get_operation_stats(self, operation: str) -> Optional[Dict[str, Any]]:
         """Get statistics for an operation"""
         if operation not in self._operation_times:
             return None
@@ -262,7 +262,7 @@ class PerformanceMonitor:
         """Get all tracked operations"""
         return list(self._operation_times.keys())
 
-    def get_cache_metrics(self) -> Dict:
+    def get_cache_metrics(self) -> Dict[str, Any]:
         """Get cache metrics summary"""
         metrics = {}
 
@@ -280,7 +280,7 @@ class PerformanceMonitor:
 
         return metrics
 
-    def get_metrics_summary(self) -> Dict:
+    def get_metrics_summary(self) -> Dict[str, Any]:
         """Get comprehensive metrics summary"""
         return {
             "cache": self.get_cache_metrics(),
@@ -309,10 +309,10 @@ performance_monitor = PerformanceMonitor()
 class PerformanceMiddleware:
     """FastAPI middleware for performance tracking"""
 
-    def __init__(self, app):
+    def __init__(self, app: Any) -> None:
         self.app = app
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Dict[str, Any], receive: Any, send: Any) -> Any:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
 
@@ -326,7 +326,7 @@ class PerformanceMiddleware:
         # Track request
         status = 200
 
-        async def send_wrapper(message):
+        async def send_wrapper(message: Dict[str, Any]) -> None:
             nonlocal status
             if message["type"] == "http.response.start":
                 status = message["status"]
@@ -357,6 +357,6 @@ def get_performance_metrics() -> Dict[str, Any]:
     return performance_monitor.get_metrics_summary()
 
 
-def get_slow_queries(limit: int = 100) -> List[Dict]:
+def get_slow_queries(limit: int = 100) -> List[Dict[str, Any]]:
     """Get slow queries for API endpoint"""
     return performance_monitor.get_slow_queries(limit)

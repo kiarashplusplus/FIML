@@ -336,7 +336,7 @@ class BatchNarrativeGenerator:
 
 
 # Celery task wrapper (to be integrated with Celery)
-async def generate_daily_narratives_task():
+async def generate_daily_narratives_task() -> Dict[str, Any]:
     """
     Celery task for daily narrative generation
 

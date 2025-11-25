@@ -22,6 +22,9 @@ logger = structlog.get_logger(__name__)
 
 
 # Conversation states
+PROVIDER_SELECT: int
+KEY_ENTRY: int
+CONFIRMATION: int
 PROVIDER_SELECT, KEY_ENTRY, CONFIRMATION = range(3)
 
 
@@ -62,7 +65,7 @@ class TelegramBotAdapter:
 
         logger.info("TelegramBotAdapter initialized")
 
-    def _setup_handlers(self):
+    def _setup_handlers(self) -> None:
         """Setup all command and conversation handlers"""
 
         # Basic commands
@@ -97,7 +100,7 @@ class TelegramBotAdapter:
         # Status command
         self.application.add_handler(CommandHandler("status", self.cmd_status))
 
-    async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command"""
         user = update.effective_user
 
@@ -121,7 +124,7 @@ Choose your path:
 
         await update.message.reply_text(welcome_text, parse_mode="Markdown")
 
-    async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /help command"""
         help_text = """
 📚 **FIML Educational Bot Commands**
@@ -150,7 +153,7 @@ Choose your path:
 
         await update.message.reply_text(help_text, parse_mode="Markdown")
 
-    async def cmd_add_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_add_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Start add key conversation"""
         # Get supported providers
         providers = self.key_manager.list_supported_providers()
@@ -187,7 +190,7 @@ Choose which data provider you want to add:
 
         return PROVIDER_SELECT
 
-    async def select_provider(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def select_provider(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Handle provider selection"""
         query = update.callback_query
         await query.answer()
@@ -201,7 +204,7 @@ Choose which data provider you want to add:
 
         if not provider_info:
             await query.edit_message_text("Provider not found. Please try again with /addkey")
-            return ConversationHandler.END
+            return int(ConversationHandler.END)
 
         # Provide instructions
         instructions = f"""
@@ -227,7 +230,7 @@ Once you have your API key, paste it here.
 
         return KEY_ENTRY
 
-    async def receive_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def receive_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Receive and validate API key"""
         str(update.effective_user.id)
         provider_id = context.user_data.get("selected_provider")
@@ -284,7 +287,7 @@ Save this key?
 
         return CONFIRMATION
 
-    async def confirm_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def confirm_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Confirm and store API key"""
         query = update.callback_query
         await query.answer()
@@ -293,7 +296,7 @@ Save this key?
 
         if confirmation == "no":
             await query.edit_message_text("❌ Key addition cancelled.")
-            return ConversationHandler.END
+            return int(ConversationHandler.END)
 
         # Store the key
         user_id = str(update.effective_user.id)
@@ -332,15 +335,15 @@ Your {provider_id} key is now connected.
         # Clear context
         context.user_data.clear()
 
-        return ConversationHandler.END
+        return int(ConversationHandler.END)
 
-    async def cmd_cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Cancel current operation"""
         context.user_data.clear()
         await update.message.reply_text("❌ Operation cancelled.")
-        return ConversationHandler.END
+        return int(ConversationHandler.END)
 
-    async def cmd_list_keys(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_list_keys(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """List user's connected providers"""
         user_id = str(update.effective_user.id)
 
@@ -375,7 +378,7 @@ Add one with /addkey to unlock premium data providers!
 
         await update.message.reply_text(text, parse_mode="Markdown")
 
-    async def cmd_remove_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_remove_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Remove a provider key"""
         user_id = str(update.effective_user.id)
 
@@ -405,7 +408,7 @@ Add one with /addkey to unlock premium data providers!
             reply_markup=reply_markup
         )
 
-    async def cmd_test_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_test_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Test all user's keys"""
         user_id = str(update.effective_user.id)
 
@@ -431,7 +434,7 @@ Add one with /addkey to unlock premium data providers!
 
         await update.message.reply_text(text, parse_mode="Markdown")
 
-    async def cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Show provider status and usage"""
         user_id = str(update.effective_user.id)
 
@@ -460,7 +463,7 @@ No providers connected yet.
 
         await update.message.reply_text(text, parse_mode="Markdown")
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the bot"""
         logger.info("Starting Telegram bot...")
         await self.application.initialize()
@@ -468,7 +471,7 @@ No providers connected yet.
         await self.application.updater.start_polling()
         logger.info("Telegram bot started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the bot"""
         logger.info("Stopping Telegram bot...")
         await self.application.updater.stop()
@@ -476,6 +479,6 @@ No providers connected yet.
         await self.application.shutdown()
         logger.info("Telegram bot stopped")
 
-    def run(self):
+    def run(self) -> None:
         """Run the bot (blocking)"""
         self.application.run_polling()

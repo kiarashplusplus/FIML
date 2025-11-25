@@ -3,7 +3,7 @@ Main FastAPI MCP Server
 """
 
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Dict, Union
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -112,7 +112,7 @@ app.include_router(alert_router, prefix="/api", tags=["alerts"])
 
 
 @app.get("/health")
-async def health_check() -> dict:
+async def health_check() -> Dict[str, Any]:
     """Health check endpoint"""
     return {
         "status": "healthy",
@@ -122,58 +122,58 @@ async def health_check() -> dict:
 
 
 @app.get("/api/metrics/cache")
-async def get_cache_metrics() -> dict:
+async def get_cache_metrics() -> Dict[str, Any]:
     """Get cache analytics metrics"""
     try:
         from fiml.cache.analytics import cache_analytics
         return cache_analytics.get_comprehensive_report()
     except Exception as e:
         logger.error(f"Failed to get cache metrics: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=500,
-            content={"error": "Failed to retrieve cache metrics", "message": str(e)}
+            detail=f"Failed to retrieve cache metrics: {str(e)}"
         )
 
 
 @app.get("/api/metrics/watchdog")
-async def get_watchdog_metrics() -> dict:
+async def get_watchdog_metrics() -> Dict[str, Any]:
     """Get watchdog health metrics"""
     try:
         from fiml.watchdog.health import watchdog_health_monitor
         return watchdog_health_monitor.get_health_summary()
     except Exception as e:
         logger.error(f"Failed to get watchdog metrics: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=500,
-            content={"error": "Failed to retrieve watchdog metrics", "message": str(e)}
+            detail=f"Failed to retrieve watchdog metrics: {str(e)}"
         )
 
 
 @app.get("/api/metrics/performance")
-async def get_performance_metrics() -> dict:
+async def get_performance_metrics() -> Dict[str, Any]:
     """Get performance monitoring metrics"""
     try:
         from fiml.monitoring.performance import get_performance_metrics
         return get_performance_metrics()
     except Exception as e:
         logger.error(f"Failed to get performance metrics: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=500,
-            content={"error": "Failed to retrieve performance metrics", "message": str(e)}
+            detail=f"Failed to retrieve performance metrics: {str(e)}"
         )
 
 
 @app.get("/api/metrics/tasks")
-async def get_task_metrics() -> dict:
+async def get_task_metrics() -> Dict[str, Any]:
     """Get task registry metrics"""
     try:
         from fiml.monitoring.task_registry import task_registry
         return task_registry.get_stats()
     except Exception as e:
         logger.error(f"Failed to get task metrics: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=500,
-            content={"error": "Failed to retrieve task metrics", "message": str(e)}
+            detail=f"Failed to retrieve task metrics: {str(e)}"
         )
 
 
@@ -181,7 +181,7 @@ async def get_task_metrics() -> dict:
 _health_check_engine = None
 
 
-async def _get_health_check_engine():
+async def _get_health_check_engine() -> Any:
     """Get or create a shared database engine for health checks"""
     global _health_check_engine
     if _health_check_engine is None:
@@ -198,7 +198,7 @@ async def _get_health_check_engine():
 
 
 @app.get("/health/db")
-async def health_check_db() -> dict:
+async def health_check_db() -> Dict[str, Any]:
     """Database (PostgreSQL) health check endpoint"""
     try:
         from sqlalchemy import text
@@ -216,13 +216,9 @@ async def health_check_db() -> dict:
         }
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=503,
-            content={
-                "status": "unhealthy",
-                "service": "postgresql",
-                "error": str(e),
-            },
+            detail=f"Database health check failed: {str(e)}"
         )
 
 
@@ -230,7 +226,7 @@ async def health_check_db() -> dict:
 _health_check_redis = None
 
 
-async def _get_health_check_redis():
+async def _get_health_check_redis() -> Any:
     """Get or create a shared Redis client for health checks"""
     global _health_check_redis
     if _health_check_redis is None:
@@ -246,7 +242,7 @@ async def _get_health_check_redis():
 
 
 @app.get("/health/cache")
-async def health_check_cache() -> dict:
+async def health_check_cache() -> Dict[str, Any]:
     """Cache (Redis) health check endpoint"""
     try:
         from fiml.cache.l1_cache import l1_cache
@@ -273,18 +269,14 @@ async def health_check_cache() -> dict:
             }
     except Exception as e:
         logger.error(f"Cache health check failed: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=503,
-            content={
-                "status": "unhealthy",
-                "service": "redis",
-                "error": str(e),
-            },
+            detail=f"Cache health check failed: {str(e)}"
         )
 
 
 @app.get("/health/providers")
-async def health_check_providers() -> dict:
+async def health_check_providers() -> Dict[str, Any]:
     """Provider health check endpoint - returns health status of all data providers"""
     try:
         health_status = await provider_registry.get_all_health()
@@ -298,7 +290,7 @@ async def health_check_providers() -> dict:
                 "uptime_percent": health.uptime_percent,
                 "avg_latency_ms": health.avg_latency_ms,
                 "success_rate": health.success_rate,
-                "last_check": health.last_check.isoformat() if health.last_check else None,
+                "last_check": health.last_check.isoformat(),
                 "error_count_24h": health.error_count_24h,
             }
             if not health.is_healthy:
@@ -306,54 +298,48 @@ async def health_check_providers() -> dict:
 
         return {
             "status": "healthy" if all_healthy else "degraded",
+            "service": "data_providers",
             "total_providers": len(providers_health),
             "healthy_providers": sum(1 for h in health_status.values() if h.is_healthy),
             "providers": providers_health,
         }
     except Exception as e:
         logger.error(f"Provider health check failed: {e}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=503,
-            content={
-                "status": "unhealthy",
-                "error": str(e),
-            },
+            detail=f"Provider health check failed: {str(e)}"
         )
 
 
 @app.get("/health/providers/{provider_name}")
-async def health_check_provider(provider_name: str) -> dict:
+async def health_check_provider(provider_name: str) -> Dict[str, Any]:
     """Individual provider health check endpoint"""
     try:
         health = await provider_registry.get_provider_health(provider_name)
 
-        if health is None:
-            return JSONResponse(
+        if not health:
+            raise HTTPException(
                 status_code=404,
-                content={
-                    "error": "ProviderNotFound",
-                    "message": f"Provider '{provider_name}' not found",
-                },
+                detail=f"Provider '{provider_name}' not found"
             )
 
         return {
+            "status": "healthy" if health.is_healthy else "unhealthy",
             "provider": provider_name,
             "is_healthy": health.is_healthy,
             "uptime_percent": health.uptime_percent,
             "avg_latency_ms": health.avg_latency_ms,
             "success_rate": health.success_rate,
-            "last_check": health.last_check.isoformat() if health.last_check else None,
+            "last_check": health.last_check.isoformat(),
             "error_count_24h": health.error_count_24h,
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Provider health check failed for {provider_name}: {e}")
-        return JSONResponse(
+        logger.error(f"Provider '{provider_name}' health check failed: {e}")
+        raise HTTPException(
             status_code=503,
-            content={
-                "status": "unhealthy",
-                "provider": provider_name,
-                "error": str(e),
-            },
+            detail=f"Provider health check failed: {str(e)}"
         )
 
 

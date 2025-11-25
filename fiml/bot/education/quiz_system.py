@@ -55,7 +55,7 @@ class QuizSystem:
     - Progress tracking
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._active_sessions: Dict[str, QuizSession] = {}
         self._completed_sessions: Dict[str, List[QuizSession]] = {}
         logger.info("QuizSystem initialized")
@@ -180,7 +180,7 @@ class QuizSystem:
             # Find correct option
             correct_option = next((opt for opt in question.options if opt.get("correct")), None)
             if correct_option:
-                return answer.lower().strip() == correct_option["text"].lower().strip()
+                return str(answer).lower().strip() == str(correct_option["text"]).lower().strip()
             return str(answer).lower().strip() == str(question.correct_answer).lower().strip()
 
         elif question.type == "true_false":
@@ -283,7 +283,7 @@ class QuizSystem:
             Session ID string
         """
         # Convert question dicts to QuizQuestion objects
-        quiz_questions = []
+        quiz_questions: List[QuizQuestion] = []
         for q_dict in questions:
             # Convert options to dict format if they are strings
             options = q_dict.get("options", [])

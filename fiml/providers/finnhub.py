@@ -70,7 +70,8 @@ class FinnhubProvider(BaseProvider):
         if params is None:
             params = {}
 
-        params["token"] = self.config.api_key
+        if self.config.api_key:
+            params["token"] = self.config.api_key
 
         try:
             url = f"{self.BASE_URL}{endpoint}"

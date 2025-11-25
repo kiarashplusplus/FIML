@@ -9,7 +9,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fiml.core.logging import get_logger
 
@@ -146,9 +146,9 @@ class WorkerHealthMonitor:
     DEFAULT_MAX_HEARTBEAT_AGE = 120  # Max seconds since last heartbeat
     DEFAULT_ERROR_RATE_THRESHOLD = 0.5  # 50% error rate threshold
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._metrics: Dict[str, WorkerMetrics] = {}
-        self._circuit_breakers: Dict[str, Dict] = defaultdict(lambda: {
+        self._circuit_breakers: Dict[str, Dict[str, Any]] = defaultdict(lambda: {
             "failures": 0,
             "last_failure": None,
             "state": "closed",  # closed, open, half-open
@@ -267,7 +267,7 @@ class WorkerHealthMonitor:
 
         return False
 
-    def get_health_summary(self) -> Dict:
+    def get_health_summary(self) -> Dict[str, Any]:
         """Get overall health summary for all workers"""
         total_workers = len(self._metrics)
         healthy_workers = sum(1 for m in self._metrics.values() if m.is_healthy(self._max_heartbeat_age))

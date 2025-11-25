@@ -8,7 +8,7 @@ Includes comprehensive error handling, retry logic, and rate limiting.
 import asyncio
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import httpx
 
@@ -97,7 +97,7 @@ class AzureOpenAIClient:
 
     async def _make_request(
         self,
-        messages: list[Dict[str, str]],
+        messages: List[Dict[str, str]],
         temperature: float = 0.7,
         max_tokens: int = 1000,
     ) -> Dict[str, Any]:
@@ -286,7 +286,7 @@ class AzureOpenAIClient:
 
             narrative = response["choices"][0]["message"]["content"]
             logger.info("Narrative generated successfully", length=len(narrative))
-            return narrative  # type: ignore[return-value]
+            return cast(str, narrative)
 
         except Exception as e:
             logger.error("Failed to generate narrative", error=str(e))
@@ -338,7 +338,7 @@ class AzureOpenAIClient:
                 max_tokens=100,
             )
 
-            content = response["choices"][0]["message"]["content"]
+            content = cast(str, response["choices"][0]["message"]["content"])
 
             # Parse JSON response
             sentiment_scores = json.loads(content)
@@ -349,7 +349,7 @@ class AzureOpenAIClient:
                 raise ProviderError("Invalid sentiment response format")
 
             logger.info("Sentiment analyzed successfully", scores=sentiment_scores)
-            return sentiment_scores  # type: ignore[return-value]
+            return cast(Dict[str, float], sentiment_scores)
 
         except json.JSONDecodeError as e:
             logger.error("Failed to parse sentiment response", error=str(e))
@@ -410,7 +410,7 @@ class AzureOpenAIClient:
 
             summary = response["choices"][0]["message"]["content"]
             logger.info("Analysis summarized successfully", length=len(summary))
-            return summary  # type: ignore[return-value]
+            return cast(str, summary)
 
         except Exception as e:
             logger.error("Failed to summarize analysis", error=str(e))
@@ -569,7 +569,7 @@ class AzureOpenAIClient:
 
             summary = response["choices"][0]["message"]["content"]
             logger.info("Market summary generated", length=len(summary))
-            return summary  # type: ignore[return-value]
+            return cast(str, summary)
 
         except Exception as e:
             logger.error("Failed to generate market summary", error=str(e))
@@ -635,7 +635,7 @@ class AzureOpenAIClient:
 
             explanation = response["choices"][0]["message"]["content"]
             logger.info("Price movement explained", length=len(explanation))
-            return explanation  # type: ignore[return-value]
+            return cast(str, explanation)
 
         except Exception as e:
             logger.error("Failed to explain price movement", error=str(e))
@@ -666,7 +666,7 @@ class AzureOpenAIClient:
         """
         logger.info("Interpreting technical indicators")
 
-        indicators_data = {}
+        indicators_data: Dict[str, Any] = {}
         if rsi is not None:
             indicators_data["RSI"] = rsi
         if macd:
@@ -701,7 +701,7 @@ class AzureOpenAIClient:
 
             interpretation = response["choices"][0]["message"]["content"]
             logger.info("Technical indicators interpreted", length=len(interpretation))
-            return interpretation  # type: ignore[return-value]
+            return cast(str, interpretation)
 
         except Exception as e:
             logger.error("Failed to interpret technical indicators", error=str(e))
@@ -764,7 +764,7 @@ class AzureOpenAIClient:
 
             assessment = response["choices"][0]["message"]["content"]
             logger.info("Risk profile assessed", length=len(assessment))
-            return assessment  # type: ignore[return-value]
+            return cast(str, assessment)
 
         except Exception as e:
             logger.error("Failed to assess risk profile", error=str(e))
@@ -827,7 +827,7 @@ class AzureOpenAIClient:
 
             comparison = response["choices"][0]["message"]["content"]
             logger.info("Assets compared", length=len(comparison))
-            return comparison  # type: ignore[return-value]
+            return cast(str, comparison)
 
         except Exception as e:
             logger.error("Failed to compare assets", error=str(e))

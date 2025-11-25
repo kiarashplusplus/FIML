@@ -348,7 +348,7 @@ class BatchUpdateScheduler:
 
         self.is_running = True
 
-        async def scheduler_loop():
+        async def scheduler_loop() -> None:
             while self.is_running:
                 try:
                     await self._run_batch_cycle()

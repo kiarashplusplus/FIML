@@ -183,7 +183,7 @@ class WatchdogHealthMonitor:
     # Configuration constants
     DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD = 3  # Mark unhealthy after this many failures
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._metrics: Dict[str, WatchdogMetrics] = {}
         self._max_check_interval_multiplier = 3  # Alert if no check in 3x expected interval
         self._consecutive_failure_threshold = self.DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD

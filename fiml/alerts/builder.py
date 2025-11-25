@@ -115,7 +115,7 @@ class AlertBuilder:
     - Rate limiting
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._alerts: Dict[str, AlertConfig] = {}
         self._subscriptions: Dict[str, str] = {}  # alert_id -> subscription_id
         self._last_triggered: Dict[str, datetime] = {}
@@ -258,7 +258,7 @@ class AlertBuilder:
 
     def _subscribe_to_watchdog_events(self, config: AlertConfig) -> None:
         """Subscribe to watchdog events for an alert"""
-        def event_handler(event: WatchdogEvent):
+        def event_handler(event: WatchdogEvent) -> None:
             """Callback for watchdog events - creates async task"""
             asyncio.create_task(self._handle_event(config, event))
 
@@ -362,17 +362,20 @@ class AlertBuilder:
 
             msg.attach(MIMEText(html_body, 'html'))
 
+            # Capture config locally for closure safety
+            email_config = config.email_config
+
             # Send email in thread to avoid blocking
-            def send_smtp():
+            def send_smtp() -> None:
                 with smtplib.SMTP(
-                    config.email_config.smtp_host,
-                    config.email_config.smtp_port
+                    email_config.smtp_host,
+                    email_config.smtp_port
                 ) as server:
-                    if config.email_config.use_tls:
+                    if email_config.use_tls:
                         server.starttls()
                     server.login(
-                        config.email_config.smtp_user,
-                        config.email_config.smtp_password
+                        email_config.smtp_user,
+                        email_config.smtp_password
                     )
                     server.send_message(msg)
 

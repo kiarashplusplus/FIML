@@ -30,7 +30,7 @@ class CoinGeckoProvider(BaseProvider):
 
     BASE_URL = "https://api.coingecko.com/api/v3"
 
-    def __init__(self):
+    def __init__(self) -> None:
         config = ProviderConfig(
             name="coingecko",
             enabled=True,
@@ -41,7 +41,7 @@ class CoinGeckoProvider(BaseProvider):
         super().__init__(config)
         self._session: Optional[aiohttp.ClientSession] = None
         # Mapping common symbols to CoinGecko IDs
-        self._symbol_to_id = {
+        self._symbol_to_id: Dict[str, str] = {
             "BTC": "bitcoin",
             "ETH": "ethereum",
             "USDT": "tether",

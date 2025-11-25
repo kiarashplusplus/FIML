@@ -70,7 +70,8 @@ class TwelvedataProvider(BaseProvider):
         if params is None:
             params = {}
 
-        params["apikey"] = self.config.api_key
+        if self.config.api_key:
+            params["apikey"] = self.config.api_key
 
         try:
             url = f"{self.BASE_URL}{endpoint}"

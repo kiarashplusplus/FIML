@@ -292,8 +292,10 @@ class PredictiveCacheWarmer:
             if isinstance(result, Exception):
                 logger.error(f"Warming task failed: {result}")
             else:
-                symbol, success = result
-                result_dict[symbol] = success
+                # symbol, success = result  # This assumes result is a tuple, but it could be an exception
+                if isinstance(result, tuple) and len(result) == 2:
+                    symbol, success = result
+                    result_dict[symbol] = success
 
         logger.info(
             "Cache warming batch complete",
@@ -355,7 +357,7 @@ class PredictiveCacheWarmer:
 
         self.is_running = True
 
-        async def warming_loop():
+        async def warming_loop() -> None:
             while self.is_running:
                 try:
                     await self.run_warming_cycle()

@@ -6,7 +6,7 @@ Central message processing hub for multi-platform educational bot
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 
@@ -114,7 +114,7 @@ class UserSession:
 class SessionManager:
     """Manages user sessions across platforms"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # In-memory storage (should be Redis in production)
         self._sessions: Dict[str, UserSession] = {}
         logger.info("SessionManager initialized")
@@ -137,13 +137,13 @@ class SessionManager:
         logger.info("New session created", user_id=user_id, platform=platform)
         return session
 
-    async def update(self, user_id: str, session: UserSession):
+    async def update(self, user_id: str, session: UserSession) -> None:
         """Update session"""
         session.updated_at = datetime.now(UTC)
         self._sessions[user_id] = session
         logger.debug("Session updated", user_id=user_id)
 
-    async def delete(self, user_id: str):
+    async def delete(self, user_id: str) -> None:
         """Delete session"""
         if user_id in self._sessions:
             del self._sessions[user_id]
@@ -265,12 +265,12 @@ class UnifiedBotGateway:
     - Response formatting
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.session_manager = SessionManager()
-        self.intent_classifier = IntentClassifier()
+        self.intent_classifier: IntentClassifier = IntentClassifier()
 
         # Handlers will be set by components
-        self.handlers = {
+        self.handlers: Dict[IntentType, Any] = {
             IntentType.COMMAND: self.handle_command,
             IntentType.LESSON_REQUEST: self.handle_lesson_request,
             IntentType.LESSON_NAVIGATION: self.handle_lesson_navigation,
@@ -347,7 +347,7 @@ class UnifiedBotGateway:
         response.metadata["intent"] = intent.type.value
         response.metadata["confidence"] = intent.confidence
 
-        return response
+        return cast(AbstractResponse, response)
 
     async def handle_command(
         self,
@@ -480,7 +480,7 @@ class UnifiedBotGateway:
                  "/addkey - Set up your API keys"
         )
 
-    def register_handler(self, intent_type: IntentType, handler):
+    def register_handler(self, intent_type: IntentType, handler: Any) -> None:
         """Register custom handler for intent type"""
         self.handlers[intent_type] = handler
         logger.info("Handler registered", intent_type=intent_type.value)

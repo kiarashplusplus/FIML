@@ -47,6 +47,7 @@ class DataType(str, Enum):
     MACRO = "macro"
     CORRELATION = "correlation"
     RISK = "risk"
+    OPTIONS = "options"
 
 
 class AnalysisDepth(str, Enum):

@@ -12,7 +12,7 @@ Workflows:
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from pydantic import BaseModel, Field
 
@@ -299,7 +299,7 @@ class DeepEquityAnalysisWorkflow:
             analysis = await self.orchestrator.analyze_asset(
                 asset, agents=["fundamentals"]
             )
-            return analysis.get("fundamentals", {})
+            return cast(Dict[str, Any], analysis.get("fundamentals", {}))
         except Exception as e:
             self.logger.warning("Fundamentals analysis failed", error=str(e))
             return {"error": str(e), "available": False}
@@ -310,7 +310,7 @@ class DeepEquityAnalysisWorkflow:
             analysis = await self.orchestrator.analyze_asset(
                 asset, agents=["technical"]
             )
-            return analysis.get("technical", {})
+            return cast(Dict[str, Any], analysis.get("technical", {}))
         except Exception as e:
             self.logger.warning("Technical analysis failed", error=str(e))
             return {"error": str(e), "available": False}
@@ -770,7 +770,7 @@ class CryptoSentimentAnalysisWorkflow:
             analysis = await self.orchestrator.analyze_asset(
                 asset, agents=["technical"]
             )
-            return analysis.get("technical", {})
+            return cast(Dict[str, Any], analysis.get("technical", {}))
         except Exception as e:
             self.logger.warning("Technical analysis failed", error=str(e))
             return {"error": str(e)}
@@ -781,7 +781,7 @@ class CryptoSentimentAnalysisWorkflow:
             analysis = await self.orchestrator.analyze_asset(
                 asset, agents=["correlation"]
             )
-            return analysis.get("correlation", {})
+            return cast(Dict[str, Any], analysis.get("correlation", {}))
         except Exception as e:
             self.logger.warning("Correlation analysis failed", error=str(e))
             return {"error": str(e)}
@@ -798,12 +798,12 @@ class CryptoSentimentAnalysisWorkflow:
         try:
             prompt = f"""You are a cryptocurrency market analyst. Provide insights on {asset.symbol}/{asset.pair}.
 
-PRICE: ${price_data.get('price', 'N/A')} | Change: {price_data.get('change_percent', 0):+.2f}%
-
-SENTIMENT: {sentiment.get('sentiment', {}).get('score', 'N/A')}
-
-TECHNICALS: RSI={technicals.get('indicators', {}).get('rsi', 'N/A')}
-
+PRICE: ${(price_data or {}).get('price', 'N/A')} | Change: {(price_data or {}).get('change_percent', 0):+.2f}%
+ 
+SENTIMENT: {(sentiment or {}).get('sentiment', {}).get('score', 'N/A')}
+ 
+TECHNICALS: RSI={(technicals or {}).get('indicators', {}).get('rsi', 'N/A')}
+ 
 CORRELATIONS: {correlations}
 
 Provide:
@@ -835,7 +835,7 @@ Provide:
         correlations: Optional[Dict],
     ) -> Dict[str, Any]:
         """Generate trading signals"""
-        signals = {
+        signals: Dict[str, Any] = {
             "signal": "NEUTRAL",
             "strength": 0,
             "indicators": [],

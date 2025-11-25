@@ -5,7 +5,7 @@ MCP Tool Implementations
 import uuid
 from datetime import datetime, timedelta, timezone
 from datetime import time as time_obj
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from fiml.arbitration.engine import arbitration_engine
 from fiml.core.logging import get_logger
@@ -34,6 +34,7 @@ from fiml.narrative.models import (
     NarrativeContext,
     NarrativePreferences,
 )
+from fiml.narrative.cache import cache_narrative, get_cached_narrative
 
 logger = get_logger(__name__)
 
@@ -254,64 +255,8 @@ def truncate_narrative(text: str, max_length: int = 1000) -> str:
     return text[:max_length - 3] + "..."
 
 
-async def get_cached_narrative(
-    symbol: str,
-    language: str,
-    expertise: str,
-) -> Optional[Dict[str, Any]]:
-    """
-    Get cached narrative if available (uses NarrativeCache module)
-
-    Args:
-        symbol: Asset symbol
-        language: Language code
-        expertise: Expertise level
-
-    Returns:
-        Cached narrative data or None
-    """
-    from fiml.narrative.cache import narrative_cache
-
-    return await narrative_cache.get(
-        symbol=symbol,
-        language=language,
-        expertise_level=expertise,
-    )
 
 
-async def cache_narrative(
-    symbol: str,
-    language: str,
-    expertise: str,
-    narrative_data: Dict[str, Any],
-    ttl: int,
-) -> bool:
-    """
-    Cache generated narrative (uses NarrativeCache module)
-
-    Args:
-        symbol: Asset symbol
-        language: Language code
-        expertise: Expertise level
-        narrative_data: Narrative data to cache
-        ttl: Time to live in seconds
-
-    Returns:
-        True if cached successfully
-    """
-    from fiml.core.models import AssetType
-    from fiml.narrative.cache import narrative_cache
-
-    # Determine asset type from symbol
-    asset_type = AssetType.CRYPTO if "/" in symbol else AssetType.EQUITY
-
-    return await narrative_cache.set(
-        symbol=symbol,
-        narrative_data=narrative_data,
-        language=language,
-        expertise_level=expertise,
-        asset_type=asset_type,
-    )
 
 async def search_by_symbol(
     symbol: str,
@@ -1257,12 +1202,12 @@ async def get_narrative(
         if analysis_data and "price_data" in analysis_data:
             volatility = abs(analysis_data["price_data"].get("change_percent", 0))
 
-        ttl = calculate_narrative_ttl(asset, volatility)
+        ttl = int(calculate_narrative_ttl(asset, volatility))
         await cache_narrative(
             symbol.upper(),
             language,
             expertise_level,
-            response_data["narrative"],
+            cast(Dict[str, Any], response_data["narrative"]),
             ttl,
         )
 

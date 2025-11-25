@@ -92,7 +92,7 @@ class SessionStore:
     async def shutdown(self) -> None:
         """Close all connections"""
         if self._redis:
-            await self._redis.aclose()
+            await self._redis.close()
         if self._engine:
             await self._engine.dispose()
         self._initialized = False

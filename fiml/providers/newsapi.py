@@ -8,7 +8,7 @@ Supports free tier (100 requests/day) and paid tier (1000 requests/day).
 import asyncio
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import aiohttp
 
@@ -170,7 +170,7 @@ class NewsAPIProvider(BaseProvider):
                         error_msg = data.get("message", "Unknown error")
                         raise ProviderError(f"NewsAPI error: {error_msg}")
 
-                    return data
+                    return cast(Dict[str, Any], data)
 
             except RateLimitError:
                 raise

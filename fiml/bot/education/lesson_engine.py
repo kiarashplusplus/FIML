@@ -6,7 +6,7 @@ Renders lessons with live FIML market data
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, cast, Union
 
 import structlog
 import yaml
@@ -367,7 +367,7 @@ class LessonContentEngine:
 
         return len(missing) == 0, missing
 
-    async def mark_completed(self, user_id: str, lesson_id: str):
+    async def mark_completed(self, user_id: str, lesson_id: str) -> None:
         """Mark lesson as completed for user"""
         if user_id not in self._user_progress:
             self._user_progress[user_id] = {"completed": set(), "in_progress": set()}
@@ -389,7 +389,7 @@ class LessonContentEngine:
         """Get user's learning progress"""
         return self._user_progress.get(user_id, {"completed": set(), "in_progress": set()})
 
-    def create_sample_lesson(self, lesson_id: str = "stock_basics_001"):
+    def create_sample_lesson(self, lesson_id: str = "stock_basics_001") -> Path:
         """Create a sample lesson for demonstration"""
         sample = {
             "id": lesson_id,
@@ -471,7 +471,7 @@ class LessonContentEngine:
         try:
             with open(file_path, "r") as f:
                 lesson_data = yaml.safe_load(f)
-            return lesson_data
+            return cast(Optional[Dict[Any, Any]], lesson_data)
         except Exception as e:
             logger.error("Failed to load lesson from file", file_path=file_path, error=str(e))
             return None
@@ -493,7 +493,7 @@ class LessonContentEngine:
                 return False
         return True
 
-    def mark_lesson_started(self, user_id: str, lesson_id: str):
+    def mark_lesson_started(self, user_id: str, lesson_id: str) -> None:
         """
         Mark lesson as started for user
 
@@ -514,7 +514,7 @@ class LessonContentEngine:
 
         logger.info("Lesson started", user_id=user_id, lesson_id=lesson_id)
 
-    def mark_lesson_completed(self, user_id: str, lesson_id: str):
+    def mark_lesson_completed(self, user_id: str, lesson_id: str) -> None:
         """
         Mark lesson as completed for user
 
@@ -552,7 +552,7 @@ class LessonContentEngine:
         lessons = self._user_progress[user_id].get("lessons", {})
         lesson_data = lessons.get(lesson_id, {})
 
-        return lesson_data.get("status") == "in_progress"
+        return bool(lesson_data.get("status") == "in_progress")
 
     def is_lesson_completed(self, user_id: str, lesson_id: str) -> bool:
         """
@@ -571,7 +571,7 @@ class LessonContentEngine:
         lessons = self._user_progress[user_id].get("lessons", {})
         lesson_data = lessons.get(lesson_id, {})
 
-        return lesson_data.get("status") == "completed"
+        return bool(lesson_data.get("status") == "completed")
 
     def can_access_lesson(self, user_id: str, lesson: Dict) -> bool:
         """

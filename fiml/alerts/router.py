@@ -4,7 +4,7 @@ Alert API Router
 Provides REST API endpoints for managing custom alerts.
 """
 
-from typing import List
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -93,7 +93,7 @@ async def update_alert(alert_id: str, config: AlertConfig) -> AlertConfig:
 
 
 @alert_router.delete("/alerts/{alert_id}")
-async def delete_alert(alert_id: str) -> dict:
+async def delete_alert(alert_id: str) -> Dict[str, Any]:
     """
     Delete an alert
 
@@ -111,7 +111,7 @@ async def delete_alert(alert_id: str) -> dict:
 
 
 @alert_router.post("/alerts/{alert_id}/enable")
-async def enable_alert(alert_id: str) -> dict:
+async def enable_alert(alert_id: str) -> Dict[str, Any]:
     """
     Enable an alert
 
@@ -132,7 +132,7 @@ async def enable_alert(alert_id: str) -> dict:
 
 
 @alert_router.post("/alerts/{alert_id}/disable")
-async def disable_alert(alert_id: str) -> dict:
+async def disable_alert(alert_id: str) -> Dict[str, Any]:
     """
     Disable an alert
 

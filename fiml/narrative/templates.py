@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class TemplateLibrary:
     """Library of narrative templates for fallback scenarios"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize template library"""
         self.templates = self._load_templates()
         logger.info("Template library initialized")
@@ -261,7 +261,7 @@ class TemplateLibrary:
                 template_type=template_type,
                 language=language.value,
             )
-            return rendered
+            return str(rendered)
 
         except Exception as e:
             logger.error(

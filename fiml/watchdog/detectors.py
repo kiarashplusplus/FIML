@@ -7,7 +7,7 @@ and events in real-time.
 
 import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class EarningsAnomalyWatchdog(BaseWatchdog):
     - Guidance changes
     """
 
-    def __init__(self, check_interval: int = 300, **kwargs):  # 5 minutes
+    def __init__(self, check_interval: int = 300, **kwargs: Any):  # 5 minutes
         super().__init__(check_interval=check_interval, **kwargs)
         self._monitored_symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
         self._last_checked: Dict[str, datetime] = {}
@@ -112,7 +112,7 @@ class UnusualVolumeWatchdog(BaseWatchdog):
     - Sustained high volume
     """
 
-    def __init__(self, check_interval: int = 60, **kwargs):  # 1 minute
+    def __init__(self, check_interval: int = 60, **kwargs: Any):  # 1 minute
         super().__init__(check_interval=check_interval, **kwargs)
         self._monitored_symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "SPY", "QQQ"]
 
@@ -206,7 +206,7 @@ class WhaleMovementWatchdog(BaseWatchdog):
     - Whale accumulation patterns
     """
 
-    def __init__(self, check_interval: int = 120, **kwargs):  # 2 minutes
+    def __init__(self, check_interval: int = 120, **kwargs: Any):  # 2 minutes
         super().__init__(check_interval=check_interval, **kwargs)
         self._monitored_tokens = ["BTC", "ETH", "SOL", "USDT", "USDC"]
         self._threshold_usd = 1_000_000
@@ -234,7 +234,7 @@ class FundingRateWatchdog(BaseWatchdog):
     - Sustained high/low funding
     """
 
-    def __init__(self, check_interval: int = 300, **kwargs):  # 5 minutes
+    def __init__(self, check_interval: int = 300, **kwargs: Any):  # 5 minutes
         super().__init__(check_interval=check_interval, **kwargs)
         self._monitored_symbols = ["BTC", "ETH", "SOL"]
         self._exchanges = ["binance", "bybit", "okx"]
@@ -296,7 +296,7 @@ class LiquidityDropWatchdog(BaseWatchdog):
     - Order book imbalances
     """
 
-    def __init__(self, check_interval: int = 180, **kwargs):  # 3 minutes
+    def __init__(self, check_interval: int = 180, **kwargs: Any):  # 3 minutes
         super().__init__(check_interval=check_interval, **kwargs)
         self._monitored_symbols = ["BTC", "ETH", "SOL", "SPY", "QQQ"]
 
@@ -368,7 +368,7 @@ class CorrelationBreakdownWatchdog(BaseWatchdog):
     - Decoupling events
     """
 
-    def __init__(self, check_interval: int = 600, **kwargs):  # 10 minutes
+    def __init__(self, check_interval: int = 600, **kwargs: Any):  # 10 minutes
         super().__init__(check_interval=check_interval, **kwargs)
         self._correlation_pairs = [
             ("BTC", "ETH"),
@@ -451,7 +451,7 @@ class ExchangeOutageWatchdog(BaseWatchdog):
     - Slow response times
     """
 
-    def __init__(self, check_interval: int = 60, **kwargs):  # 1 minute
+    def __init__(self, check_interval: int = 60, **kwargs: Any):  # 1 minute
         super().__init__(check_interval=check_interval, **kwargs)
         self._exchanges = {
             "binance": "https://api.binance.com/api/v3/ping",
@@ -534,7 +534,7 @@ class PriceAnomalyWatchdog(BaseWatchdog):
     - Cross-exchange arbitrage opportunities
     """
 
-    def __init__(self, check_interval: int = 30, **kwargs):  # 30 seconds
+    def __init__(self, check_interval: int = 30, **kwargs: Any):  # 30 seconds
         super().__init__(check_interval=check_interval, **kwargs)
         self._monitored_symbols = ["BTC", "ETH", "SPY", "QQQ", "AAPL", "TSLA"]
         self._price_history: Dict[str, List[tuple[datetime, float]]] = {}

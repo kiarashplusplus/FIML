@@ -8,7 +8,7 @@ based on market conditions and automatic invalidation on significant events.
 import hashlib
 import json
 from datetime import datetime, time, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from fiml.cache.manager import cache_manager
 from fiml.core.logging import get_logger
@@ -28,11 +28,11 @@ class NarrativeCache:
     - Market hours awareness
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize narrative cache"""
         self.cache_manager = cache_manager
-        self._hit_count = 0
-        self._miss_count = 0
+        self._hit_count: int = 0
+        self._miss_count: int = 0
         logger.info("Narrative cache initialized")
 
     async def get(
@@ -68,7 +68,7 @@ class NarrativeCache:
                     language=language,
                     hit_rate=self.get_hit_rate(),
                 )
-                return cached_data
+                return cast(Dict[str, Any], cached_data)
             else:
                 self._miss_count += 1
                 logger.debug("Narrative cache miss", symbol=symbol)
@@ -88,6 +88,7 @@ class NarrativeCache:
         asset_type: AssetType = AssetType.EQUITY,
         volatility: Optional[float] = None,
         narrative_params: Optional[Dict[str, Any]] = None,
+        ttl: Optional[int] = None,
     ) -> bool:
         """
         Cache generated narrative with dynamic TTL
@@ -108,9 +109,10 @@ class NarrativeCache:
             symbol, language, expertise_level, narrative_params
         )
 
-        # Calculate dynamic TTL
-        asset = Asset(symbol=symbol, asset_type=asset_type)
-        ttl = self._calculate_ttl(asset, volatility)
+        # Calculate dynamic TTL if not provided
+        if ttl is None:
+            asset = Asset(symbol=symbol, asset_type=asset_type)
+            ttl = self._calculate_ttl(asset, volatility)
 
         try:
             await self.cache_manager.l1.set(cache_key, narrative_data, ttl)
@@ -359,3 +361,30 @@ class NarrativeCache:
 
 # Global narrative cache instance
 narrative_cache = NarrativeCache()
+
+
+async def get_cached_narrative(
+    symbol: str,
+    language: str = "en",
+    expertise_level: str = "intermediate",
+    narrative_params: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Wrapper for narrative_cache.get"""
+    return await narrative_cache.get(symbol, language, expertise_level, narrative_params)
+
+
+async def cache_narrative(
+    symbol: str,
+    language: str,
+    expertise_level: str,
+    narrative_data: Dict[str, Any],
+    ttl: int,
+) -> bool:
+    """Wrapper for narrative_cache.set"""
+    return await narrative_cache.set(
+        symbol=symbol,
+        narrative_data=narrative_data,
+        language=language,
+        expertise_level=expertise_level,
+        ttl=ttl
+    )

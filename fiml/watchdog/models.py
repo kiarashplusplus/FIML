@@ -7,7 +7,7 @@ for the real-time event intelligence system.
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -107,10 +107,10 @@ class EventFilter(BaseModel):
         watchdogs: Filter by watchdog names (None = all)
     """
 
-    event_types: Optional[list[EventType]] = None
-    severities: Optional[list[Severity]] = None
-    assets: Optional[list[str]] = None  # Asset symbols
-    watchdogs: Optional[list[str]] = None
+    event_types: Optional[List[EventType]] = None
+    severities: Optional[List[Severity]] = None
+    assets: Optional[List[str]] = None  # Asset symbols
+    watchdogs: Optional[List[str]] = None
 
     def matches(self, event: WatchdogEvent) -> bool:
         """Check if event matches this filter"""

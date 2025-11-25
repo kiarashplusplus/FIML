@@ -210,7 +210,7 @@ async def restart_watchdog(name: str) -> Dict:
 
 # WebSocket Endpoint for Real-time Dashboard Updates
 @dashboard_router.websocket("/stream")
-async def dashboard_websocket(websocket: WebSocket):
+async def dashboard_websocket(websocket: WebSocket) -> None:
     """
     WebSocket endpoint for real-time dashboard updates
 
@@ -235,9 +235,9 @@ async def dashboard_websocket(websocket: WebSocket):
 
     try:
         # Subscribe to all watchdog events
-        def event_callback(event: WatchdogEvent):
+        def event_callback(event: WatchdogEvent) -> None:
             """Callback for watchdog events - creates async task"""
-            async def send_event():
+            async def send_event() -> None:
                 try:
                     await websocket.send_json({
                         "type": "event",

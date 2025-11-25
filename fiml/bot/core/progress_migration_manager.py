@@ -4,7 +4,7 @@ Handles user progress data migration during updates
 """
 
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import structlog
 
@@ -29,7 +29,7 @@ class ProgressMigrationManager:
 
     CURRENT_SCHEMA_VERSION = "1.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize migration manager"""
         # Register migration functions
         self._migrations: Dict[str, Callable] = {
@@ -298,8 +298,8 @@ class ProgressMigrationManager:
             "Created migration snapshot",
             user_id=user_data.get("user_id", "unknown")
         )
-
-        return snapshot
+        from typing import cast
+        return cast(Dict[str, Any], snapshot)
 
     def rollback_migration(
         self,
@@ -341,7 +341,7 @@ class ProgressMigrationManager:
                     xp_preserved=current_xp - snapshot_xp
                 )
 
-        return restored
+        return cast(Dict[str, Any], restored)
 
     def rollback_to_snapshot(self, user_id: str, snapshot: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -370,7 +370,7 @@ class ProgressMigrationManager:
         # Ensure user_id is set
         restored['user_id'] = user_id
 
-        return restored
+        return cast(Dict[str, Any], restored)
 
     # Public API methods for tests
     def create_snapshot(self, user_id: str, user_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -517,7 +517,7 @@ class ProgressMigrationManager:
         to_parts = parse_version(to_version)
 
         # Backward compatible if major version is same or newer
-        return from_parts[0] <= to_parts[0]
+        return bool(from_parts[0] <= to_parts[0])
 
     def validate_migration(self, original: Dict[str, Any], migrated: Dict[str, Any]) -> bool:
         """

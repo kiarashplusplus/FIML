@@ -5,7 +5,7 @@ Provides WebSocket endpoints for real-time financial data streaming.
 """
 
 import json
-from typing import Dict
+from typing import Any, Dict
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -179,7 +179,7 @@ async def websocket_prices_endpoint(websocket: WebSocket, symbols: str) -> None:
 
 
 @websocket_router.get("/connections")
-async def get_active_connections() -> Dict:
+async def get_active_connections() -> Dict[str, Any]:
     """Get information about active WebSocket connections"""
     active_count = len(websocket_manager.active_connections)
     total_subscriptions = sum(

@@ -85,6 +85,18 @@ class BaseProvider(ABC):
         """Fetch news articles"""
         pass
 
+    async def fetch_options_chain(self, asset: Asset) -> ProviderResponse:
+        """Fetch options chain data"""
+        return ProviderResponse(
+            provider=self.name,
+            asset=asset,
+            data_type=DataType.OPTIONS,
+            data={},
+            timestamp=datetime.now(timezone.utc),
+            is_valid=False,
+            metadata={"error": "Not implemented"},
+        )
+
     @abstractmethod
     async def supports_asset(self, asset: Asset) -> bool:
         """Check if provider supports this asset type"""

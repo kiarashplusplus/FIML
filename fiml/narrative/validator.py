@@ -72,7 +72,7 @@ class NarrativeValidator:
         "à des fins d'information uniquement",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize narrative validator"""
         logger.info("Narrative validator initialized")
 

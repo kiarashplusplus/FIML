@@ -120,7 +120,7 @@ class GamificationEngine:
         ),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._user_stats: Dict[str, UserStats] = {}
         logger.info("GamificationEngine initialized")
 
@@ -266,7 +266,7 @@ class GamificationEngine:
 
         return True
 
-    async def check_badge_triggers(self, user_id: str, action: str):
+    async def check_badge_triggers(self, user_id: str, action: str) -> None:
         """Check if action triggers any badges"""
         stats = await self.get_or_create_stats(user_id)
 

@@ -2,7 +2,7 @@
 MCP Protocol Router and Tool Handlers
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -36,7 +36,7 @@ class MCPToolRequest(BaseModel):
 class MCPToolResponse(BaseModel):
     """MCP tool response schema"""
 
-    content: list[Dict[str, Any]]
+    content: List[Dict[str, Any]]
     isError: bool = Field(default=False)
 
 

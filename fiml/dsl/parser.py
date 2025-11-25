@@ -12,7 +12,7 @@ Supports comprehensive financial queries including:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from lark import Lark, Token, Transformer, v_args
 
@@ -51,7 +51,7 @@ class MetricSpec:
     def to_dict(self) -> Dict[str, Any]:
         result = {"name": self.name, "category": self.category}
         if self.params:
-            result["params"] = self.params
+            result["params"] = cast(Any, self.params)
         if self.timeframe:
             result["timeframe"] = str(self.timeframe)
         return result
@@ -270,7 +270,7 @@ class FKDSLTransformer(Transformer):
     def start(self, *statements: Any) -> Dict[str, Any]:
         """Handle multiple statements separated by semicolons"""
         if len(statements) == 1:
-            return statements[0]
+            return cast(Dict[str, Any], statements[0])
         return {"type": "MULTI", "statements": list(statements)}
 
     def statement(self, stmt: Any) -> Any:
@@ -777,7 +777,7 @@ class FKDSLParser:
             plan = self.transformer.transform(tree)
 
             logger.info("DSL query parsed", query=query[:100])
-            return dict(plan) if isinstance(plan, dict) else plan
+            return dict(plan) if isinstance(plan, dict) else cast(Dict[str, Any], plan)
 
         except Exception as e:
             logger.error(f"DSL parse error: {e}", query=query)

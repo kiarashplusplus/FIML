@@ -285,7 +285,7 @@ class EducationalComplianceFilter:
 
         return requirements.get(self.region, requirements["US"])
 
-    def escalate_concern(self, content: str, reason: str):
+    def escalate_concern(self, content: str, reason: str) -> None:
         """Log concerning content for review"""
 
         logger.warning(

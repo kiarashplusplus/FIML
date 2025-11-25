@@ -59,14 +59,16 @@ class FIMLEducationalDataAdapter:
             # Get arbitration plan (will use user's keys via FIMLProviderConfigurator)
             plan = await self.arbitration_engine.arbitrate_request(
                 asset=asset,
-                data_type=DataType.QUOTE,
+                data_type=DataType.PRICE,
                 user_region="US"
             )
 
             # Execute the plan to get actual data
             from fiml.providers.registry import provider_registry
             provider = provider_registry.get_provider(plan.primary_provider)
-            response = await provider.get_quote(asset)
+            if not provider:
+                raise ValueError(f"Provider {plan.primary_provider} not found")
+            response = await provider.fetch_price(asset)
 
             # Extract data from response
             quote = response.data
@@ -95,7 +97,11 @@ class FIMLEducationalDataAdapter:
                 "fundamentals": {
                     "pe_ratio": quote.get("pe_ratio"),
                     "market_cap": quote.get("market_cap"),
-                    "explanation": self.explain_pe_ratio(quote.get("pe_ratio")) if quote.get("pe_ratio") else "P/E ratio not available"
+                    "explanation": (
+                        self.explain_pe_ratio(float(quote["pe_ratio"]))
+                        if quote.get("pe_ratio") is not None
+                        else "P/E ratio not available"
+                    )
                 },
                 "disclaimer": "📚 Live market data for educational purposes only",
                 "data_source": f"Via FIML from {plan.primary_provider}",
