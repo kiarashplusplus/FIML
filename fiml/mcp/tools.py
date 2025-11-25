@@ -25,6 +25,7 @@ from fiml.core.models import (
 from fiml.dsl.executor import fk_dsl_executor
 from fiml.dsl.parser import fk_dsl_parser
 from fiml.dsl.planner import execution_planner
+from fiml.monitoring.task_registry import task_registry
 from fiml.narrative.generator import NarrativeGenerator
 from fiml.narrative.models import (
     ExpertiseLevel,
@@ -430,7 +431,11 @@ async def search_by_symbol(
             resource_url=f"mcp://task/{task_id}",
             estimated_completion=datetime.now(timezone.utc) + timedelta(seconds=5),
             progress=0.0,
+            created_at=datetime.now(timezone.utc),
         )
+        
+        # Register task for status tracking (5 minute TTL)
+        task_registry.register(task_info, ttl=300)
 
         data_lineage = DataLineage(
             providers=[response.provider] if response else [],
@@ -750,7 +755,11 @@ async def search_by_coin(
             resource_url=f"mcp://task/{task_id}",
             estimated_completion=datetime.now(timezone.utc) + timedelta(seconds=3),
             progress=0.0,
+            created_at=datetime.now(timezone.utc),
         )
+        
+        # Register task for status tracking (5 minute TTL)
+        task_registry.register(task_info, ttl=300)
 
         data_lineage = DataLineage(
             providers=[response.provider] if response else [],
@@ -960,6 +969,19 @@ async def search_by_coin(
 
         # Return error response with disclaimer
         task_id = f"crypto-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
+        
+        error_task_info = TaskInfo(
+            id=task_id,
+            type="crypto_analysis",
+            status=TaskStatus.FAILED,
+            resource_url=f"mcp://task/{task_id}",
+            estimated_completion=datetime.now(timezone.utc),
+            progress=0.0,
+            created_at=datetime.now(timezone.utc),
+        )
+        
+        # Register failed task for tracking
+        task_registry.register(error_task_info, ttl=300)
 
         return SearchByCoinResponse(
             symbol=symbol.upper(),
@@ -977,14 +999,7 @@ async def search_by_coin(
                 confidence=0.0,
             ),
             crypto_metrics={},
-            task=TaskInfo(
-                id=task_id,
-                type="crypto_analysis",
-                status=TaskStatus.FAILED,
-                resource_url=f"mcp://task/{task_id}",
-                estimated_completion=datetime.now(timezone.utc),
-                progress=0.0,
-            ),
+            task=error_task_info,
             disclaimer=f"Error fetching data: {str(e)}",
             data_lineage=DataLineage(
                 providers=[],
@@ -1008,8 +1023,12 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
     """
     logger.info("get_task_status called", task_id=task_id, stream=stream)
 
-    # Get status from executor
-    task_info = fk_dsl_executor.get_task_status(task_id)
+    # First check the task registry (for analysis tasks)
+    task_info = task_registry.get(task_id)
+    
+    # If not in registry, check FK-DSL executor
+    if not task_info:
+        task_info = fk_dsl_executor.get_task_status(task_id)
 
     if task_info:
         # Calculate progress safely
@@ -1018,23 +1037,25 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
         progress = completed / total if total > 0 else 0.0
 
         return {
-            "id": task_info.id,
-            "status": task_info.status.value,
-            "query": task_info.query,
+            "task_id": task_info.id,
+            "status": task_info.status.value if task_info.status else "unknown",
+            "type": task_info.type,
+            "query": getattr(task_info, 'query', None),
             "progress": progress,
             "completed_steps": task_info.completed_steps,
             "total_steps": task_info.total_steps,
             "created_at": task_info.created_at.isoformat() if task_info.created_at else None,
             "started_at": task_info.started_at.isoformat() if task_info.started_at else None,
             "completed_at": task_info.completed_at.isoformat() if task_info.completed_at else None,
-            "result": task_info.result,
-            "error": task_info.error,
+            "result": getattr(task_info, 'result', None),
+            "error": getattr(task_info, 'error', None),
         }
 
     return {
-        "id": task_id,
+        "task_id": task_id,
         "status": "not_found",
-        "message": "Task not found",
+        "progress": None,
+        "type": None,
     }
 
 
