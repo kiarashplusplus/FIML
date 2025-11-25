@@ -239,11 +239,11 @@ pip install -e ".[dev]"
 
 ## 📖 Additional Resources
 
-- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
-- [README.md](../../README.md) - Main documentation
-- [DEPLOYMENT.md](../../DEPLOYMENT.md) - Deployment guide
-- [docs/development/](../development/) - Development guides
-- [docs/testing/](.) - Testing documentation
+- **CONTRIBUTING.md** - Contribution guidelines (see repo root)
+- **README.md** - Main documentation (see repo root)
+- **DEPLOYMENT.md** - Deployment guide (see repo root)
+- [Development Guides](../development/) - Development documentation
+- [Testing Documentation](../testing/) - Testing resources
 
 ## 🔍 Finding Specific Tests
 
