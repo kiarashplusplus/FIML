@@ -9,6 +9,7 @@ on:
     paths:
       - 'fiml/bot/**'
       - 'tests/test_bot*.py'
+      - 'tests/bot/**'
   workflow_dispatch:
 
 jobs:
@@ -98,7 +99,9 @@ jobs:
           POSTGRES_PASSWORD: fiml_test_password
         run: |
           pytest -v --cov=fiml.bot --cov-report=xml --cov-report=term --no-docker \
-            tests/test_bot_comprehensive.py
+            tests/test_bot_comprehensive.py \
+            tests/test_bot_additional.py \
+            tests/bot/
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

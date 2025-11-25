@@ -12,6 +12,7 @@ on:
       - 'tests/test_newsapi*.py'
       - 'tests/test_new_providers.py'
       - 'tests/test_phase2_providers.py'
+      - 'tests/providers/**'
   workflow_dispatch:
 
 jobs:
@@ -109,7 +110,8 @@ jobs:
             tests/test_provider_registry.py \
             tests/test_new_providers.py \
             tests/test_phase2_providers.py \
-            tests/test_newsapi_integration.py
+            tests/test_newsapi_integration.py \
+            tests/providers/
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
