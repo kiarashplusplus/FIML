@@ -309,23 +309,40 @@ def reset_cache_singletons():
     Reset cache singletons after each test to prevent test pollution.
     
     Some tests mock the global l1_cache and cache_manager singletons,
-    which can pollute other tests. This fixture ensures a clean state
-    for each test by resetting critical state after the test completes.
+    which can pollute other tests. This fixture captures the initial state
+    and restores it after each test.
     """
-    yield
-    
-    # Reset L1 cache singleton state after each test
     from fiml.cache.l1_cache import l1_cache
+    from fiml.cache.l2_cache import l2_cache
     from fiml.cache.manager import cache_manager
     
-    # Only reset if the cache was mocked (has a MagicMock redis)
-    if hasattr(l1_cache, '_redis') and l1_cache._redis is not None:
-        # Check if _redis is a MagicMock
-        if type(l1_cache._redis).__name__ == 'MagicMock':
-            l1_cache._redis = None
-            l1_cache._initialized = False
-            l1_cache._access_counts.clear()
-            l1_cache._last_access.clear()
-            # Also reset cache_manager only when L1 was mocked
-            cache_manager._initialized = False
+    # Capture initial state before test
+    initial_l1_initialized = l1_cache._initialized
+    initial_l1_redis = l1_cache._redis
+    initial_l2_initialized = l2_cache._initialized
+    initial_cm_initialized = cache_manager._initialized
+    
+    yield
+    
+    # Restore state after test if it was corrupted by mocking
+    # If _redis is now a MagicMock or was set to something different (but not a real redis connection)
+    # while _initialized is True, reset everything
+    if l1_cache._initialized and l1_cache._redis is not initial_l1_redis:
+        # The cache was mocked - reset to initial state
+        l1_cache._redis = initial_l1_redis
+        l1_cache._initialized = initial_l1_initialized
+        l1_cache._access_counts.clear()
+        l1_cache._last_access.clear()
+    
+    # Also check if _initialized was set without proper initialization
+    if l1_cache._initialized and l1_cache._redis is None:
+        l1_cache._initialized = False
+    
+    # Reset L2 cache if polluted
+    if l2_cache._initialized != initial_l2_initialized and l2_cache._engine is None:
+        l2_cache._initialized = initial_l2_initialized
+    
+    # Reset cache manager if L1 was reset
+    if cache_manager._initialized != initial_cm_initialized:
+        cache_manager._initialized = initial_cm_initialized
 

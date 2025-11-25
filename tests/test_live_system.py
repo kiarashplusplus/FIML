@@ -38,6 +38,13 @@ class TestLiveProviders:
             assert response.data["price"] > 0
             assert response.is_valid
 
+        except Exception as e:
+            # Skip test if network is not available (DNS resolution failure)
+            error_str = str(e).lower()
+            if "could not resolve host" in error_str or "dns" in error_str or "network" in error_str:
+                pytest.skip(f"Network not available: {e}")
+            raise
+
         finally:
             await provider.shutdown()
 
