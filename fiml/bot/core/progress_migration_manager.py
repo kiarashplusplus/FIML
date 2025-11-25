@@ -359,17 +359,17 @@ class ProgressMigrationManager:
             user_id=user_id,
             snapshot_timestamp=snapshot.get('timestamp', 'unknown')
         )
-        
+
         # Extract the data from the snapshot
         if 'data' in snapshot:
             restored = snapshot['data'].copy()
         else:
             # If snapshot doesn't have 'data' wrapper, assume it's the data itself
             restored = {k: v for k, v in snapshot.items() if k not in ['timestamp', 'schema_version']}
-        
+
         # Ensure user_id is set
         restored['user_id'] = user_id
-        
+
         return restored
 
     # Public API methods for tests
@@ -388,15 +388,15 @@ class ProgressMigrationManager:
         data_with_id = user_data.copy()
         if 'user_id' not in data_with_id:
             data_with_id['user_id'] = user_id
-        
+
         snapshot = self.create_migration_snapshot(data_with_id)
-        
+
         # Expose all user data fields at the top level for easy access
         # This makes the snapshot compatible with test expectations
         for key, value in data_with_id.items():
             if key not in snapshot:
                 snapshot[key] = value
-        
+
         return snapshot
 
     def migrate_user_progress(
@@ -424,7 +424,7 @@ class ProgressMigrationManager:
         data_copy = user_data.copy()
         data_copy["schema_version"] = from_version
         data_copy["user_id"] = user_id
-        
+
         # Parse versions to determine migration type
         def parse_version(v: str) -> tuple:
             try:
@@ -432,13 +432,13 @@ class ProgressMigrationManager:
                 return tuple(int(p) for p in parts)
             except (ValueError, AttributeError):
                 return (0, 0, 0)
-        
+
         from_parts = parse_version(from_version)
         to_parts = parse_version(to_version)
-        
+
         # Check if this is a major version change
         is_major_change = from_parts[0] < to_parts[0] if len(from_parts) > 0 and len(to_parts) > 0 else False
-        
+
         # Handle user choice for major changes
         if is_major_change and user_choice == 'restart':
             # Preserve XP but reset lesson progress
@@ -459,7 +459,7 @@ class ProgressMigrationManager:
                 to_version=to_version
             )
             return migrated
-        
+
         # Use the existing migration logic for other cases
         return self.migrate_user_data(data_copy)
 
@@ -483,7 +483,7 @@ class ProgressMigrationManager:
         # Set the schema version in the data
         data_copy = data.copy()
         data_copy["schema_version"] = from_version
-        
+
         # Migrate to target version
         # For now, use the standard migration which will go to CURRENT_SCHEMA_VERSION
         # In the future, this could support migration to specific versions
@@ -540,7 +540,7 @@ class ProgressMigrationManager:
         if "xp" in original or "gamification" in original:
             orig_xp = original.get("xp") or original.get("gamification", {}).get("total_xp", 0)
             migr_xp = migrated.get("xp") or migrated.get("gamification", {}).get("total_xp", 0)
-            
+
             if migr_xp < orig_xp:
                 logger.error("XP decreased during migration")
                 return False

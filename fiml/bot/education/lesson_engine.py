@@ -74,7 +74,7 @@ class RenderedLesson:
     def __str__(self):
         """Return the rendered content when converted to string"""
         return self.content
-    
+
     def __contains__(self, item):
         """Support 'in' operator for backward compatibility"""
         return item in self.content
@@ -327,7 +327,7 @@ class LessonContentEngine:
             output.append(f"📝 Quiz: {len(lesson_quiz)} questions")
 
         content = "\n".join(output)
-        
+
         # Build metadata
         metadata = {
             "lesson_id": lesson_id,
@@ -339,7 +339,7 @@ class LessonContentEngine:
             "rendered_at": datetime.now(UTC).isoformat(),
             "include_fiml_data": include_fiml_data,
         }
-        
+
         return RenderedLesson(
             title=lesson_title,
             content=content,
@@ -590,8 +590,6 @@ class LessonContentEngine:
             return True
 
         # Check if all prerequisites are completed
-        for prereq_id in prerequisites:
-            if not self.is_lesson_completed(user_id, prereq_id):
-                return False
-
-        return True
+        return all(
+            self.is_lesson_completed(user_id, prereq_id) for prereq_id in prerequisites
+        )
