@@ -95,7 +95,7 @@ class SessionAnalytics:
         """
         try:
             async with self._session_maker() as db_session:
-                # Build query
+                # Build query for session metrics
                 cutoff_date = datetime.now(UTC) - timedelta(days=days)
                 query = select(SessionMetrics).where(SessionMetrics.created_at >= cutoff_date)
 
@@ -107,12 +107,46 @@ class SessionAnalytics:
                 result = await db_session.execute(query)
                 metrics = result.scalars().all()
 
+                # Get active and archived session counts from SessionRecord
+                from fiml.sessions.db import SessionRecord
+
+                active_query = select(func.count(SessionRecord.id)).where(
+                    ~SessionRecord.is_archived,
+                    SessionRecord.expires_at > datetime.now(UTC),
+                )
+                archived_query = select(func.count(SessionRecord.id)).where(
+                    SessionRecord.is_archived,
+                    SessionRecord.created_at >= cutoff_date,
+                )
+
+                if user_id:
+                    active_query = active_query.where(SessionRecord.user_id == user_id)
+                    archived_query = archived_query.where(SessionRecord.user_id == user_id)
+
+                active_result = await db_session.execute(active_query)
+                active_sessions = active_result.scalar() or 0
+
+                archived_result = await db_session.execute(archived_query)
+                archived_sessions = archived_result.scalar() or 0
+
                 if not metrics:
+                    # Return default analytics for new users
                     return {
                         "total_sessions": 0,
+                        "active_sessions": active_sessions,
+                        "archived_sessions": archived_sessions,
+                        "total_queries": 0,
+                        "avg_duration_seconds": 0.0,
+                        "avg_queries_per_session": 0.0,
+                        "abandonment_rate": 0.0,
                         "period_days": days,
                         "user_id": user_id,
                         "session_type": session_type,
+                        "top_assets": [],
+                        "query_type_distribution": {},
+                        "session_type_breakdown": {},
+                        "popular_tags": [],
+                        "message": "No session metrics available yet. Create sessions to start tracking analytics.",
                     }
 
                 # Calculate statistics
@@ -141,8 +175,32 @@ class SessionAnalytics:
                     for qtype, count in m.query_type_summary.items():
                         all_query_types[qtype] = all_query_types.get(qtype, 0) + count
 
+                # Session type breakdown
+                session_type_counts: Dict[str, int] = {}
+                for m in metrics:
+                    session_type_counts[m.session_type] = session_type_counts.get(m.session_type, 0) + 1
+
+                # Get popular tags from archived sessions
+                tags_query = select(SessionRecord.tags).where(
+                    SessionRecord.is_archived,
+                    SessionRecord.created_at >= cutoff_date,
+                )
+                if user_id:
+                    tags_query = tags_query.where(SessionRecord.user_id == user_id)
+
+                tags_result = await db_session.execute(tags_query)
+                all_tags: Dict[str, int] = {}
+                for row in tags_result.scalars():
+                    if row:
+                        for tag in row:
+                            all_tags[tag] = all_tags.get(tag, 0) + 1
+
+                popular_tags = sorted(all_tags.items(), key=lambda x: x[1], reverse=True)[:10]
+
                 return {
                     "total_sessions": total_sessions,
+                    "active_sessions": active_sessions,
+                    "archived_sessions": archived_sessions,
                     "total_queries": total_queries,
                     "avg_duration_seconds": round(avg_duration, 2),
                     "avg_queries_per_session": round(avg_queries, 2),
@@ -152,6 +210,8 @@ class SessionAnalytics:
                     "session_type": session_type,
                     "top_assets": [{"symbol": symbol, "count": count} for symbol, count in top_assets],
                     "query_type_distribution": all_query_types,
+                    "session_type_breakdown": session_type_counts,
+                    "popular_tags": [{"tag": tag, "count": count} for tag, count in popular_tags],
                 }
 
         except Exception as e:

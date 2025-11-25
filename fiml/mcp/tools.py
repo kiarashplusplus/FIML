@@ -1543,7 +1543,18 @@ async def get_session_analytics(
         days: Number of days to analyze
 
     Returns:
-        Analytics data
+        Analytics data including:
+        - total_sessions: Total number of sessions
+        - active_sessions: Number of currently active sessions
+        - archived_sessions: Number of archived sessions
+        - total_queries: Total queries across all sessions
+        - avg_duration_seconds: Average session duration
+        - avg_queries_per_session: Average queries per session
+        - abandonment_rate: Rate of abandoned sessions
+        - top_assets: Most analyzed assets
+        - query_type_distribution: Distribution of query types
+        - session_type_breakdown: Breakdown by session type
+        - popular_tags: Most used tags
     """
     from fiml.sessions.analytics import SessionAnalytics
     from fiml.sessions.store import get_session_store
@@ -1573,4 +1584,8 @@ async def get_session_analytics(
         return {
             "status": "error",
             "error": str(e),
+            "total_sessions": 0,
+            "active_sessions": 0,
+            "archived_sessions": 0,
+            "message": "Failed to retrieve session analytics. Please try again.",
         }
