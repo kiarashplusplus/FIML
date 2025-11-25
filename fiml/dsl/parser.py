@@ -299,11 +299,12 @@ class FKDSLTransformer(Transformer):
         """
         # Last argument is the metric list, all preceding are assets
         # Filter out VS tokens (keyword separators)
+        from lark import Token
         metrics = args[-1]
         assets = []
         for a in args[:-1]:
-            # Skip VS tokens
-            if hasattr(a, 'type') and str(a).lower() == 'vs':
+            # Skip VS tokens - check if it's a Token with type 'VS'
+            if isinstance(a, Token) and a.type == 'VS':
                 continue
             assets.append(self._to_asset_dict(a))
         return {
@@ -626,36 +627,57 @@ class FKDSLTransformer(Transformer):
         return list(conditions)
 
     def condition(self, *args: Any) -> Dict[str, Any]:
-        """Handle various condition types"""
-        if len(args) >= 3:
-            # Check for metric COMPARATOR metric * NUMBER pattern
-            if len(args) == 4 and args[2] == "*":
-                return {
-                    "type": "comparison_multiplier",
-                    "metric": args[0],
-                    "operator": str(args[1]) if hasattr(args[1], "__str__") else args[1],
-                    "compare_metric": args[2],
-                    "multiplier": float(args[3]),
-                }
-            # Standard comparison: metric COMPARATOR value
-            elif len(args) == 3:
+        """
+        Handle various condition types.
+
+        Grammar rules:
+          - metric COMPARATOR value → 3 args: [metric, comparator, value]
+          - metric COMPARATOR metric "*" NUMBER → 4 args: [metric, comparator, metric, number]
+          - metric "BETWEEN" value "AND" value → 3 args: [metric, value, value]
+          - metric "ABOVE" metric → 2 args handled elsewhere
+          - "TREND" "IS" trend_type / "SIGNAL" "IS" signal_type → 1-2 args
+
+        Note: With @v_args(inline=True), literal strings like "BETWEEN", "AND", "*"
+        are NOT passed to the transformer.
+        """
+        if len(args) == 4:
+            # metric COMPARATOR metric NUMBER (multiplier pattern)
+            # The "*" is not passed as an arg
+            return {
+                "type": "comparison_multiplier",
+                "metric": args[0],
+                "operator": str(args[1]) if hasattr(args[1], "__str__") else args[1],
+                "compare_metric": args[2],
+                "multiplier": float(args[3]),
+            }
+        elif len(args) == 3:
+            # Could be either:
+            # 1. metric COMPARATOR value (standard comparison)
+            # 2. metric value value (BETWEEN without keywords)
+            #
+            # Check if args[1] is a comparator token
+            arg1_str = str(args[1]) if hasattr(args[1], "__str__") else ""
+            if arg1_str in (">", "<", ">=", "<=", "=", "!="):
                 return {
                     "type": "comparison",
                     "metric": args[0],
-                    "operator": str(args[1]) if hasattr(args[1], "__str__") else args[1],
+                    "operator": arg1_str,
                     "value": args[2],
                 }
-            # BETWEEN: metric BETWEEN value AND value
-            elif len(args) == 4:
+            else:
+                # BETWEEN pattern: args = [metric, min_value, max_value]
                 return {
                     "type": "between",
                     "metric": args[0],
                     "min": args[1],
-                    "max": args[3],
+                    "max": args[2],
                 }
         elif len(args) == 2:
-            # TREND IS / SIGNAL IS
+            # TREND IS / SIGNAL IS or ABOVE/BELOW
             return {"type": "state", "name": str(args[0]), "value": str(args[1])}
+        elif len(args) == 1:
+            # Single value condition
+            return {"type": "single", "value": args[0]}
 
         return {"type": "custom", "args": list(args)}
 
