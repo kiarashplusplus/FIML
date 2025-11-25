@@ -32,11 +32,11 @@ class AbstractMessage:
     user_id: str
     platform: str
     text: str
-    media: List[str] = None
-    context: Dict[str, Any] = None
-    timestamp: datetime = None
+    media: Optional[List[str]] = None
+    context: Optional[Dict[str, Any]] = None
+    timestamp: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.media is None:
             self.media = []
         if self.context is None:
@@ -49,11 +49,11 @@ class AbstractMessage:
 class AbstractResponse:
     """Platform-agnostic response representation"""
     text: str
-    media: List[str] = None
-    actions: List[Dict] = None  # Buttons, keyboards
-    metadata: Dict[str, Any] = None
+    media: Optional[List[str]] = None
+    actions: Optional[List[Dict[str, Any]]] = None  # Buttons, keyboards
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.media is None:
             self.media = []
         if self.actions is None:
@@ -89,14 +89,14 @@ class UserSession:
     current_lesson: Optional[str] = None
     current_quiz: Optional[str] = None
     current_question: Optional[int] = None
-    conversation_history: List[Dict] = None
-    progress: Dict[str, Any] = None
-    preferences: Dict[str, Any] = None
-    metadata: Dict[str, Any] = None
-    created_at: datetime = None
-    updated_at: datetime = None
+    conversation_history: Optional[List[Dict[str, Any]]] = None
+    progress: Optional[Dict[str, Any]] = None
+    preferences: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.conversation_history is None:
             self.conversation_history = []
         if self.progress is None:

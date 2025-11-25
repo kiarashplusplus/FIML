@@ -119,31 +119,33 @@ class EducationalComplianceFilter:
 
         # Check for prohibited advice
         for regex in self._advice_regex:
-            if regex.search(content):
-                match = regex.search(content).group(0)
+            match = regex.search(content)
+            if match:
+                matched_text = match.group(0)
                 logger.warning(
                     "Advice pattern detected",
                     context=context,
-                    pattern=match
+                    pattern=matched_text
                 )
                 return (
                     ComplianceLevel.BLOCKED,
-                    f"Content blocked: Contains advice language ('{match}'). "
+                    f"Content blocked: Contains advice language ('{matched_text}'). "
                     "Educational content only."
                 )
 
         # Check for warning patterns
         for regex in self._warning_regex:
-            if regex.search(content):
-                match = regex.search(content).group(0)
+            match = regex.search(content)
+            if match:
+                matched_text = match.group(0)
                 logger.info(
                     "Warning pattern detected",
                     context=context,
-                    pattern=match
+                    pattern=matched_text
                 )
                 return (
                     ComplianceLevel.WARNING,
-                    f"Warning: Borderline language detected ('{match}'). "
+                    f"Warning: Borderline language detected ('{matched_text}'). "
                     "Strong disclaimer required."
                 )
 
