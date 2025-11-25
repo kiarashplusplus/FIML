@@ -63,6 +63,11 @@ class SubscriptionResponse(BaseModel):
     subscription_id: str
     interval_ms: int
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    disclaimer: str = (
+        "⚠️ DISCLAIMER: Real-time market data is for informational purposes only. "
+        "This is not financial advice. Markets are volatile and data may be delayed. "
+        "See LICENSE file for complete liability disclaimer."
+    )
 
 
 class WebSocketError(BaseModel):
@@ -133,6 +138,7 @@ class StreamMessage(BaseModel):
     data: List[Any]  # List of PriceUpdate, OHLCVUpdate, QuoteUpdate, or TradeUpdate
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    disclaimer: Optional[str] = None  # Optional per-message disclaimer for important updates
 
 
 class HeartbeatMessage(BaseModel):

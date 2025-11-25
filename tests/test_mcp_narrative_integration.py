@@ -90,6 +90,8 @@ class TestMCPNarrativeIntegration:
         assert response.cached is not None
         assert response.task is not None
         assert response.disclaimer is not None
+        # Verify disclaimer includes LICENSE reference
+        assert "LICENSE" in response.disclaimer, "API response disclaimer should reference LICENSE file"
 
         # Verify narrative is included
         assert response.narrative is not None

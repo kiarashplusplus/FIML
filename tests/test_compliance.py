@@ -31,6 +31,8 @@ class TestDisclaimerGenerator:
         assert isinstance(disclaimer, str)
         assert len(disclaimer) > 0
         assert "financial advice" in disclaimer or "investment" in disclaimer.lower()
+        # Verify LICENSE reference is included
+        assert "LICENSE" in disclaimer, "Disclaimer should reference LICENSE file"
 
     def test_generate_crypto_disclaimer(self):
         """Test crypto-specific disclaimer"""
@@ -41,6 +43,8 @@ class TestDisclaimerGenerator:
         assert disclaimer is not None
         assert "crypto" in disclaimer.lower() or "cryptocurrency" in disclaimer.lower()
         assert "risk" in disclaimer.lower()
+        # Verify LICENSE reference is included
+        assert "LICENSE" in disclaimer, "Crypto disclaimer should reference LICENSE file"
 
     def test_generate_derivative_disclaimer(self):
         """Test derivatives-specific disclaimer"""
@@ -171,6 +175,29 @@ class TestDisclaimerGenerator:
         """Test that global disclaimer_generator instance exists"""
         assert disclaimer_generator is not None
         assert isinstance(disclaimer_generator, DisclaimerGenerator)
+
+    def test_disclaimer_has_warning_icon(self):
+        """Test that disclaimers include warning icon for visibility"""
+        gen = DisclaimerGenerator()
+        
+        disclaimer_us = gen.generate(AssetClass.EQUITY, region=Region.US)
+        disclaimer_eu = gen.generate(AssetClass.EQUITY, region=Region.EU)
+        disclaimer_global = gen.generate(AssetClass.EQUITY, region=Region.GLOBAL)
+        
+        # Check that disclaimers start with warning icon for better visibility
+        assert "⚠️" in disclaimer_us, "US disclaimer should include warning icon"
+        assert "⚠️" in disclaimer_eu, "EU disclaimer should include warning icon"
+        assert "⚠️" in disclaimer_global, "Global disclaimer should include warning icon"
+
+    def test_all_regions_reference_license(self):
+        """Test that all regional disclaimers reference LICENSE file"""
+        gen = DisclaimerGenerator()
+        
+        regions = [Region.US, Region.EU, Region.UK, Region.GLOBAL]
+        
+        for region in regions:
+            disclaimer = gen.generate(AssetClass.EQUITY, region=region)
+            assert "LICENSE" in disclaimer, f"{region.value} disclaimer should reference LICENSE file"
 
 
 class TestComplianceRouter:

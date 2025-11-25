@@ -102,6 +102,9 @@ class TestSubscriptionManagement:
             assert response["stream_type"] == StreamType.PRICE
             assert set(response["symbols"]) == {"AAPL", "GOOGL"}
             assert "subscription_id" in response
+            # Verify disclaimer is present in subscription response
+            assert "disclaimer" in response, "WebSocket subscription response should include disclaimer"
+            assert "LICENSE" in response["disclaimer"], "WebSocket disclaimer should reference LICENSE file"
 
     def test_subscribe_to_ohlcv_stream(self, client):
         """Test subscribing to OHLCV stream"""

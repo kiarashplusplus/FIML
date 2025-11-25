@@ -39,40 +39,45 @@ class DisclaimerGenerator:
         return {
             "US": {
                 "general": (
-                    "This information is provided for informational purposes only and does not "
+                    "⚠️ DISCLAIMER: This information is provided for informational purposes only and does not "
                     "constitute financial advice, investment recommendation, or an offer or "
                     "solicitation to buy or sell any securities. Always conduct your own research "
                     "and consult with a qualified financial advisor before making investment decisions. "
-                    "Past performance is not indicative of future results."
+                    "Past performance is not indicative of future results. "
+                    "See LICENSE file for complete terms and liability disclaimer."
                 ),
                 "equity": (
-                    "This stock information is provided for educational purposes only. "
+                    "⚠️ EQUITY TRADING RISK: This stock information is provided for educational purposes only. "
                     "FIML is not a registered investment advisor or broker-dealer. "
                     "Securities trading involves substantial risk of loss. "
-                    "This is not a recommendation to buy or sell any security."
+                    "This is not a recommendation to buy or sell any security. "
+                    "See LICENSE file for complete liability disclaimer."
                 ),
                 "crypto": (
-                    "Cryptocurrency trading carries substantial risk and may not be suitable for all investors. "
+                    "⚠️ CRYPTO TRADING HIGH RISK: Cryptocurrency trading carries substantial risk and may not be suitable for all investors. "
                     "Cryptocurrencies are highly volatile and speculative. You may lose your entire investment. "
                     "FIML does not provide investment advice. "
                     "Consult with a financial professional before trading cryptocurrencies. "
-                    "This is not an endorsement or recommendation of any cryptocurrency."
+                    "This is not an endorsement or recommendation of any cryptocurrency. "
+                    "See LICENSE file for complete liability disclaimer."
                 ),
                 "derivative": (
-                    "Derivatives and leveraged products are complex instruments that carry high risk "
+                    "⚠️ DERIVATIVE/LEVERAGE HIGH RISK: Derivatives and leveraged products are complex instruments that carry high risk "
                     "and may not be suitable for all investors. You may lose more than your initial investment. "
                     "This information is educational only and does not constitute trading advice. "
-                    "Seek professional guidance before trading derivatives."
+                    "Seek professional guidance before trading derivatives. "
+                    "See LICENSE file for complete liability disclaimer."
                 ),
             },
             "EU": {
                 "general": (
-                    "This material is provided for general information purposes only and does not "
+                    "⚠️ DISCLAIMER: This material is provided for general information purposes only and does not "
                     "constitute investment advice or a recommendation within the meaning of MiFID II. "
                     "The information has not been prepared in accordance with legal requirements designed "
                     "to promote the independence of investment research. "
                     "We process your data in accordance with GDPR. "
-                    "Past performance is not a reliable indicator of future performance."
+                    "Past performance is not a reliable indicator of future performance. "
+                    "See LICENSE file for complete terms and liability disclaimer."
                 ),
                 "equity": (
                     "This stock information is for educational purposes only and does not constitute "
@@ -94,11 +99,12 @@ class DisclaimerGenerator:
             },
             "UK": {
                 "general": (
-                    "The information provided is for general information purposes only and does not "
+                    "⚠️ DISCLAIMER: The information provided is for general information purposes only and does not "
                     "constitute financial advice or a financial promotion as defined by FCA regulations. "
                     "FIML is not authorized or regulated by the Financial Conduct Authority. "
                     "You should seek independent financial advice before making any investment decisions. "
-                    "The value of investments can go down as well as up."
+                    "The value of investments can go down as well as up. "
+                    "See LICENSE file for complete terms and liability disclaimer."
                 ),
                 "equity": (
                     "This is not investment advice or a recommendation to buy or sell securities. "
@@ -144,10 +150,11 @@ class DisclaimerGenerator:
             },
             "GLOBAL": {
                 "general": (
-                    "This information is provided for informational and educational purposes only. "
+                    "⚠️ DISCLAIMER: This information is provided for informational and educational purposes only. "
                     "It does not constitute financial, investment, or professional advice. "
                     "FIML is not responsible for any investment decisions you make based on this information. "
-                    "Always conduct your own due diligence and consult with qualified professionals."
+                    "Always conduct your own due diligence and consult with qualified professionals. "
+                    "See LICENSE file for complete terms and liability disclaimer."
                 ),
                 "equity": (
                     "Stock market investments carry risk. The value of investments may fluctuate. "
