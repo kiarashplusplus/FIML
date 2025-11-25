@@ -14,6 +14,48 @@ from fiml.sessions.models import Session
 
 logger = get_logger(__name__)
 
+# Prometheus metrics (optional)
+try:
+    from prometheus_client import Counter, Gauge, Histogram
+
+    PROMETHEUS_AVAILABLE = True
+
+    # Session metrics
+    SESSION_CREATED = Counter(
+        "fiml_sessions_created_total",
+        "Total sessions created",
+        ["session_type"]
+    )
+
+    SESSION_ACTIVE = Gauge(
+        "fiml_sessions_active_total",
+        "Number of active sessions"
+    )
+
+    SESSION_ABANDONED = Counter(
+        "fiml_sessions_abandoned_total",
+        "Total abandoned sessions",
+        ["session_type"]
+    )
+
+    SESSION_DURATION = Histogram(
+        "fiml_session_duration_seconds",
+        "Session duration in seconds",
+        ["session_type"],
+        buckets=[10, 30, 60, 120, 300, 600, 1800, 3600]
+    )
+
+    SESSION_QUERIES = Histogram(
+        "fiml_session_queries_total",
+        "Number of queries per session",
+        ["query_type"],
+        buckets=[1, 5, 10, 20, 50, 100, 200]
+    )
+
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+    logger.warning("prometheus_client not available - session metrics export disabled")
+
 
 class SessionAnalytics:
     """
@@ -28,6 +70,7 @@ class SessionAnalytics:
 
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]) -> None:
         self._session_maker = session_maker
+        self.enable_prometheus = PROMETHEUS_AVAILABLE
 
     async def record_session_metrics(self, session: Session) -> None:
         """

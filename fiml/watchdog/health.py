@@ -13,6 +13,62 @@ from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Prometheus metrics (optional)
+try:
+    from prometheus_client import Counter, Gauge, Histogram
+
+    PROMETHEUS_AVAILABLE = True
+
+    # Watchdog metrics
+    WATCHDOG_CHECKS = Counter(
+        "fiml_watchdog_checks_total",
+        "Total watchdog checks performed",
+        ["watchdog_name"]
+    )
+
+    WATCHDOG_CHECK_FAILURES = Counter(
+        "fiml_watchdog_check_failures_total",
+        "Total watchdog check failures",
+        ["watchdog_name"]
+    )
+
+    WATCHDOG_EVENTS_DETECTED = Counter(
+        "fiml_watchdog_events_detected_total",
+        "Total events detected by watchdogs",
+        ["watchdog_name", "severity"]
+    )
+
+    WATCHDOG_CHECK_DURATION = Histogram(
+        "fiml_watchdog_check_duration_seconds",
+        "Watchdog check duration",
+        ["watchdog_name"],
+        buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0]
+    )
+
+    WATCHDOG_TOTAL_COUNT = Gauge(
+        "fiml_watchdog_total_count",
+        "Total number of registered watchdogs"
+    )
+
+    WATCHDOG_HEALTHY_COUNT = Gauge(
+        "fiml_watchdog_healthy_count",
+        "Number of healthy watchdogs"
+    )
+
+    WATCHDOG_UNHEALTHY_COUNT = Gauge(
+        "fiml_watchdog_unhealthy_count",
+        "Number of unhealthy watchdogs"
+    )
+
+    WATCHDOG_SUCCESS_RATE = Gauge(
+        "fiml_watchdog_success_rate",
+        "Overall watchdog success rate"
+    )
+
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+    logger.warning("prometheus_client not available - watchdog metrics export disabled")
+
 
 @dataclass
 class WatchdogMetrics:
@@ -131,6 +187,7 @@ class WatchdogHealthMonitor:
         self._metrics: Dict[str, WatchdogMetrics] = {}
         self._max_check_interval_multiplier = 3  # Alert if no check in 3x expected interval
         self._consecutive_failure_threshold = self.DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD
+        self.enable_prometheus = PROMETHEUS_AVAILABLE
 
     def register_watchdog(self, watchdog_name: str) -> WatchdogMetrics:
         """Register a new watchdog for monitoring"""
@@ -175,8 +232,23 @@ class WatchdogHealthMonitor:
 
         if success:
             metrics.record_check_success(check_time, event_detected, severity)
+
+            # Update Prometheus metrics
+            if self.enable_prometheus:
+                WATCHDOG_CHECKS.labels(watchdog_name=watchdog_name).inc()
+                WATCHDOG_CHECK_DURATION.labels(watchdog_name=watchdog_name).observe(check_time)
+
+                if event_detected and severity:
+                    WATCHDOG_EVENTS_DETECTED.labels(
+                        watchdog_name=watchdog_name,
+                        severity=severity
+                    ).inc()
         else:
             metrics.record_check_failure(error or "Unknown error")
+
+            # Update Prometheus metrics
+            if self.enable_prometheus:
+                WATCHDOG_CHECK_FAILURES.labels(watchdog_name=watchdog_name).inc()
 
     def enable_watchdog(self, watchdog_name: str) -> None:
         """Enable a watchdog"""
@@ -212,6 +284,16 @@ class WatchdogHealthMonitor:
         total_medium = sum(m.medium_events for m in self._metrics.values())
         total_low = sum(m.low_events for m in self._metrics.values())
 
+        # Calculate success rate
+        overall_success_rate = (total_checks / (total_checks + total_failures)) if (total_checks + total_failures) > 0 else 1.0
+
+        # Update Prometheus gauges
+        if self.enable_prometheus:
+            WATCHDOG_TOTAL_COUNT.set(total_watchdogs)
+            WATCHDOG_HEALTHY_COUNT.set(healthy_watchdogs)
+            WATCHDOG_UNHEALTHY_COUNT.set(enabled_watchdogs - healthy_watchdogs)
+            WATCHDOG_SUCCESS_RATE.set(overall_success_rate)
+
         return {
             "total_watchdogs": total_watchdogs,
             "enabled_watchdogs": enabled_watchdogs,
@@ -220,7 +302,7 @@ class WatchdogHealthMonitor:
             "total_checks": total_checks,
             "total_events": total_events,
             "total_failures": total_failures,
-            "overall_success_rate": (total_checks / (total_checks + total_failures)) if (total_checks + total_failures) > 0 else 1.0,
+            "overall_success_rate": overall_success_rate,
             "events_by_severity": {
                 "critical": total_critical,
                 "high": total_high,

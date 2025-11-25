@@ -121,6 +121,62 @@ async def health_check() -> dict:
     }
 
 
+@app.get("/api/metrics/cache")
+async def get_cache_metrics() -> dict:
+    """Get cache analytics metrics"""
+    try:
+        from fiml.cache.analytics import cache_analytics
+        return cache_analytics.get_comprehensive_report()
+    except Exception as e:
+        logger.error(f"Failed to get cache metrics: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to retrieve cache metrics", "message": str(e)}
+        )
+
+
+@app.get("/api/metrics/watchdog")
+async def get_watchdog_metrics() -> dict:
+    """Get watchdog health metrics"""
+    try:
+        from fiml.watchdog.health import watchdog_health_monitor
+        return watchdog_health_monitor.get_health_summary()
+    except Exception as e:
+        logger.error(f"Failed to get watchdog metrics: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to retrieve watchdog metrics", "message": str(e)}
+        )
+
+
+@app.get("/api/metrics/performance")
+async def get_performance_metrics() -> dict:
+    """Get performance monitoring metrics"""
+    try:
+        from fiml.monitoring.performance import get_performance_metrics
+        return get_performance_metrics()
+    except Exception as e:
+        logger.error(f"Failed to get performance metrics: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to retrieve performance metrics", "message": str(e)}
+        )
+
+
+@app.get("/api/metrics/tasks")
+async def get_task_metrics() -> dict:
+    """Get task registry metrics"""
+    try:
+        from fiml.monitoring.task_registry import task_registry
+        return task_registry.get_stats()
+    except Exception as e:
+        logger.error(f"Failed to get task metrics: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Failed to retrieve task metrics", "message": str(e)}
+        )
+
+
 # Module-level database engine for health checks (created lazily)
 _health_check_engine = None
 
@@ -317,6 +373,13 @@ async def root() -> dict:
             "provider_specific": "/health/providers/{provider_name}",
         },
         "metrics": "/metrics",
+        "metrics_endpoints": {
+            "prometheus": "/metrics",
+            "cache": "/api/metrics/cache",
+            "watchdog": "/api/metrics/watchdog",
+            "performance": "/api/metrics/performance",
+            "tasks": "/api/metrics/tasks",
+        },
     }
 
 

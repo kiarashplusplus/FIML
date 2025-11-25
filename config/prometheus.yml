@@ -9,13 +9,23 @@ global:
     environment: 'production'
 
 scrape_configs:
-  # FIML Server metrics
+  # FIML Server metrics (includes all Prometheus metrics from the application)
   - job_name: 'fiml-server'
     static_configs:
       - targets: ['fiml-server:8000']
         labels:
           service: 'fiml-server'
     metrics_path: /metrics
+    scrape_interval: 15s
+
+  # FIML API metrics endpoints (for custom JSON metrics)
+  - job_name: 'fiml-api-metrics'
+    static_configs:
+      - targets: ['fiml-server:8000']
+        labels:
+          service: 'fiml-api'
+    metrics_path: /api/metrics/performance
+    scrape_interval: 30s
 
   # PostgreSQL metrics (if postgres_exporter is added)
   - job_name: 'postgres'
@@ -23,6 +33,7 @@ scrape_configs:
       - targets: ['postgres-exporter:9187']
         labels:
           service: 'postgres'
+    scrape_interval: 30s
 
   # Redis metrics (if redis_exporter is added)
   - job_name: 'redis'
@@ -30,13 +41,15 @@ scrape_configs:
       - targets: ['redis-exporter:9121']
         labels:
           service: 'redis'
+    scrape_interval: 30s
 
-  # Ray metrics
+  # Ray metrics (for multi-agent orchestration)
   - job_name: 'ray'
     static_configs:
       - targets: ['ray-head:8265']
         labels:
           service: 'ray'
+    scrape_interval: 30s
 
   # Node exporter for system metrics
   - job_name: 'node'
@@ -44,6 +57,7 @@ scrape_configs:
       - targets: ['node-exporter:9100']
         labels:
           service: 'node'
+    scrape_interval: 15s
 
 # Alerting rules
 rule_files:
