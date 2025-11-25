@@ -573,8 +573,8 @@ Metrics collection has minimal performance impact:
 
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
-- [FIML Deployment Guide](DEPLOYMENT_GUIDE.md)
-- [FIML Monitoring Documentation](../docs/architecture/monitoring.md)
+- [FIML Deployment Guide](../DEPLOYMENT_GUIDE.md)
+- [FIML Architecture Overview](../architecture/overview.md)
 
 ## Support
 

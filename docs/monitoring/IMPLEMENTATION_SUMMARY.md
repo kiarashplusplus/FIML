@@ -488,7 +488,7 @@ The system is now ready for deployment and monitoring in production environments
 
 - [Grafana Integration Guide](GRAFANA_INTEGRATION.md)
 - [Metrics Quick Reference](METRICS_QUICK_REFERENCE.md)
-- [FIML Deployment Guide](../../DEPLOYMENT.md)
+- [FIML Deployment Guide](../DEPLOYMENT_GUIDE.md)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
 
