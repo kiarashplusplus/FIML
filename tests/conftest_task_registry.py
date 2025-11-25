@@ -1,8 +1,9 @@
 """Custom conftest for task_registry tests that uses the existing Docker Redis on port 6380"""
 import pytest
 import redis
+
+from fiml.core.models import TaskInfo, TaskStatus, TaskType
 from fiml.monitoring.task_registry import TaskRegistry
-from fiml.core.models import TaskInfo, TaskType, TaskStatus
 
 
 @pytest.fixture

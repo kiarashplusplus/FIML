@@ -12,7 +12,7 @@ Production-focused tests ensuring reliability and error handling.
 import asyncio
 import time
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -23,8 +23,7 @@ from fiml.agents.health import (
     worker_health_monitor,
 )
 from fiml.agents.orchestrator import AgentOrchestrator, agent_orchestrator
-from fiml.core.models import Asset, AssetType, DataType, Market
-
+from fiml.core.models import Asset, AssetType, Market
 
 # ============================================================================
 # Fixtures
@@ -343,7 +342,7 @@ class TestWorkerHealthMonitor:
             health_monitor.record_task_complete("worker-1", start_time, success=False, error=f"Error {i}")
 
         assert health_monitor.is_circuit_open("worker-1") is True
-        
+
         # Check worker status
         metrics = health_monitor.get_metrics("worker-1")
         assert metrics.status == WorkerStatus.UNHEALTHY
@@ -488,11 +487,11 @@ class TestAgentOrchestrator:
         """Test initialization timeout handling"""
         orchestrator = AgentOrchestrator()
 
-        with patch("fiml.agents.orchestrator.ray.is_initialized", return_value=False):
-            with patch("asyncio.wait_for", side_effect=asyncio.TimeoutError()):
-                await orchestrator.initialize()
+        with patch("fiml.agents.orchestrator.ray.is_initialized", return_value=False), \
+             patch("asyncio.wait_for", side_effect=asyncio.TimeoutError()):
+            await orchestrator.initialize()
 
-                assert orchestrator.initialized is False
+            assert orchestrator.initialized is False
 
     @pytest.mark.asyncio
     async def test_initialize_exception(self, caplog):
@@ -511,12 +510,12 @@ class TestAgentOrchestrator:
         orchestrator = AgentOrchestrator()
         orchestrator.initialized = True
 
-        with patch("fiml.agents.orchestrator.ray.is_initialized", return_value=True):
-            with patch("fiml.agents.orchestrator.ray.shutdown") as mock_shutdown:
-                await orchestrator.shutdown()
+        with patch("fiml.agents.orchestrator.ray.is_initialized", return_value=True), \
+             patch("fiml.agents.orchestrator.ray.shutdown") as mock_shutdown:
+            await orchestrator.shutdown()
 
-                mock_shutdown.assert_called_once()
-                assert orchestrator.initialized is False
+            mock_shutdown.assert_called_once()
+            assert orchestrator.initialized is False
 
     @pytest.mark.asyncio
     async def test_analyze_asset_not_initialized(self, sample_equity_asset):

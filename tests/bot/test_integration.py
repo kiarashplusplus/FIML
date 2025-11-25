@@ -2,7 +2,6 @@
 Integration tests for bot components working together
 """
 
-from datetime import datetime, timedelta
 
 import pytest
 import yaml

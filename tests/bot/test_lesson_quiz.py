@@ -2,7 +2,6 @@
 Tests for LessonContentEngine (Component 6) and QuizSystem (Component 7)
 """
 
-from datetime import datetime, timedelta
 
 import pytest
 import yaml

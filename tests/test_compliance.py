@@ -179,11 +179,11 @@ class TestDisclaimerGenerator:
     def test_disclaimer_has_warning_icon(self):
         """Test that disclaimers include warning icon for visibility"""
         gen = DisclaimerGenerator()
-        
+
         disclaimer_us = gen.generate(AssetClass.EQUITY, region=Region.US)
         disclaimer_eu = gen.generate(AssetClass.EQUITY, region=Region.EU)
         disclaimer_global = gen.generate(AssetClass.EQUITY, region=Region.GLOBAL)
-        
+
         # Check that disclaimers start with warning icon for better visibility
         assert "⚠️" in disclaimer_us, "US disclaimer should include warning icon"
         assert "⚠️" in disclaimer_eu, "EU disclaimer should include warning icon"
@@ -192,9 +192,9 @@ class TestDisclaimerGenerator:
     def test_all_regions_reference_license(self):
         """Test that all regional disclaimers reference LICENSE file"""
         gen = DisclaimerGenerator()
-        
+
         regions = [Region.US, Region.EU, Region.UK, Region.GLOBAL]
-        
+
         for region in regions:
             disclaimer = gen.generate(AssetClass.EQUITY, region=region)
             assert "LICENSE" in disclaimer, f"{region.value} disclaimer should reference LICENSE file"

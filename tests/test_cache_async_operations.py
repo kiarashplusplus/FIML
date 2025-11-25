@@ -11,8 +11,9 @@ Focuses on:
 """
 
 import asyncio
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+import contextlib
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -23,7 +24,6 @@ from fiml.cache.scheduler import BatchUpdateScheduler, UpdateRequest
 from fiml.cache.warmer import CacheWarmer
 from fiml.cache.warming import PredictiveCacheWarmer, QueryPattern
 from fiml.core.models import Asset, AssetType, DataType, Market
-
 
 # ============================================================================
 # Fixtures
@@ -70,7 +70,7 @@ def mock_cache_manager():
 def mock_provider_registry():
     """Create a mock provider registry"""
     registry = MagicMock()
-    
+
     # Mock provider
     mock_provider = MagicMock()
     mock_provider.name = "test_provider"
@@ -81,10 +81,10 @@ def mock_provider_registry():
     ])
     mock_provider.get_fundamentals = AsyncMock(return_value={"pe_ratio": 25.0})
     mock_provider.supports_batch = True
-    
+
     registry.get_provider = MagicMock(return_value=mock_provider)
     registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
-    
+
     return registry
 
 
@@ -131,7 +131,7 @@ class TestBatchUpdateSchedulerAsync:
 
         # Schedule some updates
         await scheduler.schedule_update(sample_asset, DataType.PRICE, "test_provider", priority=5)
-        
+
         # Run one cycle
         await scheduler._run_batch_cycle()
 
@@ -175,7 +175,7 @@ class TestBatchUpdateSchedulerAsync:
         await scheduler.schedule_update(sample_crypto_asset, DataType.PRICE, "test_provider")
 
         initial_pending = len(scheduler.pending_requests)
-        
+
         # Flush all pending
         await scheduler.flush_pending()
 
@@ -274,7 +274,7 @@ class TestPredictiveCacheWarmerAsync:
     async def test_run_warming_cycle_in_schedule(self, mock_cache_manager, mock_provider_registry):
         """Test warming cycle runs when in schedule"""
         current_hour = datetime.now(timezone.utc).hour
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
@@ -297,7 +297,7 @@ class TestPredictiveCacheWarmerAsync:
         """Test warming cycle skips when not in schedule"""
         current_hour = datetime.now(timezone.utc).hour
         off_hour = (current_hour + 12) % 24  # 12 hours away
-        
+
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
@@ -333,7 +333,7 @@ class TestPredictiveCacheWarmerAsync:
 
 
 # ============================================================================
-# CacheWarmer Async Tests  
+# CacheWarmer Async Tests
 # ============================================================================
 
 class TestCacheWarmerAsync:
@@ -426,10 +426,8 @@ class TestCacheWarmerAsync:
 
             # Cancel it
             task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await task
-            except asyncio.CancelledError:
-                pass
 
     @pytest.mark.asyncio
     async def test_get_assets_to_warm(self):
@@ -439,7 +437,7 @@ class TestCacheWarmerAsync:
 
         assert len(assets) > 0
         assert all(isinstance(asset, Asset) for asset in assets)
-        
+
         # Should have both equity and crypto assets
         asset_types = {asset.asset_type for asset in assets}
         assert AssetType.EQUITY in asset_types
@@ -536,13 +534,13 @@ class TestCacheAnalyticsPrometheus:
 
     def test_init_with_prometheus_when_available(self):
         """Test initialization when prometheus is available"""
-        with patch("fiml.cache.analytics.PROMETHEUS_AVAILABLE", True):
-            with patch("fiml.cache.analytics.Counter") as mock_counter:
-                with patch("fiml.cache.analytics.Gauge") as mock_gauge:
-                    with patch("fiml.cache.analytics.Histogram") as mock_histogram:
-                        analytics = CacheAnalytics(enable_prometheus=True)
+        with patch("fiml.cache.analytics.PROMETHEUS_AVAILABLE", True), \
+             patch("fiml.cache.analytics.Counter"), \
+             patch("fiml.cache.analytics.Gauge"), \
+             patch("fiml.cache.analytics.Histogram"):
+            analytics = CacheAnalytics(enable_prometheus=True)
 
-                        assert analytics.enable_prometheus is True
+            assert analytics.enable_prometheus is True
 
     def test_record_access_with_prometheus_disabled(self):
         """Test recording access with prometheus disabled"""
@@ -609,7 +607,7 @@ class TestCacheOperationsIntegration:
 
         # Schedule some updates
         await scheduler.schedule_update(sample_asset, DataType.PRICE, "test_provider")
-        
+
         # Process them
         await scheduler._run_batch_cycle()
 
@@ -629,7 +627,6 @@ class TestCacheOperationsIntegration:
         )
 
         # Simulate query pattern using record_cache_access
-        current_hour = datetime.now(timezone.utc).hour
         for _ in range(5):
             warmer.record_cache_access("AAPL", DataType.PRICE)
 

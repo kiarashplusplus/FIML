@@ -6,8 +6,7 @@ Supports multi-process/multi-worker environments.
 """
 
 import json
-import time
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, Optional
 
 import redis
@@ -22,7 +21,7 @@ logger = get_logger(__name__)
 class TaskRegistry:
     """
     Registry for tracking analysis tasks
-    
+
     Stores task information in Redis with configurable TTL for status queries.
     Thread-safe and works across multiple processes/workers.
     """
@@ -30,14 +29,14 @@ class TaskRegistry:
     def __init__(self, default_ttl: int = 300):
         """
         Initialize task registry
-        
+
         Args:
             default_ttl: Default time-to-live for tasks in seconds (default: 5 minutes)
         """
         self._default_ttl = default_ttl
         self._redis_client: Optional[redis.Redis] = None
         self._prefix = "fiml:task:"
-        
+
     def _get_redis(self) -> redis.Redis:
         """Get or create Redis connection"""
         if self._redis_client is None:
@@ -73,22 +72,22 @@ class TaskRegistry:
     def _deserialize_task(self, data_str: str) -> TaskInfo:
         """Deserialize JSON string to TaskInfo"""
         data = json.loads(data_str)
-        
+
         # Parse dates
         for date_field in ['estimated_completion', 'created_at', 'updated_at', 'started_at', 'completed_at']:
             if data.get(date_field):
                 data[date_field] = datetime.fromisoformat(data[date_field])
-        
+
         # Parse status enum
         if data.get('status'):
             data['status'] = TaskStatus(data['status'])
-        
+
         return TaskInfo(**data)
 
     def register(self, task_info: TaskInfo, ttl: Optional[int] = None) -> None:
         """
         Register a task for tracking
-        
+
         Args:
             task_info: Task information to register
             ttl: Optional custom TTL in seconds
@@ -98,9 +97,9 @@ class TaskRegistry:
             key = f"{self._prefix}{task_info.id}"
             value = self._serialize_task(task_info)
             ttl_seconds = ttl or self._default_ttl
-            
+
             redis_client.setex(key, ttl_seconds, value)
-            
+
             logger.info(
                 "Task registered",
                 task_id=task_info.id,
@@ -113,10 +112,10 @@ class TaskRegistry:
     def get(self, task_id: str) -> Optional[TaskInfo]:
         """
         Get task information by ID
-        
+
         Args:
             task_id: Task ID to retrieve
-            
+
         Returns:
             TaskInfo if found and not expired, None otherwise
         """
@@ -124,10 +123,10 @@ class TaskRegistry:
             redis_client = self._get_redis()
             key = f"{self._prefix}{task_id}"
             value = redis_client.get(key)
-            
+
             if value is None:
                 return None
-                
+
             return self._deserialize_task(value)
         except Exception as e:
             logger.error(f"Failed to get task {task_id}: {e}")
@@ -136,22 +135,22 @@ class TaskRegistry:
     def update(self, task_info: TaskInfo) -> None:
         """
         Update existing task information
-        
+
         Args:
             task_info: Updated task information
         """
         try:
             redis_client = self._get_redis()
             key = f"{self._prefix}{task_info.id}"
-            
+
             # Get remaining TTL
             ttl = redis_client.ttl(key)
             if ttl <= 0:
                 ttl = self._default_ttl
-            
+
             value = self._serialize_task(task_info)
             redis_client.setex(key, ttl, value)
-            
+
             logger.debug(
                 "Task updated",
                 task_id=task_info.id,
@@ -163,10 +162,10 @@ class TaskRegistry:
     def delete(self, task_id: str) -> bool:
         """
         Remove task from registry
-        
+
         Args:
             task_id: Task ID to remove
-            
+
         Returns:
             True if task was found and removed, False otherwise
         """
@@ -174,7 +173,7 @@ class TaskRegistry:
             redis_client = self._get_redis()
             key = f"{self._prefix}{task_id}"
             result = redis_client.delete(key)
-            
+
             if result > 0:
                 logger.debug("Task deleted", task_id=task_id)
                 return True
@@ -186,7 +185,7 @@ class TaskRegistry:
     def get_all_active(self) -> Dict[str, TaskInfo]:
         """
         Get all active (non-expired) tasks
-        
+
         Returns:
             Dictionary of task_id -> TaskInfo for all active tasks
         """
@@ -194,13 +193,13 @@ class TaskRegistry:
             redis_client = self._get_redis()
             pattern = f"{self._prefix}*"
             tasks = {}
-            
+
             for key in redis_client.scan_iter(match=pattern):
                 value = redis_client.get(key)
                 if value:
                     task_info = self._deserialize_task(value)
                     tasks[task_info.id] = task_info
-            
+
             return tasks
         except Exception as e:
             logger.error(f"Failed to get all active tasks: {e}")
@@ -209,25 +208,25 @@ class TaskRegistry:
     def get_stats(self) -> dict:
         """
         Get registry statistics
-        
+
         Returns:
             Statistics about task registry
         """
         try:
             tasks = self.get_all_active()
-            
+
             tasks_by_type = {}
             tasks_by_status = {}
-            
+
             for task_info in tasks.values():
                 # Count by type
                 task_type = task_info.type or "unknown"
                 tasks_by_type[task_type] = tasks_by_type.get(task_type, 0) + 1
-                
+
                 # Count by status
                 status = task_info.status.value if task_info.status else "unknown"
                 tasks_by_status[status] = tasks_by_status.get(status, 0) + 1
-            
+
             return {
                 "total_tasks": len(tasks),
                 "tasks_by_type": tasks_by_type,

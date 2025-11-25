@@ -3,16 +3,19 @@ Additional bot tests to increase coverage further
 
 Focuses on:
 - Compliance filtering
-- AI Mentor  
+- AI Mentor
 - Additional edge cases
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime, UTC
 
-from fiml.bot.education.compliance_filter import EducationalComplianceFilter, ComplianceLevel, ComplianceFilterResult
+import pytest
+
 from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
+from fiml.bot.education.compliance_filter import (
+    ComplianceFilterResult,
+    ComplianceLevel,
+    EducationalComplianceFilter,
+)
 
 
 @pytest.fixture

@@ -5,6 +5,7 @@ This test module covers all untested code paths in the cache module.
 """
 
 import asyncio
+import contextlib
 from datetime import UTC, datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -1394,10 +1395,8 @@ class TestCacheWarmerScheduled:
 
         # Cancel the task
         task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await task
-        except asyncio.CancelledError:
-            pass
 
 
 class TestL1CacheBatchAndEviction:

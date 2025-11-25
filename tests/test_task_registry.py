@@ -13,7 +13,6 @@ import redis
 from fiml.core.models import TaskInfo, TaskStatus
 from fiml.monitoring.task_registry import TaskRegistry
 
-
 # Mark all tests as not requiring docker services
 pytestmark = pytest.mark.unit
 
@@ -66,7 +65,7 @@ class TestTaskRegistry:
         """Test Redis connection is created lazily"""
         registry = TaskRegistry()
         assert registry._redis_client is None
-        
+
         with patch('redis.Redis') as mock_redis:
             client = registry._get_redis()
             assert client is not None
@@ -75,10 +74,10 @@ class TestTaskRegistry:
     def test_serialize_task(self, task_registry, sample_task):
         """Test task serialization to JSON"""
         serialized = task_registry._serialize_task(sample_task)
-        
+
         assert isinstance(serialized, str)
         data = json.loads(serialized)
-        
+
         assert data["id"] == "test-task-123"
         assert data["type"] == "equity_analysis"
         assert data["status"] == "pending"
@@ -99,10 +98,10 @@ class TestTaskRegistry:
             completed_steps=5,
             total_steps=5,
         )
-        
+
         serialized = task_registry._serialize_task(task)
         data = json.loads(serialized)
-        
+
         assert data["completed_steps"] == 5
         assert data["total_steps"] == 5
         assert data["started_at"] is not None
@@ -112,7 +111,7 @@ class TestTaskRegistry:
         """Test task deserialization from JSON"""
         serialized = task_registry._serialize_task(sample_task)
         deserialized = task_registry._deserialize_task(serialized)
-        
+
         assert deserialized.id == sample_task.id
         assert deserialized.type == sample_task.type
         assert deserialized.status == sample_task.status
@@ -138,10 +137,10 @@ class TestTaskRegistry:
             "result": None,
             "error": None,
         }
-        
+
         serialized = json.dumps(data)
         deserialized = task_registry._deserialize_task(serialized)
-        
+
         assert isinstance(deserialized.created_at, datetime)
         assert isinstance(deserialized.started_at, datetime)
         assert isinstance(deserialized.completed_at, datetime)
@@ -150,10 +149,10 @@ class TestTaskRegistry:
     def test_register_task(self, task_registry, redis_client, sample_task):
         """Test task registration"""
         task_registry.register(sample_task, ttl=300)
-        
+
         redis_client.setex.assert_called_once()
         call_args = redis_client.setex.call_args
-        
+
         assert call_args[0][0] == "fiml:task:test-task-123"
         assert call_args[0][1] == 300
         assert isinstance(call_args[0][2], str)
@@ -161,21 +160,21 @@ class TestTaskRegistry:
     def test_register_task_with_custom_ttl(self, task_registry, redis_client, sample_task):
         """Test task registration with custom TTL"""
         task_registry.register(sample_task, ttl=600)
-        
+
         call_args = redis_client.setex.call_args
         assert call_args[0][1] == 600
 
     def test_register_task_uses_default_ttl(self, task_registry, redis_client, sample_task):
         """Test task registration uses default TTL when not specified"""
         task_registry.register(sample_task)
-        
+
         call_args = redis_client.setex.call_args
         assert call_args[0][1] == 300
 
     def test_register_task_handles_redis_error(self, task_registry, redis_client, sample_task):
         """Test registration handles Redis errors gracefully"""
         redis_client.setex.side_effect = redis.ConnectionError("Connection failed")
-        
+
         # Should not raise exception
         task_registry.register(sample_task)
 
@@ -183,9 +182,9 @@ class TestTaskRegistry:
         """Test getting task from registry"""
         serialized = task_registry._serialize_task(sample_task)
         redis_client.get.return_value = serialized
-        
+
         result = task_registry.get("test-task-123")
-        
+
         assert result is not None
         assert result.id == "test-task-123"
         assert result.type == "equity_analysis"
@@ -194,81 +193,81 @@ class TestTaskRegistry:
     def test_get_task_not_found(self, task_registry, redis_client):
         """Test getting non-existent task"""
         redis_client.get.return_value = None
-        
+
         result = task_registry.get("nonexistent-task")
-        
+
         assert result is None
 
     def test_get_task_handles_redis_error(self, task_registry, redis_client):
         """Test get handles Redis errors gracefully"""
         redis_client.get.side_effect = redis.ConnectionError("Connection failed")
-        
+
         result = task_registry.get("test-task-123")
-        
+
         assert result is None
 
     def test_update_task(self, task_registry, redis_client, sample_task):
         """Test updating existing task"""
         redis_client.ttl.return_value = 250
-        
+
         sample_task.status = TaskStatus.COMPLETED
         sample_task.progress = 1.0
-        
+
         task_registry.update(sample_task)
-        
+
         redis_client.ttl.assert_called_once_with("fiml:task:test-task-123")
         redis_client.setex.assert_called_once()
-        
+
         call_args = redis_client.setex.call_args
         assert call_args[0][1] == 250  # Preserves remaining TTL
 
     def test_update_task_expired_ttl(self, task_registry, redis_client, sample_task):
         """Test update uses default TTL when task expired"""
         redis_client.ttl.return_value = -1  # Expired
-        
+
         task_registry.update(sample_task)
-        
+
         call_args = redis_client.setex.call_args
         assert call_args[0][1] == 300  # Uses default TTL
 
     def test_update_task_handles_redis_error(self, task_registry, redis_client, sample_task):
         """Test update handles Redis errors gracefully"""
         redis_client.ttl.side_effect = redis.ConnectionError("Connection failed")
-        
+
         # Should not raise exception
         task_registry.update(sample_task)
 
     def test_delete_task_success(self, task_registry, redis_client):
         """Test deleting task from registry"""
         redis_client.delete.return_value = 1
-        
+
         result = task_registry.delete("test-task-123")
-        
+
         assert result is True
         redis_client.delete.assert_called_once_with("fiml:task:test-task-123")
 
     def test_delete_task_not_found(self, task_registry, redis_client):
         """Test deleting non-existent task"""
         redis_client.delete.return_value = 0
-        
+
         result = task_registry.delete("nonexistent-task")
-        
+
         assert result is False
 
     def test_delete_task_handles_redis_error(self, task_registry, redis_client):
         """Test delete handles Redis errors gracefully"""
         redis_client.delete.side_effect = redis.ConnectionError("Connection failed")
-        
+
         result = task_registry.delete("test-task-123")
-        
+
         assert result is False
 
     def test_get_all_active_empty(self, task_registry, redis_client):
         """Test getting all active tasks when none exist"""
         redis_client.scan_iter.return_value = []
-        
+
         tasks = task_registry.get_all_active()
-        
+
         assert tasks == {}
 
     def test_get_all_active_multiple_tasks(self, task_registry, redis_client):
@@ -289,19 +288,19 @@ class TestTaskRegistry:
             progress=1.0,
             created_at=datetime.now(timezone.utc),
         )
-        
+
         redis_client.scan_iter.return_value = [
             "fiml:task:task-1",
             "fiml:task:task-2",
         ]
-        
+
         redis_client.get.side_effect = [
             task_registry._serialize_task(task1),
             task_registry._serialize_task(task2),
         ]
-        
+
         tasks = task_registry.get_all_active()
-        
+
         assert len(tasks) == 2
         assert "task-1" in tasks
         assert "task-2" in tasks
@@ -311,17 +310,17 @@ class TestTaskRegistry:
     def test_get_all_active_handles_redis_error(self, task_registry, redis_client):
         """Test get_all_active handles Redis errors gracefully"""
         redis_client.scan_iter.side_effect = redis.ConnectionError("Connection failed")
-        
+
         tasks = task_registry.get_all_active()
-        
+
         assert tasks == {}
 
     def test_get_stats_empty(self, task_registry, redis_client):
         """Test getting stats when no tasks exist"""
         redis_client.scan_iter.return_value = []
-        
+
         stats = task_registry.get_stats()
-        
+
         assert stats["total_tasks"] == 0
         assert stats["tasks_by_type"] == {}
         assert stats["tasks_by_status"] == {}
@@ -339,7 +338,7 @@ class TestTaskRegistry:
             )
             for i in range(3)
         ]
-        
+
         tasks.append(
             TaskInfo(
                 id="crypto-1",
@@ -350,12 +349,12 @@ class TestTaskRegistry:
                 created_at=datetime.now(timezone.utc),
             )
         )
-        
+
         redis_client.scan_iter.return_value = [f"fiml:task:{t.id}" for t in tasks]
         redis_client.get.side_effect = [task_registry._serialize_task(t) for t in tasks]
-        
+
         stats = task_registry.get_stats()
-        
+
         assert stats["total_tasks"] == 4
         assert stats["tasks_by_type"]["equity_analysis"] == 3
         assert stats["tasks_by_type"]["crypto_analysis"] == 1
@@ -366,9 +365,9 @@ class TestTaskRegistry:
     def test_get_stats_handles_redis_error(self, task_registry, redis_client):
         """Test get_stats handles Redis errors gracefully"""
         redis_client.scan_iter.side_effect = redis.ConnectionError("Connection failed")
-        
+
         stats = task_registry.get_stats()
-        
+
         assert stats["total_tasks"] == 0
         assert stats["tasks_by_type"] == {}
         assert stats["tasks_by_status"] == {}
@@ -402,34 +401,34 @@ class TestTaskRegistryIntegration:
             progress=0.0,
             created_at=datetime.now(timezone.utc),
         )
-        
+
         # Register
         real_registry.register(task, ttl=10)
-        
+
         # Get
         retrieved = real_registry.get("test-lifecycle-123")
         assert retrieved is not None
         assert retrieved.id == "test-lifecycle-123"
         assert retrieved.status == TaskStatus.PENDING
-        
+
         # Update
         task.status = TaskStatus.COMPLETED
         task.progress = 1.0
         real_registry.update(task)
-        
+
         # Get updated
         updated = real_registry.get("test-lifecycle-123")
         assert updated.status == TaskStatus.COMPLETED
         assert updated.progress == 1.0
-        
+
         # Stats
         stats = real_registry.get_stats()
         assert stats["total_tasks"] >= 1
-        
+
         # Delete
         deleted = real_registry.delete("test-lifecycle-123")
         assert deleted is True
-        
+
         # Verify deleted
         not_found = real_registry.get("test-lifecycle-123")
         assert not_found is None
@@ -444,17 +443,17 @@ class TestTaskRegistryIntegration:
             progress=0.0,
             created_at=datetime.now(timezone.utc),
         )
-        
+
         # Register with 2 second TTL
         real_registry.register(task, ttl=2)
-        
+
         # Should exist immediately
         retrieved = real_registry.get("test-expiry-456")
         assert retrieved is not None
-        
+
         # Wait for expiration
         time.sleep(3)
-        
+
         # Should be gone
         expired = real_registry.get("test-expiry-456")
         assert expired is None
@@ -472,16 +471,16 @@ class TestTaskRegistryIntegration:
             )
             for i in range(5)
         ]
-        
+
         # Register all
         for task in tasks:
             real_registry.register(task, ttl=10)
-        
+
         # Get all
         all_tasks = real_registry.get_all_active()
         for task in tasks:
             assert task.id in all_tasks
-        
+
         # Stats
         stats = real_registry.get_stats()
         assert stats["total_tasks"] >= 5
@@ -500,10 +499,10 @@ class TestTaskRegistryEdgeCases:
             progress=0.0,
             created_at=None,
         )
-        
+
         serialized = task_registry._serialize_task(task)
         data = json.loads(serialized)
-        
+
         assert data["type"] is None
         assert data["created_at"] is None
 
@@ -519,13 +518,13 @@ class TestTaskRegistryEdgeCases:
             "resource_url": "test",
             "progress": 0.0,
         }
-        
+
         serialized = json.dumps(minimal_data)
-        
+
         # Should handle missing fields gracefully
         try:
             task_registry._deserialize_task(serialized)
-        except Exception as e:
+        except Exception:
             # Expected to fail due to missing required fields
             assert True
 
@@ -533,15 +532,15 @@ class TestTaskRegistryEdgeCases:
         """Test that prefix prevents key collisions"""
         registry = TaskRegistry()
         assert registry._prefix == "fiml:task:"
-        
+
         # Keys should be namespaced
         task_id = "123"
         expected_key = "fiml:task:123"
-        
+
         # Verify prefix is used in key construction
         with patch.object(registry, '_get_redis') as mock_redis:
             mock_client = MagicMock()
             mock_redis.return_value = mock_client
-            
+
             registry.get(task_id)
             mock_client.get.assert_called_with(expected_key)

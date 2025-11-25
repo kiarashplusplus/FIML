@@ -433,7 +433,7 @@ async def search_by_symbol(
             progress=0.0,
             created_at=datetime.now(timezone.utc),
         )
-        
+
         # Register task for status tracking (5 minute TTL)
         task_registry.register(task_info, ttl=300)
 
@@ -757,7 +757,7 @@ async def search_by_coin(
             progress=0.0,
             created_at=datetime.now(timezone.utc),
         )
-        
+
         # Register task for status tracking (5 minute TTL)
         task_registry.register(task_info, ttl=300)
 
@@ -969,7 +969,7 @@ async def search_by_coin(
 
         # Return error response with disclaimer
         task_id = f"crypto-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
-        
+
         error_task_info = TaskInfo(
             id=task_id,
             type="crypto_analysis",
@@ -979,7 +979,7 @@ async def search_by_coin(
             progress=0.0,
             created_at=datetime.now(timezone.utc),
         )
-        
+
         # Register failed task for tracking
         task_registry.register(error_task_info, ttl=300)
 
@@ -1025,7 +1025,7 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
 
     # First check the task registry (for analysis tasks)
     task_info = task_registry.get(task_id)
-    
+
     # If not in registry, check FK-DSL executor
     if not task_info:
         task_info = fk_dsl_executor.get_task_status(task_id)

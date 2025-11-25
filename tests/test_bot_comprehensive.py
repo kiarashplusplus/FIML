@@ -9,26 +9,18 @@ Tests cover:
 - Quiz system
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime, UTC
 import tempfile
-import json
 from pathlib import Path
-from cryptography.fernet import Fernet
+
+import pytest
 import yaml
+from cryptography.fernet import Fernet
 
 from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
-from fiml.bot.education.gamification import GamificationEngine, UserStats, Badge
-from fiml.bot.education.lesson_engine import (
-    LessonContentEngine, 
-    Lesson, 
-    LessonSection, 
-    QuizQuestion as LessonQuizQuestion
-)
-from fiml.bot.education.quiz_system import QuizSystem, QuizQuestion, QuizSession
-
+from fiml.bot.education.gamification import GamificationEngine, UserStats
+from fiml.bot.education.lesson_engine import LessonContentEngine
+from fiml.bot.education.quiz_system import QuizQuestion, QuizSession, QuizSystem
 
 # ============================================================================
 # Fixtures
@@ -105,11 +97,11 @@ def temp_lessons_dir():
             "xp_reward": 50,
             "next_lesson": None
         }
-        
+
         lesson_file = Path(tmpdir) / "test_lesson_1.yaml"
         with open(lesson_file, 'w') as f:
             yaml.dump(lesson_data, f)
-        
+
         # Create second lesson
         lesson_data_2 = {
             "id": "test_lesson_2",
@@ -130,11 +122,11 @@ def temp_lessons_dir():
             "xp_reward": 75,
             "next_lesson": None
         }
-        
+
         lesson_file_2 = Path(tmpdir) / "test_lesson_2.yaml"
         with open(lesson_file_2, 'w') as f:
             yaml.dump(lesson_data_2, f)
-        
+
         yield tmpdir
 
 
@@ -169,11 +161,11 @@ class TestUserProviderKeyManager:
         user_id = "test_user"
         provider = "openai"
         api_key = "sk-test123"
-        
+
         # Store key
         success = await key_manager.store_user_key(user_id, provider, api_key)
         assert success is True
-        
+
         # Retrieve key
         retrieved = await key_manager.get_key(user_id, provider)
         assert retrieved == api_key
@@ -184,10 +176,10 @@ class TestUserProviderKeyManager:
         user_id = "test_user"
         provider = "openai"
         api_key = "sk-test123"
-        
+
         await key_manager.store_user_key(user_id, provider, api_key)
         assert await key_manager.get_key(user_id, provider) == api_key
-        
+
         # Delete key
         deleted = await key_manager.remove_user_key(user_id, provider)
         assert deleted is True
@@ -197,11 +189,11 @@ class TestUserProviderKeyManager:
     async def test_list_user_providers(self, key_manager):
         """Test listing all providers for a user"""
         user_id = "test_user"
-        
+
         await key_manager.store_user_key(user_id, "openai", "key1")
         await key_manager.store_user_key(user_id, "anthropic", "key2")
         await key_manager.store_user_key(user_id, "google", "key3")
-        
+
         keys = await key_manager.get_user_keys(user_id)
         assert len(keys) == 3
         assert "openai" in keys
@@ -213,10 +205,10 @@ class TestUserProviderKeyManager:
         """Test that different encryption keys produce different results"""
         key1 = Fernet.generate_key()
         key2 = Fernet.generate_key()
-        
+
         manager1 = UserProviderKeyManager(encryption_key=key1, storage_path=temp_storage_dir)
         await manager1.store_user_key("user1", "openai", "secret123")
-        
+
         # Cannot decrypt with different key - returns empty string or None
         manager2 = UserProviderKeyManager(encryption_key=key2, storage_path=temp_storage_dir)
         result = await manager2.get_key("user1", "openai")
@@ -234,10 +226,10 @@ class TestUserProviderKeyManager:
         """Test updating an existing key"""
         user_id = "test_user"
         provider = "openai"
-        
+
         await key_manager.store_user_key(user_id, provider, "old_key")
         assert await key_manager.get_key(user_id, provider) == "old_key"
-        
+
         await key_manager.store_user_key(user_id, provider, "new_key")
         assert await key_manager.get_key(user_id, provider) == "new_key"
 
@@ -279,10 +271,10 @@ class TestUserProviderKeyManager:
         provider = "alpha_vantage"
         api_key = "test_av_key"
         metadata = {"tier": "free", "limit": 500}
-        
+
         success = await key_manager.store_user_key(user_id, provider, api_key, metadata)
         assert success is True
-        
+
         # Key should be retrievable
         retrieved = await key_manager.get_key(user_id, provider)
         assert retrieved == api_key
@@ -306,18 +298,18 @@ class TestFIMLProviderConfigurator:
         user_id = "test_user"
         provider_name = "alpha_vantage"
         api_key = "test-av-key"
-        
+
         # Store user key
         await key_manager.store_user_key(user_id, provider_name, api_key)
-        
+
         # Get user keys
         user_keys = await key_manager.get_user_keys(user_id)
-        
+
         # Get config
         config = provider_configurator.get_user_provider_config(user_id, user_keys=user_keys)
         assert config is not None
         assert "providers" in config
-        
+
         # Check that user's provider is in config
         provider_names = [p["name"] for p in config["providers"]]
         assert provider_name in provider_names
@@ -333,20 +325,20 @@ class TestFIMLProviderConfigurator:
     async def test_configure_multiple_providers(self, provider_configurator, key_manager):
         """Test configuring multiple providers for user"""
         user_id = "test_user"
-        
+
         providers = {
             "alpha_vantage": "av-key",
             "polygon": "polygon-key",
             "finnhub": "finnhub-key"
         }
-        
+
         for provider, key in providers.items():
             await key_manager.store_user_key(user_id, provider, key)
-        
+
         # Get user keys and config
         user_keys = await key_manager.get_user_keys(user_id)
         config = provider_configurator.get_user_provider_config(user_id, user_keys=user_keys)
-        
+
         # Check all providers are in config
         provider_names = [p["name"] for p in config["providers"]]
         for provider in providers.keys():
@@ -382,7 +374,7 @@ class TestGamificationEngine:
         """Test awarding XP to user"""
         user_id = "test_user"
         action = "lesson_completed"  # Must match XP_REWARDS dict key
-        
+
         result = await gamification_engine.award_xp(user_id, action)
         assert result is not None
         assert "xp_earned" in result
@@ -392,10 +384,10 @@ class TestGamificationEngine:
     async def test_get_user_stats(self, gamification_engine):
         """Test retrieving user statistics"""
         user_id = "test_user"
-        
+
         # Award some XP first
         await gamification_engine.award_xp(user_id, "lesson_completed")
-        
+
         stats = await gamification_engine.get_or_create_stats(user_id)
         assert stats is not None
         assert isinstance(stats, UserStats)
@@ -405,11 +397,11 @@ class TestGamificationEngine:
     async def test_level_progression(self, gamification_engine):
         """Test user levels up with enough XP"""
         user_id = "test_user"
-        
+
         # Award enough XP to level up
         for i in range(20):
             await gamification_engine.award_xp(user_id, "lesson_completed")
-        
+
         stats = await gamification_engine.get_or_create_stats(user_id)
         assert stats.level >= 1
 
@@ -417,11 +409,11 @@ class TestGamificationEngine:
         """Test earning badges"""
         user_id = "test_user"
         badge_id = "first_lesson"
-        
+
         # Award badge (synchronous method)
         success = gamification_engine.award_badge_sync(user_id, badge_id)
         assert success is True
-        
+
         # Check badge was added
         assert gamification_engine.has_badge(user_id, badge_id) is True
 
@@ -429,10 +421,10 @@ class TestGamificationEngine:
     def test_streak_tracking(self, gamification_engine):
         """Test daily streak tracking"""
         user_id = "test_user"
-        
+
         # Record activity
         gamification_engine.record_daily_activity(user_id)
-        
+
         stats = gamification_engine._user_stats.get(user_id)
         assert stats.streak_days >= 0
 
@@ -440,7 +432,7 @@ class TestGamificationEngine:
     async def test_update_streak_same_day(self, gamification_engine):
         """Test streak update on same day"""
         user_id = "test_user"
-        
+
         result1 = await gamification_engine.update_streak(user_id)
         # First call - same day as stats creation
         assert "streak_days" in result1
@@ -450,10 +442,10 @@ class TestGamificationEngine:
     async def test_get_progress_to_next_level(self, gamification_engine):
         """Test getting progress to next level"""
         user_id = "test_user"
-        
+
         # Award some XP
         await gamification_engine.award_xp(user_id, "lesson_completed")
-        
+
         progress = await gamification_engine.get_progress_to_next_level(user_id)
         assert "current_xp" in progress
         assert "xp_for_next_level" in progress or "max_level" in progress
@@ -463,11 +455,11 @@ class TestGamificationEngine:
     async def test_get_user_summary(self, gamification_engine):
         """Test getting user summary"""
         user_id = "test_user"
-        
+
         # Award XP and badge
         await gamification_engine.award_xp(user_id, "lesson_completed")
         gamification_engine.award_badge_sync(user_id, "first_lesson")
-        
+
         summary = await gamification_engine.get_user_summary(user_id)
         assert "level" in summary
         assert "total_xp" in summary
@@ -477,11 +469,11 @@ class TestGamificationEngine:
     async def test_check_badge_triggers(self, gamification_engine):
         """Test automatic badge triggers"""
         user_id = "test_user"
-        
+
         # Directly call check_badge_triggers
         # The method is async and checks conditions internally
         await gamification_engine.check_badge_triggers(user_id, "quiz_completed")
-        
+
         # Just verify the method runs without error
         # Badge awarding depends on internal state
 
@@ -489,7 +481,7 @@ class TestGamificationEngine:
         """Test getting level title"""
         title = gamification_engine.get_level_title(1)
         assert title == "Novice"
-        
+
         title = gamification_engine.get_level_title(5)
         assert title == "Practitioner"
 
@@ -518,7 +510,7 @@ class TestLessonContentEngine:
     async def test_lesson_structure(self, lesson_engine):
         """Test lesson has correct structure"""
         lesson_data = await lesson_engine.load_lesson("test_lesson_1")
-        
+
         assert "id" in lesson_data
         assert "title" in lesson_data
         assert "sections" in lesson_data
@@ -532,7 +524,7 @@ class TestLessonContentEngine:
         """Test rendering lesson content"""
         user_id = "test_user"
         lesson_data = await lesson_engine.load_lesson("test_lesson_1")
-        
+
         rendered = await lesson_engine.render_lesson(lesson_data, user_id, include_fiml_data=False)
         assert rendered is not None
         assert "Welcome to the test lesson" in rendered
@@ -541,13 +533,13 @@ class TestLessonContentEngine:
     async def test_prerequisite_checking(self, lesson_engine):
         """Test checking lesson prerequisites"""
         user_id = "test_user"
-        
+
         # Load lesson 2 which requires lesson 1 - this caches the Lesson object
         await lesson_engine.load_lesson("test_lesson_2")
-        
+
         # Get cached Lesson object
         lesson_2 = lesson_engine._lessons_cache["test_lesson_2"]
-        
+
         # User hasn't completed lesson 1 yet
         has_prereqs, missing = await lesson_engine.check_prerequisites(user_id, lesson_2)
         assert has_prereqs is False
@@ -558,10 +550,10 @@ class TestLessonContentEngine:
         """Test marking a lesson as completed"""
         user_id = "test_user"
         lesson_id = "test_lesson_1"
-        
+
         # Mark as completed
         await lesson_engine.mark_completed(user_id, lesson_id)
-        
+
         # Check completion status using synchronous method
         lesson_engine.mark_lesson_completed(user_id, lesson_id)
         is_completed = lesson_engine.is_lesson_completed(user_id, lesson_id)
@@ -571,7 +563,7 @@ class TestLessonContentEngine:
         """Test marking a lesson as started"""
         user_id = "test_user"
         lesson_id = "test_lesson_1"
-        
+
         lesson_engine.mark_lesson_started(user_id, lesson_id)
         is_in_progress = lesson_engine.is_lesson_in_progress(user_id, lesson_id)
         assert is_in_progress is True
@@ -580,26 +572,26 @@ class TestLessonContentEngine:
     async def test_get_user_progress(self, lesson_engine):
         """Test getting user progress"""
         user_id = "test_user"
-        
+
         # Mark some lessons as completed
         await lesson_engine.mark_completed(user_id, "test_lesson_1")
-        
+
         progress = await lesson_engine.get_user_progress(user_id)
         assert progress is not None
         assert "completed" in progress or "lessons_completed" in str(progress).lower()
 
     @pytest.mark.asyncio
-    async def test_get_next_lesson(self, lesson_engine):  
+    async def test_get_next_lesson(self, lesson_engine):
         """Test getting next lesson"""
         user_id = "test_user"
-        
+
         # Load lessons first to cache them
         await lesson_engine.load_lesson("test_lesson_1")
         await lesson_engine.load_lesson("test_lesson_2")
-        
+
         # Complete first lesson
         await lesson_engine.mark_completed(user_id, "test_lesson_1")
-        
+
         # The method has a bug - it expects object but gets dict
         # Just verify it doesn't crash completely
         try:
@@ -617,7 +609,7 @@ class TestLessonContentEngine:
             "sections": [],
             "quiz": {"questions": []}
         }
-        
+
         is_valid = lesson_engine.validate_lesson(lesson_data)
         assert isinstance(is_valid, bool)
 
@@ -629,7 +621,7 @@ class TestLessonContentEngine:
             "title": "Test",
             "prerequisites": []
         }
-        
+
         can_access = lesson_engine.can_access_lesson(user_id, lesson_data)
         assert isinstance(can_access, bool)
 
@@ -650,7 +642,7 @@ class TestQuizSystem:
         """Test starting a quiz session"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(
                 id="q1",
@@ -663,7 +655,7 @@ class TestQuizSystem:
                 correct_answer="b"
             )
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
         assert session is not None
         assert isinstance(session, QuizSession)
@@ -675,7 +667,7 @@ class TestQuizSystem:
         """Test submitting quiz answer"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(
                 id="q1",
@@ -689,9 +681,9 @@ class TestQuizSystem:
                 xp_reward=10
             )
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Submit correct answer
         result = await quiz_system.submit_answer(session.session_id, "4")
         assert result["correct"] is True
@@ -702,7 +694,7 @@ class TestQuizSystem:
         """Test submitting wrong answer"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(
                 id="q1",
@@ -715,9 +707,9 @@ class TestQuizSystem:
                 correct_answer="4"
             )
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Submit wrong answer
         result = await quiz_system.submit_answer(session.session_id, "3")
         assert result["correct"] is False
@@ -728,20 +720,20 @@ class TestQuizSystem:
         """Test completing entire quiz"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
-            QuizQuestion(id="q1", type="multiple_choice", text="Q1", 
+            QuizQuestion(id="q1", type="multiple_choice", text="Q1",
                         options=[{"text": "a", "correct": True}], correct_answer="a", xp_reward=10),
-            QuizQuestion(id="q2", type="multiple_choice", text="Q2", 
+            QuizQuestion(id="q2", type="multiple_choice", text="Q2",
                         options=[{"text": "b", "correct": True}], correct_answer="b", xp_reward=10),
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Answer all questions
         await quiz_system.submit_answer(session.session_id, "a")
         result = await quiz_system.submit_answer(session.session_id, "b")
-        
+
         # Check final results
         assert result["quiz_complete"] is True
         assert result["final_score"] == 2
@@ -752,7 +744,7 @@ class TestQuizSystem:
         """Test numeric answer with tolerance"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(
                 id="q1",
@@ -762,9 +754,9 @@ class TestQuizSystem:
                 tolerance=0.01
             )
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Answer within tolerance should be correct
         result = await quiz_system.submit_answer(session.session_id, 3.14)
         assert result["correct"] is True
@@ -774,10 +766,10 @@ class TestQuizSystem:
         """Test retrieving active quiz session"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [QuizQuestion(id="q1", type="multiple_choice", text="Q", correct_answer="a")]
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         retrieved = quiz_system.get_session(session.session_id)
         assert retrieved is not None
 
@@ -786,13 +778,13 @@ class TestQuizSystem:
         """Test getting summary of in-progress session"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(id="q1", type="multiple_choice", text="Q1", correct_answer="a"),
             QuizQuestion(id="q2", type="multiple_choice", text="Q2", correct_answer="b"),
         ]
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Get summary while in progress
         summary = await quiz_system.get_session_summary(session.session_id)
         assert summary is not None
@@ -805,16 +797,16 @@ class TestQuizSystem:
         """Test getting summary of completed session"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
-            QuizQuestion(id="q1", type="multiple_choice", text="Q", 
+            QuizQuestion(id="q1", type="multiple_choice", text="Q",
                         options=[{"text": "a", "correct": True}], correct_answer="a"),
         ]
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Complete the quiz
         await quiz_system.submit_answer(session.session_id, "a")
-        
+
         # Get summary after completion
         summary = await quiz_system.get_session_summary(session.session_id)
         assert summary is not None
@@ -827,13 +819,13 @@ class TestQuizSystem:
         """Test getting user quiz history"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         # Complete a quiz
-        questions = [QuizQuestion(id="q1", type="multiple_choice", text="Q", 
+        questions = [QuizQuestion(id="q1", type="multiple_choice", text="Q",
                                  options=[{"text": "a", "correct": True}], correct_answer="a")]
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
         await quiz_system.submit_answer(session.session_id, "a")
-        
+
         # Get history
         history = await quiz_system.get_user_quiz_history(user_id)
         assert isinstance(history, list)
@@ -843,7 +835,7 @@ class TestQuizSystem:
         """Test true/false question type"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(
                 id="q1",
@@ -852,9 +844,9 @@ class TestQuizSystem:
                 correct_answer="true"
             )
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Submit correct answer
         result = await quiz_system.submit_answer(session.session_id, "true")
         assert result["correct"] is True
@@ -864,21 +856,21 @@ class TestQuizSystem:
         """Test getting current question"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(id="q1", type="multiple_choice", text="Q1", correct_answer="a"),
             QuizQuestion(id="q2", type="multiple_choice", text="Q2", correct_answer="b"),
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         current = await quiz_system.get_current_question(session.session_id)
         assert current is not None
         assert current.id == "q1"
-        
+
         # Answer first question
         await quiz_system.submit_answer(session.session_id, "a")
-        
+
         # Should now be on second question
         current = await quiz_system.get_current_question(session.session_id)
         assert current is not None
@@ -889,7 +881,7 @@ class TestQuizSystem:
         """Test numeric answer outside tolerance"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(
                 id="q1",
@@ -899,9 +891,9 @@ class TestQuizSystem:
                 tolerance=0.001
             )
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Answer outside tolerance
         result = await quiz_system.submit_answer(session.session_id, 3.5)
         assert result["correct"] is False
@@ -911,7 +903,7 @@ class TestQuizSystem:
         """Test invalid numeric answer"""
         user_id = "test_user"
         lesson_id = "test_lesson"
-        
+
         questions = [
             QuizQuestion(
                 id="q1",
@@ -920,9 +912,9 @@ class TestQuizSystem:
                 correct_answer=3.14159
             )
         ]
-        
+
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
-        
+
         # Submit non-numeric answer
         result = await quiz_system.submit_answer(session.session_id, "not a number")
         assert result["correct"] is False
