@@ -9,7 +9,7 @@ import asyncio
 import contextlib
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from fiml.core.logging import get_logger
 from fiml.watchdog.models import EventFilter, WatchdogEvent
@@ -59,13 +59,13 @@ class EventStream:
         self._events_by_severity: Dict[str, int] = defaultdict(int)
 
         # Redis client (optional)
-        self._redis_client = None
+        self._redis_client: Any = None
 
         # WebSocket manager (optional)
-        self._websocket_manager = None
+        self._websocket_manager: Any = None
 
         # Background tasks
-        self._tasks: List[asyncio.Task] = []
+        self._tasks: List[asyncio.Task[Any]] = []
 
     async def initialize(self) -> None:
         """Initialize event stream components"""
@@ -87,8 +87,8 @@ class EventStream:
             from fiml.cache.l1_cache import l1_cache
 
             # Reuse L1 cache Redis connection
-            if l1_cache._client:
-                self._redis_client = l1_cache._client
+            if l1_cache._redis:
+                self._redis_client = l1_cache._redis
                 logger.info("Event stream using L1 cache Redis client")
             else:
                 logger.warning("Redis not available for event persistence")
@@ -109,7 +109,7 @@ class EventStream:
             logger.warning(f"WebSocket not available for event broadcasting: {e}")
             self.enable_websocket = False
 
-    def set_websocket_manager(self, manager) -> None:
+    def set_websocket_manager(self, manager: Any) -> None:
         """Set WebSocket manager for broadcasting"""
         self._websocket_manager = manager
         logger.info("WebSocket manager configured for event stream")
@@ -146,6 +146,10 @@ class EventStream:
 
     async def _persist_to_redis(self, event: WatchdogEvent) -> None:
         """Persist event to Redis Streams"""
+        if self._redis_client is None:
+            logger.warning("Redis client not available for event persistence")
+            return
+
         try:
             stream_name = "watchdog:events"
 
