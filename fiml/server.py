@@ -15,6 +15,7 @@ from fiml.core.config import settings
 from fiml.core.exceptions import FIMLException
 from fiml.core.logging import get_logger
 from fiml.mcp.router import mcp_router
+from fiml.monitoring.performance import PerformanceMiddleware
 from fiml.providers import provider_registry
 from fiml.web.dashboard import dashboard_router
 from fiml.websocket.router import websocket_router
@@ -89,6 +90,9 @@ if settings.enable_cors:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Add performance monitoring middleware
+app.add_middleware(PerformanceMiddleware)
 
 # Mount Prometheus metrics
 metrics_app = make_asgi_app()
