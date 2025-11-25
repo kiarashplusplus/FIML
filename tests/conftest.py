@@ -228,8 +228,27 @@ def mock_azure_openai_httpx():
         async def selective_mock_post(self, url, *args, **kwargs):
             """Only mock Azure OpenAI calls, pass through others"""
             url_str = str(url)
-            # Check if this is an Azure OpenAI call
-            if "openai.azure.com" in url_str or "mock-azure-openai" in url_str:
+            # Check if this is an Azure OpenAI call using proper URL parsing
+            # to prevent URL substring attacks (e.g., evil.com?q=openai.azure.com)
+            # Use proper URL parsing to check the hostname
+            from urllib.parse import urlparse
+            try:
+                parsed = urlparse(url_str)
+                hostname = parsed.hostname or ""
+                # Check for Azure OpenAI domains using proper domain matching:
+                # Must be exactly "openai.azure.com" or a subdomain like "x.openai.azure.com"
+                # The hostname must end with ".openai.azure.com" with a dot before it,
+                # OR be exactly "openai.azure.com"
+                is_azure_domain = (
+                    hostname == "openai.azure.com" or
+                    (len(hostname) > len(".openai.azure.com") and 
+                     hostname[-(len(".openai.azure.com")):] == ".openai.azure.com")
+                )
+                is_azure_openai = is_azure_domain
+            except Exception:
+                is_azure_openai = False
+            
+            if is_azure_openai:
                 return mock_openai_response
             # For all other calls, use the original method
             if original_post is not None:
@@ -325,9 +344,13 @@ def reset_cache_singletons():
     yield
     
     # Restore state after test if it was corrupted by mocking
-    # If _redis is now a MagicMock or was set to something different (but not a real redis connection)
-    # while _initialized is True, reset everything
-    if l1_cache._initialized and l1_cache._redis is not initial_l1_redis:
+    # Check if _redis was changed to a different object (mock or otherwise)
+    redis_was_changed = (
+        (initial_l1_redis is None and l1_cache._redis is not None) or
+        (initial_l1_redis is not None and l1_cache._redis is not initial_l1_redis)
+    )
+    
+    if l1_cache._initialized and redis_was_changed:
         # The cache was mocked - reset to initial state
         l1_cache._redis = initial_l1_redis
         l1_cache._initialized = initial_l1_initialized
