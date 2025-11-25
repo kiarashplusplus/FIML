@@ -2,6 +2,47 @@
 
 This guide covers deploying FIML in various environments from development to production.
 
+## Minimum Required API Keys
+
+FIML is designed to work with minimal configuration. Here are the API key requirements:
+
+### No API Keys Required (Free Tier)
+
+FIML works out-of-the-box with these free providers:
+- **Yahoo Finance** - Real-time and historical stock data (no API key)
+- **CoinGecko** - Cryptocurrency data (no API key for basic tier)
+- **Mock Provider** - For testing and development
+
+### Optional API Keys (Enhanced Features)
+
+For additional data sources and features, you can configure these optional API keys:
+
+| Provider | Environment Variable | Purpose | Free Tier |
+|----------|---------------------|---------|-----------|
+| Alpha Vantage | `ALPHA_VANTAGE_API_KEY` | Stock fundamentals, forex | Yes (5 calls/min) |
+| FMP | `FMP_API_KEY` | Financial modeling data | Yes (250 calls/day) |
+| Polygon | `POLYGON_API_KEY` | Real-time market data | Yes (limited) |
+| Finnhub | `FINNHUB_API_KEY` | Stock & crypto data | Yes (60 calls/min) |
+| NewsAPI | `NEWSAPI_API_KEY` | Financial news | Yes (100 calls/day) |
+| TwelveData | `TWELVEDATA_API_KEY` | Time series data | Yes (800 calls/day) |
+| Tiingo | `TIINGO_API_KEY` | Stock & crypto prices | Yes (limited) |
+| CoinMarketCap | `COINMARKETCAP_API_KEY` | Cryptocurrency data | Yes (333 calls/day) |
+
+### AI Features (Optional)
+
+For narrative generation and AI-powered insights:
+
+| Service | Environment Variables | Purpose |
+|---------|----------------------|---------|
+| Azure OpenAI | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT_NAME` | AI narrative generation |
+
+### Alert Notifications (Optional)
+
+| Service | Environment Variables | Purpose |
+|---------|----------------------|---------|
+| Email (SMTP) | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | Email alerts |
+| Telegram | `TELEGRAM_BOT_TOKEN` | Telegram notifications |
+
 ## Development Deployment
 
 ### Quick Start
@@ -353,23 +394,110 @@ Configure in cloud provider:
 
 ## Health Checks
 
+FIML provides comprehensive health check endpoints for monitoring system status.
+
 ### API Health
+
+Basic application health check:
 
 ```bash
 curl http://localhost:8000/health
 ```
 
+Response:
+```json
+{
+  "status": "healthy",
+  "version": "0.2.2",
+  "environment": "production"
+}
+```
+
 ### Database Health
+
+PostgreSQL/TimescaleDB health check:
 
 ```bash
 curl http://localhost:8000/health/db
 ```
 
+Response:
+```json
+{
+  "status": "healthy",
+  "service": "postgresql",
+  "host": "localhost",
+  "port": 5432,
+  "database": "fiml"
+}
+```
+
 ### Cache Health
+
+Redis (L1 cache) health check:
 
 ```bash
 curl http://localhost:8000/health/cache
 ```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "service": "redis",
+  "host": "localhost",
+  "port": 6379
+}
+```
+
+### Provider Health
+
+Health status of all data providers:
+
+```bash
+curl http://localhost:8000/health/providers
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "total_providers": 5,
+  "healthy_providers": 5,
+  "providers": {
+    "yahoo_finance": {
+      "is_healthy": true,
+      "uptime_percent": 99.9,
+      "avg_latency_ms": 150.5,
+      "success_rate": 0.98
+    }
+  }
+}
+```
+
+### Individual Provider Health
+
+Health status of a specific provider:
+
+```bash
+curl http://localhost:8000/health/providers/yahoo_finance
+```
+
+### Prometheus Metrics
+
+Prometheus-compatible metrics endpoint:
+
+```bash
+curl http://localhost:8000/metrics
+```
+
+Available metrics include:
+- `fiml_requests_total` - Total API requests by method, endpoint, status
+- `fiml_request_duration_seconds` - Request latency histogram
+- `fiml_provider_requests_total` - Provider API requests by provider/operation
+- `fiml_provider_latency_seconds` - Provider latency histogram
+- `fiml_active_requests` - Current active requests gauge
+- `fiml_slow_queries_total` - Count of slow queries (>1s)
 
 ## Troubleshooting
 
