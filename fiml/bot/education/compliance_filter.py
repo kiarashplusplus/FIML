@@ -6,7 +6,7 @@ Ensures all content is educational-only with no financial advice
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import structlog
 
@@ -25,9 +25,9 @@ class ComplianceFilterResult:
     """Result from filtering user questions"""
     is_allowed: bool
     message: str = ""
-    alternative_suggestions: List[str] = None
+    alternative_suggestions: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.alternative_suggestions is None:
             self.alternative_suggestions = []
 

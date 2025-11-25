@@ -20,13 +20,13 @@ class QuizQuestion:
     id: str
     type: str  # multiple_choice, true_false, numeric
     text: str
-    options: List[Dict] = None
+    options: Optional[List[Dict[str, Any]]] = None
     correct_answer: Any = None
     explanation: str = ""
     xp_reward: int = 10
     tolerance: float = 0.01  # For numeric questions
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.options is None:
             self.options = []
 
@@ -40,13 +40,13 @@ class QuizSession:
     lesson_id: str
     questions: List[QuizQuestion]
     current_question_index: int = 0
-    answers: Dict[str, Any] = None
+    answers: Optional[Dict[str, Any]] = None
     score: int = 0
     total_xp: int = 0
-    started_at: datetime = None
+    started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.answers is None:
             self.answers = {}
         if self.started_at is None:
@@ -226,7 +226,9 @@ class QuizSystem:
         for user_sessions in self._completed_sessions.values():
             for session in user_sessions:
                 if session.session_id == session_id:
-                    duration = (session.completed_at - session.started_at).total_seconds()
+                    duration = 0.0
+                    if session.completed_at is not None and session.started_at is not None:
+                        duration = (session.completed_at - session.started_at).total_seconds()
                     return {
                         "status": "completed",
                         "score": session.score,
