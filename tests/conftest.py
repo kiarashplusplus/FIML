@@ -436,6 +436,9 @@ def mock_yfinance_network_calls():
             return self._news
 
         def history(self, period=None, interval=None):
+            # Note: pandas import is done at module level in conftest.py,
+            # but since we're in a MockTicker class, we import locally
+            # to avoid polluting the module namespace
             import pandas as pd
             index = pd.date_range(start="2024-01-01", periods=3, freq="D")
             return pd.DataFrame(mock_history_data, index=index)
@@ -485,21 +488,18 @@ def mock_ccxt_network_calls():
 
     patches = []
     for exchange_name in exchanges_to_patch:
-        try:
+        # Use contextlib.suppress for expected failures when module doesn't exist
+        with contextlib.suppress(AttributeError, ImportError, ModuleNotFoundError):
             p = patch(f"ccxt.async_support.{exchange_name}", mock_exchange_class)
             p.start()
             patches.append(p)
-        except Exception:
-            pass  # Exchange module might not exist
 
     # Also patch the sync version
     for exchange_name in exchanges_to_patch:
-        try:
+        with contextlib.suppress(AttributeError, ImportError, ModuleNotFoundError):
             p = patch(f"ccxt.{exchange_name}", mock_exchange_class)
             p.start()
             patches.append(p)
-        except Exception:
-            pass
 
     yield
 
