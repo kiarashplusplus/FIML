@@ -77,6 +77,19 @@ class TestHealthEndpoints:
         assert data["health"] == "/health"
         assert data["metrics"] == "/metrics"
 
+    def test_root_has_health_endpoints(self, client):
+        """Test that root endpoint documents all health endpoints"""
+        response = client.get("/")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "health_endpoints" in data
+        assert data["health_endpoints"]["main"] == "/health"
+        assert data["health_endpoints"]["database"] == "/health/db"
+        assert data["health_endpoints"]["cache"] == "/health/cache"
+        assert data["health_endpoints"]["providers"] == "/health/providers"
+
     def test_root_docs_url_in_development(self, client):
         """Test that docs URL is present in development mode"""
         with patch("fiml.server.settings") as mock_settings:
@@ -89,6 +102,39 @@ class TestHealthEndpoints:
             # The response uses the already-initialized settings
             # so this test just verifies the structure
             assert "docs" in data
+
+    def test_health_db_endpoint_exists(self, client):
+        """Test that /health/db endpoint exists"""
+        response = client.get("/health/db")
+        # May return 200 (healthy) or 503 (unhealthy) depending on db availability
+        assert response.status_code in [200, 503]
+        data = response.json()
+        assert "status" in data
+        assert "service" in data or "error" in data
+
+    def test_health_cache_endpoint_exists(self, client):
+        """Test that /health/cache endpoint exists"""
+        response = client.get("/health/cache")
+        # May return 200 (healthy) or 503 (unhealthy) depending on Redis availability
+        assert response.status_code in [200, 503]
+        data = response.json()
+        assert "status" in data
+        assert "service" in data or "error" in data
+
+    def test_health_providers_endpoint_exists(self, client):
+        """Test that /health/providers endpoint exists"""
+        response = client.get("/health/providers")
+        # May return 200 (healthy/degraded) or 503 (unhealthy)
+        assert response.status_code in [200, 503]
+        data = response.json()
+        assert "status" in data
+
+    def test_health_provider_not_found(self, client):
+        """Test that non-existent provider returns 404"""
+        response = client.get("/health/providers/nonexistent_provider")
+        assert response.status_code == 404
+        data = response.json()
+        assert data["error"] == "ProviderNotFound"
 
 
 class TestExceptionHandlers:

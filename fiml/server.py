@@ -117,6 +117,186 @@ async def health_check() -> dict:
     }
 
 
+# Module-level database engine for health checks (created lazily)
+_health_check_engine = None
+
+
+async def _get_health_check_engine():
+    """Get or create a shared database engine for health checks"""
+    global _health_check_engine
+    if _health_check_engine is None:
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        _health_check_engine = create_async_engine(
+            settings.database_url,
+            echo=False,
+            pool_size=1,
+            max_overflow=0,
+            pool_pre_ping=True,
+        )
+    return _health_check_engine
+
+
+@app.get("/health/db")
+async def health_check_db() -> dict:
+    """Database (PostgreSQL) health check endpoint"""
+    try:
+        from sqlalchemy import text
+
+        engine = await _get_health_check_engine()
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+
+        return {
+            "status": "healthy",
+            "service": "postgresql",
+            "host": settings.postgres_host,
+            "port": settings.postgres_port,
+            "database": settings.postgres_db,
+        }
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "service": "postgresql",
+                "error": str(e),
+            },
+        )
+
+
+# Module-level Redis client for health checks (created lazily)
+_health_check_redis = None
+
+
+async def _get_health_check_redis():
+    """Get or create a shared Redis client for health checks"""
+    global _health_check_redis
+    if _health_check_redis is None:
+        import redis.asyncio as aioredis
+
+        _health_check_redis = aioredis.from_url(
+            settings.redis_url,
+            encoding="utf-8",
+            decode_responses=True,
+            socket_timeout=5,
+        )
+    return _health_check_redis
+
+
+@app.get("/health/cache")
+async def health_check_cache() -> dict:
+    """Cache (Redis) health check endpoint"""
+    try:
+        from fiml.cache.l1_cache import l1_cache
+
+        # Try to use the existing l1_cache connection first
+        if l1_cache._redis:
+            await l1_cache._redis.ping()
+            return {
+                "status": "healthy",
+                "service": "redis",
+                "host": settings.redis_host,
+                "port": settings.redis_port,
+            }
+        else:
+            # Use the shared health check Redis client
+            redis_client = await _get_health_check_redis()
+            await redis_client.ping()
+
+            return {
+                "status": "healthy",
+                "service": "redis",
+                "host": settings.redis_host,
+                "port": settings.redis_port,
+            }
+    except Exception as e:
+        logger.error(f"Cache health check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "service": "redis",
+                "error": str(e),
+            },
+        )
+
+
+@app.get("/health/providers")
+async def health_check_providers() -> dict:
+    """Provider health check endpoint - returns health status of all data providers"""
+    try:
+        health_status = await provider_registry.get_all_health()
+
+        providers_health = {}
+        all_healthy = True
+
+        for provider_name, health in health_status.items():
+            providers_health[provider_name] = {
+                "is_healthy": health.is_healthy,
+                "uptime_percent": health.uptime_percent,
+                "avg_latency_ms": health.avg_latency_ms,
+                "success_rate": health.success_rate,
+                "last_check": health.last_check.isoformat() if health.last_check else None,
+                "error_count_24h": health.error_count_24h,
+            }
+            if not health.is_healthy:
+                all_healthy = False
+
+        return {
+            "status": "healthy" if all_healthy else "degraded",
+            "total_providers": len(providers_health),
+            "healthy_providers": sum(1 for h in health_status.values() if h.is_healthy),
+            "providers": providers_health,
+        }
+    except Exception as e:
+        logger.error(f"Provider health check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "error": str(e),
+            },
+        )
+
+
+@app.get("/health/providers/{provider_name}")
+async def health_check_provider(provider_name: str) -> dict:
+    """Individual provider health check endpoint"""
+    try:
+        health = await provider_registry.get_provider_health(provider_name)
+
+        if health is None:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "error": "ProviderNotFound",
+                    "message": f"Provider '{provider_name}' not found",
+                },
+            )
+
+        return {
+            "provider": provider_name,
+            "is_healthy": health.is_healthy,
+            "uptime_percent": health.uptime_percent,
+            "avg_latency_ms": health.avg_latency_ms,
+            "success_rate": health.success_rate,
+            "last_check": health.last_check.isoformat() if health.last_check else None,
+            "error_count_24h": health.error_count_24h,
+        }
+    except Exception as e:
+        logger.error(f"Provider health check failed for {provider_name}: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "provider": provider_name,
+                "error": str(e),
+            },
+        )
+
+
 @app.get("/")
 async def root() -> dict:
     """Root endpoint"""
@@ -125,6 +305,13 @@ async def root() -> dict:
         "version": "0.2.2",
         "docs": "/docs" if settings.is_development else None,
         "health": "/health",
+        "health_endpoints": {
+            "main": "/health",
+            "database": "/health/db",
+            "cache": "/health/cache",
+            "providers": "/health/providers",
+            "provider_specific": "/health/providers/{provider_name}",
+        },
         "metrics": "/metrics",
     }
 

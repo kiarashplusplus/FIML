@@ -1,6 +1,5 @@
-"""
-Prometheus monitoring configuration
-"""
+# Prometheus monitoring configuration for FIML
+# See https://prometheus.io/docs/prometheus/latest/configuration/configuration/
 
 global:
   scrape_interval: 15s
@@ -13,9 +12,10 @@ scrape_configs:
   # FIML Server metrics
   - job_name: 'fiml-server'
     static_configs:
-      - targets: ['fiml-server:9090']
+      - targets: ['fiml-server:8000']
         labels:
           service: 'fiml-server'
+    metrics_path: /metrics
 
   # PostgreSQL metrics (if postgres_exporter is added)
   - job_name: 'postgres'
