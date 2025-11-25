@@ -369,7 +369,7 @@ class CacheManager:
         # News can be extended on weekends
         elif data_type == DataType.NEWS:
             if not is_weekday:
-                return base_ttl * 1.5
+                return int(base_ttl * 1.5)
 
         return base_ttl
 

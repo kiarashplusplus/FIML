@@ -490,21 +490,22 @@ class TestTaskRegistryEdgeCases:
     """Test edge cases and error conditions"""
 
     def test_serialize_task_with_none_values(self, task_registry):
-        """Test serialization with None values"""
+        """Test serialization with None values for optional fields"""
         task = TaskInfo(
             id="task-none",
-            type=None,
-            status=None,
+            type="test",
+            status=TaskStatus.PENDING,
             resource_url="test",
             progress=0.0,
-            created_at=None,
+            estimated_completion=None,  # Optional field can be None
+            query=None,  # Optional field can be None
         )
 
         serialized = task_registry._serialize_task(task)
         data = json.loads(serialized)
 
-        assert data["type"] is None
-        assert data["created_at"] is None
+        assert data["estimated_completion"] is None
+        assert data["query"] is None
 
     def test_deserialize_invalid_json(self, task_registry):
         """Test deserialization with invalid JSON"""

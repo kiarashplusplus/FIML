@@ -6,7 +6,7 @@ and provides centralized monitoring and control.
 """
 
 import asyncio
-from typing import Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from fiml.core.logging import get_logger
 from fiml.watchdog.base import BaseWatchdog
@@ -168,7 +168,7 @@ class WatchdogManager:
 
     async def _register_watchdogs(self) -> None:
         """Register all watchdog instances"""
-        watchdog_classes = [
+        watchdog_classes: List[Type[BaseWatchdog]] = [
             EarningsAnomalyWatchdog,
             UnusualVolumeWatchdog,
             WhaleMovementWatchdog,
@@ -195,7 +195,8 @@ class WatchdogManager:
                 )
 
                 # Set event stream
-                watchdog.set_event_stream(self._event_stream)
+                if self._event_stream is not None:
+                    watchdog.set_event_stream(self._event_stream)
 
                 # Register
                 self._watchdogs[watchdog.name] = watchdog
@@ -213,6 +214,10 @@ class WatchdogManager:
 
     def _setup_priority_handlers(self) -> None:
         """Setup handlers for high-priority events"""
+        if self._event_stream is None:
+            logger.warning("Event stream not initialized, skipping priority handlers setup")
+            return
+
         # Subscribe to critical events
         self._event_stream.subscribe(
             callback=self._handle_critical_event,
@@ -287,7 +292,8 @@ class WatchdogManager:
         await asyncio.gather(*stop_tasks, return_exceptions=True)
 
         # Shutdown event stream
-        await self._event_stream.shutdown()
+        if self._event_stream is not None:
+            await self._event_stream.shutdown()
 
         logger.info("Watchdog manager stopped")
 
@@ -375,7 +381,7 @@ class WatchdogManager:
 
     def subscribe_to_events(
         self,
-        callback,
+        callback: Callable[[WatchdogEvent], Any],
         event_filter: Optional[EventFilter] = None,
     ) -> str:
         """

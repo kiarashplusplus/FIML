@@ -215,8 +215,8 @@ class TaskRegistry:
         try:
             tasks = self.get_all_active()
 
-            tasks_by_type = {}
-            tasks_by_status = {}
+            tasks_by_type: Dict[str, int] = {}
+            tasks_by_status: Dict[str, int] = {}
 
             for task_info in tasks.values():
                 # Count by type
