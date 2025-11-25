@@ -26,6 +26,7 @@ from fiml.dsl.executor import fk_dsl_executor
 from fiml.dsl.parser import fk_dsl_parser
 from fiml.dsl.planner import execution_planner
 from fiml.monitoring.task_registry import task_registry
+from fiml.narrative.cache import cache_narrative, get_cached_narrative
 from fiml.narrative.generator import NarrativeGenerator
 from fiml.narrative.models import (
     ExpertiseLevel,
@@ -34,7 +35,6 @@ from fiml.narrative.models import (
     NarrativeContext,
     NarrativePreferences,
 )
-from fiml.narrative.cache import cache_narrative, get_cached_narrative
 
 logger = get_logger(__name__)
 

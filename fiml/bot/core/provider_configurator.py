@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 import structlog
 
 if TYPE_CHECKING:
-    from fiml.bot.core.key_manager import UserProviderKeyManager
     from fiml.arbitration.engine import DataArbitrationEngine
+    from fiml.bot.core.key_manager import UserProviderKeyManager
 
 logger = structlog.get_logger(__name__)
 

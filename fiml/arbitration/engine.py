@@ -9,7 +9,7 @@ Intelligently routes data requests to optimal providers with:
 """
 
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
@@ -23,7 +23,6 @@ from fiml.core.models import (
 )
 from fiml.providers.base import BaseProvider, ProviderResponse
 from fiml.providers.registry import provider_registry
-from typing import Optional
 
 logger = get_logger(__name__)
 

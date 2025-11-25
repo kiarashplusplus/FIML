@@ -3,9 +3,9 @@ Main FastAPI MCP Server
 """
 
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Dict, Union
+from typing import Any, AsyncIterator, Dict
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app

@@ -25,16 +25,16 @@ dev:
 	pip install -e ".[dev]"
 
 build:
-	docker-compose build
+	docker compose build
 
 up:
-	docker-compose up -d
+	docker compose up -d
 
 down:
-	docker-compose down
+	docker compose down
 
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 test:
 	pytest -v --cov=fiml --cov-report=html --cov-report=term
@@ -115,16 +115,16 @@ clean:
 	rm -rf build/ dist/ .pytest_cache/ .coverage htmlcov/
 
 shell:
-	docker-compose exec fiml-server /bin/bash
+	docker compose exec fiml-server /bin/bash
 
 migrate:
-	docker-compose exec fiml-server python -m fiml.db.migrate
+	docker compose exec fiml-server python -m fiml.db.migrate
 
 psql:
-	docker-compose exec postgres psql -U fiml -d fiml
+	docker compose exec postgres psql -U fiml -d fiml
 
 redis-cli:
-	docker-compose exec redis redis-cli
+	docker compose exec redis redis-cli
 
 ray-dashboard:
 	@echo "Ray Dashboard: http://localhost:8265"
@@ -136,7 +136,7 @@ prometheus:
 	@echo "Prometheus: http://localhost:9090"
 
 restart:
-	docker-compose restart fiml-server
+	docker compose restart fiml-server
 
 rebuild:
-	docker-compose up -d --build fiml-server
+	docker compose up -d --build fiml-server

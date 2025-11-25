@@ -6,7 +6,7 @@ Renders lessons with live FIML market data
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, cast, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import structlog
 import yaml

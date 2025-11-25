@@ -799,11 +799,11 @@ class CryptoSentimentAnalysisWorkflow:
             prompt = f"""You are a cryptocurrency market analyst. Provide insights on {asset.symbol}/{asset.pair}.
 
 PRICE: ${(price_data or {}).get('price', 'N/A')} | Change: {(price_data or {}).get('change_percent', 0):+.2f}%
- 
+
 SENTIMENT: {(sentiment or {}).get('sentiment', {}).get('score', 'N/A')}
- 
+
 TECHNICALS: RSI={(technicals or {}).get('indicators', {}).get('rsi', 'N/A')}
- 
+
 CORRELATIONS: {correlations}
 
 Provide:

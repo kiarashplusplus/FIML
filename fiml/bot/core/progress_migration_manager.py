@@ -4,7 +4,7 @@ Handles user progress data migration during updates
 """
 
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, Optional, cast
 
 import structlog
 

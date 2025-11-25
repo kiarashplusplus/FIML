@@ -6,8 +6,8 @@ Run the Telegram bot with BYOK support
 import logging
 import os
 from pathlib import Path
-
 from typing import Optional
+
 import structlog
 from dotenv import load_dotenv
 
