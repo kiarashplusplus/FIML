@@ -2,9 +2,17 @@
 
 **An AI-Native Financial Data MCP Server with Intelligent Provider Orchestration**
 
-> 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Test Results](docs/testing/TEST_REPORT.md) [![FIML CI/CD Pipeline](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml) | [Technical Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
+[![Integration Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-integration.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-integration.yml)
+[![Infrastructure Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-infrastructure.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-infrastructure.yml)
+[![Bot Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-bot.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-bot.yml)
+[![Agent Workflow Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-agents.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-agents.yml)
+[![Core Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-core.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-core.yml)
+[![FIML CI/CD Pipeline (Core Only)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml)
+[![Deploy Documentation](https://github.com/kiarashplusplus/FIML/actions/workflows/docs.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/docs.yml)
+
+> 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Test Results](docs/testing/TEST_REPORT.md) | [Technical Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 In Development 🚧 | **Version**: 0.2.1 | **Tests**: 🎉 **100% PASSING** (439 passed, 25 skipped) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
+> **Current State**: Phase 1 Complete ✅ | Phase 2 In Development 🚧 | **Version**: 0.2.2 | **Tests**: 🎉 **100% PASSING** (439 passed, 25 skipped) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
 > 
 > ✅ **Verified**: Tests pass identically with and without .env file (GitHub runner compatible)
 > 

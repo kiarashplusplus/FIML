@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifecycle management for the application"""
     # Startup
-    logger.info("Starting FIML server", version="0.2.1", environment=settings.fiml_env)
+    logger.info("Starting FIML server", version="0.2.2", environment=settings.fiml_env)
 
     # Initialize cache layers
     logger.info("Initializing cache layers...")
@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="FIML - Financial Intelligence Meta-Layer",
     description="AI-Native Multi-Market Financial Intelligence Framework",
-    version="0.2.1",
+    version="0.2.2",
     lifespan=lifespan,
     docs_url="/docs" if settings.is_development else None,
     redoc_url="/redoc" if settings.is_development else None,
@@ -112,7 +112,7 @@ async def health_check() -> dict:
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "environment": settings.fiml_env,
     }
 
@@ -122,7 +122,7 @@ async def root() -> dict:
     """Root endpoint"""
     return {
         "service": "FIML - Financial Intelligence Meta-Layer",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "docs": "/docs" if settings.is_development else None,
         "health": "/health",
         "metrics": "/metrics",
