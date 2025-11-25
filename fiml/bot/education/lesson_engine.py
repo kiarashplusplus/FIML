@@ -20,10 +20,10 @@ class LessonSection:
 
     type: str  # introduction, live_example, explanation, chart, key_takeaways
     content: str
-    fiml_query: Optional[Dict] = None
-    metadata: Dict[str, Any] = None
+    fiml_query: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -35,7 +35,7 @@ class QuizQuestion:
     id: str
     type: str  # multiple_choice, true_false, numeric
     text: str
-    options: List[Dict]
+    options: List[Dict[str, Any]]
     correct_answer: Any
     xp_reward: int = 10
 
@@ -56,7 +56,7 @@ class Lesson:
     xp_reward: int
     next_lesson: Optional[str]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not isinstance(self.sections, list):
             self.sections = []
         if not isinstance(self.quiz_questions, list):
@@ -71,11 +71,11 @@ class RenderedLesson:
     content: str
     metadata: Dict[str, Any]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the rendered content when converted to string"""
         return self.content
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         """Support 'in' operator for backward compatibility"""
         return item in self.content
 

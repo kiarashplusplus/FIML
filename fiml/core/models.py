@@ -76,6 +76,7 @@ class Asset(BaseModel):
     market: Market = Market.US  # Default to US market
     exchange: Optional[str] = None
     currency: str = "USD"
+    pair: Optional[str] = None  # Trading pair for crypto (e.g., "USDT")
 
     @field_validator("symbol")
     @classmethod

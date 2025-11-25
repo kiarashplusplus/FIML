@@ -4,7 +4,7 @@ Handles user progress data migration during updates
 """
 
 from datetime import datetime
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import structlog
 
@@ -405,7 +405,7 @@ class ProgressMigrationManager:
         user_data: Dict[str, Any],
         from_version: str,
         to_version: str,
-        user_choice: str = None
+        user_choice: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Migrate user progress data between versions

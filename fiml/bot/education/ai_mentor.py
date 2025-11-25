@@ -11,6 +11,7 @@ import structlog
 from fiml.narrative.generator import NarrativeGenerator
 from fiml.narrative.models import (
     ExpertiseLevel,
+    Language,
     NarrativeContext,
     NarrativePreferences,
 )
@@ -120,8 +121,7 @@ class AIMentorService:
                 price_data=context.get("price_data", {}) if context else {},
                 preferences=NarrativePreferences(
                     expertise_level=mentor["expertise_level"],
-                    language="en",
-                    tone="educational",
+                    language=Language.ENGLISH,
                     include_disclaimers=True
                 ),
                 include_disclaimers=True

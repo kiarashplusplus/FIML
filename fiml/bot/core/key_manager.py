@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import aiohttp
 import structlog
 from cryptography.fernet import Fernet
 
@@ -82,7 +83,7 @@ class UserProviderKeyManager:
         self._key_cache: Dict[str, Dict[str, str]] = {}
 
         # Quota tracking (in-memory for now, should be Redis in production)
-        self._quota_usage: Dict[str, Dict[str, int]] = {}
+        self._quota_usage: Dict[str, int] = {}
 
         logger.info("UserProviderKeyManager initialized", storage_path=storage_path)
 
@@ -160,8 +161,6 @@ class UserProviderKeyManager:
 
     async def _test_alpha_vantage(self, api_key: str) -> Dict:
         """Test Alpha Vantage API key"""
-        import aiohttp
-
         url = "https://www.alphavantage.co/query"
         params = {
             "function": "TIME_SERIES_INTRADAY",
@@ -170,7 +169,8 @@ class UserProviderKeyManager:
             "apikey": api_key
         }
 
-        async with aiohttp.ClientSession() as session, session.get(url, params=params, timeout=10) as resp:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession() as session, session.get(url, params=params, timeout=timeout) as resp:
             data = await resp.json()
 
             if "Error Message" in data:
@@ -201,12 +201,11 @@ class UserProviderKeyManager:
 
     async def _test_polygon(self, api_key: str) -> Dict:
         """Test Polygon.io API key"""
-        import aiohttp
-
         url = "https://api.polygon.io/v2/aggs/ticker/AAPL/prev"
         headers = {"Authorization": f"Bearer {api_key}"}
 
-        async with aiohttp.ClientSession() as session, session.get(url, headers=headers, timeout=10) as resp:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession() as session, session.get(url, headers=headers, timeout=timeout) as resp:
             if resp.status == 200:
                 return {
                     "valid": True,
@@ -228,11 +227,10 @@ class UserProviderKeyManager:
 
     async def _test_finnhub(self, api_key: str) -> Dict:
         """Test Finnhub API key"""
-        import aiohttp
-
         url = f"https://finnhub.io/api/v1/quote?symbol=AAPL&token={api_key}"
 
-        async with aiohttp.ClientSession() as session, session.get(url, timeout=10) as resp:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession() as session, session.get(url, timeout=timeout) as resp:
             data = await resp.json()
 
             if "error" in data:
@@ -256,11 +254,10 @@ class UserProviderKeyManager:
 
     async def _test_fmp(self, api_key: str) -> Dict:
         """Test Financial Modeling Prep API key"""
-        import aiohttp
-
         url = f"https://financialmodelingprep.com/api/v3/quote/AAPL?apikey={api_key}"
 
-        async with aiohttp.ClientSession() as session, session.get(url, timeout=10) as resp:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession() as session, session.get(url, timeout=timeout) as resp:
             data = await resp.json()
 
             if isinstance(data, dict) and "Error Message" in data:

@@ -6,7 +6,7 @@ Ensures all content is educational-only with no financial advice
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import structlog
 
@@ -25,9 +25,9 @@ class ComplianceFilterResult:
     """Result from filtering user questions"""
     is_allowed: bool
     message: str = ""
-    alternative_suggestions: List[str] = None
+    alternative_suggestions: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.alternative_suggestions is None:
             self.alternative_suggestions = []
 
@@ -119,31 +119,33 @@ class EducationalComplianceFilter:
 
         # Check for prohibited advice
         for regex in self._advice_regex:
-            if regex.search(content):
-                match = regex.search(content).group(0)
+            match = regex.search(content)
+            if match:
+                matched_text = match.group(0)
                 logger.warning(
                     "Advice pattern detected",
                     context=context,
-                    pattern=match
+                    pattern=matched_text
                 )
                 return (
                     ComplianceLevel.BLOCKED,
-                    f"Content blocked: Contains advice language ('{match}'). "
+                    f"Content blocked: Contains advice language ('{matched_text}'). "
                     "Educational content only."
                 )
 
         # Check for warning patterns
         for regex in self._warning_regex:
-            if regex.search(content):
-                match = regex.search(content).group(0)
+            match = regex.search(content)
+            if match:
+                matched_text = match.group(0)
                 logger.info(
                     "Warning pattern detected",
                     context=context,
-                    pattern=match
+                    pattern=matched_text
                 )
                 return (
                     ComplianceLevel.WARNING,
-                    f"Warning: Borderline language detected ('{match}'). "
+                    f"Warning: Borderline language detected ('{matched_text}'). "
                     "Strong disclaimer required."
                 )
 

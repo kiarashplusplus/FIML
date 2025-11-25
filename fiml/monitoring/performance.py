@@ -30,7 +30,7 @@ Usage:
 import time
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
 
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -118,7 +118,7 @@ class PerformanceMonitor:
         self._tasks_failed = 0
 
     @contextmanager
-    def track(self, operation: str, threshold: Optional[float] = None) -> None:
+    def track(self, operation: str, threshold: Optional[float] = None) -> Generator[None, None, None]:
         """
         Track synchronous operation timing
 
@@ -135,7 +135,7 @@ class PerformanceMonitor:
             self._record_timing(operation, elapsed, threshold)
 
     @asynccontextmanager
-    async def track_async(self, operation: str, threshold: Optional[float] = None) -> None:
+    async def track_async(self, operation: str, threshold: Optional[float] = None) -> AsyncGenerator[None, None]:
         """
         Track asynchronous operation timing
 

@@ -3,13 +3,20 @@ Component 9: Gamification Engine
 XP, levels, streaks, badges, and achievements
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TypedDict
 
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+
+class LevelData(TypedDict):
+    """Type definition for level data"""
+    level: int
+    title: str
+    xp_required: int
 
 
 @dataclass
@@ -32,14 +39,12 @@ class UserStats:
     level: int = 1
     streak_days: int = 0
     last_activity: Optional[datetime] = None
-    badges: List[str] = None
+    badges: List[str] = field(default_factory=list)
     daily_quests_completed: int = 0
     lessons_completed: int = 0
     quizzes_completed: int = 0
 
-    def __post_init__(self):
-        if self.badges is None:
-            self.badges = []
+    def __post_init__(self) -> None:
         if self.last_activity is None:
             self.last_activity = datetime.now(UTC)
 
@@ -70,7 +75,7 @@ class GamificationEngine:
     }
 
     # Level thresholds
-    LEVELS = [
+    LEVELS: List[LevelData] = [
         {"level": 1, "title": "Novice", "xp_required": 0},
         {"level": 2, "title": "Learner", "xp_required": 100},
         {"level": 3, "title": "Student", "xp_required": 250},
