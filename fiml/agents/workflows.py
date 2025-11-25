@@ -388,11 +388,12 @@ Be specific, data-driven, and actionable."""
 
             # Generate narrative using LLM
             # Build context with all required information
+            # Spread context first, then override with explicit values
             narrative_context = {
+                **context,
                 "asset": asset.symbol,
                 "asset_type": asset.asset_type.value,
                 "prompt": prompt,
-                **context,
             }
             narrative = await self.llm_client.generate_narrative(
                 context=narrative_context,
