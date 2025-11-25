@@ -195,13 +195,16 @@ def mock_azure_openai_httpx():
     
     The fixture is autouse=True, so it applies to all tests automatically
     when the mock endpoint is configured.
+    
+    NOTE: This only mocks calls to the Azure OpenAI endpoint, not all httpx calls.
     """
     # Only mock if we're using the mock endpoint
-    if os.environ.get("AZURE_OPENAI_ENDPOINT", "").startswith("https://mock"):
+    azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+    if azure_endpoint.startswith("https://mock"):
         # Create a mock response that mimics Azure OpenAI's response format
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
+        mock_openai_response = MagicMock()
+        mock_openai_response.status_code = 200
+        mock_openai_response.json.return_value = {
             "choices": [
                 {
                     "message": {
@@ -219,11 +222,46 @@ def mock_azure_openai_httpx():
             },
         }
         
-        # Create async mock for httpx.AsyncClient.post
-        async_mock_post = AsyncMock(return_value=mock_response)
+        # Store the original post method to use for non-Azure OpenAI calls
+        original_post = None
         
-        # Patch httpx.AsyncClient.post to return our mock
-        with patch("httpx.AsyncClient.post", async_mock_post):
+        async def selective_mock_post(self, url, *args, **kwargs):
+            """Only mock Azure OpenAI calls, pass through others"""
+            url_str = str(url)
+            # Check if this is an Azure OpenAI call using proper URL parsing
+            # to prevent URL substring attacks (e.g., evil.com?q=openai.azure.com)
+            # Use proper URL parsing to check the hostname
+            from urllib.parse import urlparse
+            try:
+                parsed = urlparse(url_str)
+                hostname = parsed.hostname or ""
+                # Check for Azure OpenAI domains using proper domain matching:
+                # Must be exactly "openai.azure.com" or a subdomain like "x.openai.azure.com"
+                # The hostname must end with ".openai.azure.com" with a dot before it,
+                # OR be exactly "openai.azure.com"
+                is_azure_domain = (
+                    hostname == "openai.azure.com" or
+                    (len(hostname) > len(".openai.azure.com") and 
+                     hostname[-(len(".openai.azure.com")):] == ".openai.azure.com")
+                )
+                is_azure_openai = is_azure_domain
+            except Exception:
+                is_azure_openai = False
+            
+            if is_azure_openai:
+                return mock_openai_response
+            # For all other calls, use the original method
+            if original_post is not None:
+                return await original_post(self, url, *args, **kwargs)
+            # Fallback for cases where original wasn't captured
+            raise RuntimeError(f"Unmocked httpx call to: {url_str}")
+        
+        # Get the original method before patching
+        import httpx
+        original_post = httpx.AsyncClient.post
+        
+        # Patch with our selective mock
+        with patch.object(httpx.AsyncClient, "post", selective_mock_post):
             yield
     else:
         # If using real endpoint, don't mock anything
@@ -283,4 +321,51 @@ async def init_session_db():
     finally:
         await engine.dispose()
 
+
+@pytest.fixture(autouse=True)
+def reset_cache_singletons():
+    """
+    Reset cache singletons after each test to prevent test pollution.
+    
+    Some tests mock the global l1_cache and cache_manager singletons,
+    which can pollute other tests. This fixture captures the initial state
+    and restores it after each test.
+    """
+    from fiml.cache.l1_cache import l1_cache
+    from fiml.cache.l2_cache import l2_cache
+    from fiml.cache.manager import cache_manager
+    
+    # Capture initial state before test
+    initial_l1_initialized = l1_cache._initialized
+    initial_l1_redis = l1_cache._redis
+    initial_l2_initialized = l2_cache._initialized
+    initial_cm_initialized = cache_manager._initialized
+    
+    yield
+    
+    # Restore state after test if it was corrupted by mocking
+    # Check if _redis was changed to a different object (mock or otherwise)
+    redis_was_changed = (
+        (initial_l1_redis is None and l1_cache._redis is not None) or
+        (initial_l1_redis is not None and l1_cache._redis is not initial_l1_redis)
+    )
+    
+    if l1_cache._initialized and redis_was_changed:
+        # The cache was mocked - reset to initial state
+        l1_cache._redis = initial_l1_redis
+        l1_cache._initialized = initial_l1_initialized
+        l1_cache._access_counts.clear()
+        l1_cache._last_access.clear()
+    
+    # Also check if _initialized was set without proper initialization
+    if l1_cache._initialized and l1_cache._redis is None:
+        l1_cache._initialized = False
+    
+    # Reset L2 cache if polluted
+    if l2_cache._initialized != initial_l2_initialized and l2_cache._engine is None:
+        l2_cache._initialized = initial_l2_initialized
+    
+    # Reset cache manager if L1 was reset
+    if cache_manager._initialized != initial_cm_initialized:
+        cache_manager._initialized = initial_cm_initialized
 

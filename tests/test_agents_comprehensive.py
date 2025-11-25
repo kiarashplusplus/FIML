@@ -11,7 +11,7 @@ Production-focused tests ensuring reliability and error handling.
 
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -190,7 +190,7 @@ class TestWorkerMetrics:
     def test_is_healthy_old_heartbeat(self):
         """Test health check with stale heartbeat"""
         metrics = WorkerMetrics(worker_id="test-1", worker_type="test")
-        metrics.last_heartbeat = datetime.utcnow() - timedelta(seconds=200)
+        metrics.last_heartbeat = datetime.now(UTC) - timedelta(seconds=200)
 
         assert metrics.is_healthy(max_heartbeat_age_seconds=120) is False
 
@@ -446,7 +446,7 @@ class TestWorkerHealthMonitor:
 
         # Make worker-1 unhealthy
         metrics1 = health_monitor.get_metrics("worker-1")
-        metrics1.last_heartbeat = datetime.utcnow() - timedelta(seconds=200)
+        metrics1.last_heartbeat = datetime.now(UTC) - timedelta(seconds=200)
 
         # Keep worker-2 healthy
         metrics2 = health_monitor.get_metrics("worker-2")
