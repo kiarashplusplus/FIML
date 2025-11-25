@@ -46,6 +46,7 @@ python examples/websocket_demo.py
 | Document | Description | Date |
 |----------|-------------|------|
 | [LIVE_INTEGRATION_TEST_RESULTS.md](./LIVE_INTEGRATION_TEST_RESULTS.md) | Latest live system integration tests | Nov 25, 2025 |
+| [MCP_TOOLS_TEST_RESULTS.md](./MCP_TOOLS_TEST_RESULTS.md) | MCP Protocol tools testing (9/9 tools) | Nov 25, 2025 |
 | [TEST_STATUS_REPORT.md](./TEST_STATUS_REPORT.md) | Comprehensive pytest results (701 tests) | Nov 24, 2025 |
 | [LIVE_TEST_SUMMARY.md](../implementation-summaries/LIVE_TEST_SUMMARY.md) | Live provider validation summary | Earlier |
 
