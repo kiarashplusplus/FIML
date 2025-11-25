@@ -117,17 +117,35 @@ async def health_check() -> dict:
     }
 
 
+# Module-level database engine for health checks (created lazily)
+_health_check_engine = None
+
+
+async def _get_health_check_engine():
+    """Get or create a shared database engine for health checks"""
+    global _health_check_engine
+    if _health_check_engine is None:
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        _health_check_engine = create_async_engine(
+            settings.database_url,
+            echo=False,
+            pool_size=1,
+            max_overflow=0,
+            pool_pre_ping=True,
+        )
+    return _health_check_engine
+
+
 @app.get("/health/db")
 async def health_check_db() -> dict:
     """Database (PostgreSQL) health check endpoint"""
     try:
         from sqlalchemy import text
-        from sqlalchemy.ext.asyncio import create_async_engine
 
-        engine = create_async_engine(settings.database_url, echo=False)
-        async with engine.begin() as conn:
+        engine = await _get_health_check_engine()
+        async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        await engine.dispose()
 
         return {
             "status": "healthy",
@@ -148,13 +166,32 @@ async def health_check_db() -> dict:
         )
 
 
+# Module-level Redis client for health checks (created lazily)
+_health_check_redis = None
+
+
+async def _get_health_check_redis():
+    """Get or create a shared Redis client for health checks"""
+    global _health_check_redis
+    if _health_check_redis is None:
+        import redis.asyncio as aioredis
+
+        _health_check_redis = aioredis.from_url(
+            settings.redis_url,
+            encoding="utf-8",
+            decode_responses=True,
+            socket_timeout=5,
+        )
+    return _health_check_redis
+
+
 @app.get("/health/cache")
 async def health_check_cache() -> dict:
     """Cache (Redis) health check endpoint"""
     try:
         from fiml.cache.l1_cache import l1_cache
 
-        # Try to ping Redis
+        # Try to use the existing l1_cache connection first
         if l1_cache._redis:
             await l1_cache._redis.ping()
             return {
@@ -164,17 +201,9 @@ async def health_check_cache() -> dict:
                 "port": settings.redis_port,
             }
         else:
-            # Try to initialize and check
-            import redis.asyncio as aioredis
-
-            redis_client = aioredis.from_url(
-                settings.redis_url,
-                encoding="utf-8",
-                decode_responses=True,
-                socket_timeout=5,
-            )
+            # Use the shared health check Redis client
+            redis_client = await _get_health_check_redis()
             await redis_client.ping()
-            await redis_client.aclose()
 
             return {
                 "status": "healthy",

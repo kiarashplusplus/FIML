@@ -9,9 +9,11 @@ These tests verify that:
 5. Provider-specific health endpoints work
 """
 
+import json
 import os
 
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 
 
@@ -53,8 +55,6 @@ class TestDeploymentConfiguration:
 
     def test_prometheus_config_valid_yaml(self):
         """Test that prometheus.yml is valid YAML"""
-        import yaml
-
         prometheus_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "config",
@@ -71,8 +71,6 @@ class TestDeploymentConfiguration:
 
     def test_grafana_datasources_valid_yaml(self):
         """Test that grafana datasources config is valid YAML"""
-        import yaml
-
         datasources_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "config",
@@ -89,8 +87,6 @@ class TestDeploymentConfiguration:
 
     def test_grafana_dashboards_config_valid_yaml(self):
         """Test that grafana dashboards config is valid YAML"""
-        import yaml
-
         dashboards_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "config",
@@ -107,8 +103,6 @@ class TestDeploymentConfiguration:
 
     def test_grafana_dashboard_valid_json(self):
         """Test that grafana dashboard JSON is valid"""
-        import json
-
         dashboard_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "config",
@@ -257,8 +251,6 @@ class TestDockerComposeValidation:
 
     def test_docker_compose_valid_yaml(self):
         """Test docker-compose.yml is valid YAML and has required services"""
-        import yaml
-
         compose_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "docker-compose.yml"
@@ -292,8 +284,6 @@ class TestDockerComposeValidation:
 
     def test_docker_compose_exposes_correct_ports(self):
         """Test docker-compose exposes required ports"""
-        import yaml
-
         compose_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "docker-compose.yml"
