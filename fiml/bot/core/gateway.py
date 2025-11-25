@@ -168,7 +168,7 @@ class IntentClassifier:
     LESSON_KEYWORDS = ["lesson", "learn", "teach", "explain", "course", "module"]
 
     # Educational question patterns (high priority)
-    EDUCATIONAL_PATTERNS = ["what is", "how do", "can you explain", "what's the difference", 
+    EDUCATIONAL_PATTERNS = ["what is", "how do", "can you explain", "what's the difference",
                           "how does", "why does", "tell me about", "what are"]
 
     # Market keywords

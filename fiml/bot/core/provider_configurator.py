@@ -3,7 +3,7 @@ Component 2: FIML Provider Configurator
 Configures FIML arbitration engine with user-specific API keys
 """
 
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import structlog
 
@@ -26,10 +26,10 @@ class FIMLProviderConfigurator:
 
     # Known providers that support API keys
     KNOWN_PROVIDERS = ["alpha_vantage", "polygon", "finnhub", "fmp"]
-    
+
     # Free providers that don't require API keys
     FREE_PROVIDERS = ["yahoo_finance"]
-    
+
     # Provider fallback mappings
     FALLBACK_MAP = {
         "alpha_vantage": ["yahoo_finance", "finnhub"],
@@ -287,13 +287,13 @@ class FIMLProviderConfigurator:
         """
         # Use class constant for fallback mappings
         suggestions = self.FALLBACK_MAP.get(failed_provider, self.FREE_PROVIDERS)
-        
+
         logger.info(
             "Generated fallback suggestions",
             failed_provider=failed_provider,
             suggestions=suggestions
         )
-        
+
         return suggestions
 
     def check_provider_health(self, provider: str) -> bool:
@@ -309,16 +309,16 @@ class FIMLProviderConfigurator:
         # Free providers are always available (no API key required)
         if provider in self.FREE_PROVIDERS:
             return True
-        
+
         # For other providers, check if they're in our known list
         is_healthy = provider in self.KNOWN_PROVIDERS
-        
+
         logger.info(
             "Provider health check",
             provider=provider,
             is_healthy=is_healthy
         )
-        
+
         return is_healthy
 
     async def get_provider_status(self, user_id: str) -> List[Dict]:

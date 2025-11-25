@@ -207,7 +207,7 @@ class FIMLEducationalDataAdapter:
 
         # Convert to billions for easier comparison
         market_cap_billions = market_cap / 1_000_000_000
-        
+
         if market_cap_billions < 0.3:
             return "Micro-cap (< $300M) - very small, high risk"
         elif market_cap_billions < 2:

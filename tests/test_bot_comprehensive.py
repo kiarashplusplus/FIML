@@ -419,7 +419,7 @@ class TestGamificationEngine:
         badge_id = "first_lesson"
         
         # Award badge (synchronous method)
-        success = gamification_engine.award_badge(user_id, badge_id)
+        success = gamification_engine.award_badge_sync(user_id, badge_id)
         assert success is True
         
         # Check badge was added
@@ -466,7 +466,7 @@ class TestGamificationEngine:
         
         # Award XP and badge
         await gamification_engine.award_xp(user_id, "lesson_completed")
-        gamification_engine.award_badge(user_id, "first_lesson")
+        gamification_engine.award_badge_sync(user_id, "first_lesson")
         
         summary = await gamification_engine.get_user_summary(user_id)
         assert "level" in summary

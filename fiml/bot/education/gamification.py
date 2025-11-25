@@ -347,16 +347,16 @@ class GamificationEngine:
         """
         if user_id not in self._user_stats:
             self._user_stats[user_id] = UserStats(user_id=user_id)
-        
+
         stats = self._user_stats[user_id]
         old_level = stats.level
         stats.total_xp += amount
         new_level = self._calculate_level(stats.total_xp)
-        
+
         if new_level > old_level:
             stats.level = new_level
             logger.info("Level up!", user_id=user_id, old_level=old_level, new_level=new_level)
-        
+
         stats.last_activity = datetime.now(UTC)
 
     def get_user_xp(self, user_id: str) -> int:
@@ -369,7 +369,7 @@ class GamificationEngine:
         """Get user's level info (sync)"""
         if user_id not in self._user_stats:
             return {"level": 1, "name": "Novice", "xp": 0}
-        
+
         stats = self._user_stats[user_id]
         return {
             "level": stats.level,
@@ -381,7 +381,7 @@ class GamificationEngine:
         """Get user's badges (sync)"""
         if user_id not in self._user_stats:
             return []
-        
+
         stats = self._user_stats[user_id]
         return [
             {
@@ -392,15 +392,15 @@ class GamificationEngine:
             for badge_id in stats.badges
         ]
 
-    def award_badge(self, user_id: str, badge_id: str, description: str = "") -> bool:
-        """Award badge to user (sync)"""
+    def award_badge_sync(self, user_id: str, badge_id: str, description: str = "") -> bool:
+        """Award badge to user (sync version for non-async contexts)"""
         if user_id not in self._user_stats:
             self._user_stats[user_id] = UserStats(user_id=user_id)
-        
+
         stats = self._user_stats[user_id]
         if badge_id in stats.badges:
             return False
-        
+
         stats.badges.append(badge_id)
         logger.info("Badge awarded", user_id=user_id, badge_id=badge_id)
         return True
@@ -415,14 +415,14 @@ class GamificationEngine:
         """Record daily activity for streak (sync)"""
         if user_id not in self._user_stats:
             self._user_stats[user_id] = UserStats(user_id=user_id)
-        
+
         stats = self._user_stats[user_id]
         today = datetime.now(UTC).date()
-        
+
         if stats.last_activity:
             last_date = stats.last_activity.date()
             days_diff = (today - last_date).days
-            
+
             if days_diff == 0:
                 # Same day, ensure streak is at least 1
                 if stats.streak_days == 0:
@@ -436,14 +436,14 @@ class GamificationEngine:
         else:
             # First activity
             stats.streak_days = 1
-        
+
         stats.last_activity = datetime.now(UTC)
 
     def get_streak(self, user_id: str) -> Dict:
         """Get user's streak info (sync)"""
         if user_id not in self._user_stats:
             return {"current_streak": 0, "longest_streak": 0}
-        
+
         stats = self._user_stats[user_id]
         return {
             "current_streak": stats.streak_days,
