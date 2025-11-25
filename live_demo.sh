@@ -1,8 +1,12 @@
 #!/bin/bash
 # FIML Live System Demo
+# Quick demonstration of FIML capabilities with live data
 
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║          🚀 FIML LIVE SYSTEM DEMONSTRATION 🚀                  ║"
+echo "║                                                                ║"
+echo "║  For comprehensive testing, run:                               ║"
+echo "║    ./scripts/test_live_system.sh                               ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 

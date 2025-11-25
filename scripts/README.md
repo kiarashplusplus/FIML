@@ -2,6 +2,28 @@
 
 This directory contains utility scripts for the FIML project.
 
+## Testing Scripts
+
+### `test_live_system.sh` ✨ NEW
+
+Comprehensive live system integration tests:
+- Tests all 12 running Docker services
+- Validates API endpoints, health checks, MCP protocol
+- Checks infrastructure (Redis, PostgreSQL, Kafka, Ray, Grafana, Prometheus)
+- Verifies Celery task queue connectivity
+- **22 automated tests** with colored output
+
+**Usage:**
+```bash
+./scripts/test_live_system.sh
+```
+
+**Also available from root:**
+```bash
+./live_demo.sh          # Quick demo
+./check_test_status.sh  # Pytest suite
+```
+
 ## Git Hooks
 
 ### `pre-push-hook.sh`
