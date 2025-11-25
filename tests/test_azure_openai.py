@@ -275,10 +275,10 @@ class TestSummarizeAnalysis:
             summary = await client.summarize_analysis(data, max_length=100)
 
             assert summary == "This is a short summary for testing purposes and validation of the response."
-            # Check that max_tokens was calculated based on max_length
+            # Check that max_completion_tokens was calculated based on max_length
             call_args = mock_post.call_args
             payload = call_args.kwargs["json"]
-            assert payload["max_tokens"] == 25  # 100 // 4
+            assert payload["max_completion_tokens"] == 25  # 100 // 4
 
 
 class TestHealthCheck:
@@ -615,9 +615,9 @@ class TestRequestConstruction:
             assert "messages" in payload
             assert isinstance(payload["messages"], list)
             assert "temperature" in payload
-            assert "max_tokens" in payload
+            assert "max_completion_tokens" in payload
             assert payload["temperature"] == 0.7
-            assert payload["max_tokens"] == 500
+            assert payload["max_completion_tokens"] == 500
 
 
 class TestEdgeCases:
