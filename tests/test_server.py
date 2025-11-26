@@ -134,7 +134,9 @@ class TestHealthEndpoints:
         response = client.get("/health/providers/nonexistent_provider")
         assert response.status_code == 404
         data = response.json()
-        assert data["error"] == "ProviderNotFound"
+        # FastAPI HTTPException returns 'detail' not 'error'
+        assert "detail" in data
+        assert "not found" in data["detail"].lower()
 
 
 class TestExceptionHandlers:

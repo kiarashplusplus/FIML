@@ -636,3 +636,18 @@ def mock_aiohttp_for_providers():
     with patch.object(aiohttp.ClientSession, "get", selective_mock_get):
         yield
 
+
+@pytest.fixture(autouse=True)
+def reset_caplog(caplog):
+    """
+    Reset caplog between tests to prevent log pollution.
+    
+    Some tests assert on log messages using caplog.text or "message" in caplog.text.
+    When tests run in a full suite, caplog accumulates messages from previous tests,
+    causing assertions to pass/fail incorrectly. This fixture clears caplog before
+    and after each test to ensure test isolation.
+    """
+    caplog.clear()
+    yield
+    caplog.clear()
+
