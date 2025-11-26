@@ -87,6 +87,7 @@ class NarrativeGenerator:
         )
 
         sections: List[NarrativeSection] = []
+        generation_errors: List[str] = []  # Track errors during generation
 
         # Generate market context section
         if context.price_data:
@@ -101,9 +102,7 @@ class NarrativeGenerator:
                     sections.append(market_section)
             except Exception as e:
                 logger.error("Failed to generate market context", error=str(e))
-                if "errors" not in context.metadata:
-                    context.metadata["errors"] = []
-                context.metadata["errors"].append(f"Market Context: {str(e)}")
+                generation_errors.append(f"Market Context: {str(e)}")
 
         # Generate technical analysis section
         if context.technical_data and context.preferences.include_technical:
@@ -117,9 +116,7 @@ class NarrativeGenerator:
                     sections.append(technical_section)
             except Exception as e:
                 logger.error("Failed to generate technical narrative", error=str(e))
-                if "errors" not in context.metadata:
-                    context.metadata["errors"] = []
-                context.metadata["errors"].append(f"Technical: {str(e)}")
+                generation_errors.append(f"Technical: {str(e)}")
 
         # Generate fundamental analysis section
         if (
@@ -137,9 +134,7 @@ class NarrativeGenerator:
                     sections.append(fundamental_section)
             except Exception as e:
                 logger.error("Failed to generate fundamental narrative", error=str(e))
-                if "errors" not in context.metadata:
-                    context.metadata["errors"] = []
-                context.metadata["errors"].append(f"Fundamental: {str(e)}")
+                generation_errors.append(f"Fundamental: {str(e)}")
 
         # Generate sentiment analysis section
         if context.sentiment_data and context.preferences.include_sentiment:
@@ -153,9 +148,7 @@ class NarrativeGenerator:
                     sections.append(sentiment_section)
             except Exception as e:
                 logger.error("Failed to generate sentiment narrative", error=str(e))
-                if "errors" not in context.metadata:
-                    context.metadata["errors"] = []
-                context.metadata["errors"].append(f"Sentiment: {str(e)}")
+                generation_errors.append(f"Sentiment: {str(e)}")
 
         # Generate risk analysis section
         if context.risk_data and context.preferences.include_risk:
@@ -169,9 +162,7 @@ class NarrativeGenerator:
                     sections.append(risk_section)
             except Exception as e:
                 logger.error("Failed to generate risk narrative", error=str(e))
-                if "errors" not in context.metadata:
-                    context.metadata["errors"] = []
-                context.metadata["errors"].append(f"Risk: {str(e)}")
+                generation_errors.append(f"Risk: {str(e)}")
 
         # Extract key insights from all analysis
         key_insights = await self._extract_key_insights(context, sections)
@@ -206,7 +197,7 @@ class NarrativeGenerator:
                 "region": context.region,
                 "data_sources": context.data_sources,
                 "section_count": len(sections),
-                "errors": context.metadata.get("errors", []),
+                "generation_errors": generation_errors,
             },
         )
 

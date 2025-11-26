@@ -88,7 +88,7 @@ services:
 
   # Ray Head Node
   ray-head:
-    image: rayproject/ray:2.9.0-py311
+    image: rayproject/ray:2.52.0-py311
     container_name: fiml-ray-head
     command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --metrics-export-port=8080 --block
     ports:
@@ -103,7 +103,7 @@ services:
 
   # Ray Worker Nodes
   ray-worker:
-    image: rayproject/ray:2.9.0-py311
+    image: rayproject/ray:2.52.0-py311
     command: ray start --address=ray-head:6379 --block
     depends_on:
       - ray-head
