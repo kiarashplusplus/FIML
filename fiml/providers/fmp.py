@@ -3,6 +3,7 @@ Financial Modeling Prep (FMP) Provider Implementation
 """
 
 import asyncio
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -49,7 +50,9 @@ class FMPProvider(BaseProvider):
         logger.info("Initializing FMP provider")
 
         if not self.config.api_key:
-            raise ProviderError("FMP API key not configured")
+            logger.warning("FMP API key not configured - provider will not be initialized")
+            self._is_initialized = False
+            return
 
         self._session = aiohttp.ClientSession()
         self._is_initialized = True
@@ -389,19 +392,41 @@ class FMPProvider(BaseProvider):
         # FMP primarily supports equities
         return asset.asset_type == AssetType.EQUITY
 
+    def _calculate_success_rate(self) -> float:
+        """Calculate success rate based on request and error counts"""
+        if self._request_count == 0:
+            return 0.0
+        return 1.0 - (self._error_count / self._request_count)
+
     async def get_health(self) -> ProviderHealth:
         """Get provider health metrics"""
+        # If not initialized, return unhealthy status with meaningful values
+        if not self._is_initialized:
+            return ProviderHealth(
+                provider_name=self.name,
+                is_healthy=False,
+                uptime_percent=0.0,
+                avg_latency_ms=0.0,
+                success_rate=0.0,
+                last_check=datetime.now(timezone.utc),
+                error_count_24h=0,
+            )
+
         try:
+            start_time = time.time()
+
             # Simple health check - fetch a known symbol
             test_asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
             await self.fetch_price(test_asset)
+
+            latency_ms = (time.time() - start_time) * 1000
 
             return ProviderHealth(
                 provider_name=self.name,
                 is_healthy=True,
                 uptime_percent=0.98,
-                avg_latency_ms=100.0,
-                success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
+                avg_latency_ms=latency_ms,
+                success_rate=self._calculate_success_rate(),
                 last_check=datetime.now(timezone.utc),
                 error_count_24h=self._error_count,
             )
@@ -412,9 +437,9 @@ class FMPProvider(BaseProvider):
                 is_healthy=False,
                 uptime_percent=0.0,
                 avg_latency_ms=0.0,
-                success_rate=0.0,
+                success_rate=self._calculate_success_rate(),
                 last_check=datetime.now(timezone.utc),
-                error_count_24h=self._error_count,
+                error_count_24h=self._error_count + 1,
             )
 
     def _record_request(self) -> None:
