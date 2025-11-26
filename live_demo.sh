@@ -167,6 +167,13 @@ http_get() {
     echo "$result"
 }
 
+# Calculate duration using awk for portability (bc may not be available)
+calc_duration() {
+    local start="$1"
+    local end="$2"
+    awk "BEGIN {printf \"%.2f\", $end - $start}" 2>/dev/null || echo "N/A"
+}
+
 # Start timing a section
 start_timing() {
     local section_name="$1"
@@ -178,7 +185,8 @@ end_timing() {
     local section_name="$1"
     local end_time=$(date +%s.%N)
     local start_time="${SECTION_TIMES[${section_name}_start]}"
-    local duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "N/A")
+    local duration
+    duration=$(calc_duration "$start_time" "$end_time")
     echo -e "  ${DIM}⏱  Completed in ${duration}s${NC}"
 }
 
@@ -220,10 +228,10 @@ start_timing "section1"
 
 print_subsection "System Health Check" "💚"
 health_response=$(http_get "/health")
-python3 -c "
+echo "$health_response" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${health_response}''')
+    data = json.load(sys.stdin)
     print(f\"  Status:      \033[32m{data.get('status', 'unknown').upper()}\033[0m\")
     print(f\"  Version:     {data.get('version', 'N/A')}\")
     print(f\"  Environment: {data.get('environment', 'N/A')}\")
@@ -233,10 +241,10 @@ except Exception as e:
 
 print_subsection "Database Health" "🗄️"
 db_health=$(http_get "/health/db")
-python3 -c "
+echo "$db_health" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${db_health}''')
+    data = json.load(sys.stdin)
     status = data.get('status', 'unknown')
     color = '\033[32m' if status == 'healthy' else '\033[31m'
     print(f\"  Status:   {color}{status.upper()}\033[0m\")
@@ -249,10 +257,10 @@ except Exception as e:
 
 print_subsection "Cache Health (Redis)" "📦"
 cache_health=$(http_get "/health/cache")
-python3 -c "
+echo "$cache_health" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${cache_health}''')
+    data = json.load(sys.stdin)
     status = data.get('status', 'unknown')
     color = '\033[32m' if status == 'healthy' else '\033[31m'
     print(f\"  Status:  {color}{status.upper()}\033[0m\")
@@ -264,10 +272,10 @@ except Exception as e:
 
 print_subsection "Provider Health Status" "🔌"
 providers_health=$(http_get "/health/providers")
-python3 -c "
+echo "$providers_health" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${providers_health}''')
+    data = json.load(sys.stdin)
     status = data.get('status', 'unknown')
     color = '\033[32m' if status == 'healthy' else '\033[33m' if status == 'degraded' else '\033[31m'
     print(f\"  Overall Status: {color}{status.upper()}\033[0m\")
@@ -288,10 +296,10 @@ except Exception as e:
 
 print_subsection "Cache Analytics" "📊"
 cache_metrics=$(http_get "/api/metrics/cache")
-python3 -c "
+echo "$cache_metrics" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${cache_metrics}''')
+    data = json.load(sys.stdin)
     l1 = data.get('l1_cache', {})
     l2 = data.get('l2_cache', {})
     print(\"  L1 Cache (Redis):\")
@@ -317,10 +325,10 @@ start_timing "section2"
 
 print_subsection "Stock Query with Narrative (AAPL - Standard Depth)" "🍎"
 aapl_response=$(call_mcp_tool "search-by-symbol" '{"symbol":"AAPL","market":"US","depth":"standard"}')
-python3 -c "
+echo "$aapl_response" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${aapl_response}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
@@ -350,17 +358,21 @@ except Exception as e:
 
 print_subsection "Cryptocurrency Query with Metrics (BTC)" "₿"
 btc_response=$(call_mcp_tool "search-by-coin" '{"symbol":"BTC","exchange":"binance","depth":"standard"}')
-python3 -c "
+echo "$btc_response" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${btc_response}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
         print(f\"  Symbol:   \033[1m{result.get('symbol', 'N/A')}\033[0m\")
         print(f\"  Pair:     {result.get('pair', 'N/A')}\")
         print(f\"  Exchange: {result.get('exchange', 'N/A')}\")
-        print(f\"  Price:    \033[33m\${cached.get('price', 'N/A'):,.2f}\033[0m\" if isinstance(cached.get('price'), (int, float)) else f\"  Price:    \${cached.get('price', 'N/A')}\")
+        price = cached.get('price', 'N/A')
+        if isinstance(price, (int, float)):
+            print(f\"  Price:    \033[33m\${price:,.2f}\033[0m\")
+        else:
+            print(f\"  Price:    \${price}\")
         change = cached.get('change', 0)
         change_pct = cached.get('change_percent', 0)
         color = '\033[32m' if change >= 0 else '\033[31m'
@@ -380,10 +392,10 @@ if [ "$QUICK_MODE" != true ]; then
     # Quick depth
     echo -e "\n  ${BOLD}Quick Depth:${NC}"
     tsla_quick=$(call_mcp_tool "search-by-symbol" '{"symbol":"TSLA","market":"US","depth":"quick"}')
-    python3 -c "
+    echo "$tsla_quick" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${tsla_quick}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
@@ -396,10 +408,10 @@ except:
     # Standard depth
     echo -e "\n  ${BOLD}Standard Depth:${NC}"
     tsla_standard=$(call_mcp_tool "search-by-symbol" '{"symbol":"TSLA","market":"US","depth":"standard"}')
-    python3 -c "
+    echo "$tsla_standard" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${tsla_standard}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
@@ -414,10 +426,10 @@ except:
     # Deep depth
     echo -e "\n  ${BOLD}Deep Depth:${NC}"
     tsla_deep=$(call_mcp_tool "search-by-symbol" '{"symbol":"TSLA","market":"US","depth":"deep"}')
-    python3 -c "
+    echo "$tsla_deep" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${tsla_deep}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
@@ -445,10 +457,10 @@ start_timing "section3"
 print_subsection "Simple EVALUATE Query" "▶️"
 echo -e "  ${DIM}Query: EVALUATE AAPL: PRICE, VOLUME${NC}"
 dsl_simple=$(call_mcp_tool "execute-fk-dsl" '{"query":"EVALUATE AAPL: PRICE, VOLUME","async":false}')
-python3 -c "
+echo "$dsl_simple" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${dsl_simple}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         status = result.get('status', 'unknown')
@@ -471,10 +483,10 @@ if [ "$QUICK_MODE" != true ]; then
     print_subsection "Multi-Asset COMPARE Query" "📊"
     echo -e "  ${DIM}Query: COMPARE AAPL, MSFT, GOOGL: PE_RATIO, MARKET_CAP${NC}"
     dsl_compare=$(call_mcp_tool "execute-fk-dsl" '{"query":"COMPARE AAPL, MSFT, GOOGL: PE_RATIO, MARKET_CAP","async":false}')
-    python3 -c "
+    echo "$dsl_compare" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${dsl_compare}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         status = result.get('status', 'unknown')
@@ -492,10 +504,10 @@ except:
     print_subsection "Correlation Analysis" "🔗"
     echo -e "  ${DIM}Query: CORRELATE BTC, ETH, SPY: 30d${NC}"
     dsl_correlate=$(call_mcp_tool "execute-fk-dsl" '{"query":"CORRELATE BTC, ETH, SPY: 30d","async":false}')
-    python3 -c "
+    echo "$dsl_correlate" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${dsl_correlate}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         print(f\"  Status: {result.get('status', 'N/A')}\")
@@ -513,10 +525,10 @@ except:
     print_subsection "Complex SCAN Query" "🔍"
     echo -e "  ${DIM}Query: SCAN US_TECH WHERE PE < 30 AND VOLUME > 1M${NC}"
     dsl_scan=$(call_mcp_tool "execute-fk-dsl" '{"query":"SCAN US_TECH WHERE PE < 30 AND VOLUME > 1M","async":false}')
-    python3 -c "
+    echo "$dsl_scan" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${dsl_scan}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         print(f\"  Status: {result.get('status', 'N/A')}\")
@@ -541,10 +553,10 @@ start_timing "section4"
 
 print_subsection "Create Analysis Session" "➕"
 session_response=$(call_mcp_tool "create-analysis-session" '{"assets":["AAPL","TSLA","BTC"],"sessionType":"portfolio","userId":"demo-user","ttlHours":24,"tags":["demo","live-test"]}')
-python3 -c "
+echo "$session_response" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${session_response}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         status = result.get('status', 'unknown')
@@ -557,28 +569,38 @@ try:
             print(f\"  TTL:        {result.get('ttl_hours', 'N/A')} hours\")
             print(f\"  Tags:       {', '.join(result.get('tags', []))}\")
             print(f\"  Expires:    {result.get('expires_at', 'N/A')}\")
-            # Export for later use
-            print(f\"SESSION_ID={session_id}\")
         else:
             print(f\"  \033[33mSession creation: {result.get('error', 'unknown error')}\033[0m\")
     else:
         print(\"  \033[33mSession management not available in demo mode\033[0m\")
 except Exception as e:
     print(f\"  \033[33mSession demonstration (requires database)\033[0m\")
-" | tee /tmp/session_output.txt
+"
 
-# Extract session ID
-SESSION_ID=$(grep "SESSION_ID=" /tmp/session_output.txt 2>/dev/null | cut -d'=' -f2 || echo "")
-rm -f /tmp/session_output.txt
+# Extract session ID using a secure temporary file
+SESSION_TEMP_FILE=$(mktemp 2>/dev/null || echo "/tmp/fiml_session_$$_$RANDOM.txt")
+echo "$session_response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if not data.get('isError', False):
+        result = json.loads(data['content'][0]['text'])
+        if result.get('status') == 'success':
+            print(result.get('session_id', ''))
+except:
+    pass
+" > "$SESSION_TEMP_FILE" 2>/dev/null
+SESSION_ID=$(cat "$SESSION_TEMP_FILE" 2>/dev/null | tr -d '\n' || echo "")
+rm -f "$SESSION_TEMP_FILE" 2>/dev/null
 
 if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "N/A" ]; then
     print_subsection "Query Within Session Context" "🔍"
     echo -e "  ${DIM}Querying AAPL within session context...${NC}"
     session_query=$(call_mcp_tool "search-by-symbol" "{\"symbol\":\"AAPL\",\"market\":\"US\",\"depth\":\"quick\",\"sessionId\":\"${SESSION_ID}\"}")
-    python3 -c "
+    echo "$session_query" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${session_query}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         print(f\"  Session-aware query completed\")
@@ -591,10 +613,10 @@ except:
 
     print_subsection "Session Analytics" "📊"
     analytics_response=$(call_mcp_tool "get-session-analytics" '{"days":30}')
-    python3 -c "
+    echo "$analytics_response" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${analytics_response}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         if result.get('status') == 'success':
@@ -624,10 +646,10 @@ start_timing "section5"
 print_subsection "Data Lineage Example" "🔍"
 echo -e "  ${DIM}Showing data source tracking for AAPL query...${NC}"
 lineage_response=$(call_mcp_tool "search-by-symbol" '{"symbol":"AAPL","market":"US","depth":"quick"}')
-python3 -c "
+echo "$lineage_response" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${lineage_response}''')
+    data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
@@ -651,10 +673,10 @@ except:
 print_subsection "Provider Selection Demo" "🎯"
 echo -e "  ${DIM}Demonstrating intelligent provider selection...${NC}"
 providers_health=$(http_get "/health/providers")
-python3 -c "
+echo "$providers_health" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${providers_health}''')
+    data = json.load(sys.stdin)
     providers = data.get('providers', {})
 
     if providers:
@@ -697,10 +719,10 @@ start_timing "section6"
 
 print_subsection "Cache Performance" "💾"
 cache_metrics=$(http_get "/api/metrics/cache")
-python3 -c "
+echo "$cache_metrics" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${cache_metrics}''')
+    data = json.load(sys.stdin)
 
     overall = data.get('overall', {})
     l1 = data.get('l1_cache', {})
@@ -730,10 +752,10 @@ except:
 
 print_subsection "Provider Latency Comparison" "📶"
 providers_health=$(http_get "/health/providers")
-python3 -c "
+echo "$providers_health" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${providers_health}''')
+    data = json.load(sys.stdin)
     providers = data.get('providers', {})
 
     if providers:
@@ -770,10 +792,10 @@ fi
 
 print_subsection "Task Registry Status" "📝"
 task_metrics=$(http_get "/api/metrics/tasks")
-python3 -c "
+echo "$task_metrics" | python3 -c "
 import sys, json
 try:
-    data = json.loads('''${task_metrics}''')
+    data = json.load(sys.stdin)
 
     print(f\"  Total Tasks:     {data.get('total_tasks', 0)}\")
     print(f\"  Active Tasks:    {data.get('active_tasks', 0)}\")
@@ -795,7 +817,7 @@ end_timing "section6"
 # Demo Summary
 # =============================================================================
 DEMO_END_TIME=$(date +%s.%N)
-TOTAL_DURATION=$(echo "$DEMO_END_TIME - $DEMO_START_TIME" | bc 2>/dev/null || echo "N/A")
+TOTAL_DURATION=$(calc_duration "$DEMO_START_TIME" "$DEMO_END_TIME")
 
 echo ""
 echo -e "${BOLD}${WHITE}╔════════════════════════════════════════════════════════════════╗${NC}"
