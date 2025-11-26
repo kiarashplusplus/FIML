@@ -14,6 +14,7 @@ from fiml.alerts.router import alert_router
 from fiml.core.config import settings
 from fiml.core.exceptions import FIMLException
 from fiml.core.logging import get_logger
+from fiml.core.sentry import capture_exception, set_context
 from fiml.mcp.router import mcp_router
 from fiml.monitoring.performance import PerformanceMiddleware
 from fiml.providers import provider_registry
@@ -378,6 +379,12 @@ async def fiml_exception_handler(request: Request, exc: FIMLException) -> JSONRe
         exception_type=type(exc).__name__,
         path=request.url.path,
     )
+    # Capture FIML exceptions to Sentry with context
+    capture_exception(
+        exc,
+        request_path=request.url.path,
+        request_method=request.method,
+    )
     return JSONResponse(
         status_code=400,
         content={
@@ -396,6 +403,13 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         exception_type=type(exc).__name__,
         path=request.url.path,
     )
+    # Capture unexpected exceptions to Sentry with request context
+    set_context("request", {
+        "path": request.url.path,
+        "method": request.method,
+        "query_string": str(request.query_params),
+    })
+    capture_exception(exc)
     return JSONResponse(
         status_code=500,
         content={

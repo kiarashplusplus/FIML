@@ -1,5 +1,5 @@
 """
-Structured logging configuration
+Structured logging configuration with Sentry integration
 """
 
 import logging
@@ -9,7 +9,9 @@ from typing import Any
 import structlog
 from structlog.types import EventDict, Processor
 
+from fiml import __version__
 from fiml.core.config import settings
+from fiml.core.sentry import init_sentry
 
 
 def add_app_context(logger: Any, method_name: str, event_dict: EventDict) -> EventDict:
@@ -20,10 +22,21 @@ def add_app_context(logger: Any, method_name: str, event_dict: EventDict) -> Eve
 
 
 def configure_logging() -> None:
-    """Configure structured logging with structlog"""
+    """Configure structured logging with structlog and initialize Sentry"""
 
     # Determine log level
     log_level = getattr(logging, settings.fiml_log_level.upper())
+
+    # Initialize Sentry for error tracking if DSN is configured
+    # Sentry should be initialized early to capture any startup errors
+    sentry_initialized = init_sentry(
+        dsn=settings.sentry_dsn,
+        environment=settings.fiml_env,
+        release=f"fiml@{__version__}",
+        # Higher sample rate in production for better visibility
+        traces_sample_rate=0.1 if settings.is_production else 0.0,
+        profiles_sample_rate=0.1 if settings.is_production else 0.0,
+    )
 
     # Configure structlog processors
     processors: list[Processor] = [
@@ -59,6 +72,11 @@ def configure_logging() -> None:
         stream=sys.stdout,
         level=log_level,
     )
+
+    # Log Sentry initialization status (only after logging is configured)
+    if sentry_initialized:
+        temp_logger = structlog.get_logger("fiml.sentry")
+        temp_logger.info("Sentry error tracking initialized", environment=settings.fiml_env)
 
 
 def get_logger(name: str) -> structlog.BoundLogger:
