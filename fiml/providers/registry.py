@@ -244,8 +244,12 @@ class ProviderRegistry:
         for provider in providers_to_register:
             try:
                 await provider.initialize()
-                self.providers[provider.name] = provider
-                logger.info(f"Registered provider: {provider.name}")
+                # Only register providers that successfully initialized
+                if provider._is_initialized:
+                    self.providers[provider.name] = provider
+                    logger.info(f"Registered provider: {provider.name}")
+                else:
+                    logger.warning(f"Provider {provider.name} not initialized - skipping registration")
             except Exception as e:
                 logger.error(f"Failed to initialize provider {provider.name}: {e}")
 

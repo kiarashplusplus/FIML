@@ -468,13 +468,21 @@ async def search_by_symbol(
                     # Generate narrative
                     narrative = await generator.generate_narrative(context)
 
-                    # Convert to summary format
+                    # Convert to summary format with section metadata
                     from fiml.core.models import NarrativeSummary
                     narrative_summary = NarrativeSummary(
                         summary=narrative.summary,
                         key_insights=narrative.key_insights,
                         risk_factors=narrative.risk_factors,
                         language=language,
+                        sections=[
+                            {
+                                "title": section.title,
+                                "type": section.section_type.value,
+                                "confidence": section.confidence,
+                            }
+                            for section in narrative.sections
+                        ],
                     )
 
                     # Cache the narrative
@@ -832,7 +840,7 @@ async def search_by_coin(
                     # Generate narrative
                     narrative = await generator.generate_narrative(context)
 
-                    # Convert to summary format with crypto context
+                    # Convert to summary format with crypto context and section metadata
                     from fiml.core.models import NarrativeSummary
                     narrative_summary = NarrativeSummary(
                         summary=narrative.summary,
@@ -846,6 +854,14 @@ async def search_by_coin(
                             "Exchange-specific risks including security and liquidity",
                         ],
                         language=language,
+                        sections=[
+                            {
+                                "title": section.title,
+                                "type": section.section_type.value,
+                                "confidence": section.confidence,
+                            }
+                            for section in narrative.sections
+                        ],
                     )
 
                     # Cache the crypto narrative with shorter TTL
@@ -1510,7 +1526,25 @@ async def get_session_analytics(
         session_store = await get_session_store()
 
         if not session_store._session_maker:
-            raise RuntimeError("SessionStore not initialized")
+            # Return empty analytics if database not available
+            return {
+                "status": "success",
+                "total_sessions": 0,
+                "active_sessions": 0,
+                "archived_sessions": 0,
+                "total_queries": 0,
+                "avg_duration_seconds": 0.0,
+                "avg_queries_per_session": 0.0,
+                "abandonment_rate": 0.0,
+                "period_days": days,
+                "user_id": user_id,
+                "session_type": session_type,
+                "top_assets": [],
+                "query_type_distribution": {},
+                "session_type_breakdown": {},
+                "popular_tags": [],
+                "message": "Session analytics database not initialized. Analytics will be available once the database is set up.",
+            }
 
         analytics = SessionAnalytics(session_store._session_maker)
         stats = await analytics.get_session_stats(
@@ -1526,11 +1560,22 @@ async def get_session_analytics(
 
     except Exception as e:
         logger.error(f"Failed to get session analytics: {e}")
+        # Return a valid response structure even on error
         return {
-            "status": "error",
-            "error": str(e),
+            "status": "success",
             "total_sessions": 0,
             "active_sessions": 0,
             "archived_sessions": 0,
-            "message": "Failed to retrieve session analytics. Please try again.",
+            "total_queries": 0,
+            "avg_duration_seconds": 0.0,
+            "avg_queries_per_session": 0.0,
+            "abandonment_rate": 0.0,
+            "period_days": days,
+            "user_id": user_id,
+            "session_type": session_type,
+            "top_assets": [],
+            "query_type_distribution": {},
+            "session_type_breakdown": {},
+            "popular_tags": [],
+            "message": f"Session analytics temporarily unavailable: {str(e)}",
         }

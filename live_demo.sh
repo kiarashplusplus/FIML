@@ -481,8 +481,8 @@ except Exception as e:
 
 if [ "$QUICK_MODE" != true ]; then
     print_subsection "Multi-Asset COMPARE Query" "📊"
-    echo -e "  ${DIM}Query: COMPARE AAPL, MSFT, GOOGL: PE_RATIO, MARKET_CAP${NC}"
-    dsl_compare=$(call_mcp_tool "execute-fk-dsl" '{"query":"COMPARE AAPL, MSFT, GOOGL: PE_RATIO, MARKET_CAP","async":false}')
+    echo -e "  ${DIM}Query: COMPARE AAPL, MSFT, GOOGL BY PE, MARKETCAP${NC}"
+    dsl_compare=$(call_mcp_tool "execute-fk-dsl" '{"query":"COMPARE AAPL, MSFT, GOOGL BY PE, MARKETCAP","async":false}')
     echo "$dsl_compare" | python3 -c "
 import sys, json
 try:
@@ -502,8 +502,8 @@ except:
 "
 
     print_subsection "Correlation Analysis" "🔗"
-    echo -e "  ${DIM}Query: CORRELATE BTC, ETH, SPY: 30d${NC}"
-    dsl_correlate=$(call_mcp_tool "execute-fk-dsl" '{"query":"CORRELATE BTC, ETH, SPY: 30d","async":false}')
+    echo -e "  ${DIM}Query: CORRELATE BTC WITH ETH, SPY WINDOW 30d${NC}"
+    dsl_correlate=$(call_mcp_tool "execute-fk-dsl" '{"query":"CORRELATE BTC WITH ETH, SPY WINDOW 30d","async":false}')
     echo "$dsl_correlate" | python3 -c "
 import sys, json
 try:
@@ -523,8 +523,8 @@ except:
 "
 
     print_subsection "Complex SCAN Query" "🔍"
-    echo -e "  ${DIM}Query: SCAN US_TECH WHERE PE < 30 AND VOLUME > 1M${NC}"
-    dsl_scan=$(call_mcp_tool "execute-fk-dsl" '{"query":"SCAN US_TECH WHERE PE < 30 AND VOLUME > 1M","async":false}')
+    echo -e "  ${DIM}Query: SCAN US_TECH WHERE PE < 30 AND VOLUME > 1000000${NC}"
+    dsl_scan=$(call_mcp_tool "execute-fk-dsl" '{"query":"SCAN US_TECH WHERE PE < 30 AND VOLUME > 1000000","async":false}')
     echo "$dsl_scan" | python3 -c "
 import sys, json
 try:

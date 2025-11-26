@@ -173,6 +173,7 @@ class NarrativeSummary(BaseModel):
     macro_context: Optional[str] = None
     technical_context: Optional[str] = None
     language: str = "en"
+    sections: List[Dict[str, Any]] = []  # Section metadata for reference
 
 
 class SearchBySymbolResponse(BaseModel):
