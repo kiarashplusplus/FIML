@@ -248,8 +248,9 @@ class TestTelegramBotAdapter:
         session_id = adapter.quiz_system.create_session(user_id, "test_lesson", questions)
 
         # Create mock callback query
+        # Use index 1 for "Ownership" (correct answer)
         mock_query = MagicMock()
-        mock_query.data = f"quiz_answer:{session_id}:0:Ownership"
+        mock_query.data = f"quiz_answer:{session_id}:0:1"
         mock_query.answer = AsyncMock()
         mock_query.edit_message_text = AsyncMock()
 
@@ -285,8 +286,9 @@ class TestTelegramBotAdapter:
         session_id = adapter.quiz_system.create_session(user_id, "test_lesson", questions)
 
         # Create mock callback query with wrong answer
+        # Use index 0 for "Bond" (incorrect answer)
         mock_query = MagicMock()
-        mock_query.data = f"quiz_answer:{session_id}:0:Bond"
+        mock_query.data = f"quiz_answer:{session_id}:0:0"
         mock_query.answer = AsyncMock()
         mock_query.edit_message_text = AsyncMock()
 
@@ -620,8 +622,9 @@ class TestTelegramAdapterIntegration:
         assert session_id is not None
 
         # Answer first question correctly
+        # Use index 1 for "Ownership in a company"
         mock_query = MagicMock()
-        mock_query.data = f"quiz_answer:{session_id}:0:Ownership in a company"
+        mock_query.data = f"quiz_answer:{session_id}:0:1"
         mock_query.answer = AsyncMock()
         mock_query.edit_message_text = AsyncMock()
 

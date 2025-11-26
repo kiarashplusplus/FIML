@@ -614,7 +614,7 @@ def mock_aiohttp_for_providers():
 
     original_get = None
 
-    async def selective_mock_get(self, url, *args, **kwargs):
+    def selective_mock_get(self, url, *args, **kwargs):
         """Only mock calls to financial data provider domains"""
         url_str = str(url)
 
@@ -625,7 +625,7 @@ def mock_aiohttp_for_providers():
 
         # For all other calls, use the original method
         if original_get is not None:
-            return await original_get(self, url, *args, **kwargs)
+            return original_get(self, url, *args, **kwargs)
 
         # Fallback: return mock response to be safe
         return mock_response

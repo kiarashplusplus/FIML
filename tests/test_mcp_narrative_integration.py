@@ -10,7 +10,7 @@ in standard test environments. They are meant for manual/integration testing.
 
 import os
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -21,15 +21,76 @@ from fiml.mcp.tools import (
     search_by_symbol,
 )
 
-# Skip all tests in this module if using mock Azure OpenAI endpoint
-pytestmark = pytest.mark.skipif(
-    os.getenv("AZURE_OPENAI_ENDPOINT", "").startswith("https://mock"),
-    reason="Narrative integration tests require real Azure OpenAI endpoint"
-)
-
+# Skip logic removed to enable tests with mocks
+# pytestmark = pytest.mark.skipif(...)
 
 @pytest.fixture(autouse=True)
-async def mock_providers():
+def mock_azure_openai_httpx(monkeypatch):
+    """
+    Custom mock for narrative integration tests that handles different prompt types
+    and forces mock endpoint usage.
+    """
+    # Force mock endpoint
+    monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://mock-azure-openai.openai.azure.com/")
+    monkeypatch.setenv("AZURE_OPENAI_API_KEY", "mock-key")
+    
+    from fiml.core.config import settings
+    settings.azure_openai_endpoint = "https://mock-azure-openai.openai.azure.com/"
+    settings.azure_openai_api_key = "mock-key"
+
+    # Create mock response
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+
+    # Create a shared state for the mock response to access the request payload
+    request_payload = {}
+
+    def side_effect(*args, **kwargs):
+        # Use the captured payload
+        json_payload = request_payload.get('json', {})
+        messages = json_payload.get('messages', [])
+        user_content = next((m['content'] for m in messages if m['role'] == 'user'), "")
+        
+        content = "Mock narrative content for testing. This is a longer sentence to ensure we meet the minimum length requirements for summaries and sections in the narrative generation tests. It needs to be at least 50 characters long."
+        
+        if "JSON array" in user_content or "extract insights" in user_content.lower():
+            content = '["Insight 1: The market is showing strong bullish momentum based on recent price action.", "Insight 2: Technical indicators suggest overbought conditions in the short term.", "Insight 3: Fundamental metrics remain solid with healthy profit margins."]'
+        elif "sentiment" in user_content.lower() and "JSON object" in messages[0].get('content', ''):
+             content = '{"positive": 0.7, "negative": 0.1, "neutral": 0.2}'
+        
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": content,
+                    },
+                    "finish_reason": "stop",
+                    "index": 0,
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 20,
+                "total_tokens": 30,
+            },
+        }
+
+    mock_response.json = MagicMock(side_effect=side_effect)
+
+    # Patch httpx
+    import httpx
+    
+    async def mock_post(self, url, *args, **kwargs):
+        # Capture the payload
+        request_payload['json'] = kwargs.get('json', {})
+        return mock_response
+
+    with patch.object(httpx.AsyncClient, "post", mock_post):
+        yield
+
+@pytest.fixture(autouse=True)
+def mock_providers():
     """Mock provider responses for narrative integration tests"""
     from fiml.core.models import ArbitrationPlan, Asset, AssetType, DataType
     from fiml.providers.base import ProviderResponse
@@ -63,11 +124,68 @@ async def mock_providers():
         )
 
     async def mock_execute_with_fallback(*args, **kwargs):
-        return mock_response
+       # Check which data type is being requested
+        data_type = args[2] if len(args) > 2 else kwargs.get("data_type", DataType.PRICE)
+        
+        if data_type == DataType.FUNDAMENTALS:
+            # Return fundamental data with PE ratio to trigger risk factor
+            return ProviderResponse(
+                provider="mock_provider",
+                asset=mock_asset,
+                data_type=DataType.FUNDAMENTALS,
+                data={
+                    "pe_ratio": 45.0,  # High PE ratio to trigger risk factor
+                    "market_cap": 2500000000000,
+                    "beta": 1.8,  # High beta to trigger risk factor
+                },
+                timestamp=datetime.now(timezone.utc),
+                is_valid=True,
+                is_fresh=True,
+                confidence=1.0,
+            )
+        elif data_type == DataType.TECHNICAL:
+            # Return technical data with high RSI to trigger risk factor
+            return ProviderResponse(
+                provider="mock_provider",
+                asset=mock_asset,
+                data_type=DataType.TECHNICAL,
+                data={
+                    "rsi": 75.0,  # Overbought RSI to trigger risk factor
+                    "macd": {"macd": 2.5, "signal": 1.5, "histogram": 1.0},
+                },
+                timestamp=datetime.now(timezone.utc),
+                is_valid=True,
+                is_fresh=True,
+                confidence=1.0,
+            )
+        else:
+            # Return price data
+            return mock_response
 
     with patch("fiml.arbitration.engine.arbitration_engine.arbitrate_request", side_effect=mock_arbitrate_request), \
          patch("fiml.arbitration.engine.arbitration_engine.execute_with_fallback", side_effect=mock_execute_with_fallback):
         yield
+
+@pytest.fixture(autouse=True)
+async def init_cache():
+    """Initialize cache manager for tests"""
+    from fiml.cache.manager import cache_manager
+    
+    # Initialize cache manager
+    await cache_manager.initialize()
+    
+    # Flush Redis to prevent cache pollution between tests
+    if cache_manager.l1._redis:
+        await cache_manager.l1._redis.flushdb()
+    
+    yield
+    
+    # Flush again on teardown
+    if cache_manager.l1._redis:
+        await cache_manager.l1._redis.flushdb()
+    
+    await cache_manager.shutdown()
+
 
 
 class TestMCPNarrativeIntegration:
