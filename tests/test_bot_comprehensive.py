@@ -417,7 +417,6 @@ class TestGamificationEngine:
         # Check badge was added
         assert gamification_engine.has_badge(user_id, badge_id) is True
 
-    @pytest.mark.asyncio
     def test_streak_tracking(self, gamification_engine):
         """Test daily streak tracking"""
         user_id = "test_user"
