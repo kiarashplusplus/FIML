@@ -372,7 +372,7 @@ def reset_cache_singletons():
 
 
 @pytest.fixture(autouse=True)
-def mock_yfinance_network_calls():
+def mock_yfinance_network_calls(request):
     """
     Mock yfinance network calls to prevent tests from making real HTTP requests.
 
@@ -380,6 +380,10 @@ def mock_yfinance_network_calls():
     preventing Yahoo Finance API calls during testing. Tests that need real
     API calls should use the @pytest.mark.live marker.
     """
+    # Skip mocking for live tests
+    if 'live' in request.keywords:
+        yield
+        return
     # Create mock data for yfinance
     mock_info = {
         "currentPrice": 150.25,
@@ -467,13 +471,18 @@ def mock_yfinance_network_calls():
 
 
 @pytest.fixture(autouse=True)
-def mock_ccxt_network_calls():
+def mock_ccxt_network_calls(request):
     """
     Mock CCXT network calls to prevent tests from making real HTTP requests
     to cryptocurrency exchanges like Binance.
 
     This fixture is autouse=True, so it applies to all tests automatically.
+    Tests that need real API calls should use the @pytest.mark.live marker.
     """
+    # Skip mocking for live tests
+    if 'live' in request.keywords:
+        yield
+        return
     # Create a factory function that creates mock exchange instances
     def create_mock_exchange():
         mock_exchange = AsyncMock()
@@ -557,7 +566,7 @@ def mock_ccxt_network_calls():
 
 
 @pytest.fixture(autouse=True)
-def mock_aiohttp_for_providers():
+def mock_aiohttp_for_providers(request):
     """
     Mock aiohttp.ClientSession.get for provider API calls to external services.
 
@@ -565,7 +574,12 @@ def mock_aiohttp_for_providers():
     like CoinGecko, NewsAPI, Polygon, Finnhub, etc.
 
     Note: This only mocks specific financial data API domains, not all HTTP calls.
+    Tests that need real API calls should use the @pytest.mark.live marker.
     """
+    # Skip mocking for live tests
+    if 'live' in request.keywords:
+        yield
+        return
     # List of domains to mock (financial data providers and their dependencies)
     provider_domains = [
         # Financial data providers
