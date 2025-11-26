@@ -198,7 +198,7 @@ class TestTelegramBotAdapter:
         # Set some context data to be cleared
         mock_context.user_data["test_key"] = "test_value"
 
-        result = await adapter.cmd_cancel(mock_update, mock_context)
+        await adapter.cmd_cancel(mock_update, mock_context)
 
         mock_update.message.reply_text.assert_called_once()
         args = mock_update.message.reply_text.call_args[0]

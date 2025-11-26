@@ -2,7 +2,6 @@
 Tests for UserProviderKeyManager (Component 1)
 """
 
-
 import json
 
 import pytest
