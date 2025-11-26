@@ -8,12 +8,44 @@ from typing import List, Optional
 
 import ccxt.async_support as ccxt  # type: ignore[import-untyped]
 
-from fiml.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError
+from fiml.core.exceptions import (
+    ProviderError,
+    ProviderRateLimitError,
+    ProviderTimeoutError,
+    RegionalRestrictionError,
+)
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider, ProviderConfig, ProviderResponse
 
 logger = get_logger(__name__)
+
+
+def _is_geo_blocked_error(error_message: str) -> bool:
+    """
+    Check if an error message indicates geo-blocking (CloudFront/CDN blocking).
+
+    Some exchanges (like bybit) use CloudFront to geo-block certain regions,
+    returning a 403 error that ccxt interprets as RateLimitExceeded.
+
+    Args:
+        error_message: The error message string to check
+
+    Returns:
+        True if the error appears to be geo-blocking related
+    """
+    geo_block_indicators = [
+        "cloudfront",
+        "block access from your country",
+        "access denied",
+        "geographical",
+        "geo-restrict",
+        "region",
+        "your country",
+        "access from your location",
+    ]
+    error_lower = error_message.lower()
+    return any(indicator in error_lower for indicator in geo_block_indicators)
 
 
 class CCXTProvider(BaseProvider):
@@ -58,7 +90,104 @@ class CCXTProvider(BaseProvider):
             self._is_initialized = True
             logger.info(f"CCXT provider initialized with {len(self._exchange.markets)} markets")
 
+        except (ccxt.RateLimitExceeded, ccxt.DDoSProtection) as e:
+            error_msg = str(e)
+            # Check for geo-blocking (e.g., CloudFront blocking certain countries)
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} is geo-blocked or access denied",
+                    exchange=self.exchange_id,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
+            logger.warning(
+                "Rate limit or DDoS protection triggered during initialization",
+                exchange=self.exchange_id,
+                error=error_msg[:200],
+            )
+            raise ProviderRateLimitError(
+                f"Rate limit exceeded for {self.exchange_id} during initialization",
+                retry_after=60
+            )
+        except ccxt.OnMaintenance as e:
+            logger.warning(
+                f"Exchange {self.exchange_id} is under maintenance",
+                exchange=self.exchange_id,
+                error=str(e)[:200],
+            )
+            raise ProviderError(
+                f"Exchange {self.exchange_id} is under maintenance"
+            )
+        except ccxt.ExchangeNotAvailable as e:
+            logger.warning(
+                f"Exchange {self.exchange_id} is not available",
+                exchange=self.exchange_id,
+                error=str(e)[:200],
+            )
+            raise ProviderError(
+                f"Exchange {self.exchange_id} is currently unavailable"
+            )
+        except ccxt.AuthenticationError as e:
+            logger.error(
+                f"Authentication failed for exchange {self.exchange_id}",
+                exchange=self.exchange_id,
+                error=str(e)[:200],
+            )
+            raise ProviderError(
+                f"Authentication failed for {self.exchange_id}"
+            )
+        except ccxt.RequestTimeout as e:
+            logger.warning(
+                f"Request timeout during initialization for {self.exchange_id}",
+                exchange=self.exchange_id,
+                error=str(e)[:200],
+            )
+            raise ProviderTimeoutError(
+                f"Timeout connecting to {self.exchange_id}"
+            )
+        except ccxt.NetworkError as e:
+            logger.error(
+                f"Network error during initialization for {self.exchange_id}",
+                exchange=self.exchange_id,
+                error=str(e)[:200],
+            )
+            raise ProviderTimeoutError(
+                f"Network error connecting to {self.exchange_id}: {e}"
+            )
+        except ccxt.ExchangeError as e:
+            error_msg = str(e)
+            # Check for geo-blocking in exchange errors too
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
+            logger.error(
+                f"Exchange error during initialization for {self.exchange_id}",
+                exchange=self.exchange_id,
+                error=error_msg[:200],
+            )
+            raise ProviderError(
+                f"Failed to initialize {self.exchange_id}: {e}"
+            )
         except Exception as e:
+            error_msg = str(e)
+            # Final check for geo-blocking in any exception type
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             raise ProviderError(f"Failed to initialize CCXT with {self.exchange_id}: {e}")
 
     async def shutdown(self) -> None:
@@ -128,23 +257,71 @@ class CCXTProvider(BaseProvider):
                 },
             )
 
-        except ccxt.RateLimitExceeded as e:
+        except (ccxt.RateLimitExceeded, ccxt.DDoSProtection) as e:
             self._record_error()
+            error_msg = str(e)
+            # Check for geo-blocking (e.g., CloudFront blocking certain countries)
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} is geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
             raise ProviderRateLimitError(
                 "Exchange rate limit exceeded",
                 retry_after=60
             )
+        except ccxt.OnMaintenance as e:
+            self._record_error()
+            logger.warning(f"Exchange {self.exchange_id} is under maintenance: {e}")
+            raise ProviderError(f"Exchange {self.exchange_id} is under maintenance")
+        except ccxt.ExchangeNotAvailable as e:
+            self._record_error()
+            logger.warning(f"Exchange {self.exchange_id} is not available: {e}")
+            raise ProviderError(f"Exchange {self.exchange_id} is currently unavailable")
+        except ccxt.RequestTimeout as e:
+            self._record_error()
+            logger.warning(f"Request timeout on {self.exchange_id}: {e}")
+            raise ProviderTimeoutError(f"Request timeout: {e}")
         except ccxt.NetworkError as e:
             self._record_error()
             logger.error(f"Network error on {self.exchange_id}: {e}")
             raise ProviderTimeoutError(f"Network error: {e}")
         except ccxt.ExchangeError as e:
             self._record_error()
+            error_msg = str(e)
+            # Check for geo-blocking in exchange errors too
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.error(f"Exchange error on {self.exchange_id}: {e}")
             raise ProviderError(f"Exchange error: {e}")
         except Exception as e:
             self._record_error()
+            error_msg = str(e)
+            # Final check for geo-blocking in any exception type
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.error(f"Error fetching price from {self.exchange_id} for {asset.symbol}: {e}")
             raise ProviderError(f"CCXT fetch failed: {e}")
 
@@ -220,23 +397,71 @@ class CCXTProvider(BaseProvider):
                 },
             )
 
-        except ccxt.RateLimitExceeded as e:
+        except (ccxt.RateLimitExceeded, ccxt.DDoSProtection) as e:
             self._record_error()
+            error_msg = str(e)
+            # Check for geo-blocking (e.g., CloudFront blocking certain countries)
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} is geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
             raise ProviderRateLimitError(
                 "Exchange rate limit exceeded",
                 retry_after=60
             )
+        except ccxt.OnMaintenance as e:
+            self._record_error()
+            logger.warning(f"Exchange {self.exchange_id} is under maintenance: {e}")
+            raise ProviderError(f"Exchange {self.exchange_id} is under maintenance")
+        except ccxt.ExchangeNotAvailable as e:
+            self._record_error()
+            logger.warning(f"Exchange {self.exchange_id} is not available: {e}")
+            raise ProviderError(f"Exchange {self.exchange_id} is currently unavailable")
+        except ccxt.RequestTimeout as e:
+            self._record_error()
+            logger.warning(f"Request timeout on {self.exchange_id}: {e}")
+            raise ProviderTimeoutError(f"Request timeout: {e}")
         except ccxt.NetworkError as e:
             self._record_error()
             logger.error(f"Network error on {self.exchange_id}: {e}")
             raise ProviderTimeoutError(f"Network error: {e}")
         except ccxt.ExchangeError as e:
             self._record_error()
+            error_msg = str(e)
+            # Check for geo-blocking in exchange errors too
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.error(f"Exchange error on {self.exchange_id}: {e}")
             raise ProviderError(f"Exchange error: {e}")
         except Exception as e:
             self._record_error()
+            error_msg = str(e)
+            # Final check for geo-blocking in any exception type
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.error(f"Error fetching OHLCV from {self.exchange_id} for {asset.symbol}: {e}")
             raise ProviderError(f"CCXT OHLCV fetch failed: {e}")
 
@@ -310,23 +535,71 @@ class CCXTProvider(BaseProvider):
                 },
             )
 
-        except ccxt.RateLimitExceeded as e:
+        except (ccxt.RateLimitExceeded, ccxt.DDoSProtection) as e:
             self._record_error()
+            error_msg = str(e)
+            # Check for geo-blocking (e.g., CloudFront blocking certain countries)
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} is geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
             raise ProviderRateLimitError(
                 "Exchange rate limit exceeded",
                 retry_after=60
             )
+        except ccxt.OnMaintenance as e:
+            self._record_error()
+            logger.warning(f"Exchange {self.exchange_id} is under maintenance: {e}")
+            raise ProviderError(f"Exchange {self.exchange_id} is under maintenance")
+        except ccxt.ExchangeNotAvailable as e:
+            self._record_error()
+            logger.warning(f"Exchange {self.exchange_id} is not available: {e}")
+            raise ProviderError(f"Exchange {self.exchange_id} is currently unavailable")
+        except ccxt.RequestTimeout as e:
+            self._record_error()
+            logger.warning(f"Request timeout on {self.exchange_id}: {e}")
+            raise ProviderTimeoutError(f"Request timeout: {e}")
         except ccxt.NetworkError as e:
             self._record_error()
             logger.error(f"Network error on {self.exchange_id}: {e}")
             raise ProviderTimeoutError(f"Network error: {e}")
         except ccxt.ExchangeError as e:
             self._record_error()
+            error_msg = str(e)
+            # Check for geo-blocking in exchange errors too
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.error(f"Exchange error on {self.exchange_id}: {e}")
             raise ProviderError(f"Exchange error: {e}")
         except Exception as e:
             self._record_error()
+            error_msg = str(e)
+            # Final check for geo-blocking in any exception type
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    asset=asset.symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
             logger.error(f"Error fetching crypto metrics from {self.exchange_id} for {asset.symbol}: {e}")
             raise ProviderError(f"CCXT fundamentals fetch failed: {e}")
 
