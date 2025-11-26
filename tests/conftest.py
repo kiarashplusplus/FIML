@@ -655,7 +655,7 @@ def mock_aiohttp_for_providers(request):
 def configure_caplog(caplog):
     """
     Configure caplog to capture all log levels for each test.
-    
+
     This ensures caplog.text contains all logged messages during test execution.
     The 'function' scope ensures each test gets a fresh caplog instance.
     """

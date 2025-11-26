@@ -131,14 +131,14 @@ class GamificationEngine:
         """Save user stats to session store"""
         if not self._session_store or user_id not in self._user_stats:
             return
-        
+
         stats = self._user_stats[user_id]
         data = asdict(stats)
-        
+
         # Convert datetime to ISO string
         if data.get("last_activity"):
             data["last_activity"] = data["last_activity"].isoformat()
-        
+
         # Store in session store context
         key = f"gamification:{user_id}"
         try:
@@ -155,22 +155,22 @@ class GamificationEngine:
         """Load user stats from session store"""
         if not self._session_store:
             return None
-        
+
         key = f"gamification:{user_id}"
         try:
             if hasattr(self._session_store, '_redis') and self._session_store._redis:
                 data_str = await self._session_store._redis.get(key)
                 if not data_str:
                     return None
-                
+
                 # Parse the string representation back to dict
                 import ast
                 data = ast.literal_eval(data_str)
-                
+
                 # Convert ISO string back to datetime
                 if data.get("last_activity"):
                     data["last_activity"] = datetime.fromisoformat(data["last_activity"])
-                
+
                 return UserStats(**data)
         except Exception as e:
             logger.error("Failed to load user stats", user_id=user_id, error=str(e))
@@ -232,7 +232,7 @@ class GamificationEngine:
 
         # Update activity
         stats.last_activity = datetime.now(UTC)
-        
+
         # Save to session store
         await self._save_user_stats(user_id)
 
@@ -310,7 +310,7 @@ class GamificationEngine:
             old_streak = stats.streak_days
             stats.streak_days = 1
             stats.last_activity = now
-            
+
             # Save to session store
             await self._save_user_stats(user_id)
 
@@ -334,7 +334,7 @@ class GamificationEngine:
         # Award XP
         if badge.xp_reward > 0:
             stats.total_xp += badge.xp_reward
-        
+
         # Save to session store
         await self._save_user_stats(user_id)
 

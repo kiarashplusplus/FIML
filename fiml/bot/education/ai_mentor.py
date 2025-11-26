@@ -82,15 +82,15 @@ class AIMentorService:
     def _extract_symbol_from_question(self, question: str) -> str:
         """
         Extract stock symbol from user question.
-        
+
         Args:
             question: User's question text
-            
+
         Returns:
             Detected stock symbol or 'AAPL' as default
         """
         question_upper = question.upper()
-        
+
         # Common stock symbols to look for (expandable)
         common_symbols = [
             "AAPL", "GOOGL", "GOOG", "MSFT", "AMZN", "TSLA", "META", "NVDA",
@@ -98,12 +98,12 @@ class AIMentorService:
             "INTC", "CSCO", "VZ", "PFE", "KO", "PEP", "NKE", "MCD", "BA",
             "GE", "IBM", "GM", "F", "T", "XOM", "CVX", "ORCL", "CRM", "AMD"
         ]
-        
+
         # Check for explicit mentions
         for symbol in common_symbols:
             if symbol in question_upper.split():
                 return symbol
-        
+
         # Check for company name mentions
         company_map = {
             "APPLE": "AAPL",
@@ -118,11 +118,11 @@ class AIMentorService:
             "NETFLIX": "NFLX",
             "DISNEY": "DIS",
         }
-        
+
         for company_name, symbol in company_map.items():
             if company_name in question_upper:
                 return symbol
-        
+
         # Default to AAPL if no symbol detected
         return "AAPL"
 
@@ -160,7 +160,7 @@ class AIMentorService:
         try:
             # Extract symbol from question or use provided context
             symbol = context.get("symbol") if context and "symbol" in context else self._extract_symbol_from_question(question)
-            
+
             # Use FIML narrative generation for educational responses
             # Build narrative context from educational question
             narrative_context = NarrativeContext(

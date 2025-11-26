@@ -148,7 +148,7 @@ class SessionAnalytics:
             async with self._session_maker() as db_session:
                 # Calculate cutoff date for filtering
                 cutoff_date = datetime.now(UTC) - timedelta(days=days)
-                
+
                 # Try to query session metrics (may not exist if tables not created)
                 metrics = []
                 try:
@@ -172,27 +172,27 @@ class SessionAnalytics:
                 # Count active sessions from Redis if session_store is available
                 active_sessions = 0
                 active_sessions_data = []
-                
+
                 if self._session_store and self._session_store._redis:
                     try:
                         import json
                         pattern = "session:*"
                         cursor = 0
-                        
+
                         logger.debug(f"Scanning Redis for active sessions with pattern: {pattern}")
-                        
+
                         while True:
                             cursor, keys = await self._session_store._redis.scan(
                                 cursor, match=pattern, count=100
                             )
-                            
+
                             logger.debug(f"Redis SCAN returned {len(keys)} keys, cursor={cursor}")
-                            
+
                             for key in keys:
                                 session_data = await self._session_store._redis.get(key)
                                 if session_data:
                                     session_dict = json.loads(session_data)
-                                    
+
                                     # Apply filters
                                     if user_id and session_dict.get("user_id") != user_id:
                                         logger.debug(f"Skipping session {key}: user_id mismatch")
@@ -200,7 +200,7 @@ class SessionAnalytics:
                                     if session_type and session_dict.get("type") != session_type:
                                         logger.debug(f"Skipping session {key}: session_type mismatch")
                                         continue
-                                    
+
                                     # Check if session is within date range
                                     created_at_str = session_dict.get("created_at")
                                     if created_at_str:
@@ -211,17 +211,17 @@ class SessionAnalytics:
                                             logger.debug(f"Found active session: {key}")
                                         else:
                                             logger.debug(f"Skipping session {key}: outside date range")
-                            
+
                             if cursor == 0:
                                 break
-                        
+
                         logger.info(f"Found {active_sessions} active sessions in Redis")
-                                
+
                     except Exception as e:
                         logger.warning(f"Failed to count active sessions from Redis: {e}")
                 else:
                     logger.warning(f"Session store not available for Redis scan: store={self._session_store}, redis={self._session_store._redis if self._session_store else None}")
-                
+
                 # Get archived session count from SessionRecord
                 from fiml.sessions.db import SessionRecord
 
@@ -249,7 +249,7 @@ class SessionAnalytics:
                         state = session_data.get("state", {})
                         history = state.get("history", {})
                         total_queries += history.get("total_queries", 0)
-                    
+
                     return {
                         "total_sessions": active_sessions,
                         "active_sessions": active_sessions,

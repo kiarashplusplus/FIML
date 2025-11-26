@@ -699,11 +699,11 @@ No providers connected yet.
         # Convert to string and handle Telegram's 4096 char limit
         content = str(rendered)
         max_length = 4000  # Leave some margin
-        
+
         if len(content) > max_length:
             # Truncate with ellipsis
             content = content[:max_length] + "\n\n...[Content truncated - lesson too long]\n\nUse /quiz to test your knowledge!"
-        
+
         # Send without Markdown parsing to avoid entity parsing errors
         await query.edit_message_text(content)
 
@@ -799,7 +799,7 @@ No providers connected yet.
             return
 
         question = questions[question_idx]
-        
+
         # Convert answer_data to actual answer text
         if question["type"] == "multiple_choice":
             # answer_data is an index for multiple choice
@@ -897,11 +897,11 @@ No providers connected yet.
 
         # Check if user has an active mentor session FIRST
         mentor_persona = context.user_data.get("mentor_persona")
-        
+
         if mentor_persona:
             # User is chatting with a mentor - route to mentor service
             await update.message.reply_text("🤔 Thinking...")
-            
+
             try:
                 response = await self.mentor_service.respond(
                     user_id=user_id,
@@ -909,18 +909,18 @@ No providers connected yet.
                     persona=mentor_persona,
                     context={}
                 )
-                
+
                 response_text = f"{response['icon']} **{response['mentor']}**\n\n"
                 response_text += response['text']
-                
+
                 # Add suggested lessons if any
                 if response.get('related_lessons'):
                     response_text += "\n\n📚 **Related lessons:**\n"
                     for lesson_id in response['related_lessons']:
                         response_text += f"• {lesson_id}\n"
-                
+
                 await update.message.reply_text(response_text, parse_mode="Markdown")
-                
+
             except Exception as e:
                 logger.error("Failed to generate mentor response", error=str(e), user_id=user_id)
                 await update.message.reply_text(
@@ -933,24 +933,24 @@ No providers connected yet.
         greetings = ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]
         if any(greeting in message.lower() for greeting in greetings):
             await update.message.reply_text(
-                f"👋 Hello! I'm the FIML Educational Bot.\n\n"
-                f"I can help you learn about trading and investing.\n\n"
-                f"Try these commands:\n"
-                f"• /help - See all commands\n"
-                f"• /lesson - Start learning\n"
-                f"• /mentor - Chat with AI mentor\n"
-                f"• /progress - View your progress",
+                "👋 Hello! I'm the FIML Educational Bot.\n\n"
+                "I can help you learn about trading and investing.\n\n"
+                "Try these commands:\n"
+                "• /help - See all commands\n"
+                "• /lesson - Start learning\n"
+                "• /mentor - Chat with AI mentor\n"
+                "• /progress - View your progress",
                 parse_mode="Markdown"
             )
             return
 
         # For other messages, suggest using mentor or commands
         await update.message.reply_text(
-            f"💬 I understand you want to chat!\n\n"
-            f"For educational conversations, try:\n"
-            f"• /mentor - Chat with an AI trading mentor\n"
-            f"• /help - See what I can do\n\n"
-            f"Or ask me about specific topics using /lesson",
+            "💬 I understand you want to chat!\n\n"
+            "For educational conversations, try:\n"
+            "• /mentor - Chat with an AI trading mentor\n"
+            "• /help - See what I can do\n\n"
+            "Or ask me about specific topics using /lesson",
             parse_mode="Markdown"
         )
 

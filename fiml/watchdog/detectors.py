@@ -470,11 +470,11 @@ class ExchangeOutageWatchdog(BaseWatchdog):
     async def check(self) -> Optional[WatchdogEvent]:
         """Check exchange health"""
         import aiohttp
-        
+
         # Dynamically populate exchanges from provider registry on first run
         if not self._initialized:
             from fiml.providers.registry import provider_registry
-            
+
             # Build exchange list from registered CCXT providers
             for provider_name in provider_registry.providers:
                 if provider_name.startswith("ccxt_"):
@@ -482,9 +482,9 @@ class ExchangeOutageWatchdog(BaseWatchdog):
                     if exchange_id in self._all_exchange_endpoints:
                         self._exchanges[exchange_id] = self._all_exchange_endpoints[exchange_id]
                         logger.info(f"Exchange outage watchdog will monitor {exchange_id}")
-            
+
             self._initialized = True
-            
+
             # If no exchanges to monitor, skip
             if not self._exchanges:
                 logger.info("No CCXT exchanges registered - skipping exchange outage monitoring")

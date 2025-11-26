@@ -117,7 +117,7 @@ async def run_async(
         await telegram_bot.application.initialize()
         await telegram_bot.application.start()
         await telegram_bot.application.updater.start_polling()
-        
+
         # Keep running until interrupted
         try:
             while True:
@@ -135,7 +135,7 @@ async def run_async(
             await telegram_bot.application.shutdown()
         except:
             pass
-        
+
         # Cleanup session store if it was initialized
         if session_store_enabled and session_store:
             await session_store.shutdown()

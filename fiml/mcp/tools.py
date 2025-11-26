@@ -356,7 +356,7 @@ async def search_by_symbol(
 
             # Execute the plan
             response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
-            
+
             # Return data with provider info for caching
             data = response.data if response else {}
             if response:
@@ -367,14 +367,14 @@ async def search_by_symbol(
         # Use cache manager with read-through
         # Cache key will be built by manager: "price:{symbol}:any"
         cache_key = cache_manager.l1.build_key("price", asset.symbol, "any")
-        
+
         data = await cache_manager.get_with_read_through(
             key=cache_key,
             data_type=DataType.PRICE,
             fetch_fn=fetch_price_data,
             asset=asset
         )
-        
+
         if not data:
             data = {}
 
@@ -776,7 +776,7 @@ async def search_by_coin(
 
             # Execute the plan
             response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
-            
+
             # Return data with provider info
             data = response.data if response else {}
             if response:
@@ -786,14 +786,14 @@ async def search_by_coin(
 
         # Use cache manager with read-through
         cache_key = cache_manager.l1.build_key("price", asset.symbol, "any")
-        
+
         data = await cache_manager.get_with_read_through(
             key=cache_key,
             data_type=DataType.PRICE,
             fetch_fn=fetch_crypto_price,
             asset=asset
         )
-        
+
         if not data:
             data = {}
 
@@ -946,8 +946,8 @@ async def search_by_coin(
                         "liquidity_risk": "moderate",
                         "regulatory_risk": "high",
                         "market_type": "24/7 trading",
-                        "funding_rates": data.get("funding_rate", None),
-                        "open_interest": data.get("open_interest", None),
+                        "funding_rates": data.get("funding_rate"),
+                        "open_interest": data.get("open_interest"),
                     }
 
                     # Generate narrative

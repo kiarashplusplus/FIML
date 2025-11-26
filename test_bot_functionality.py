@@ -6,7 +6,6 @@ Tests all bot components without requiring Telegram or Docker services
 
 import asyncio
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -96,9 +95,9 @@ class BotFunctionalityTester:
                         data = json.load(f)
                     encrypted = data.get("alpha_vantage", {}).get("encrypted_key", "")
                     if encrypted and encrypted != test_key:
-                        print(f"✅ Key is encrypted in storage (not plaintext)")
+                        print("✅ Key is encrypted in storage (not plaintext)")
                     else:
-                        print(f"❌ Key might not be properly encrypted")
+                        print("❌ Key might not be properly encrypted")
             else:
                 print("❌ Key storage failed")
 
@@ -107,7 +106,7 @@ class BotFunctionalityTester:
             retrieved = await km.get_key(test_user, "alpha_vantage")
 
             if retrieved == test_key:
-                print(f"✅ Key retrieved and decrypted correctly")
+                print("✅ Key retrieved and decrypted correctly")
                 results["key_retrieval"] = True
             else:
                 print(f"❌ Key retrieval failed (expected '{test_key}', got '{retrieved}')")
@@ -130,7 +129,7 @@ class BotFunctionalityTester:
             if len(keys) == 2 and "finnhub" in keys:
                 print(f"✅ Multiple keys stored ({len(keys)} providers)")
             else:
-                print(f"❌ Multiple keys test failed")
+                print("❌ Multiple keys test failed")
 
             # Test 1.6: Key removal
             print("\n1.6 Testing key removal...")
@@ -151,7 +150,7 @@ class BotFunctionalityTester:
             if info and "name" in info and len(providers_list) >= 4:
                 print(f"✅ Provider info available ({len(providers_list)} providers)")
             else:
-                print(f"❌ Provider info incomplete")
+                print("❌ Provider info incomplete")
 
         except Exception as e:
             print(f"❌ Error in key manager tests: {e}")
@@ -260,8 +259,9 @@ class BotFunctionalityTester:
         print("TEST 3: LessonContentEngine")
         print("=" * 70)
 
-        from fiml.bot.education.lesson_engine import LessonContentEngine
         from pathlib import Path
+
+        from fiml.bot.education.lesson_engine import LessonContentEngine
 
         results = {
             "lesson_loading": False,
@@ -323,7 +323,7 @@ class BotFunctionalityTester:
                 progress = await engine.get_user_progress(test_user)
 
                 if first_lesson_id in progress.get("completed_lessons", []):
-                    print(f"✅ Progress tracking works")
+                    print("✅ Progress tracking works")
                     results["progress_tracking"] = True
                 else:
                     print("❌ Progress tracking failed")
@@ -344,7 +344,7 @@ class BotFunctionalityTester:
         print("TEST 4: QuizSystem")
         print("=" * 70)
 
-        from fiml.bot.education.quiz_system import QuizSystem, QuizQuestion
+        from fiml.bot.education.quiz_system import QuizQuestion, QuizSystem
 
         results = {
             "quiz_creation": False,
@@ -401,7 +401,7 @@ class BotFunctionalityTester:
                 result2 = await quiz_system.submit_answer(session_id, "False")
 
                 if result1.get("correct") and not result2.get("correct"):
-                    print(f"✅ Answer submission and validation works")
+                    print("✅ Answer submission and validation works")
                     # Don't set results here, will do in 4.3
                 else:
                     print(f"❌ Answer validation failed (r1={result1.get('correct')}, r2={result2.get('correct')})")
@@ -411,9 +411,9 @@ class BotFunctionalityTester:
             if session_id and result1 and result2:
                 # Check that first answer was correct and second was wrong
                 if result1.get("correct") and not result2.get("correct"):
-                    print(f"✅ Answer validation works correctly")
+                    print("✅ Answer validation works correctly")
                     results["question_submission"] = True
-                
+
                 # Check final score in result2 (quiz should be complete)
                 if result2.get("quiz_complete"):
                     final_score = result2.get("final_score", 0)
@@ -486,7 +486,7 @@ class BotFunctionalityTester:
                 response = response_dict.get("text", "")
 
                 if response and len(response) > 0:
-                    print(f"✅ Mentor response generated")
+                    print("✅ Mentor response generated")
                     results["response_generation"] = True
                 else:
                     print("⚠️  Response empty (Azure OpenAI may not be configured)")
@@ -567,7 +567,7 @@ class BotFunctionalityTester:
             badge_result = await gam.award_badge(test_user, "first_lesson")
 
             if badge_result:
-                print(f"✅ Badge awarded: first_lesson")
+                print("✅ Badge awarded: first_lesson")
                 results["badge_awards"] = True
             else:
                 print("❌ Badge award failed")
@@ -617,7 +617,7 @@ class BotFunctionalityTester:
             edu_level, edu_msg = await cf.check_content(educational_text)
 
             from fiml.bot.education.compliance_filter import ComplianceLevel
-            
+
             if advice_level == ComplianceLevel.BLOCKED and edu_level == ComplianceLevel.SAFE:
                 print("✅ Financial advice detection works")
                 results["advice_detection"] = True
