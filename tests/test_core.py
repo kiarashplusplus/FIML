@@ -1,6 +1,8 @@
 """
-Tests for Core modules - models, config, exceptions, logging
+Tests for Core modules - models, config, exceptions, logging, sentry
 """
+
+from unittest.mock import MagicMock, patch
 
 from fiml.core.config import Settings
 from fiml.core.exceptions import (
@@ -24,6 +26,15 @@ from fiml.core.models import (
     ProviderScore,
     TaskInfo,
     TaskStatus,
+)
+from fiml.core.sentry import (
+    add_breadcrumb,
+    capture_exception,
+    capture_message,
+    init_sentry,
+    set_context,
+    set_tag,
+    set_user,
 )
 
 
@@ -177,3 +188,120 @@ class TestLogging:
         assert hasattr(logger, 'error')
         assert hasattr(logger, 'warning')
         assert hasattr(logger, 'debug')
+
+
+class TestSentry:
+    """Test Sentry integration"""
+
+    def test_init_sentry_without_dsn(self):
+        """Test that Sentry is not initialized when DSN is None or empty"""
+        assert init_sentry(dsn=None) is False
+        assert init_sentry(dsn="") is False
+
+    @patch("fiml.core.sentry.sentry_sdk.init")
+    def test_init_sentry_with_dsn(self, mock_init):
+        """Test that Sentry is initialized when DSN is provided"""
+        mock_init.return_value = None
+        result = init_sentry(
+            dsn="https://test@sentry.io/123",
+            environment="test",
+            release="fiml@1.0.0",
+        )
+        assert result is True
+        mock_init.assert_called_once()
+
+    @patch("fiml.core.sentry.sentry_sdk.init")
+    def test_init_sentry_handles_exception(self, mock_init):
+        """Test that Sentry initialization failure doesn't crash the app"""
+        mock_init.side_effect = Exception("Initialization failed")
+        result = init_sentry(dsn="https://test@sentry.io/123")
+        assert result is False
+
+    @patch("fiml.core.sentry.sentry_sdk.capture_exception")
+    @patch("fiml.core.sentry.sentry_sdk.push_scope")
+    def test_capture_exception(self, mock_push_scope, mock_capture):
+        """Test capturing an exception"""
+        mock_scope = MagicMock()
+        mock_push_scope.return_value.__enter__ = MagicMock(return_value=mock_scope)
+        mock_push_scope.return_value.__exit__ = MagicMock(return_value=False)
+        mock_capture.return_value = "event-123"
+
+        exc = ValueError("Test exception")
+        result = capture_exception(exc, custom_key="custom_value")
+
+        assert result == "event-123"
+        mock_scope.set_extra.assert_called_with("custom_key", "custom_value")
+        mock_capture.assert_called_once_with(exc)
+
+    @patch("fiml.core.sentry.sentry_sdk.capture_message")
+    @patch("fiml.core.sentry.sentry_sdk.push_scope")
+    def test_capture_message(self, mock_push_scope, mock_capture):
+        """Test capturing a message"""
+        mock_scope = MagicMock()
+        mock_push_scope.return_value.__enter__ = MagicMock(return_value=mock_scope)
+        mock_push_scope.return_value.__exit__ = MagicMock(return_value=False)
+        mock_capture.return_value = "event-456"
+
+        result = capture_message("Test message", level="warning", extra="data")
+
+        assert result == "event-456"
+        mock_scope.set_extra.assert_called_with("extra", "data")
+        mock_capture.assert_called_once_with("Test message", level="warning")
+
+    @patch("fiml.core.sentry.sentry_sdk.set_user")
+    def test_set_user(self, mock_set_user):
+        """Test setting user context"""
+        set_user(user_id="user-123", email="test@example.com")
+        mock_set_user.assert_called_once_with({"id": "user-123", "email": "test@example.com"})
+
+    @patch("fiml.core.sentry.sentry_sdk.set_user")
+    def test_set_user_without_id(self, mock_set_user):
+        """Test setting user context without ID"""
+        set_user(email="test@example.com")
+        mock_set_user.assert_called_once_with({"email": "test@example.com"})
+
+    @patch("fiml.core.sentry.sentry_sdk.set_user")
+    def test_set_user_clear(self, mock_set_user):
+        """Test clearing user context"""
+        set_user()
+        mock_set_user.assert_called_once_with(None)
+
+    @patch("fiml.core.sentry.sentry_sdk.set_tag")
+    def test_set_tag(self, mock_set_tag):
+        """Test setting a tag"""
+        set_tag("provider", "yahoo_finance")
+        mock_set_tag.assert_called_once_with("provider", "yahoo_finance")
+
+    @patch("fiml.core.sentry.sentry_sdk.set_context")
+    def test_set_context(self, mock_set_context):
+        """Test setting context"""
+        context = {"asset": "AAPL", "market": "US"}
+        set_context("trade", context)
+        mock_set_context.assert_called_once_with("trade", context)
+
+    @patch("fiml.core.sentry.sentry_sdk.add_breadcrumb")
+    def test_add_breadcrumb(self, mock_add_breadcrumb):
+        """Test adding a breadcrumb"""
+        add_breadcrumb(
+            message="User clicked button",
+            category="user",
+            level="info",
+            data={"button": "submit"},
+        )
+        mock_add_breadcrumb.assert_called_once_with(
+            message="User clicked button",
+            category="user",
+            level="info",
+            data={"button": "submit"},
+        )
+
+    @patch("fiml.core.sentry.sentry_sdk.add_breadcrumb")
+    def test_add_breadcrumb_defaults(self, mock_add_breadcrumb):
+        """Test adding a breadcrumb with defaults"""
+        add_breadcrumb(message="Simple message")
+        mock_add_breadcrumb.assert_called_once_with(
+            message="Simple message",
+            category="default",
+            level="info",
+            data={},
+        )
