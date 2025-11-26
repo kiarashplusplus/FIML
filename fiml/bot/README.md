@@ -27,11 +27,41 @@ Multi-platform educational trading bot with BYOK (Bring Your Own Key) architectu
 - ✅ Inline keyboards for interactive UI
 - ✅ Telegram markdown formatting
 - ✅ Key management (/addkey, /removekey, /testkey, /status)
+- ✅ Dynamic lesson loading from YAML files
+- ✅ Key removal callback handler
 
-### 🚧 In Progress
+### ✅ Completed (Sprint 2.1 - Educational Features)
 
-**Component 3: UnifiedBotGateway** - Coming next
-**Components 6-11** - Educational content, lessons, quizzes, AI mentors
+**Component 6: LessonContentEngine**
+- ✅ YAML lesson loading
+- ✅ Dynamic lesson rendering
+- ✅ Progress tracking
+- ✅ Prerequisite checking
+- ✅ 20 lesson files available
+
+**Component 7: QuizSystem**
+- ✅ Quiz session management
+- ✅ Multiple question types (multiple choice, true/false, numeric)
+- ✅ Score calculation
+- ✅ XP rewards
+
+**Component 8: AIMentorService**
+- ✅ 3 mentor personas (Maya, Theo, Zara)
+- ✅ Context-aware responses
+- ✅ Educational tone enforcement
+- ✅ Lesson suggestions
+
+**Component 9: GamificationEngine**
+- ✅ XP and leveling system
+- ✅ Daily streaks
+- ✅ Badge awards
+- ✅ Progress tracking
+
+**Component 11: EducationalComplianceFilter**
+- ✅ Detects financial advice language
+- ✅ Blocks investment recommendations
+- ✅ Regional compliance checks
+- ✅ Automatic disclaimers
 
 ## Quick Start
 
@@ -185,13 +215,21 @@ fiml/bot/
 ├── run_bot.py              # Entry point
 ├── core/
 │   ├── __init__.py
+│   ├── gateway.py          # Component 3: Bot gateway
 │   ├── key_manager.py      # Component 1: Key management
 │   └── provider_configurator.py  # Component 2: FIML config
 ├── adapters/
 │   ├── __init__.py
 │   └── telegram_adapter.py # Component 4: Telegram bot
-├── education/              # Coming: Lessons, quizzes
-└── content/                # Coming: Lesson content
+├── education/
+│   ├── ai_mentor.py        # Component 8: AI mentors
+│   ├── compliance_filter.py # Component 11: Compliance
+│   ├── fiml_adapter.py     # Component 10: FIML integration
+│   ├── gamification.py     # Component 9: XP & badges
+│   ├── lesson_engine.py    # Component 6: Lessons
+│   └── quiz_system.py      # Component 7: Quizzes
+└── content/
+    └── lessons/            # 20 YAML lesson files
 ```
 
 ### Adding New Providers
@@ -201,9 +239,19 @@ fiml/bot/
 3. Implement test method `_test_<provider_name>`
 4. Add provider initialization in `FIMLProviderConfigurator`
 
+### Adding New Lessons
+
+1. Create a YAML file in `content/lessons/`
+2. Include required fields: `id`, `title`, `difficulty`, `sections`
+3. Add quiz questions (optional)
+4. The lesson will be auto-discovered on bot startup
+
 ### Testing
 
 ```bash
+# Run all bot tests (168 tests)
+pytest tests/bot/ -v
+
 # Run bot in development mode
 python -m fiml.bot.run_bot
 
@@ -215,22 +263,15 @@ print(km.validate_key_format('alpha_vantage', 'ABC123XYZ456789X'))
 "
 ```
 
-## Next Steps (Phase 1 Continuation)
+## Launch Checklist
 
-### Sprint 1.2 - Bot Gateway (Week 2)
-- [ ] Component 3: UnifiedBotGateway (message router)
-- [ ] Intent classification
-- [ ] Session management integration
-
-### Sprint 2.1 - Educational Content (Week 3-4)
-- [ ] Component 6: LessonContentEngine
-- [ ] Component 7: QuizSystem
-- [ ] 20 foundation lessons
-
-### Sprint 2.2 - AI Mentors (Week 4)
-- [ ] Component 8: AIMentorService (Maya persona)
-- [ ] Component 10: FIMLEducationalDataAdapter
-- [ ] FIML narrative integration
+- [x] All bot commands working (/start, /help, /addkey, /listkeys, /removekey, /testkey, /status)
+- [x] Educational commands working (/lesson, /quiz, /mentor, /progress)
+- [x] 20 lessons available
+- [x] Key management with encryption
+- [x] 168 tests passing
+- [x] Linter checks passing
+- [x] No security vulnerabilities
 
 ## Contributing
 

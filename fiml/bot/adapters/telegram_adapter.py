@@ -3,9 +3,11 @@ Component 4: Telegram Bot Adapter
 Handles Telegram bot integration with conversation flows for key management
 """
 
-from typing import Optional
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import structlog
+import yaml
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
@@ -145,6 +147,11 @@ class TelegramBotAdapter:
         # Quiz answer handling
         self.application.add_handler(
             CallbackQueryHandler(self.handle_quiz_answer, pattern="^quiz_answer:")
+        )
+
+        # Remove key callback
+        self.application.add_handler(
+            CallbackQueryHandler(self.handle_remove_key, pattern="^remove:")
         )
 
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -453,6 +460,30 @@ Add one with /addkey to unlock premium data providers!
             reply_markup=reply_markup
         )
 
+    async def handle_remove_key(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Handle key removal callback"""
+        query = update.callback_query
+        await query.answer()
+
+        user_id = str(update.effective_user.id)
+        provider_id = query.data.split(":")[1]
+
+        # Remove the key
+        success = await self.key_manager.remove_user_key(user_id, provider_id)
+
+        if success:
+            await query.edit_message_text(
+                f"✅ **{provider_id}** key removed successfully.\n\n"
+                "Use /listkeys to see your remaining providers."
+            )
+            logger.info("Key removed", user_id=user_id, provider=provider_id)
+        else:
+            await query.edit_message_text(
+                f"❌ Failed to remove {provider_id} key. Please try again."
+            )
+
     async def cmd_test_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Test all user's keys"""
         user_id = str(update.effective_user.id)
@@ -508,6 +539,82 @@ No providers connected yet.
 
         await update.message.reply_text(text, parse_mode="Markdown")
 
+    def _get_available_lessons(self) -> List[Tuple[str, str, str]]:
+        """
+        Get list of available lessons from the lessons directory.
+
+        Returns:
+            List of tuples: (lesson_id, title, difficulty)
+        """
+        lessons_path = Path(self.lesson_engine.lessons_path)
+        lessons: List[Tuple[str, str, str]] = []
+
+        if not lessons_path.exists():
+            # Return default lessons if path doesn't exist
+            return [
+                ("stock_basics_001", "Understanding Stock Prices", "beginner"),
+                ("stock_basics_002", "Market Orders vs Limit Orders", "beginner"),
+                ("stock_basics_003", "Volume and Liquidity", "beginner"),
+                ("valuation_001", "Understanding P/E Ratio", "intermediate"),
+                ("risk_001", "Position Sizing and Risk", "intermediate"),
+            ]
+
+        # Scan lesson files
+        lesson_files = sorted(lessons_path.glob("*.yaml"))
+        for lesson_file in lesson_files:
+            try:
+                with open(lesson_file, "r") as f:
+                    lesson_data = yaml.safe_load(f)
+                    if lesson_data and isinstance(lesson_data, dict):
+                        lesson_id = lesson_data.get("id", lesson_file.stem)
+                        title = lesson_data.get("title", "Untitled Lesson")
+                        difficulty = lesson_data.get("difficulty", "beginner")
+                        lessons.append((lesson_id, title, difficulty))
+            except Exception as e:
+                logger.warning(
+                    "Failed to load lesson file",
+                    file=str(lesson_file),
+                    error=str(e)
+                )
+
+        return lessons
+
+    def _get_lesson_id_to_file_map(self) -> Dict[str, str]:
+        """
+        Create a mapping from lesson IDs to their file paths.
+
+        Returns:
+            Dictionary mapping lesson_id to file path
+        """
+        lessons_path = Path(self.lesson_engine.lessons_path)
+        mapping: Dict[str, str] = {}
+
+        if not lessons_path.exists():
+            return mapping
+
+        for lesson_file in lessons_path.glob("*.yaml"):
+            try:
+                with open(lesson_file, "r") as f:
+                    lesson_data = yaml.safe_load(f)
+                    if lesson_data and isinstance(lesson_data, dict):
+                        lesson_id = lesson_data.get("id", lesson_file.stem)
+                        mapping[lesson_id] = str(lesson_file)
+            except Exception:
+                # Skip invalid lesson files silently - they'll be handled
+                # when user tries to access them directly
+                pass
+
+        return mapping
+
+    def _get_difficulty_emoji(self, difficulty: str) -> str:
+        """Get emoji for difficulty level."""
+        difficulty_emojis = {
+            "beginner": "🟢",
+            "intermediate": "🟡",
+            "advanced": "🔴",
+        }
+        return difficulty_emojis.get(difficulty.lower(), "🟡")
+
     async def cmd_lesson(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Show available lessons or continue current lesson"""
         user_id = str(update.effective_user.id)
@@ -516,21 +623,19 @@ No providers connected yet.
         progress = await self.lesson_engine.get_user_progress(user_id)
         completed = progress.get("completed", set())
 
-        # Available lessons
-        lessons = [
-            ("stock_basics_001", "Understanding Stock Prices", "beginner"),
-            ("market_orders_101", "Market Orders vs Limit Orders", "beginner"),
-            ("volume_101", "Volume and Liquidity", "beginner"),
-            ("pe_ratio_101", "Understanding P/E Ratio", "intermediate"),
-            ("risk_management_101", "Position Sizing and Risk", "intermediate"),
-        ]
+        # Get available lessons dynamically
+        lessons = self._get_available_lessons()
+
+        # Limit to first 10 lessons for cleaner display
+        # (Telegram callback data has a 64-byte limit)
+        display_lessons = lessons[:10]
 
         text = "📚 **Available Lessons**\n\n"
 
         keyboard = []
-        for lesson_id, title, difficulty in lessons:
+        for lesson_id, title, difficulty in display_lessons:
             status = "✅" if lesson_id in completed else "📖"
-            emoji = "🟢" if difficulty == "beginner" else "🟡"
+            emoji = self._get_difficulty_emoji(difficulty)
             text += f"{status} {emoji} {title}\n"
 
             keyboard.append([
@@ -540,8 +645,9 @@ No providers connected yet.
                 )
             ])
 
-        text += "\n💡 Tap a lesson to start learning!"
-        text += "\n\n🟢 Beginner | 🟡 Intermediate"
+        total_lessons = len(lessons)
+        text += f"\n💡 Tap a lesson to start! ({total_lessons} lessons available)"
+        text += "\n\n🟢 Beginner | 🟡 Intermediate | 🔴 Advanced"
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
@@ -554,11 +660,20 @@ No providers connected yet.
         user_id = str(update.effective_user.id)
         lesson_id = query.data.split(":")[1]
 
-        # Load and render lesson
-        lesson = await self.lesson_engine.load_lesson(lesson_id)
+        # Try to load lesson from file path mapping first
+        lesson = None
+        lesson_file_map = self._get_lesson_id_to_file_map()
+
+        if lesson_id in lesson_file_map:
+            # Load from the mapped file path
+            lesson = self.lesson_engine.load_lesson_from_file(lesson_file_map[lesson_id])
 
         if not lesson:
-            # Create sample lesson if not found
+            # Try direct ID-based loading
+            lesson = await self.lesson_engine.load_lesson(lesson_id)
+
+        if not lesson:
+            # Create sample lesson as fallback
             self.lesson_engine.create_sample_lesson(lesson_id)
             lesson = await self.lesson_engine.load_lesson(lesson_id)
 
