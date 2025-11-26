@@ -8,6 +8,7 @@ from datetime import time as time_obj
 from typing import Any, Dict, Optional, cast
 
 from fiml.arbitration.engine import arbitration_engine
+from fiml.cache.manager import cache_manager
 from fiml.core.logging import get_logger
 from fiml.core.models import (
     AnalysisDepth,
@@ -344,18 +345,42 @@ async def search_by_symbol(
         )
 
     try:
-        # Fetch price data via arbitration engine
-        plan = await arbitration_engine.arbitrate_request(
-            asset=asset,
+        # Define fetch function for read-through cache
+        async def fetch_price_data() -> Dict[str, Any]:
+            # Fetch price data via arbitration engine
+            plan = await arbitration_engine.arbitrate_request(
+                asset=asset,
+                data_type=DataType.PRICE,
+                user_region="US",
+            )
+
+            # Execute the plan
+            response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
+            
+            # Return data with provider info for caching
+            data = response.data if response else {}
+            if response:
+                data["_source_provider"] = response.provider
+                data["_confidence"] = response.confidence
+            return data
+
+        # Use cache manager with read-through
+        # Cache key will be built by manager: "price:{symbol}:any"
+        cache_key = cache_manager.l1.build_key("price", asset.symbol, "any")
+        
+        data = await cache_manager.get_with_read_through(
+            key=cache_key,
             data_type=DataType.PRICE,
-            user_region="US",
+            fetch_fn=fetch_price_data,
+            asset=asset
         )
+        
+        if not data:
+            data = {}
 
-        # Execute the plan
-        response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
-
-        # Extract data from response
-        data = response.data if response else {}
+        # Extract provider info (might be from cache or fresh fetch)
+        provider_name = data.pop("_source_provider", "unknown")
+        confidence = data.pop("_confidence", 0.0)
 
         # Fetch additional data based on depth
         fundamental_data = {}
@@ -400,9 +425,9 @@ async def search_by_symbol(
             change_percent=data.get("change_percent", 0.0),
             as_of=datetime.now(timezone.utc),
             last_updated=datetime.now(timezone.utc),
-            source=response.provider if response else "unknown",
+            source=provider_name,
             ttl=300,  # 5 minutes
-            confidence=response.confidence if response else 0.0,
+            confidence=confidence,
         )
 
         # Create structural data object
@@ -433,8 +458,8 @@ async def search_by_symbol(
         task_registry.register(task_info, ttl=300)
 
         data_lineage = DataLineage(
-            providers=[response.provider] if response else [],
-            arbitration_score=plan.estimated_latency_ms / 10.0 if plan else 0.0,
+            providers=[provider_name],
+            arbitration_score=0.0,  # TODO: Get from cache metadata if possible
             conflict_resolved=False,
             source_count=1,
         )
@@ -500,7 +525,7 @@ async def search_by_symbol(
                             "pe_ratio": fundamental_data.get("pe_ratio", 0),
                         },
                         preferences=preferences,
-                        data_sources=[response.provider] if response else [],
+                        data_sources=[provider_name],
                     )
 
                     # Add fundamental data
@@ -740,18 +765,41 @@ async def search_by_coin(
         )
 
     try:
-        # Fetch price data via arbitration engine
-        plan = await arbitration_engine.arbitrate_request(
-            asset=asset,
+        # Define fetch function for read-through cache
+        async def fetch_crypto_price() -> Dict[str, Any]:
+            # Fetch price data via arbitration engine
+            plan = await arbitration_engine.arbitrate_request(
+                asset=asset,
+                data_type=DataType.PRICE,
+                user_region="US",
+            )
+
+            # Execute the plan
+            response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
+            
+            # Return data with provider info
+            data = response.data if response else {}
+            if response:
+                data["_source_provider"] = response.provider
+                data["_confidence"] = response.confidence
+            return data
+
+        # Use cache manager with read-through
+        cache_key = cache_manager.l1.build_key("price", asset.symbol, "any")
+        
+        data = await cache_manager.get_with_read_through(
+            key=cache_key,
             data_type=DataType.PRICE,
-            user_region="US",
+            fetch_fn=fetch_crypto_price,
+            asset=asset
         )
+        
+        if not data:
+            data = {}
 
-        # Execute the plan
-        response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
-
-        # Extract data from response
-        data = response.data if response else {}
+        # Extract provider info
+        provider_name = data.pop("_source_provider", "unknown")
+        confidence = data.pop("_confidence", 0.0)
 
         task_id = f"crypto-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
 
@@ -761,9 +809,9 @@ async def search_by_coin(
             change_percent=data.get("change_percent", 0.0),
             as_of=datetime.now(timezone.utc),
             last_updated=datetime.now(timezone.utc),
-            source=response.provider if response else "unknown",
+            source=provider_name,
             ttl=30,  # 30 seconds for crypto (more volatile)
-            confidence=response.confidence if response else 0.0,
+            confidence=confidence,
         )
 
         task_info = TaskInfo(
@@ -780,8 +828,8 @@ async def search_by_coin(
         task_registry.register(task_info, ttl=300)
 
         data_lineage = DataLineage(
-            providers=[response.provider] if response else [],
-            arbitration_score=plan.estimated_latency_ms / 10.0 if plan else 0.0,
+            providers=[provider_name],
+            arbitration_score=0.0,  # TODO: Get from cache metadata
             conflict_resolved=False,
             source_count=1,
         )
@@ -857,7 +905,7 @@ async def search_by_coin(
                             "low_24h": crypto_metrics.get("low_24h", 0),
                         },
                         preferences=preferences,
-                        data_sources=[response.provider] if response else [],
+                        data_sources=[provider_name],
                     )
 
                     # Add crypto-specific fundamental data

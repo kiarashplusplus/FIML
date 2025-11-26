@@ -92,7 +92,22 @@ class CacheManager:
         l1_result = await self.l1.get(l1_key)
         if l1_result:
             logger.debug("Price from L1 cache", asset=asset.symbol)
+            self.analytics.record_cache_access(
+                data_type=DataType.PRICE,
+                is_hit=True,
+                latency_ms=0.0,  # TODO: Track actual latency
+                cache_level="l1",
+                key=l1_key
+            )
             return dict(l1_result) if isinstance(l1_result, dict) else l1_result
+
+        self.analytics.record_cache_access(
+            data_type=DataType.PRICE,
+            is_hit=False,
+            latency_ms=0.0,
+            cache_level="l1",
+            key=l1_key
+        )
 
         # Try L2
         # Note: Would need asset_id lookup first in production
@@ -151,7 +166,22 @@ class CacheManager:
         l1_result = await self.l1.get(l1_key)
         if l1_result:
             logger.debug("Fundamentals from L1 cache", asset=asset.symbol)
+            self.analytics.record_cache_access(
+                data_type=DataType.FUNDAMENTALS,
+                is_hit=True,
+                latency_ms=0.0,
+                cache_level="l1",
+                key=l1_key
+            )
             return dict(l1_result) if isinstance(l1_result, dict) else l1_result
+
+        self.analytics.record_cache_access(
+            data_type=DataType.FUNDAMENTALS,
+            is_hit=False,
+            latency_ms=0.0,
+            cache_level="l1",
+            key=l1_key
+        )
 
         # Try L2
         logger.debug("Fundamentals L1 miss, trying L2", asset=asset.symbol)
@@ -283,6 +313,9 @@ class CacheManager:
 
         if value is not None:
             self._l1_hits += 1
+            # We don't know the data type here easily, so we might skip detailed analytics
+            # or use a generic type if available. For now, let's skip to avoid noise
+            # or we could add an optional data_type arg to get()
             return value
 
         self._l1_misses += 1
@@ -471,6 +504,18 @@ class CacheManager:
         hits = sum(1 for r in results if r is not None)
         self._l1_hits += hits
         self._l1_misses += (len(results) - hits)
+
+        # Record analytics for batch
+        # This is an approximation - we record one "hit" or "miss" for the batch?
+        # Or we should iterate. Iterating is better for accuracy.
+        for i, result in enumerate(results):
+            self.analytics.record_cache_access(
+                data_type=DataType.PRICE,
+                is_hit=result is not None,
+                latency_ms=l1_latency_ms / len(results) if results else 0, # Distribute latency
+                cache_level="l1",
+                key=l1_keys[i]
+            )
 
         logger.debug("Batch price lookup", total=len(assets), l1_hits=hits, latency_ms=f"{l1_latency_ms:.2f}")
 

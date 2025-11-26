@@ -123,6 +123,10 @@ class CacheAnalytics:
         self.total_hits = 0
         self.total_misses = 0
         self.total_errors = 0
+        self.l1_hits = 0
+        self.l1_misses = 0
+        self.l2_hits = 0
+        self.l2_misses = 0
 
         # Cache pollution tracking
         self.single_access_keys: Dict[str, datetime] = {}
@@ -208,9 +212,17 @@ class CacheAnalytics:
         if is_hit:
             self.data_type_metrics[data_type].record_hit(latency_ms)
             self.total_hits += 1
+            if cache_level == "l1":
+                self.l1_hits += 1
+            elif cache_level == "l2":
+                self.l2_hits += 1
         else:
             self.data_type_metrics[data_type].record_miss()
             self.total_misses += 1
+            if cache_level == "l1":
+                self.l1_misses += 1
+            elif cache_level == "l2":
+                self.l2_misses += 1
 
         # Update hourly stats
         hour_key = datetime.now(UTC).strftime("%Y-%m-%d-%H")
@@ -434,6 +446,18 @@ class CacheAnalytics:
         return {
             "timestamp": datetime.now(UTC).isoformat(),
             "overall": self.get_overall_stats(),
+            "l1_cache": {
+                "hits": self.l1_hits,
+                "misses": self.l1_misses,
+                "hit_rate": (self.l1_hits / (self.l1_hits + self.l1_misses)) if (self.l1_hits + self.l1_misses) > 0 else 0.0,
+                "avg_latency_ms": 0.0,  # TODO: Track per-level latency
+            },
+            "l2_cache": {
+                "hits": self.l2_hits,
+                "misses": self.l2_misses,
+                "hit_rate": (self.l2_hits / (self.l2_hits + self.l2_misses)) if (self.l2_hits + self.l2_misses) > 0 else 0.0,
+                "avg_latency_ms": 0.0,
+            },
             "by_data_type": self.get_data_type_stats(),
             "pollution": self.detect_cache_pollution(),
             "hourly_trends": self.get_hourly_trends(24),
@@ -446,6 +470,10 @@ class CacheAnalytics:
         self.total_hits = 0
         self.total_misses = 0
         self.total_errors = 0
+        self.l1_hits = 0
+        self.l1_misses = 0
+        self.l2_hits = 0
+        self.l2_misses = 0
         self.single_access_keys.clear()
         self.evicted_before_use = 0
         self.hourly_stats.clear()
