@@ -9,6 +9,7 @@ including:
 - Environment and release tagging
 """
 
+import asyncio
 import logging
 from typing import Any, Literal
 
@@ -21,6 +22,10 @@ from sentry_sdk.types import Event, Hint
 
 # Type alias for log levels accepted by Sentry
 LogLevel = Literal["fatal", "critical", "error", "warning", "info", "debug"]
+
+# Exceptions that should be filtered out (not sent to Sentry)
+# These are expected exceptions that don't need tracking
+FILTERED_EXCEPTIONS = (asyncio.CancelledError, ConnectionResetError)
 
 
 def init_sentry(
@@ -47,7 +52,7 @@ def init_sentry(
         return False
 
     # Configure logging integration to capture breadcrumbs
-    # Only capture WARNING and above as breadcrumbs, ERROR and above as events
+    # Capture INFO+ as breadcrumbs, ERROR+ as events
     logging_integration = LoggingIntegration(
         level=logging.INFO,  # Capture INFO+ as breadcrumbs
         event_level=logging.ERROR,  # Send ERROR+ as events
@@ -95,8 +100,8 @@ def _before_send(event: Event, hint: Hint) -> Event | None:
         exc_type, exc_value, _tb = hint["exc_info"]
 
         # Filter out expected exceptions that don't need tracking
-        # For example, client disconnections or validation errors
-        if exc_type.__name__ in ("CancelledError", "ConnectionResetError"):
+        # For example, client disconnections or cancellation
+        if exc_type is not None and issubclass(exc_type, FILTERED_EXCEPTIONS):
             return None
 
     return event

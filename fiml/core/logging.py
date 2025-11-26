@@ -9,6 +9,7 @@ from typing import Any
 import structlog
 from structlog.types import EventDict, Processor
 
+from fiml import __version__
 from fiml.core.config import settings
 from fiml.core.sentry import init_sentry
 
@@ -31,7 +32,7 @@ def configure_logging() -> None:
     sentry_initialized = init_sentry(
         dsn=settings.sentry_dsn,
         environment=settings.fiml_env,
-        release="fiml@0.2.2",
+        release=f"fiml@{__version__}",
         # Higher sample rate in production for better visibility
         traces_sample_rate=0.1 if settings.is_production else 0.0,
         profiles_sample_rate=0.1 if settings.is_production else 0.0,
