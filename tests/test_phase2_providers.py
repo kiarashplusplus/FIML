@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from fiml.core.exceptions import ProviderRateLimitError
+from fiml.core.exceptions import ProviderError, ProviderRateLimitError, RegionalRestrictionError
 from fiml.core.models import Asset, AssetType
 
 
@@ -186,6 +186,23 @@ class TestFMPProvider:
         await provider.shutdown()
 
 
+def _setup_mock_ccxt_exceptions(mock_ccxt, ccxt_module, mock_exchange, exchange_id="binance"):
+    """Helper function to set up mock ccxt module with all exception types."""
+    if exchange_id == "bybit":
+        mock_ccxt.bybit = lambda x: mock_exchange
+    else:
+        mock_ccxt.binance = lambda x: mock_exchange
+
+    mock_ccxt.RateLimitExceeded = ccxt_module.RateLimitExceeded
+    mock_ccxt.DDoSProtection = ccxt_module.DDoSProtection
+    mock_ccxt.OnMaintenance = ccxt_module.OnMaintenance
+    mock_ccxt.ExchangeNotAvailable = ccxt_module.ExchangeNotAvailable
+    mock_ccxt.AuthenticationError = ccxt_module.AuthenticationError
+    mock_ccxt.RequestTimeout = ccxt_module.RequestTimeout
+    mock_ccxt.NetworkError = ccxt_module.NetworkError
+    mock_ccxt.ExchangeError = ccxt_module.ExchangeError
+
+
 class TestCCXTProvider:
     """Tests for CCXT cryptocurrency provider"""
 
@@ -282,6 +299,95 @@ class TestCCXTProvider:
             assert "binance" in manager.exchanges
             assert "coinbase" in manager.exchanges
             assert "kraken" in manager.exchanges
+
+    @pytest.mark.asyncio
+    async def test_ccxt_geo_blocking_detection(self):
+        """Test geo-blocking error detection during initialization"""
+        import ccxt.async_support as ccxt_module
+
+        from fiml.providers.ccxt_provider import CCXTProvider
+
+        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+            mock_exchange = AsyncMock()
+            # Simulate CloudFront geo-blocking error (as seen in bybit sentry error)
+            mock_exchange.load_markets = AsyncMock(
+                side_effect=ccxt_module.RateLimitExceeded(
+                    "bybit GET https://api.bybit.com 403 Forbidden "
+                    "The Amazon CloudFront distribution is configured to block access from your country."
+                )
+            )
+            _setup_mock_ccxt_exceptions(mock_ccxt, ccxt_module, mock_exchange, exchange_id="bybit")
+
+            provider = CCXTProvider(exchange_id="bybit")
+            with pytest.raises(RegionalRestrictionError) as exc_info:
+                await provider.initialize()
+
+            assert "not available in this region" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_ccxt_rate_limit_handling(self):
+        """Test rate limit error handling"""
+        import ccxt.async_support as ccxt_module
+
+        from fiml.providers.ccxt_provider import CCXTProvider
+
+        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+            mock_exchange = AsyncMock()
+            mock_exchange.load_markets = AsyncMock()
+            mock_exchange.markets = {"BTC/USDT": {}}
+            # Simulate rate limit during fetch_price
+            mock_exchange.fetch_ticker = AsyncMock(
+                side_effect=ccxt_module.RateLimitExceeded(
+                    "Rate limit exceeded: too many requests"
+                )
+            )
+            _setup_mock_ccxt_exceptions(mock_ccxt, ccxt_module, mock_exchange)
+
+            provider = CCXTProvider(exchange_id="binance")
+            await provider.initialize()
+
+            asset = Asset(symbol="BTC/USDT", asset_type=AssetType.CRYPTO)
+            with pytest.raises(ProviderRateLimitError):
+                await provider.fetch_price(asset)
+
+    @pytest.mark.asyncio
+    async def test_ccxt_ddos_protection_handling(self):
+        """Test DDoS protection error handling"""
+        import ccxt.async_support as ccxt_module
+
+        from fiml.providers.ccxt_provider import CCXTProvider
+
+        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+            mock_exchange = AsyncMock()
+            # Simulate DDoS protection during initialization
+            mock_exchange.load_markets = AsyncMock(
+                side_effect=ccxt_module.DDoSProtection("DDoS protection triggered")
+            )
+            _setup_mock_ccxt_exceptions(mock_ccxt, ccxt_module, mock_exchange)
+
+            provider = CCXTProvider(exchange_id="binance")
+            with pytest.raises(ProviderRateLimitError):
+                await provider.initialize()
+
+    @pytest.mark.asyncio
+    async def test_ccxt_maintenance_handling(self):
+        """Test maintenance error handling"""
+        import ccxt.async_support as ccxt_module
+
+        from fiml.providers.ccxt_provider import CCXTProvider
+
+        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+            mock_exchange = AsyncMock()
+            mock_exchange.load_markets = AsyncMock(
+                side_effect=ccxt_module.OnMaintenance("Exchange under maintenance")
+            )
+            _setup_mock_ccxt_exceptions(mock_ccxt, ccxt_module, mock_exchange)
+
+            provider = CCXTProvider(exchange_id="binance")
+            with pytest.raises(ProviderError) as exc_info:
+                await provider.initialize()
+
+            assert "maintenance" in str(exc_info.value).lower()
 
 
 class TestComplianceFramework:

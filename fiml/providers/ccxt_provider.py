@@ -8,12 +8,46 @@ from typing import List, Optional
 
 import ccxt.async_support as ccxt  # type: ignore[import-untyped]
 
-from fiml.core.exceptions import ProviderError, ProviderRateLimitError, ProviderTimeoutError
+from fiml.core.exceptions import (
+    ProviderError,
+    ProviderRateLimitError,
+    ProviderTimeoutError,
+    RegionalRestrictionError,
+)
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, AssetType, DataType, ProviderHealth
 from fiml.providers.base import BaseProvider, ProviderConfig, ProviderResponse
 
 logger = get_logger(__name__)
+
+# Module-level constant for geo-blocking detection patterns
+GEO_BLOCK_INDICATORS = [
+    "cloudfront",
+    "block access from your country",
+    "access denied",
+    "geographical",
+    "geo-restrict",
+    "region",
+    "your country",
+    "access from your location",
+]
+
+
+def _is_geo_blocked_error(error_message: str) -> bool:
+    """
+    Check if an error message indicates geo-blocking (CloudFront/CDN blocking).
+
+    Some exchanges (like bybit) use CloudFront to geo-block certain regions,
+    returning a 403 error that ccxt interprets as RateLimitExceeded.
+
+    Args:
+        error_message: The error message string to check
+
+    Returns:
+        True if the error appears to be geo-blocking related
+    """
+    error_lower = error_message.lower()
+    return any(indicator in error_lower for indicator in GEO_BLOCK_INDICATORS)
 
 
 class CCXTProvider(BaseProvider):
@@ -40,6 +74,153 @@ class CCXTProvider(BaseProvider):
         self.exchange_id = exchange_id
         self._exchange: Optional[ccxt.Exchange] = None
 
+    def _handle_ccxt_exception(
+        self,
+        exception: Exception,
+        operation: str,
+        asset_symbol: Optional[str] = None,
+        record_error: bool = True,
+    ) -> None:
+        """
+        Handle CCXT exceptions with proper error classification and logging.
+
+        Args:
+            exception: The caught exception
+            operation: Description of the operation that failed (e.g., "initialization", "fetch_price")
+            asset_symbol: Optional asset symbol for context in logging
+            record_error: Whether to record the error in metrics (False during initialization)
+
+        Raises:
+            RegionalRestrictionError: If error indicates geo-blocking
+            ProviderRateLimitError: If rate limit or DDoS protection triggered
+            ProviderTimeoutError: If network or timeout error
+            ProviderError: For other exchange errors
+        """
+        if record_error:
+            self._record_error()
+
+        error_msg = str(exception)
+
+        # Handle rate limiting and DDoS protection (may include geo-blocking)
+        if isinstance(exception, (ccxt.RateLimitExceeded, ccxt.DDoSProtection)):
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} is geo-blocked or access denied",
+                    exchange=self.exchange_id,
+                    operation=operation,
+                    asset=asset_symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
+            logger.warning(
+                f"Rate limit or DDoS protection triggered on {self.exchange_id}",
+                exchange=self.exchange_id,
+                operation=operation,
+                asset=asset_symbol,
+                error=error_msg[:200],
+            )
+            raise ProviderRateLimitError(
+                "Exchange rate limit exceeded",
+                retry_after=60
+            )
+
+        # Handle maintenance mode
+        if isinstance(exception, ccxt.OnMaintenance):
+            logger.warning(
+                f"Exchange {self.exchange_id} is under maintenance",
+                exchange=self.exchange_id,
+                operation=operation,
+                error=error_msg[:200],
+            )
+            raise ProviderError(f"Exchange {self.exchange_id} is under maintenance")
+
+        # Handle exchange unavailable
+        if isinstance(exception, ccxt.ExchangeNotAvailable):
+            logger.warning(
+                f"Exchange {self.exchange_id} is not available",
+                exchange=self.exchange_id,
+                operation=operation,
+                error=error_msg[:200],
+            )
+            raise ProviderError(f"Exchange {self.exchange_id} is currently unavailable")
+
+        # Handle authentication errors
+        if isinstance(exception, ccxt.AuthenticationError):
+            logger.error(
+                f"Authentication failed for exchange {self.exchange_id}",
+                exchange=self.exchange_id,
+                operation=operation,
+                error=error_msg[:200],
+            )
+            raise ProviderError(f"Authentication failed for {self.exchange_id}")
+
+        # Handle request timeout
+        if isinstance(exception, ccxt.RequestTimeout):
+            logger.warning(
+                f"Request timeout on {self.exchange_id}",
+                exchange=self.exchange_id,
+                operation=operation,
+                asset=asset_symbol,
+                error=error_msg[:200],
+            )
+            raise ProviderTimeoutError(f"Request timeout: {exception}")
+
+        # Handle network errors
+        if isinstance(exception, ccxt.NetworkError):
+            logger.error(
+                f"Network error on {self.exchange_id}",
+                exchange=self.exchange_id,
+                operation=operation,
+                asset=asset_symbol,
+                error=error_msg[:200],
+            )
+            raise ProviderTimeoutError(f"Network error: {exception}")
+
+        # Handle exchange errors (check for geo-blocking)
+        if isinstance(exception, ccxt.ExchangeError):
+            if _is_geo_blocked_error(error_msg):
+                logger.warning(
+                    f"Exchange {self.exchange_id} appears to be geo-blocked",
+                    exchange=self.exchange_id,
+                    operation=operation,
+                    asset=asset_symbol,
+                    error=error_msg[:200],
+                )
+                raise RegionalRestrictionError(
+                    f"Exchange {self.exchange_id} is not available in this region"
+                )
+            logger.error(
+                f"Exchange error on {self.exchange_id}",
+                exchange=self.exchange_id,
+                operation=operation,
+                asset=asset_symbol,
+                error=error_msg[:200],
+            )
+            raise ProviderError(f"Exchange error: {exception}")
+
+        # Handle any other exception (check for geo-blocking)
+        if _is_geo_blocked_error(error_msg):
+            logger.warning(
+                f"Exchange {self.exchange_id} appears to be geo-blocked",
+                exchange=self.exchange_id,
+                operation=operation,
+                asset=asset_symbol,
+                error=error_msg[:200],
+            )
+            raise RegionalRestrictionError(
+                f"Exchange {self.exchange_id} is not available in this region"
+            )
+        logger.error(
+            f"Error during {operation} on {self.exchange_id}",
+            exchange=self.exchange_id,
+            operation=operation,
+            asset=asset_symbol,
+            error=error_msg[:200],
+        )
+        raise ProviderError(f"CCXT {operation} failed: {exception}")
+
     async def initialize(self) -> None:
         """Initialize CCXT provider"""
         logger.info(f"Initializing CCXT provider with exchange: {self.exchange_id}")
@@ -59,7 +240,8 @@ class CCXTProvider(BaseProvider):
             logger.info(f"CCXT provider initialized with {len(self._exchange.markets)} markets")
 
         except Exception as e:
-            raise ProviderError(f"Failed to initialize CCXT with {self.exchange_id}: {e}")
+            # Use helper method for consistent error handling (don't record error during init)
+            self._handle_ccxt_exception(e, operation="initialization", record_error=False)
 
     async def shutdown(self) -> None:
         """Shutdown CCXT provider"""
@@ -128,25 +310,11 @@ class CCXTProvider(BaseProvider):
                 },
             )
 
-        except ccxt.RateLimitExceeded as e:
-            self._record_error()
-            logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
-            raise ProviderRateLimitError(
-                "Exchange rate limit exceeded",
-                retry_after=60
-            )
-        except ccxt.NetworkError as e:
-            self._record_error()
-            logger.error(f"Network error on {self.exchange_id}: {e}")
-            raise ProviderTimeoutError(f"Network error: {e}")
-        except ccxt.ExchangeError as e:
-            self._record_error()
-            logger.error(f"Exchange error on {self.exchange_id}: {e}")
-            raise ProviderError(f"Exchange error: {e}")
+        except ProviderError:
+            # Re-raise ProviderError as-is (e.g., "No ticker data")
+            raise
         except Exception as e:
-            self._record_error()
-            logger.error(f"Error fetching price from {self.exchange_id} for {asset.symbol}: {e}")
-            raise ProviderError(f"CCXT fetch failed: {e}")
+            self._handle_ccxt_exception(e, operation="fetch_price", asset_symbol=asset.symbol)
 
     async def fetch_ohlcv(
         self, asset: Asset, timeframe: str = "1d", limit: int = 100
@@ -220,25 +388,11 @@ class CCXTProvider(BaseProvider):
                 },
             )
 
-        except ccxt.RateLimitExceeded as e:
-            self._record_error()
-            logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
-            raise ProviderRateLimitError(
-                "Exchange rate limit exceeded",
-                retry_after=60
-            )
-        except ccxt.NetworkError as e:
-            self._record_error()
-            logger.error(f"Network error on {self.exchange_id}: {e}")
-            raise ProviderTimeoutError(f"Network error: {e}")
-        except ccxt.ExchangeError as e:
-            self._record_error()
-            logger.error(f"Exchange error on {self.exchange_id}: {e}")
-            raise ProviderError(f"Exchange error: {e}")
+        except ProviderError:
+            # Re-raise ProviderError as-is (e.g., "No OHLCV data")
+            raise
         except Exception as e:
-            self._record_error()
-            logger.error(f"Error fetching OHLCV from {self.exchange_id} for {asset.symbol}: {e}")
-            raise ProviderError(f"CCXT OHLCV fetch failed: {e}")
+            self._handle_ccxt_exception(e, operation="fetch_ohlcv", asset_symbol=asset.symbol)
 
     async def fetch_fundamentals(self, asset: Asset) -> ProviderResponse:
         """
@@ -310,25 +464,11 @@ class CCXTProvider(BaseProvider):
                 },
             )
 
-        except ccxt.RateLimitExceeded as e:
-            self._record_error()
-            logger.warning(f"Rate limit exceeded on {self.exchange_id}: {e}")
-            raise ProviderRateLimitError(
-                "Exchange rate limit exceeded",
-                retry_after=60
-            )
-        except ccxt.NetworkError as e:
-            self._record_error()
-            logger.error(f"Network error on {self.exchange_id}: {e}")
-            raise ProviderTimeoutError(f"Network error: {e}")
-        except ccxt.ExchangeError as e:
-            self._record_error()
-            logger.error(f"Exchange error on {self.exchange_id}: {e}")
-            raise ProviderError(f"Exchange error: {e}")
+        except ProviderError:
+            # Re-raise ProviderError as-is
+            raise
         except Exception as e:
-            self._record_error()
-            logger.error(f"Error fetching crypto metrics from {self.exchange_id} for {asset.symbol}: {e}")
-            raise ProviderError(f"CCXT fundamentals fetch failed: {e}")
+            self._handle_ccxt_exception(e, operation="fetch_fundamentals", asset_symbol=asset.symbol)
 
     async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
         """
