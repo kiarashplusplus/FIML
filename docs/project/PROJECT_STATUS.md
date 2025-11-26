@@ -789,7 +789,7 @@ make lint
 - **[ARCHITECTURE.md](../architecture/overview.md)** - System architecture and module structure
 - **[DEPLOYMENT.md](../development/deployment.md)** - Deployment guide for production
 - **[CONTRIBUTING.md](../development/contributing.md)** - Contribution guidelines
-- **[LICENSE](LICENSE)** - Apache 2.0 License
+- **[LICENSE](https://github.com/kiarashplusplus/FIML/blob/main/LICENSE)** - Apache 2.0 License
 
 ---
 
@@ -816,7 +816,7 @@ make lint
 
 ## 📄 License
 
-Apache 2.0 License - See [LICENSE](LICENSE) file for details.
+Apache 2.0 License - See [LICENSE](https://github.com/kiarashplusplus/FIML/blob/main/LICENSE) file for details.
 
 ---
 

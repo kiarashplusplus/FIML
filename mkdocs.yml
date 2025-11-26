@@ -141,9 +141,19 @@ nav:
     - Watchdog System: features/watchdog.md
     - MCP Narrative: features/mcp-narrative.md
     - Session Management: features/session-management.md
+    - Session Analytics: features/session-analytics.md
     - Compliance Framework: features/compliance.md
   - Use Cases:
     - Trading Education Bot: use-cases/trading-education-bot.md
+  - Monitoring:
+    - Grafana Integration: monitoring/GRAFANA_INTEGRATION.md
+    - Implementation Summary: monitoring/IMPLEMENTATION_SUMMARY.md
+    - Metrics Quick Reference: monitoring/METRICS_QUICK_REFERENCE.md
+  - Roadmaps:
+    - Overview: roadmaps/README.md
+    - Educational Bot Quick Reference: roadmaps/EDUCATIONAL_BOT_QUICK_REFERENCE.md
+    - Educational Bot Roadmap: roadmaps/EDUCATIONAL_BOT_ROADMAP.md
+    - Unified Educational Bot Master Plan: roadmaps/UNIFIED_EDUCATIONAL_BOT_MASTER_PLAN.md
   - API Reference:
     - REST API: api/rest.md
     - WebSocket API: api/websocket.md
@@ -155,20 +165,30 @@ nav:
     - Performance Testing: development/PERFORMANCE_TESTING.md
     - Deployment: development/deployment.md
     - Deployment Extended: development/deployment-extended.md
+    - Deployment Guide: DEPLOYMENT_GUIDE.md
+    - Production Deployment: PRODUCTION_DEPLOYMENT.md
+    - Pre-Push Hook: PRE_PUSH_HOOK.md
+    - Update Migration Strategy: UPDATE_MIGRATION_STRATEGY.md
+    - Providers Overview: PROVIDERS.md
     - Technical Debt: development/technical-debt.md
     - Technical Debt Resolution: development/TECHNICAL_DEBT_RESOLUTION.md
     - Technical & Strategic Evaluation: development/TECHNICAL_STRATEGIC_EVALUATION.md
     - CI Workflow Structure: development/CI_WORKFLOW_STRUCTURE.md
     - GitHub Pages Setup: development/github-pages-setup.md
     - Documentation Consolidation: DOCUMENTATION_CONSOLIDATION.md
+    - Legal Compliance: LEGAL_COMPLIANCE_COMPLETE.md
   - Testing:
     - Overview: testing/index.md
     - Test Documentation Index: testing/TEST_DOCUMENTATION_INDEX.md
     - Test Report: testing/TEST_REPORT.md
     - Test Status: testing/TEST_STATUS_REPORT.md
     - Testing Quickstart: testing/TESTING_QUICKSTART.md
+    - Testing Index: testing/TESTING_INDEX.md
     - Test Infrastructure: testing/TEST_INFRASTRUCTURE_IMPROVEMENT.md
     - Quickstart Fixes: testing/QUICKSTART_TEST_FIXES.md
+    - Live Integration Results: testing/LIVE_INTEGRATION_TEST_RESULTS.md
+    - MCP Tools Test Results: testing/MCP_TOOLS_TEST_RESULTS.md
+    - Session Analytics Enhancements: testing/SESSION_ANALYTICS_ENHANCEMENTS.md
   - Project:
     - Roadmap: project/roadmap.md
     - Blueprint: project/blueprint.md

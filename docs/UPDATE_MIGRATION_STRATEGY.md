@@ -12,9 +12,9 @@ This document outlines the comprehensive strategy for handling updates to lesson
 2. [Migration Strategy](#migration-strategy)
 3. [Implementation Plan](#implementation-plan)
 4. [Versioning System](#versioning-system)
-5. [Update Types & Procedures](#update-types--procedures)
+5. [Update Types & Procedures](#update-types-procedures)
 6. [Rollback Procedures](#rollback-procedures)
-7. [Testing & Validation](#testing--validation)
+7. [Testing & Validation](#testing-validation)
 
 ---
 

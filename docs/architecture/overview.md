@@ -55,6 +55,28 @@ Multiple data sources:
 4. **Observable**: Comprehensive monitoring and logging
 5. **Compliant**: Built-in regional compliance
 
+## Monitoring
+
+FIML includes comprehensive monitoring capabilities:
+- Prometheus metrics collection
+- Grafana dashboards for visualization
+- Real-time performance tracking
+- Provider health monitoring
+- Cache performance analytics
+
+See the [Monitoring](../monitoring/METRICS_QUICK_REFERENCE.md) documentation for details.
+
+## Security
+
+Security features include:
+- API key management and rotation
+- Rate limiting and throttling
+- Request authentication
+- Compliance checks per region
+- Audit logging
+
+See the [Compliance Framework](../features/compliance.md) for more information.
+
 See detailed architecture docs:
 - [Data Arbitration](arbitration.md)
 - [Caching Strategy](caching.md)

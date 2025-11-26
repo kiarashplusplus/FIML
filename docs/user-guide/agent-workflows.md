@@ -758,4 +758,4 @@ To add new workflows:
 
 ## License
 
-See [LICENSE](../LICENSE) for details.
+See [LICENSE](https://github.com/kiarashplusplus/FIML/blob/main/LICENSE) for details.
