@@ -511,7 +511,10 @@ def mock_ccxt_network_calls():
 
     # Patch at multiple levels to ensure coverage
     patches = []
-    exchanges_to_patch = ["binance", "coinbase", "kraken", "bybit", "okx", "huobi"]
+    exchanges_to_patch = [
+        "binance", "coinbase", "kraken", "bybit", "okx", "huobi",
+        "kucoin", "gateio", "bitget",  # Additional public API exchanges
+    ]
 
     # Patch ccxt.async_support module to return mock classes
     for exchange_name in exchanges_to_patch:
@@ -579,6 +582,9 @@ def mock_aiohttp_for_providers():
         "newsapi.org",
         "www.alphavantage.co",
         "financialmodelingprep.com",
+        # DefiLlama domains
+        "coins.llama.fi",
+        "api.llama.fi",
         # Yahoo Finance domains
         "fc.yahoo.com",
         "guce.yahoo.com",
@@ -592,6 +598,10 @@ def mock_aiohttp_for_providers():
         "api.bybit.com",
         "api.huobi.pro",
         "www.okx.com",
+        # Additional CCXT exchanges
+        "api.kucoin.com",
+        "api.gateio.ws",
+        "api.bitget.com",
     ]
 
     # Create a mock response
