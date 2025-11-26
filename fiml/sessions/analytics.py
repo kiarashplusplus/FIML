@@ -3,7 +3,10 @@ Session analytics and metrics tracking
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+if TYPE_CHECKING:
+    from fiml.sessions.store import SessionStore
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -68,8 +71,13 @@ class SessionAnalytics:
     - Abandonment rates
     """
 
-    def __init__(self, session_maker: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        session_maker: async_sessionmaker[AsyncSession],
+        session_store: Optional["SessionStore"] = None,
+    ) -> None:
         self._session_maker = session_maker
+        self._session_store = session_store
         self.enable_prometheus = PROMETHEUS_AVAILABLE
 
     async def record_session_metrics(self, session: Session) -> None:
@@ -138,39 +146,127 @@ class SessionAnalytics:
         """
         try:
             async with self._session_maker() as db_session:
-                # Build query for session metrics
+                # Calculate cutoff date for filtering
                 cutoff_date = datetime.now(UTC) - timedelta(days=days)
-                query = select(SessionMetrics).where(SessionMetrics.created_at >= cutoff_date)
+                
+                # Try to query session metrics (may not exist if tables not created)
+                metrics = []
+                try:
+                    # Build query for session metrics
+                    query = select(SessionMetrics).where(SessionMetrics.created_at >= cutoff_date)
 
-                if user_id:
-                    query = query.where(SessionMetrics.user_id == user_id)
-                if session_type:
-                    query = query.where(SessionMetrics.session_type == session_type)
+                    if user_id:
+                        query = query.where(SessionMetrics.user_id == user_id)
+                    if session_type:
+                        query = query.where(SessionMetrics.session_type == session_type)
 
-                result = await db_session.execute(query)
-                metrics = result.scalars().all()
+                    result = await db_session.execute(query)
+                    metrics = result.scalars().all()
+                except Exception as e:
+                    # Table might not exist yet - that's okay, we'll count Redis sessions
+                    logger.warning(f"Could not query session_metrics table: {e}")
+                    metrics = []
+                    # Rollback the failed transaction
+                    await db_session.rollback()
 
-                # Get active and archived session counts from SessionRecord
+                # Count active sessions from Redis if session_store is available
+                active_sessions = 0
+                active_sessions_data = []
+                
+                if self._session_store and self._session_store._redis:
+                    try:
+                        import json
+                        pattern = "session:*"
+                        cursor = 0
+                        
+                        logger.debug(f"Scanning Redis for active sessions with pattern: {pattern}")
+                        
+                        while True:
+                            cursor, keys = await self._session_store._redis.scan(
+                                cursor, match=pattern, count=100
+                            )
+                            
+                            logger.debug(f"Redis SCAN returned {len(keys)} keys, cursor={cursor}")
+                            
+                            for key in keys:
+                                session_data = await self._session_store._redis.get(key)
+                                if session_data:
+                                    session_dict = json.loads(session_data)
+                                    
+                                    # Apply filters
+                                    if user_id and session_dict.get("user_id") != user_id:
+                                        logger.debug(f"Skipping session {key}: user_id mismatch")
+                                        continue
+                                    if session_type and session_dict.get("type") != session_type:
+                                        logger.debug(f"Skipping session {key}: session_type mismatch")
+                                        continue
+                                    
+                                    # Check if session is within date range
+                                    created_at_str = session_dict.get("created_at")
+                                    if created_at_str:
+                                        created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                                        if created_at >= cutoff_date:
+                                            active_sessions += 1
+                                            active_sessions_data.append(session_dict)
+                                            logger.debug(f"Found active session: {key}")
+                                        else:
+                                            logger.debug(f"Skipping session {key}: outside date range")
+                            
+                            if cursor == 0:
+                                break
+                        
+                        logger.info(f"Found {active_sessions} active sessions in Redis")
+                                
+                    except Exception as e:
+                        logger.warning(f"Failed to count active sessions from Redis: {e}")
+                else:
+                    logger.warning(f"Session store not available for Redis scan: store={self._session_store}, redis={self._session_store._redis if self._session_store else None}")
+                
+                # Get archived session count from SessionRecord
                 from fiml.sessions.db import SessionRecord
 
-                active_query = select(func.count(SessionRecord.id)).where(
-                    ~SessionRecord.is_archived,
-                    SessionRecord.expires_at > datetime.now(UTC),
-                )
-                archived_query = select(func.count(SessionRecord.id)).where(
-                    SessionRecord.is_archived,
-                    SessionRecord.created_at >= cutoff_date,
-                )
+                archived_sessions = 0
+                try:
+                    archived_query = select(func.count(SessionRecord.id)).where(
+                        SessionRecord.is_archived,
+                        SessionRecord.created_at >= cutoff_date,
+                    )
 
-                if user_id:
-                    active_query = active_query.where(SessionRecord.user_id == user_id)
-                    archived_query = archived_query.where(SessionRecord.user_id == user_id)
+                    if user_id:
+                        archived_query = archived_query.where(SessionRecord.user_id == user_id)
 
-                active_result = await db_session.execute(active_query)
-                active_sessions = active_result.scalar() or 0
+                    archived_result = await db_session.execute(archived_query)
+                    archived_sessions = archived_result.scalar() or 0
+                except Exception as e:
+                    logger.warning(f"Could not query sessions table for archived count: {e}")
+                    archived_sessions = 0
 
-                archived_result = await db_session.execute(archived_query)
-                archived_sessions = archived_result.scalar() or 0
+                # If no metrics but we have active sessions, return stats for active sessions
+                if not metrics and active_sessions > 0:
+                    # Calculate basic stats from active sessions
+                    total_queries = 0
+                    for session_data in active_sessions_data:
+                        state = session_data.get("state", {})
+                        history = state.get("history", {})
+                        total_queries += history.get("total_queries", 0)
+                    
+                    return {
+                        "total_sessions": active_sessions,
+                        "active_sessions": active_sessions,
+                        "archived_sessions": 0,
+                        "total_queries": total_queries,
+                        "avg_duration_seconds": 0.0,
+                        "avg_queries_per_session": total_queries / active_sessions if active_sessions > 0 else 0.0,
+                        "abandonment_rate": 0.0,
+                        "period_days": days,
+                        "user_id": user_id,
+                        "session_type": session_type,
+                        "top_assets": [],
+                        "query_type_distribution": {},
+                        "session_type_breakdown": {},
+                        "popular_tags": [],
+                        "message": "Showing analytics for active sessions. Detailed metrics will be available after sessions are archived.",
+                    }
 
                 if not metrics:
                     # Return default analytics for new users
@@ -241,7 +337,7 @@ class SessionAnalytics:
                 popular_tags = sorted(all_tags.items(), key=lambda x: x[1], reverse=True)[:10]
 
                 return {
-                    "total_sessions": total_sessions,
+                    "total_sessions": total_sessions + active_sessions,  # Include active sessions from Redis
                     "active_sessions": active_sessions,
                     "archived_sessions": archived_sessions,
                     "total_queries": total_queries,

@@ -1611,7 +1611,7 @@ async def get_session_analytics(
                 "message": "Session analytics database not initialized. Analytics will be available once the database is set up.",
             }
 
-        analytics = SessionAnalytics(session_store._session_maker)
+        analytics = SessionAnalytics(session_store._session_maker, session_store)
         stats = await analytics.get_session_stats(
             user_id=user_id,
             session_type=session_type,

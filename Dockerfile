@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for FIML
 
 # Stage 1: Build stage
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
