@@ -152,13 +152,15 @@ class ProviderRegistry:
             except Exception as e:
                 logger.warning(f"Could not create FMP provider: {e}")
 
-        # Register CCXT for crypto (uses Binance by default, no API key needed for public data)
-        if CCXT_AVAILABLE:
+        # Register CCXT for crypto (only if API key is configured)
+        if CCXT_AVAILABLE and settings.binance_api_key:
             try:
                 providers_to_register.append(CCXTProvider("binance"))
                 logger.info("CCXT Binance provider will be registered")
             except Exception as e:
                 logger.warning(f"Could not create CCXT provider: {e}")
+        elif CCXT_AVAILABLE and not settings.binance_api_key:
+            logger.info("CCXT Binance provider skipped - no API key configured")
 
         # Register NewsAPI if API key is configured
         newsapi_key = settings.newsapi_api_key or settings.newsapi_key

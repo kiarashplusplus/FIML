@@ -154,8 +154,9 @@ class YahooFinanceProvider(BaseProvider):
                 "sector": info.get("sector"),
                 "industry": info.get("industry"),
                 "full_time_employees": info.get("fullTimeEmployees"),
-                "52_week_high": info.get("fiftyTwoWeekHigh"),
-                "52_week_low": info.get("fiftyTwoWeekLow"),
+                "week_52_high": info.get("fiftyTwoWeekHigh"),
+                "week_52_low": info.get("fiftyTwoWeekLow"),
+                "avg_volume": info.get("averageVolume"),
             }
 
             return ProviderResponse(

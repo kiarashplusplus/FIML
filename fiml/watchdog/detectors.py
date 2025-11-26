@@ -453,12 +453,15 @@ class ExchangeOutageWatchdog(BaseWatchdog):
 
     def __init__(self, check_interval: int = 60, **kwargs: Any):  # 1 minute
         super().__init__(check_interval=check_interval, **kwargs)
-        self._exchanges = {
+        # Exchange health endpoints - will be populated dynamically from registered providers
+        self._all_exchange_endpoints = {
             "binance": "https://api.binance.com/api/v3/ping",
             "coinbase": "https://api.coinbase.com/v2/time",
             "kraken": "https://api.kraken.com/0/public/Time",
         }
+        self._exchanges: Dict[str, str] = {}  # Will be populated in check()
         self._timeout_threshold = 5.0  # seconds
+        self._initialized = False
 
     @property
     def name(self) -> str:
@@ -467,6 +470,25 @@ class ExchangeOutageWatchdog(BaseWatchdog):
     async def check(self) -> Optional[WatchdogEvent]:
         """Check exchange health"""
         import aiohttp
+        
+        # Dynamically populate exchanges from provider registry on first run
+        if not self._initialized:
+            from fiml.providers.registry import provider_registry
+            
+            # Build exchange list from registered CCXT providers
+            for provider_name in provider_registry.providers:
+                if provider_name.startswith("ccxt_"):
+                    exchange_id = provider_name.replace("ccxt_", "")
+                    if exchange_id in self._all_exchange_endpoints:
+                        self._exchanges[exchange_id] = self._all_exchange_endpoints[exchange_id]
+                        logger.info(f"Exchange outage watchdog will monitor {exchange_id}")
+            
+            self._initialized = True
+            
+            # If no exchanges to monitor, skip
+            if not self._exchanges:
+                logger.info("No CCXT exchanges registered - skipping exchange outage monitoring")
+                return None
 
         for exchange, health_url in self._exchanges.items():
             try:
