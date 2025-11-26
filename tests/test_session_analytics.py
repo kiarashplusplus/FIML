@@ -773,8 +773,10 @@ class TestAnalyticsIntegration:
         # Verify accuracy
         assert stats["total_sessions"] == 3
         assert stats["total_queries"] == 10 + 1 + 5  # 16 total
-        assert stats["avg_queries_per_session"] == pytest.approx(16 / 3, rel=1e-9)  # Exact: 5.333333...
-        assert stats["abandonment_rate"] == pytest.approx(1 / 3, rel=1e-9)  # 33.33% (1 out of 3)
+        # Note: avg_queries_per_session is rounded to 2 decimals in analytics.py:345
+        assert stats["avg_queries_per_session"] == 5.33  # round(16/3, 2)
+        # Note: abandonment_rate is also rounded to 4 decimals in analytics.py
+        assert stats["abandonment_rate"] == 0.3333  # round(1/3, 4)
 
         # Verify session type breakdown
         breakdown = stats["session_type_breakdown"]
