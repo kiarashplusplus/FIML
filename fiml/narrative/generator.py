@@ -306,6 +306,9 @@ class NarrativeGenerator:
                 readability_score=readability,
                 metadata={"source": "azure_openai", "data_points": len(price_data)},
             )
+        except Exception as e:
+            logger.error("Failed to generate market context narrative", error=str(e))
+            return None
 
     async def _generate_technical_narrative(
         self,
@@ -385,6 +388,9 @@ class NarrativeGenerator:
                     "indicators": list(technical_data.keys()),
                 },
             )
+        except Exception as e:
+            logger.error("Failed to generate technical narrative", error=str(e))
+            return None
 
     async def _generate_fundamental_narrative(
         self,
@@ -455,6 +461,9 @@ class NarrativeGenerator:
                     "metrics": list(fundamental_data.keys()),
                 },
             )
+        except Exception as e:
+            logger.error("Failed to generate fundamental narrative", error=str(e))
+            return None
 
     async def _generate_sentiment_narrative(
         self,
@@ -524,6 +533,9 @@ class NarrativeGenerator:
                     "headline_count": len(headlines),
                 },
             )
+        except Exception as e:
+            logger.error("Failed to generate sentiment narrative", error=str(e))
+            return None
 
     async def _generate_risk_narrative(
         self,
@@ -584,6 +596,9 @@ class NarrativeGenerator:
                     "beta": risk_data.get("beta", 1.0),
                 },
             )
+        except Exception as e:
+            logger.error("Failed to generate risk narrative", error=str(e))
+            return None
 
     async def _extract_key_insights(
         self,
