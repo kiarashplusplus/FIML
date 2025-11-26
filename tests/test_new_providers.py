@@ -7,6 +7,7 @@ import pytest
 from fiml.core.models import Asset, AssetType, Market
 from fiml.providers.coingecko import CoinGeckoProvider
 from fiml.providers.coinmarketcap import CoinMarketCapProvider
+from fiml.providers.defillama import DefiLlamaProvider
 from fiml.providers.finnhub import FinnhubProvider
 from fiml.providers.intrinio import IntrinioProvider
 from fiml.providers.marketstack import MarketstackProvider
@@ -229,6 +230,65 @@ async def test_provider_health_reporting():
 
     assert health is not None
     assert health.provider_name == "coingecko"
+    assert health.is_healthy is True
+    assert health.uptime_percent > 0.0
+
+    await provider.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_defillama_provider_initialization():
+    """Test DefiLlama provider initialization (no API key required)"""
+    provider = DefiLlamaProvider()
+    assert provider.name == "defillama"
+    assert provider.config.priority == 5  # Lower than CoinGecko as fallback
+    assert not provider.is_enabled  # Not initialized yet
+
+    await provider.initialize()
+    assert provider.is_enabled
+
+    await provider.shutdown()
+    assert not provider.is_enabled
+
+
+@pytest.mark.asyncio
+async def test_defillama_supports_crypto():
+    """Test DefiLlama provider supports crypto"""
+    provider = DefiLlamaProvider()
+    await provider.initialize()
+
+    asset = Asset(symbol="BTC", asset_type=AssetType.CRYPTO, market=Market.US)
+
+    supports = await provider.supports_asset(asset)
+    assert supports is True
+
+    await provider.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_defillama_does_not_support_equity():
+    """Test DefiLlama provider does not support equity"""
+    provider = DefiLlamaProvider()
+    await provider.initialize()
+
+    asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY, market=Market.US)
+
+    supports = await provider.supports_asset(asset)
+    assert supports is False
+
+    await provider.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_defillama_health_reporting():
+    """Test DefiLlama provider health reporting"""
+    provider = DefiLlamaProvider()
+    await provider.initialize()
+
+    health = await provider.get_health()
+
+    assert health is not None
+    assert health.provider_name == "defillama"
     assert health.is_healthy is True
     assert health.uptime_percent > 0.0
 

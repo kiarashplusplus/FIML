@@ -107,6 +107,13 @@ except ImportError:
     QUANDL_AVAILABLE = False
     logger.warning("Quandl provider not available")
 
+try:
+    from fiml.providers.defillama import DefiLlamaProvider
+    DEFILLAMA_AVAILABLE = True
+except ImportError:
+    DEFILLAMA_AVAILABLE = False
+    logger.warning("DefiLlama provider not available")
+
 
 class ProviderRegistry:
     """
@@ -226,6 +233,14 @@ class ProviderRegistry:
                 logger.info("CoinGecko provider will be registered")
             except Exception as e:
                 logger.warning(f"Could not create CoinGecko provider: {e}")
+
+        # Register DefiLlama (no API key needed - free API)
+        if DEFILLAMA_AVAILABLE:
+            try:
+                providers_to_register.append(DefiLlamaProvider())
+                logger.info("DefiLlama provider will be registered")
+            except Exception as e:
+                logger.warning(f"Could not create DefiLlama provider: {e}")
 
         # Register CoinMarketCap if API key is configured
         if COINMARKETCAP_AVAILABLE and settings.coinmarketcap_api_key:

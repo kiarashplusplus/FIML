@@ -579,6 +579,9 @@ def mock_aiohttp_for_providers():
         "newsapi.org",
         "www.alphavantage.co",
         "financialmodelingprep.com",
+        # DefiLlama domains
+        "coins.llama.fi",
+        "api.llama.fi",
         # Yahoo Finance domains
         "fc.yahoo.com",
         "guce.yahoo.com",
