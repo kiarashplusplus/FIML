@@ -1012,7 +1012,7 @@ try:
         for component, status in components.items():
             if isinstance(status, dict):
                 health = status.get('healthy', status.get('status', 'unknown'))
-                health_str = str(health).upper() if isinstance(health, bool) else str(health).upper()
+                health_str = str(health).upper()
                 icon = '\033[32m●\033[0m' if health in [True, 'healthy', 'HEALTHY'] else '\033[31m●\033[0m'
                 latency = status.get('latency_ms', status.get('avg_latency_ms', 'N/A'))
                 if isinstance(latency, (int, float)):
@@ -1056,7 +1056,10 @@ try:
     endpoints = data.get('endpoints', data.get('by_endpoint', {}))
     if endpoints:
         print('  Top Endpoints:')
-        sorted_endpoints = sorted(endpoints.items(), key=lambda x: x[1].get('count', 0) if isinstance(x[1], dict) else 0, reverse=True)[:5]
+        def get_endpoint_count(item):
+            stats = item[1]
+            return stats.get('count', 0) if isinstance(stats, dict) else 0
+        sorted_endpoints = sorted(endpoints.items(), key=get_endpoint_count, reverse=True)[:5]
         for endpoint, stats in sorted_endpoints:
             if isinstance(stats, dict):
                 count = stats.get('count', 0)
