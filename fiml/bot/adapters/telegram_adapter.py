@@ -3,6 +3,8 @@ Component 4: Telegram Bot Adapter
 Handles Telegram bot integration with conversation flows for key management
 """
 
+from typing import Optional
+
 import structlog
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -17,6 +19,11 @@ from telegram.ext import (
 
 from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
+from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
+from fiml.bot.education.compliance_filter import EducationalComplianceFilter
+from fiml.bot.education.gamification import GamificationEngine
+from fiml.bot.education.lesson_engine import LessonContentEngine
+from fiml.bot.education.quiz_system import QuizSystem
 
 logger = structlog.get_logger(__name__)
 
@@ -37,13 +44,20 @@ class TelegramBotAdapter:
     - Multi-step conversation flows for key onboarding
     - Inline keyboards for interactive UI
     - Message formatting with Telegram markdown
+    - Educational features: lessons, quizzes, AI mentors
+    - Gamification: XP, levels, streaks
     """
 
     def __init__(
         self,
         token: str,
         key_manager: UserProviderKeyManager,
-        provider_configurator: FIMLProviderConfigurator
+        provider_configurator: FIMLProviderConfigurator,
+        lesson_engine: Optional[LessonContentEngine] = None,
+        quiz_system: Optional[QuizSystem] = None,
+        mentor_service: Optional[AIMentorService] = None,
+        gamification: Optional[GamificationEngine] = None,
+        compliance_filter: Optional[EducationalComplianceFilter] = None,
     ):
         """
         Initialize Telegram bot adapter
@@ -52,10 +66,22 @@ class TelegramBotAdapter:
             token: Telegram bot token
             key_manager: User provider key manager
             provider_configurator: FIML provider configurator
+            lesson_engine: Lesson content engine (optional)
+            quiz_system: Quiz system (optional)
+            mentor_service: AI mentor service (optional)
+            gamification: Gamification engine (optional)
+            compliance_filter: Compliance filter (optional)
         """
         self.token = token
         self.key_manager = key_manager
         self.provider_configurator = provider_configurator
+
+        # Educational components (create if not provided)
+        self.lesson_engine = lesson_engine or LessonContentEngine()
+        self.quiz_system = quiz_system or QuizSystem()
+        self.mentor_service = mentor_service or AIMentorService()
+        self.gamification = gamification or GamificationEngine()
+        self.compliance_filter = compliance_filter or EducationalComplianceFilter()
 
         # Build application
         self.application = Application.builder().token(token).build()
@@ -100,6 +126,27 @@ class TelegramBotAdapter:
         # Status command
         self.application.add_handler(CommandHandler("status", self.cmd_status))
 
+        # Educational commands
+        self.application.add_handler(CommandHandler("lesson", self.cmd_lesson))
+        self.application.add_handler(CommandHandler("quiz", self.cmd_quiz))
+        self.application.add_handler(CommandHandler("mentor", self.cmd_mentor))
+        self.application.add_handler(CommandHandler("progress", self.cmd_progress))
+
+        # Mentor persona selection
+        self.application.add_handler(
+            CallbackQueryHandler(self.select_mentor, pattern="^mentor:")
+        )
+
+        # Lesson selection
+        self.application.add_handler(
+            CallbackQueryHandler(self.select_lesson, pattern="^lesson:")
+        )
+
+        # Quiz answer handling
+        self.application.add_handler(
+            CallbackQueryHandler(self.handle_quiz_answer, pattern="^quiz_answer:")
+        )
+
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command"""
         user = update.effective_user
@@ -137,12 +184,10 @@ Choose your path:
 /status - View your provider status and usage
 
 **Learning:**
-/lesson - Start or continue a lesson (coming soon)
-/quiz - Practice quiz (coming soon)
-/mentor - Talk to AI mentor (coming soon)
-
-**Market Data:**
-/market <symbol> - Get market data (coming soon)
+/lesson - Browse and start lessons
+/quiz - Take a practice quiz
+/mentor - Talk to AI mentor
+/progress - View your learning progress
 
 **Help:**
 /help - Show this message
@@ -460,6 +505,330 @@ No providers connected yet.
                 text += f"   Tier: {tier}\n"
                 text += f"   Usage today: {usage} requests\n"
                 text += f"   Status: {status['status']}\n\n"
+
+        await update.message.reply_text(text, parse_mode="Markdown")
+
+    async def cmd_lesson(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Show available lessons or continue current lesson"""
+        user_id = str(update.effective_user.id)
+
+        # Get user's progress
+        progress = await self.lesson_engine.get_user_progress(user_id)
+        completed = progress.get("completed", set())
+
+        # Available lessons
+        lessons = [
+            ("stock_basics_001", "Understanding Stock Prices", "beginner"),
+            ("market_orders_101", "Market Orders vs Limit Orders", "beginner"),
+            ("volume_101", "Volume and Liquidity", "beginner"),
+            ("pe_ratio_101", "Understanding P/E Ratio", "intermediate"),
+            ("risk_management_101", "Position Sizing and Risk", "intermediate"),
+        ]
+
+        text = "📚 **Available Lessons**\n\n"
+
+        keyboard = []
+        for lesson_id, title, difficulty in lessons:
+            status = "✅" if lesson_id in completed else "📖"
+            emoji = "🟢" if difficulty == "beginner" else "🟡"
+            text += f"{status} {emoji} {title}\n"
+
+            keyboard.append([
+                InlineKeyboardButton(
+                    f"{status} {title}",
+                    callback_data=f"lesson:{lesson_id}"
+                )
+            ])
+
+        text += "\n💡 Tap a lesson to start learning!"
+        text += "\n\n🟢 Beginner | 🟡 Intermediate"
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+    async def select_lesson(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle lesson selection"""
+        query = update.callback_query
+        await query.answer()
+
+        user_id = str(update.effective_user.id)
+        lesson_id = query.data.split(":")[1]
+
+        # Load and render lesson
+        lesson = await self.lesson_engine.load_lesson(lesson_id)
+
+        if not lesson:
+            # Create sample lesson if not found
+            self.lesson_engine.create_sample_lesson(lesson_id)
+            lesson = await self.lesson_engine.load_lesson(lesson_id)
+
+        if not lesson:
+            await query.edit_message_text("❌ Lesson not found. Please try again.")
+            return
+
+        # Render lesson
+        rendered = await self.lesson_engine.render_lesson(lesson, user_id)
+
+        # Mark as started
+        self.lesson_engine.mark_lesson_started(user_id, lesson_id)
+
+        # Update streak
+        await self.gamification.update_streak(user_id)
+
+        await query.edit_message_text(str(rendered), parse_mode="Markdown")
+
+    async def cmd_quiz(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Start a quiz for current lesson"""
+        user_id = str(update.effective_user.id)
+
+        # Sample quiz questions
+        questions = [
+            {
+                "id": "q1",
+                "type": "multiple_choice",
+                "text": "What is a stock?",
+                "options": [
+                    {"text": "A type of bond", "correct": False},
+                    {"text": "Ownership in a company", "correct": True},
+                    {"text": "A loan to a company", "correct": False},
+                ],
+                "correct_answer": "Ownership in a company",
+                "xp_reward": 10,
+            },
+            {
+                "id": "q2",
+                "type": "true_false",
+                "text": "P/E ratio compares a company's stock price to its earnings.",
+                "options": [],
+                "correct_answer": "true",
+                "xp_reward": 10,
+            },
+        ]
+
+        # Create quiz session
+        session_id = self.quiz_system.create_session(user_id, "stock_basics", questions)
+        context.user_data["quiz_session_id"] = session_id
+
+        # Get first question
+        session = self.quiz_system.get_session(session_id)
+        if not session or not session.get("questions"):
+            await update.message.reply_text("❌ Failed to start quiz.")
+            return
+
+        question = session["questions"][0]
+
+        text = "📝 **Quiz Time!**\n\n"
+        text += f"Question 1 of {len(session['questions'])}\n\n"
+        text += f"❓ **{question['text']}**\n\n"
+
+        keyboard = []
+        if question["type"] == "multiple_choice":
+            for i, opt in enumerate(question["options"]):
+                keyboard.append([
+                    InlineKeyboardButton(
+                        opt["text"],
+                        callback_data=f"quiz_answer:{session_id}:0:{opt['text']}"
+                    )
+                ])
+        elif question["type"] == "true_false":
+            keyboard = [
+                [
+                    InlineKeyboardButton("True", callback_data=f"quiz_answer:{session_id}:0:true"),
+                    InlineKeyboardButton("False", callback_data=f"quiz_answer:{session_id}:0:false"),
+                ]
+            ]
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+    async def handle_quiz_answer(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Handle quiz answer submission"""
+        query = update.callback_query
+        await query.answer()
+
+        user_id = str(update.effective_user.id)
+
+        # Parse callback data: quiz_answer:session_id:question_index:answer
+        parts = query.data.split(":")
+        session_id = parts[1]
+        question_idx = int(parts[2])
+        answer = ":".join(parts[3:])  # Handle answers with colons
+
+        # Record answer
+        result = self.quiz_system.answer_question(session_id, question_idx, answer)
+
+        if "error" in result:
+            await query.edit_message_text(f"❌ {result['error']}")
+            return
+
+        # Show result
+        if result["correct"]:
+            text = f"✅ **Correct!** +{result['xp_earned']} XP\n\n"
+        else:
+            text = f"❌ **Incorrect**\n{result.get('explanation', '')}\n\n"
+
+        # Check if quiz complete
+        score = self.quiz_system.get_quiz_score(session_id)
+        session = self.quiz_system.get_session(session_id)
+
+        if session and score:
+            current_idx = session.get("current_question_index", question_idx + 1)
+            total = score.get("total_questions", 1)
+
+            if current_idx >= total or session.get("completed_at"):
+                # Quiz complete
+                text += "🎉 **Quiz Complete!**\n\n"
+                text += f"Score: {score['correct_answers']}/{total} ({score['percentage']:.0f}%)\n"
+                text += f"XP Earned: {score['total_xp']}\n\n"
+
+                # Award XP
+                await self.gamification.award_xp(user_id, "quiz_passed")
+
+                text += "Use /lesson for more learning!"
+                await query.edit_message_text(text, parse_mode="Markdown")
+                return
+
+            # Show next question
+            questions = session.get("questions", [])
+            if current_idx < len(questions):
+                question = questions[current_idx]
+
+                text += f"Question {current_idx + 1} of {total}\n\n"
+                text += f"❓ **{question['text']}**\n\n"
+
+                keyboard = []
+                if question["type"] == "multiple_choice":
+                    for opt in question["options"]:
+                        keyboard.append([
+                            InlineKeyboardButton(
+                                opt["text"],
+                                callback_data=f"quiz_answer:{session_id}:{current_idx}:{opt['text']}"
+                            )
+                        ])
+                elif question["type"] == "true_false":
+                    keyboard = [
+                        [
+                            InlineKeyboardButton(
+                                "True",
+                                callback_data=f"quiz_answer:{session_id}:{current_idx}:true"
+                            ),
+                            InlineKeyboardButton(
+                                "False",
+                                callback_data=f"quiz_answer:{session_id}:{current_idx}:false"
+                            ),
+                        ]
+                    ]
+
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+                return
+
+        await query.edit_message_text(text, parse_mode="Markdown")
+
+    async def cmd_mentor(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Start AI mentor interaction"""
+        text = """
+🤖 **AI Mentor Selection**
+
+Choose your learning companion:
+
+👩‍🏫 **Maya** - Patient guide
+Uses analogies, beginner-friendly
+
+👨‍💼 **Theo** - Analytical expert
+Data-driven, technical analysis
+
+🧘‍♀️ **Zara** - Psychology coach
+Trading discipline and mindset
+"""
+
+        keyboard = [
+            [InlineKeyboardButton("👩‍🏫 Maya", callback_data="mentor:maya")],
+            [InlineKeyboardButton("👨‍💼 Theo", callback_data="mentor:theo")],
+            [InlineKeyboardButton("🧘‍♀️ Zara", callback_data="mentor:zara")],
+        ]
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+    async def select_mentor(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle mentor selection"""
+        query = update.callback_query
+        await query.answer()
+
+        mentor_name = query.data.split(":")[1]
+
+        # Map to persona
+        persona_map = {
+            "maya": MentorPersona.MAYA,
+            "theo": MentorPersona.THEO,
+            "zara": MentorPersona.ZARA,
+        }
+        persona = persona_map.get(mentor_name, MentorPersona.MAYA)
+
+        # Store mentor preference
+        context.user_data["mentor_persona"] = persona
+
+        mentor_info = self.mentor_service.get_mentor_info(persona)
+
+        text = f"""
+{mentor_info['icon']} **{mentor_info['name']}** is ready to help!
+
+{mentor_info['description']}
+
+**Focus:** {mentor_info['focus']}
+
+💬 Ask me anything about trading and investing!
+
+_Type your question below, or use /help for commands._
+
+📚 _Educational purposes only - not financial advice_
+"""
+
+        await query.edit_message_text(text, parse_mode="Markdown")
+
+    async def cmd_progress(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Show user's learning progress"""
+        user_id = str(update.effective_user.id)
+
+        # Get gamification summary
+        summary = await self.gamification.get_user_summary(user_id)
+
+        # Get lesson progress
+        lesson_progress = await self.lesson_engine.get_user_progress(user_id)
+        completed_lessons = len(lesson_progress.get("completed", set()))
+
+        text = f"""
+📊 **Your Learning Progress**
+
+**Level:** {summary['level']} - {summary['level_title']}
+**Total XP:** {summary['total_xp']} XP
+**Streak:** {summary['streak_days']} days 🔥
+
+**Lessons:**
+✅ Completed: {completed_lessons}
+📝 Quizzes: {summary.get('quizzes_completed', 0)}
+
+**Badges:**
+"""
+        if summary['badges']:
+            for badge in summary['badges']:
+                text += f"{badge['icon']} {badge['name']}\n"
+        else:
+            text += "No badges yet - keep learning!\n"
+
+        # Progress bar
+        progress = summary.get('progress_to_next_level', {})
+        if not progress.get('max_level'):
+            percent = progress.get('progress', 0)
+            bar_filled = int(percent / 10)
+            bar_empty = 10 - bar_filled
+            progress_bar = "█" * bar_filled + "░" * bar_empty
+
+            text += f"\n**Next Level:** {progress.get('xp_needed', 0)} XP needed\n"
+            text += f"[{progress_bar}] {percent:.0f}%"
 
         await update.message.reply_text(text, parse_mode="Markdown")
 
