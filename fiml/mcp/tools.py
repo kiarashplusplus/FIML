@@ -469,18 +469,18 @@ async def search_by_symbol(
                     narrative = await generator.generate_narrative(context)
 
                     # Convert to summary format with section metadata
-                    from fiml.core.models import NarrativeSummary
+                    from fiml.core.models import NarrativeSectionMeta, NarrativeSummary
                     narrative_summary = NarrativeSummary(
                         summary=narrative.summary,
                         key_insights=narrative.key_insights,
                         risk_factors=narrative.risk_factors,
                         language=language,
                         sections=[
-                            {
-                                "title": section.title,
-                                "type": section.section_type.value,
-                                "confidence": section.confidence,
-                            }
+                            NarrativeSectionMeta(
+                                title=section.title,
+                                type=section.section_type.value,
+                                confidence=section.confidence,
+                            )
                             for section in narrative.sections
                         ],
                     )
@@ -841,7 +841,7 @@ async def search_by_coin(
                     narrative = await generator.generate_narrative(context)
 
                     # Convert to summary format with crypto context and section metadata
-                    from fiml.core.models import NarrativeSummary
+                    from fiml.core.models import NarrativeSectionMeta, NarrativeSummary
                     narrative_summary = NarrativeSummary(
                         summary=narrative.summary,
                         key_insights=narrative.key_insights + [
@@ -855,11 +855,11 @@ async def search_by_coin(
                         ],
                         language=language,
                         sections=[
-                            {
-                                "title": section.title,
-                                "type": section.section_type.value,
-                                "confidence": section.confidence,
-                            }
+                            NarrativeSectionMeta(
+                                title=section.title,
+                                type=section.section_type.value,
+                                confidence=section.confidence,
+                            )
                             for section in narrative.sections
                         ],
                     )

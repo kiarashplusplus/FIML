@@ -164,6 +164,14 @@ class ComplianceInfo(BaseModel):
     applicable_regulations: List[str] = Field(default_factory=list)
 
 
+class NarrativeSectionMeta(BaseModel):
+    """Metadata for a narrative section"""
+
+    title: str
+    type: str
+    confidence: float = 0.0
+
+
 class NarrativeSummary(BaseModel):
     """Narrative analysis summary"""
 
@@ -173,7 +181,7 @@ class NarrativeSummary(BaseModel):
     macro_context: Optional[str] = None
     technical_context: Optional[str] = None
     language: str = "en"
-    sections: List[Dict[str, Any]] = []  # Section metadata for reference
+    sections: List[NarrativeSectionMeta] = Field(default_factory=list)
 
 
 class SearchBySymbolResponse(BaseModel):

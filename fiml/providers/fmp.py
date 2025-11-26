@@ -3,6 +3,7 @@ Financial Modeling Prep (FMP) Provider Implementation
 """
 
 import asyncio
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -391,6 +392,12 @@ class FMPProvider(BaseProvider):
         # FMP primarily supports equities
         return asset.asset_type == AssetType.EQUITY
 
+    def _calculate_success_rate(self) -> float:
+        """Calculate success rate based on request and error counts"""
+        if self._request_count == 0:
+            return 0.0
+        return 1.0 - (self._error_count / self._request_count)
+
     async def get_health(self) -> ProviderHealth:
         """Get provider health metrics"""
         # If not initialized, return unhealthy status with meaningful values
@@ -406,7 +413,6 @@ class FMPProvider(BaseProvider):
             )
 
         try:
-            import time
             start_time = time.time()
 
             # Simple health check - fetch a known symbol
@@ -420,7 +426,7 @@ class FMPProvider(BaseProvider):
                 is_healthy=True,
                 uptime_percent=0.98,
                 avg_latency_ms=latency_ms,
-                success_rate=1.0 - (self._error_count / max(self._request_count, 1)),
+                success_rate=self._calculate_success_rate(),
                 last_check=datetime.now(timezone.utc),
                 error_count_24h=self._error_count,
             )
@@ -431,7 +437,7 @@ class FMPProvider(BaseProvider):
                 is_healthy=False,
                 uptime_percent=0.0,
                 avg_latency_ms=0.0,
-                success_rate=1.0 - (self._error_count / max(self._request_count, 1)) if self._request_count > 0 else 0.0,
+                success_rate=self._calculate_success_rate(),
                 last_check=datetime.now(timezone.utc),
                 error_count_24h=self._error_count + 1,
             )
