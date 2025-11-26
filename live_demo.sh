@@ -510,17 +510,56 @@ try:
         status = result.get('status', 'unknown')
         color = '\033[32m' if status == 'completed' else '\033[33m'
         print(f\"  Status: {color}{status}\033[0m\")
-        if 'results' in result:
+        
+        # Check for synchronous execution results
+        if 'result' in result and result['result']:
+            exec_result = result['result']
+            print()
+            print('  \033[1mExecution Results:\033[0m')
+            
+            # Handle different result formats
+            if isinstance(exec_result, dict):
+                # Check for price data
+                if 'price' in exec_result or 'PRICE' in exec_result:
+                    price_data = exec_result.get('price') or exec_result.get('PRICE', {})
+                    if isinstance(price_data, dict):
+                        print(f\"    Price:    \033[32m\${price_data.get('price', 'N/A')}\033[0m\")
+                        change = price_data.get('change_percent', 0)
+                        color = '\033[32m' if change >= 0 else '\033[31m'
+                        print(f\"    Change:   {color}{change:+.2f}%\033[0m\")
+                        print(f\"    Volume:   {price_data.get('volume', 'N/A'):,}\")
+                    else:
+                        print(f\"    Price: {price_data}\")
+                        
+                # Check for volume data
+                if 'volume' in exec_result or 'VOLUME' in exec_result:
+                    vol_data = exec_result.get('volume') or exec_result.get('VOLUME', {})
+                    if isinstance(vol_data, dict) and 'volume' in vol_data:
+                        print(f\"    Volume:   {vol_data.get('volume', 'N/A'):,}\")
+                        
+                # Show any other top-level metrics
+                for key, value in list(exec_result.items())[:5]:
+                    if key.lower() not in ['price', 'volume']:
+                        if isinstance(value, dict):
+                            print(f\"    {key}: {json.dumps(value, default=str)[:60]}...\")
+                        else:
+                            print(f\"    {key}: {value}\")
+            else:
+                print(f\"    Result: {exec_result}\")
+                
+        # Fallback to results field (async mode)
+        elif 'results' in result:
             results = result['results']
             if isinstance(results, dict):
                 for key, value in list(results.items())[:3]:
                     print(f\"  {key}: {value}\")
         elif 'task_id' in result:
             print(f\"  Task ID: {result['task_id']}\")
+            print(f\"  Total Steps: {result.get('total_steps', 'N/A')}\")
     else:
         print(f\"  \033[33mDSL execution returned error - this is expected in demo mode\033[0m\")
 except Exception as e:
-    print(f\"  \033[33mDSL query demonstration (mock data in demo mode)\033[0m\")
+    print(f\"  \033[33mDSL query demonstration (mock data in demo mode): {e}\033[0m\")
 "
 
 if [ "$QUICK_MODE" != true ]; then
@@ -534,15 +573,42 @@ try:
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         status = result.get('status', 'unknown')
-        print(f\"  Status: {status}\")
-        if 'results' in result:
+        color = '\033[32m' if status == 'completed' else '\033[33m'
+        print(f\"  Status: {color}{status}\033[0m\")
+        
+        # Check for synchronous execution results
+        if 'result' in result and result['result']:
+            exec_result = result['result']
+            print()
+            print('  \033[1mComparison Results:\033[0m')
+            
+            # Handle comparison format
+            if isinstance(exec_result, dict):
+                comparison = exec_result.get('comparison', [])
+                if comparison:
+                    print('  ' + '-' * 55)
+                    print(f\"  {'Symbol':<12} {'P/E Ratio':<15} {'Market Cap':<20}\")
+                    print('  ' + '-' * 55)
+                    for item in comparison[:5]:
+                        symbol = item.get('asset', 'N/A')
+                        pe = item.get('pe', item.get('pe_ratio', 'N/A'))
+                        mcap = item.get('marketcap', item.get('market_cap', 'N/A'))
+                        pe_str = f\"{pe:.2f}\" if isinstance(pe, (int, float)) else str(pe)
+                        mcap_str = f\"\${mcap:,.0f}\" if isinstance(mcap, (int, float)) else str(mcap)
+                        print(f\"  {symbol:<12} {pe_str:<15} {mcap_str:<20}\")
+                    print('  ' + '-' * 55)
+                else:
+                    # Show raw results
+                    for key, value in list(exec_result.items())[:5]:
+                        print(f\"    {key}: {value}\")
+        elif 'results' in result:
             print(\"  Comparison Results:\")
             for asset, values in result.get('results', {}).items():
                 print(f\"    {asset}: {values}\")
     else:
         print(\"  \033[33mMulti-asset comparison demonstration\033[0m\")
-except:
-    print(\"  \033[33mCOMPARE query demonstration (mock data in demo mode)\033[0m\")
+except Exception as e:
+    print(f\"  \033[33mCOMPARE query demonstration (mock data in demo mode)\033[0m\")
 "
 
     print_subsection "Correlation Analysis" "🔗"
@@ -554,16 +620,52 @@ try:
     data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
-        print(f\"  Status: {result.get('status', 'N/A')}\")
-        if 'correlation_matrix' in result:
+        status = result.get('status', 'unknown')
+        color = '\033[32m' if status == 'completed' else '\033[33m'
+        print(f\"  Status: {color}{status}\033[0m\")
+        
+        # Check for synchronous execution results
+        if 'result' in result and result['result']:
+            exec_result = result['result']
+            print()
+            print('  \033[1mCorrelation Analysis:\033[0m')
+            
+            if isinstance(exec_result, dict):
+                # Primary asset info
+                primary = exec_result.get('primary_asset', {})
+                if primary:
+                    symbol = primary.get('symbol', 'BTC') if isinstance(primary, dict) else primary
+                    print(f\"    Primary Asset: {symbol}\")
+                
+                # Window info
+                window = exec_result.get('window', {})
+                if window:
+                    window_str = f\"{window.get('value', 30)}{window.get('unit', 'd')}\" if isinstance(window, dict) else str(window)
+                    print(f\"    Analysis Window: {window_str}\")
+                
+                # Correlation results
+                correlations = exec_result.get('correlations', {})
+                if correlations:
+                    print()
+                    print('    Correlation Coefficients:')
+                    for asset, corr_data in correlations.items():
+                        if isinstance(corr_data, dict):
+                            coef = corr_data.get('coefficient', 0)
+                            strength = corr_data.get('strength', 'N/A')
+                            color = '\033[32m' if coef > 0.5 else '\033[33m' if coef > 0 else '\033[31m'
+                            print(f\"      {asset}: {color}{coef:+.3f}\033[0m ({strength})\")
+                        else:
+                            print(f\"      {asset}: {corr_data:.3f}\")
+                            
+        elif 'correlation_matrix' in result:
             print(\"  Correlation Matrix:\")
             matrix = result['correlation_matrix']
             for pair, value in matrix.items():
                 print(f\"    {pair}: {value:.3f}\")
     else:
         print(\"  \033[33mCorrelation analysis demonstration\033[0m\")
-except:
-    print(\"  \033[33mCORRELATE query demonstration (mock data in demo mode)\033[0m\")
+except Exception as e:
+    print(f\"  \033[33mCORRELATE query demonstration (mock data in demo mode)\033[0m\")
 "
 
     print_subsection "Complex SCAN Query" "🔍"
@@ -575,15 +677,44 @@ try:
     data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
-        print(f\"  Status: {result.get('status', 'N/A')}\")
-        matches = result.get('matches', [])
-        print(f\"  Matches Found: {len(matches)}\")
-        for match in matches[:5]:
-            print(f\"    • {match.get('symbol', 'N/A')}: PE={match.get('pe', 'N/A')}, Vol={match.get('volume', 'N/A')}\")
+        status = result.get('status', 'unknown')
+        color = '\033[32m' if status == 'completed' else '\033[33m'
+        print(f\"  Status: {color}{status}\033[0m\")
+        
+        # Check for synchronous execution results
+        if 'result' in result and result['result']:
+            exec_result = result['result']
+            print()
+            print('  \033[1mMarket Scan Results:\033[0m')
+            
+            # Handle list of matching assets
+            if isinstance(exec_result, list):
+                print(f\"    Matches Found: {len(exec_result)}\")
+                if exec_result:
+                    print()
+                    print('  ' + '-' * 55)
+                    print(f\"  {'Symbol':<10} {'Matches':<10} {'Conditions Met':<15}\")
+                    print('  ' + '-' * 55)
+                    for match in exec_result[:5]:
+                        symbol = match.get('symbol', 'N/A')
+                        matches = '\033[32m✓\033[0m' if match.get('matches', False) else '\033[31m✗\033[0m'
+                        conditions = match.get('conditions_met', 0)
+                        print(f\"  {symbol:<10} {matches:<10} {conditions:<15}\")
+                    print('  ' + '-' * 55)
+            elif isinstance(exec_result, dict):
+                matches = exec_result.get('matches', [])
+                print(f\"    Matches Found: {len(matches)}\")
+                for match in matches[:5]:
+                    print(f\"    • {match.get('symbol', 'N/A')}: PE={match.get('pe', 'N/A')}, Vol={match.get('volume', 'N/A')}\")
+        elif 'matches' in result:
+            matches = result.get('matches', [])
+            print(f\"  Matches Found: {len(matches)}\")
+            for match in matches[:5]:
+                print(f\"    • {match.get('symbol', 'N/A')}: PE={match.get('pe', 'N/A')}, Vol={match.get('volume', 'N/A')}\")
     else:
         print(\"  \033[33mSCAN query demonstration\033[0m\")
-except:
-    print(\"  \033[33mSCAN query demonstration (mock data in demo mode)\033[0m\")
+except Exception as e:
+    print(f\"  \033[33mSCAN query demonstration (mock data in demo mode)\033[0m\")
 "
 fi
 
@@ -858,6 +989,178 @@ except:
 end_timing "section6"
 
 # =============================================================================
+# SECTION 7: v0.2.2 Features - Monitoring & Observability
+# =============================================================================
+print_section "SECTION 7: v0.2.2 Monitoring & Observability" "🔭"
+start_timing "section7"
+
+print_subsection "Watchdog Health Monitor" "👁️"
+watchdog_metrics=$(http_get "/api/metrics/watchdog")
+echo "$watchdog_metrics" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    
+    overall_health = data.get('overall_health', 'unknown')
+    color = '\033[32m' if overall_health == 'healthy' else '\033[33m' if overall_health == 'degraded' else '\033[31m'
+    print(f\"  Overall Health: {color}{overall_health.upper()}\033[0m\")
+    
+    components = data.get('components', {})
+    if components:
+        print()
+        print('  Component Health Status:')
+        for component, status in components.items():
+            if isinstance(status, dict):
+                health = status.get('healthy', status.get('status', 'unknown'))
+                health_str = str(health).upper() if isinstance(health, bool) else str(health).upper()
+                icon = '\033[32m●\033[0m' if health in [True, 'healthy', 'HEALTHY'] else '\033[31m●\033[0m'
+                latency = status.get('latency_ms', status.get('avg_latency_ms', 'N/A'))
+                if isinstance(latency, (int, float)):
+                    print(f\"    {icon} {component:<20} Latency: {latency:>6.0f}ms\")
+                else:
+                    print(f\"    {icon} {component:<20} Status: {health_str}\")
+            else:
+                print(f\"    • {component}: {status}\")
+    
+    # Event stream info
+    events = data.get('recent_events', data.get('events', []))
+    if events:
+        print()
+        print(f\"  Recent Events: {len(events)}\")
+        for event in events[:3]:
+            if isinstance(event, dict):
+                print(f\"    • {event.get('type', 'event')}: {event.get('message', event.get('details', 'N/A'))}\")
+            
+except Exception as e:
+    print(f\"  \033[33mWatchdog metrics (requires services): {str(e)[:50]}\033[0m\")
+"
+
+print_subsection "Performance Monitoring" "📈"
+perf_metrics=$(http_get "/api/metrics/performance")
+echo "$perf_metrics" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    
+    # Request metrics
+    requests = data.get('requests', {})
+    if requests:
+        print('  Request Statistics:')
+        print(f\"    Total Requests:    {requests.get('total', 0):,}\")
+        print(f\"    Success Rate:      {requests.get('success_rate', 0) * 100:.1f}%\")
+        print(f\"    Avg Response Time: {requests.get('avg_response_time_ms', 0):.2f}ms\")
+        print(f\"    P95 Response Time: {requests.get('p95_response_time_ms', 0):.2f}ms\")
+        print()
+    
+    # Endpoint breakdown
+    endpoints = data.get('endpoints', data.get('by_endpoint', {}))
+    if endpoints:
+        print('  Top Endpoints:')
+        sorted_endpoints = sorted(endpoints.items(), key=lambda x: x[1].get('count', 0) if isinstance(x[1], dict) else 0, reverse=True)[:5]
+        for endpoint, stats in sorted_endpoints:
+            if isinstance(stats, dict):
+                count = stats.get('count', 0)
+                avg_time = stats.get('avg_time_ms', 0)
+                print(f\"    {endpoint:<30} {count:>6} requests, {avg_time:>6.1f}ms avg\")
+    
+    # Memory/resource usage if available
+    resources = data.get('resources', {})
+    if resources:
+        print()
+        print('  Resource Usage:')
+        print(f\"    Memory Usage: {resources.get('memory_mb', 0):.1f} MB\")
+        print(f\"    CPU Usage:    {resources.get('cpu_percent', 0):.1f}%\")
+        
+except Exception as e:
+    print(f\"  \033[33mPerformance metrics (requires services): {str(e)[:50]}\033[0m\")
+"
+
+if [ "$QUICK_MODE" != true ]; then
+    print_subsection "Narrative Generation Capability" "✍️"
+    echo -e "  ${DIM}Demonstrating AI-powered narrative generation...${NC}"
+    narrative_response=$(call_mcp_tool "search-by-symbol" '{"symbol":"MSFT","market":"US","depth":"deep"}')
+    echo "$narrative_response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if not data.get('isError', False):
+        result = json.loads(data['content'][0]['text'])
+        narrative = result.get('narrative', {})
+        
+        if narrative and narrative.get('summary'):
+            print('  \033[32m✓ Narrative Engine Active\033[0m')
+            print()
+            print('  Summary:')
+            summary = narrative.get('summary', '')[:300]
+            # Word wrap at ~70 chars
+            import textwrap
+            wrapped = textwrap.fill(summary, width=65, initial_indent='    ', subsequent_indent='    ')
+            print(wrapped)
+            if len(narrative.get('summary', '')) > 300:
+                print('    ...')
+            
+            sections = narrative.get('sections', [])
+            if sections:
+                print()
+                print(f\"  Sections Generated: {len(sections)}\")
+                for section in sections[:3]:
+                    title = section.get('title', 'Unknown')
+                    sec_type = section.get('type', 'N/A')
+                    confidence = section.get('confidence', 0)
+                    print(f\"    • {title} ({sec_type}) - Confidence: {confidence:.0%}\")
+                    
+            insights = narrative.get('key_insights', [])
+            if insights:
+                print()
+                print('  Key Insights:')
+                for insight in insights[:3]:
+                    print(f\"    • {insight[:70]}{'...' if len(insight) > 70 else ''}\")
+        else:
+            print('  \033[33mNarrative generation requires LLM configuration (Azure OpenAI)\033[0m')
+            print('  \033[33mSet AZURE_OPENAI_API_KEY to enable narratives\033[0m')
+    else:
+        print('  \033[33mNarrative demonstration\033[0m')
+except Exception as e:
+    print(f\"  \033[33mNarrative generation demonstration\033[0m\")
+"
+
+    print_subsection "MCP Tool Discovery" "🔧"
+    echo -e "  ${DIM}Available MCP Tools (v0.2.2):${NC}"
+    tools_response=$(http_get "/mcp/tools")
+    echo "$tools_response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    tools = data.get('tools', [])
+    
+    if tools:
+        print(f\"  Total Available Tools: {len(tools)}\")
+        print()
+        print('  ' + '-' * 60)
+        print(f\"  {'Tool Name':<30} {'Description':<28}\")
+        print('  ' + '-' * 60)
+        
+        for tool in tools:
+            name = tool.get('name', 'N/A')
+            desc = tool.get('description', '')[:45]
+            print(f\"  {name:<30} {desc}...\")
+            
+        print('  ' + '-' * 60)
+        print()
+        print('  Session Management Tools:')
+        session_tools = [t for t in tools if 'session' in t.get('name', '').lower()]
+        for tool in session_tools:
+            print(f\"    • {tool.get('name')}\")
+    else:
+        print('  Tool discovery not available')
+except:
+    print('  \033[33mMCP tool discovery demonstration\033[0m')
+"
+fi
+
+end_timing "section7"
+
+# =============================================================================
 # Demo Summary
 # =============================================================================
 DEMO_END_TIME=$(date +%s.%N)
@@ -870,11 +1173,18 @@ echo -e "${BOLD}${WHITE}╠═════════════════�
 echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
 echo -e "${BOLD}${WHITE}║  ${CYAN}Total Duration:${WHITE} ${TOTAL_DURATION}s                                       ║${NC}"
 echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
-echo -e "${BOLD}${WHITE}║  ${DIM}Available Endpoints:${NC}                                         ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║  ${DIM}Core Endpoints:${NC}                                              ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}API Server:${NC}    ${BASE_URL}                         ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}API Docs:${NC}       ${BASE_URL}/docs                    ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}Health:${NC}         ${BASE_URL}/health                  ${BOLD}${WHITE}║${NC}"
-echo -e "${BOLD}${WHITE}║    ${BLUE}Metrics:${NC}        ${BASE_URL}/metrics                 ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${BLUE}MCP Tools:${NC}      ${BASE_URL}/mcp/tools               ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
+echo -e "${BOLD}${WHITE}║  ${DIM}v0.2.2 Metrics & Monitoring:${NC}                                 ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${BLUE}Prometheus:${NC}     ${BASE_URL}/metrics                 ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${BLUE}Cache:${NC}          ${BASE_URL}/api/metrics/cache       ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${BLUE}Watchdog:${NC}       ${BASE_URL}/api/metrics/watchdog    ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${BLUE}Performance:${NC}    ${BASE_URL}/api/metrics/performance ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${BLUE}Tasks:${NC}          ${BASE_URL}/api/metrics/tasks       ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
 echo -e "${BOLD}${WHITE}║  ${DIM}For comprehensive testing, run:${NC}                              ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${YELLOW}./scripts/test_live_system.sh${NC}                               ${BOLD}${WHITE}║${NC}"
