@@ -137,8 +137,10 @@ class ProviderRegistry:
         # Register providers based on configuration and availability
         providers_to_register: List[BaseProvider] = []
 
-        # Always register mock provider for testing
-        providers_to_register.append(MockProvider())
+        # Only register mock provider in test/development environments
+        if settings.fiml_env in ["test", "development"]:
+            providers_to_register.append(MockProvider())
+            logger.info("Mock provider registered (test/development mode)")
 
         # Register Yahoo Finance (free, no API key needed)
         providers_to_register.append(YahooFinanceProvider())
