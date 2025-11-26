@@ -375,29 +375,29 @@ class TestTelegramBotAdapter:
         """Test successful key removal via callback"""
         user_id = "12345"
         provider_id = "alpha_vantage"
-        
+
         # Add a key first
         await key_manager.add_key(user_id, provider_id, "ABC123XYZ456789X")
-        
+
         mock_query = MagicMock()
         mock_query.data = f"remove:{provider_id}"
         mock_query.answer = AsyncMock()
         mock_query.edit_message_text = AsyncMock()
-        
+
         mock_update = MagicMock()
         mock_update.callback_query = mock_query
         mock_update.effective_user = MagicMock()
         mock_update.effective_user.id = int(user_id)
-        
+
         await adapter.handle_remove_key(mock_update, mock_context)
-        
+
         mock_query.answer.assert_called_once()
         mock_query.edit_message_text.assert_called_once()
-        
+
         # Check success message
         args = mock_query.edit_message_text.call_args[0]
         assert "removed successfully" in args[0].lower() or "✅" in args[0]
-        
+
         # Verify key was actually removed
         keys = await key_manager.get_user_keys(user_id)
         assert provider_id not in keys
@@ -406,22 +406,22 @@ class TestTelegramBotAdapter:
         """Test removal of non-existent key"""
         user_id = "12345"
         provider_id = "nonexistent_provider"
-        
+
         mock_query = MagicMock()
         mock_query.data = f"remove:{provider_id}"
         mock_query.answer = AsyncMock()
         mock_query.edit_message_text = AsyncMock()
-        
+
         mock_update = MagicMock()
         mock_update.callback_query = mock_query
         mock_update.effective_user = MagicMock()
         mock_update.effective_user.id = int(user_id)
-        
+
         await adapter.handle_remove_key(mock_update, mock_context)
-        
+
         mock_query.answer.assert_called_once()
         mock_query.edit_message_text.assert_called_once()
-        
+
         # Should show failure message
         args = mock_query.edit_message_text.call_args[0]
         assert "failed" in args[0].lower() or "❌" in args[0]
@@ -429,12 +429,12 @@ class TestTelegramBotAdapter:
     def test_get_available_lessons_from_files(self, adapter, tmp_path):
         """Test that available lessons are loaded from files"""
         import yaml
-        
+
         # Create lessons directory
         lessons_dir = tmp_path / "lessons"
         lessons_dir.mkdir(parents=True, exist_ok=True)
         adapter.lesson_engine.lessons_path = lessons_dir
-        
+
         # Create test lesson files
         lesson1 = {
             "id": "test_lesson_001",
@@ -446,29 +446,37 @@ class TestTelegramBotAdapter:
             "title": "Test Lesson 2",
             "difficulty": "intermediate"
         }
-        
+
         with open(lessons_dir / "01_test_lesson.yaml", "w") as f:
             yaml.dump(lesson1, f)
         with open(lessons_dir / "02_test_lesson.yaml", "w") as f:
             yaml.dump(lesson2, f)
-        
+
         lessons = adapter._get_available_lessons()
-        
+
         assert len(lessons) == 2
-        assert any(l[0] == "test_lesson_001" for l in lessons)
-        assert any(l[0] == "test_lesson_002" for l in lessons)
-        assert any(l[2] == "beginner" for l in lessons)
-        assert any(l[2] == "intermediate" for l in lessons)
+        assert any(lesson[0] == "test_lesson_001" for lesson in lessons)
+        assert any(lesson[0] == "test_lesson_002" for lesson in lessons)
+        assert any(lesson[2] == "beginner" for lesson in lessons)
+        assert any(lesson[2] == "intermediate" for lesson in lessons)
+
+    def test_get_difficulty_emoji(self, adapter):
+        """Test difficulty emoji mapping"""
+        assert adapter._get_difficulty_emoji("beginner") == "🟢"
+        assert adapter._get_difficulty_emoji("intermediate") == "🟡"
+        assert adapter._get_difficulty_emoji("advanced") == "🔴"
+        assert adapter._get_difficulty_emoji("BEGINNER") == "🟢"  # Case insensitive
+        assert adapter._get_difficulty_emoji("unknown") == "🟡"  # Default
 
     def test_get_lesson_id_to_file_map(self, adapter, tmp_path):
         """Test lesson ID to file path mapping"""
         import yaml
-        
+
         # Create lessons directory
         lessons_dir = tmp_path / "lessons"
         lessons_dir.mkdir(parents=True, exist_ok=True)
         adapter.lesson_engine.lessons_path = lessons_dir
-        
+
         # Create test lesson file
         lesson = {
             "id": "mapped_lesson_001",
@@ -478,21 +486,21 @@ class TestTelegramBotAdapter:
         lesson_file = lessons_dir / "01_mapped_lesson.yaml"
         with open(lesson_file, "w") as f:
             yaml.dump(lesson, f)
-        
+
         mapping = adapter._get_lesson_id_to_file_map()
-        
+
         assert "mapped_lesson_001" in mapping
         assert mapping["mapped_lesson_001"] == str(lesson_file)
 
     async def test_select_lesson_loads_from_file_map(self, adapter, mock_context, tmp_path):
         """Test lesson selection uses file mapping"""
         import yaml
-        
+
         # Create lessons directory
         lessons_dir = tmp_path / "lessons"
         lessons_dir.mkdir(parents=True, exist_ok=True)
         adapter.lesson_engine.lessons_path = lessons_dir
-        
+
         # Create test lesson with different file name than ID
         lesson = {
             "id": "stock_basics_001",
@@ -505,19 +513,19 @@ class TestTelegramBotAdapter:
         }
         with open(lessons_dir / "01_stock_prices.yaml", "w") as f:
             yaml.dump(lesson, f)
-        
+
         mock_query = MagicMock()
         mock_query.data = "lesson:stock_basics_001"
         mock_query.answer = AsyncMock()
         mock_query.edit_message_text = AsyncMock()
-        
+
         mock_update = MagicMock()
         mock_update.callback_query = mock_query
         mock_update.effective_user = MagicMock()
         mock_update.effective_user.id = 12345
-        
+
         await adapter.select_lesson(mock_update, mock_context)
-        
+
         # Verify lesson was loaded and rendered
         mock_query.edit_message_text.assert_called_once()
         args = mock_query.edit_message_text.call_args[0]

@@ -600,9 +600,20 @@ No providers connected yet.
                         lesson_id = lesson_data.get("id", lesson_file.stem)
                         mapping[lesson_id] = str(lesson_file)
             except Exception:
+                # Skip invalid lesson files silently - they'll be handled
+                # when user tries to access them directly
                 pass
 
         return mapping
+
+    def _get_difficulty_emoji(self, difficulty: str) -> str:
+        """Get emoji for difficulty level."""
+        difficulty_emojis = {
+            "beginner": "🟢",
+            "intermediate": "🟡",
+            "advanced": "🔴",
+        }
+        return difficulty_emojis.get(difficulty.lower(), "🟡")
 
     async def cmd_lesson(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Show available lessons or continue current lesson"""
@@ -624,7 +635,7 @@ No providers connected yet.
         keyboard = []
         for lesson_id, title, difficulty in display_lessons:
             status = "✅" if lesson_id in completed else "📖"
-            emoji = "🟢" if difficulty == "beginner" else "🟡" if difficulty == "intermediate" else "🔴"
+            emoji = self._get_difficulty_emoji(difficulty)
             text += f"{status} {emoji} {title}\n"
 
             keyboard.append([
