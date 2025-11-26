@@ -93,7 +93,11 @@ class DefiLlamaProvider(BaseProvider):
         """
         Convert symbol to DefiLlama coin ID.
 
-        DefiLlama uses coingecko IDs prefixed with 'coingecko:' for price lookups.
+        DefiLlama supports multiple ID formats:
+        - coingecko:{id} - For CoinGecko coin IDs (e.g., 'coingecko:bitcoin')
+        - {chain}:{address} - For on-chain tokens (e.g., 'ethereum:0x...')
+
+        This method uses the coingecko format for known symbols.
         """
         clean_symbol = symbol.upper()
 
@@ -226,7 +230,7 @@ class DefiLlamaProvider(BaseProvider):
                         "high": price,
                         "low": price,
                         "close": price,
-                        "volume": 0,  # DefiLlama doesn't provide volume in chart data
+                        "volume": None,  # DefiLlama doesn't provide volume in chart data
                     }
                 )
 
@@ -234,6 +238,7 @@ class DefiLlamaProvider(BaseProvider):
                 "ohlcv": ohlcv_data,
                 "timeframe": timeframe,
                 "count": len(ohlcv_data),
+                "volume_available": False,  # Flag to indicate volume is not available
             }
 
             return ProviderResponse(
@@ -297,19 +302,23 @@ class DefiLlamaProvider(BaseProvider):
                     metadata={"source": "defillama", "note": "Protocol not found"},
                 )
 
+            # Calculate mcap/tvl ratio safely
+            mcap = float(protocol_data.get("mcap", 0.0) or 0.0)
+            tvl = float(protocol_data.get("tvl", 0.0))
+            mcap_tvl_ratio = (mcap / tvl) if tvl > 0 else None
+
             data = {
                 "symbol": protocol_data.get("symbol", ""),
                 "name": protocol_data.get("name", ""),
                 "slug": protocol_data.get("slug", ""),
-                "tvl": float(protocol_data.get("tvl", 0.0)),
+                "tvl": tvl,
                 "chain_tvls": protocol_data.get("chainTvls", {}),
                 "change_1h": float(protocol_data.get("change_1h", 0.0) or 0.0),
                 "change_1d": float(protocol_data.get("change_1d", 0.0) or 0.0),
                 "change_7d": float(protocol_data.get("change_7d", 0.0) or 0.0),
                 "category": protocol_data.get("category", ""),
                 "chains": protocol_data.get("chains", []),
-                "mcap_tvl_ratio": float(protocol_data.get("mcap", 0.0) or 0.0)
-                / max(float(protocol_data.get("tvl", 1.0)), 1.0),
+                "mcap_tvl_ratio": mcap_tvl_ratio,
             }
 
             return ProviderResponse(
@@ -375,10 +384,17 @@ class DefiLlamaProvider(BaseProvider):
                     "tokens": response_data.get("tokens", {}),
                 }
             else:
-                # Total DeFi TVL
-                data = {
-                    "total_tvl": float(response_data) if isinstance(response_data, (int, float)) else 0.0,
-                }
+                # Total DeFi TVL - validate response format
+                if isinstance(response_data, (int, float)):
+                    data = {
+                        "total_tvl": float(response_data),
+                    }
+                else:
+                    logger.warning(
+                        "Unexpected TVL response format from DefiLlama: %s",
+                        type(response_data).__name__,
+                    )
+                    raise ProviderError(f"Unexpected TVL response format: {type(response_data).__name__}")
 
             # Create a dummy asset for TVL response
             dummy_asset = Asset(symbol="TVL", asset_type=AssetType.CRYPTO)
