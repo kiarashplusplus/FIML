@@ -171,7 +171,7 @@ http_get() {
 calc_duration() {
     local start="$1"
     local end="$2"
-    awk "BEGIN {printf \"%.2f\", $end - $start}" 2>/dev/null || echo "N/A"
+    awk -v s="$start" -v e="$end" 'BEGIN {printf "%.2f", e - s}' 2>/dev/null || echo "N/A"
 }
 
 # Start timing a section
@@ -577,26 +577,26 @@ except Exception as e:
     print(f\"  \033[33mSession demonstration (requires database)\033[0m\")
 "
 
-# Extract session ID using a secure temporary file
-SESSION_TEMP_FILE=$(mktemp 2>/dev/null || echo "/tmp/fiml_session_$$_$RANDOM.txt")
-echo "$session_response" | python3 -c "
+# Extract session ID directly from the response without temporary file
+SESSION_ID=$(echo "$session_response" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         if result.get('status') == 'success':
-            print(result.get('session_id', ''))
+            print(result.get('session_id', ''), end='')
 except:
     pass
-" > "$SESSION_TEMP_FILE" 2>/dev/null
-SESSION_ID=$(cat "$SESSION_TEMP_FILE" 2>/dev/null | tr -d '\n' || echo "")
-rm -f "$SESSION_TEMP_FILE" 2>/dev/null
+" 2>/dev/null)
 
 if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "N/A" ]; then
     print_subsection "Query Within Session Context" "🔍"
     echo -e "  ${DIM}Querying AAPL within session context...${NC}"
-    session_query=$(call_mcp_tool "search-by-symbol" "{\"symbol\":\"AAPL\",\"market\":\"US\",\"depth\":\"quick\",\"sessionId\":\"${SESSION_ID}\"}")
+    # Build JSON safely for session query
+    session_query=$(curl -s -X POST "${BASE_URL}/mcp/tools/call" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\":\"search-by-symbol\",\"arguments\":{\"symbol\":\"AAPL\",\"market\":\"US\",\"depth\":\"quick\",\"sessionId\":\"${SESSION_ID}\"}}" 2>/dev/null)
     echo "$session_query" | python3 -c "
 import sys, json
 try:
@@ -779,15 +779,15 @@ except:
 
 if [ "$QUICK_MODE" != true ]; then
     print_subsection "Ray Cluster Status" "🔬"
-    # Check if Ray is available via docker
-    if docker exec fiml-ray-head ray status > /dev/null 2>&1; then
-        docker exec fiml-ray-head ray status 2>/dev/null | head -15 | while read -r line; do
+    # Check if Ray is available via docker and capture output in single call
+    ray_status_output=$(docker exec fiml-ray-head ray status 2>/dev/null) && {
+        echo "$ray_status_output" | head -15 | while read -r line; do
             echo "  $line"
         done
-    else
+    } || {
         echo -e "  ${GRAY}Ray cluster status (requires docker services):${NC}"
         echo -e "  ${DIM}  Start with: make up${NC}"
-    fi
+    }
 fi
 
 print_subsection "Task Registry Status" "📝"
