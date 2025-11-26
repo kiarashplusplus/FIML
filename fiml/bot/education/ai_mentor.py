@@ -79,6 +79,53 @@ class AIMentorService:
         self._conversations: Dict[str, List[Dict]] = {}
         logger.info("AIMentorService initialized with FIML narrative generation")
 
+    def _extract_symbol_from_question(self, question: str) -> str:
+        """
+        Extract stock symbol from user question.
+        
+        Args:
+            question: User's question text
+            
+        Returns:
+            Detected stock symbol or 'AAPL' as default
+        """
+        question_upper = question.upper()
+        
+        # Common stock symbols to look for (expandable)
+        common_symbols = [
+            "AAPL", "GOOGL", "GOOG", "MSFT", "AMZN", "TSLA", "META", "NVDA",
+            "JPM", "V", "WMT", "PG", "JNJ", "UNH", "DIS", "NFLX", "PYPL",
+            "INTC", "CSCO", "VZ", "PFE", "KO", "PEP", "NKE", "MCD", "BA",
+            "GE", "IBM", "GM", "F", "T", "XOM", "CVX", "ORCL", "CRM", "AMD"
+        ]
+        
+        # Check for explicit mentions
+        for symbol in common_symbols:
+            if symbol in question_upper.split():
+                return symbol
+        
+        # Check for company name mentions
+        company_map = {
+            "APPLE": "AAPL",
+            "GOOGLE": "GOOGL",
+            "ALPHABET": "GOOGL",
+            "MICROSOFT": "MSFT",
+            "AMAZON": "AMZN",
+            "TESLA": "TSLA",
+            "FACEBOOK": "META",
+            "META": "META",
+            "NVIDIA": "NVDA",
+            "NETFLIX": "NFLX",
+            "DISNEY": "DIS",
+        }
+        
+        for company_name, symbol in company_map.items():
+            if company_name in question_upper:
+                return symbol
+        
+        # Default to AAPL if no symbol detected
+        return "AAPL"
+
     async def respond(
         self,
         user_id: str,
@@ -111,11 +158,14 @@ class AIMentorService:
         })
 
         try:
+            # Extract symbol from question or use provided context
+            symbol = context.get("symbol") if context and "symbol" in context else self._extract_symbol_from_question(question)
+            
             # Use FIML narrative generation for educational responses
             # Build narrative context from educational question
             narrative_context = NarrativeContext(
-                asset_symbol=context.get("symbol", "AAPL") if context else "AAPL",
-                asset_name=context.get("asset_name", "Example Stock") if context else "Example Stock",
+                asset_symbol=symbol,
+                asset_name=context.get("asset_name", f"{symbol} Stock") if context else f"{symbol} Stock",
                 asset_type="stock",
                 market="US",
                 price_data=context.get("price_data", {}) if context else {},
@@ -134,7 +184,7 @@ class AIMentorService:
 
             # Adapt narrative to mentor persona style
             response_text = self._adapt_narrative_to_persona(
-                narrative.full_text,
+                narrative.summary,
                 persona,
                 question
             )

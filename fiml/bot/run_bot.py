@@ -3,6 +3,7 @@ FIML Educational Bot Entry Point
 Run the Telegram bot with BYOK support
 """
 
+import asyncio
 import logging
 import os
 from pathlib import Path
@@ -14,6 +15,8 @@ from dotenv import load_dotenv
 from fiml.bot.adapters.telegram_adapter import TelegramBotAdapter
 from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
+from fiml.bot.education.gamification import GamificationEngine
+from fiml.sessions.store import SessionStore
 
 # Load environment variables
 load_dotenv()
@@ -58,30 +61,85 @@ def main() -> None:
 
     logger.info("Starting FIML Educational Bot", storage_path=storage_path)
 
-    # Initialize components
-    key_manager = UserProviderKeyManager(
-        encryption_key=encryption_key_bytes,
-        storage_path=storage_path
-    )
+    # Initialize session store for persistence
+    session_store = SessionStore()
 
-    provider_configurator = FIMLProviderConfigurator(key_manager)
+    # Run async initialization and bot
+    asyncio.run(run_async(bot_token, encryption_key_bytes, storage_path, session_store))
 
-    telegram_bot = TelegramBotAdapter(
-        token=bot_token,
-        key_manager=key_manager,
-        provider_configurator=provider_configurator
-    )
 
-    # Run the bot
-    logger.info("Bot initialized, starting polling...")
-    print("🤖 FIML Educational Bot is starting...")
-    print("Press Ctrl+C to stop")
+async def run_async(
+    bot_token: str,
+    encryption_key: Optional[bytes],
+    storage_path: str,
+    session_store: SessionStore
+) -> None:
+    """Async runner to handle SessionStore lifecycle"""
+
+    # Try to initialize session store (Redis + PostgreSQL)
+    session_store_enabled = False
+    try:
+        await session_store.initialize()
+        session_store_enabled = True
+        logger.info("SessionStore initialized (Redis + PostgreSQL persistence)")
+        print("✅ Redis + PostgreSQL session persistence enabled")
+    except Exception as e:
+        logger.warning(f"SessionStore unavailable, running in standalone mode: {e}")
+        print("⚠️  Redis/PostgreSQL unavailable - running with in-memory progress (won't persist)")
+        session_store = None  # Gamification will use in-memory dict
 
     try:
-        telegram_bot.run()
+        # Initialize components
+        key_manager = UserProviderKeyManager(
+            encryption_key=encryption_key,
+            storage_path=storage_path
+        )
+
+        provider_configurator = FIMLProviderConfigurator(key_manager)
+
+        # Initialize gamification (with or without session store)
+        gamification = GamificationEngine(session_store=session_store)
+
+        telegram_bot = TelegramBotAdapter(
+            token=bot_token,
+            key_manager=key_manager,
+            provider_configurator=provider_configurator,
+            gamification=gamification
+        )
+
+        # Run the bot
+        mode = "persistent" if session_store_enabled else "in-memory"
+        logger.info(f"Bot initialized ({mode} mode), starting polling...")
+        print(f"🤖 FIML Educational Bot is starting ({mode} mode)...")
+        print("Press Ctrl+C to stop")
+
+        # Use run_polling() which works in existing async context
+        await telegram_bot.application.initialize()
+        await telegram_bot.application.start()
+        await telegram_bot.application.updater.start_polling()
+        
+        # Keep running until interrupted
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            pass
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
         print("\n👋 Bot stopped")
+    finally:
+        # Cleanup bot
+        try:
+            await telegram_bot.application.updater.stop()
+            await telegram_bot.application.stop()
+            await telegram_bot.application.shutdown()
+        except:
+            pass
+        
+        # Cleanup session store if it was initialized
+        if session_store_enabled and session_store:
+            await session_store.shutdown()
+            logger.info("SessionStore shutdown complete")
 
 
 if __name__ == "__main__":

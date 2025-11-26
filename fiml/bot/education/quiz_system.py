@@ -304,8 +304,11 @@ class QuizSystem:
                 )
             )
 
-        # Generate unique session ID using UUID and timestamp
-        session_id = f"{user_id}_{lesson_id}_{uuid.uuid4().hex[:8]}_{int(datetime.now(UTC).timestamp() * 1000000)}"
+        # Generate unique but SHORT session ID for Telegram callback compatibility (64-byte limit)
+        # Use just 12 chars: 8-char hex + 4-char timestamp suffix
+        short_uuid = uuid.uuid4().hex[:8]
+        timestamp_suffix = hex(int(datetime.now(UTC).timestamp()))[2:][-4:]  # Last 4 hex digits
+        session_id = f"{short_uuid}{timestamp_suffix}"
 
         session = QuizSession(
             session_id=session_id,

@@ -255,14 +255,14 @@ class LessonContentEngine:
             lesson_sections = lesson.sections
 
         # Header
-        output.append(f"📚 **{lesson_title}**\n")
+        output.append(f"📚 {lesson_title}\n")
         # Safely handle difficulty title case
         difficulty_display = str(lesson_difficulty).title() if lesson_difficulty else "Unknown"
         output.append(f"⏱️ {lesson_duration} minutes | " f"📊 {difficulty_display}\n")
 
         # Learning objectives
         if lesson_objectives:
-            output.append("\n**Learning Objectives:**")
+            output.append("\nLearning Objectives:")
             for obj in lesson_objectives:
                 output.append(f"• {obj}")
             output.append("")
@@ -284,13 +284,13 @@ class LessonContentEngine:
                 output.append("")
 
             elif section_type == "live_example":
-                output.append("📊 **Live Example:**")
+                output.append("📊 Live Example:")
 
                 if include_fiml_data and section_fiml_query:
                     # Placeholder for FIML data
-                    output.append("\n_[Live market data would appear here]_")
+                    output.append("\n[Live market data would appear here]")
                     if isinstance(section_fiml_query, dict):
-                        output.append(f"_Query: {section_fiml_query.get('symbol', 'N/A')}_\n")
+                        output.append(f"Query: {section_fiml_query.get('symbol', 'N/A')}\n")
 
                 output.append(section_content)
                 output.append("")
@@ -300,13 +300,13 @@ class LessonContentEngine:
                 output.append("")
 
             elif section_type == "chart":
-                output.append("📈 **Chart:**")
-                output.append("_[Chart would be generated here]_\n")
+                output.append("📈 Chart:")
+                output.append("[Chart would be generated here]\n")
                 output.append(section_content)
                 output.append("")
 
             elif section_type == "key_takeaways":
-                output.append("🔑 **Key Takeaways:**")
+                output.append("🔑 Key Takeaways:")
                 # Parse content as bullet points
                 for line in section_content.split("\n"):
                     if line.strip():
@@ -316,15 +316,20 @@ class LessonContentEngine:
         # Footer
         if isinstance(lesson, dict):
             lesson_xp = lesson.get("xp_reward", 0)
-            lesson_quiz = lesson.get("quiz", {}).get("questions", [])
+            quiz_data = lesson.get("quiz", {})
+            if isinstance(quiz_data, dict):
+                lesson_quiz = quiz_data.get("questions", [])
+            else:
+                lesson_quiz = quiz_data if isinstance(quiz_data, list) else []
         else:
             lesson_xp = lesson.xp_reward
             lesson_quiz = lesson.quiz_questions
 
-        output.append(f"✨ Complete this lesson to earn **{lesson_xp} XP**")
+        output.append(f"✨ Complete this lesson to earn {lesson_xp} XP")
 
         if lesson_quiz:
-            output.append(f"📝 Quiz: {len(lesson_quiz)} questions")
+            output.append(f"\n📝 Quiz available: {len(lesson_quiz)} questions")
+            output.append("Use /quiz to test your knowledge and earn XP!")
 
         content = "\n".join(output)
 

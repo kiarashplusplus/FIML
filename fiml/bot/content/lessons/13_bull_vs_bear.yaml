@@ -1,218 +1,79 @@
-id: market_concepts_001
-title: "Bull Markets vs. Bear Markets"
-category: market_concepts
+id: market_basics_001
+version: "2.0"
+title: "Bull vs Bear Markets"
+category: market_basics
 difficulty: beginner
-duration_minutes: 6
+duration_minutes: 3
+
 learning_objectives:
-  - Understand bull and bear market definitions
-  - Recognize characteristics of each market type
-  - Learn how to adapt strategy to market conditions
-  - Identify market cycle patterns
-prerequisites:
-  - stock_basics_001
+  - Define bull and bear markets
+  - Recognize market cycles
+  - Adjust strategies accordingly
+
 sections:
   - type: introduction
     content: |
-      **Why "Bull" and "Bear"?**
-      
-      🐂 **Bull** = Attacks by thrusting horns UPWARD
-      → Bull Market = Prices rising
-      
-      🐻 **Bear** = Attacks by swiping paws DOWNWARD
-      → Bear Market = Prices falling
-      
-      **Official Definitions:**
-      - **Bull Market**: 20%+ rise from recent low
-      - **Bear Market**: 20%+ fall from recent high
-      - **Correction**: 10-20% fall (normal, not a bear market)
-      
-      Understanding which market you're in determines your strategy!
+      Bull Market = prices rising (+20% from bottom)
+      Bear Market = prices falling (-20% from top)
 
   - type: explanation
     content: |
-      **🐂 Bull Market Characteristics:**
+      Bull Market:
+      - Rising prices
+      - Investor confidence
+      - Economic growth
+      - Easy to make money
+      - Can last years
       
-      **Price Action:**
-      - Consistent higher highs and higher lows
-      - Quick recoveries from dips
-      - "Buy the dip" works
-      
-      **Sentiment:**
-      - Optimism and confidence
-      - FOMO (fear of missing out)
-      - Everyone talks about stocks
-      - Media bullish
-      
-      **Duration:**
-      - Average: 4-5 years
-      - Longest: 2009-2020 (11 years!)
-      
-      **Examples:**
-      - 1982-2000 (18 years!)
-      - 2009-2020 (11 years)
-      - 2020-2021 (COVID recovery)
-      
-      **Strategy:**
-      ✅ Stay fully invested
-      ✅ Buy quality stocks on dips
-      ✅ Let winners run
-      ✅ Minimize cash position
-      ✅ Focus on growth
-      
-      ⚠️ **Late Bull Market Warning Signs:**
-      - Extreme valuations
-      - Everyone is making money
-      - Leverage increasing
-      - "New paradigm" narratives
-
-  - type: explanation
-    content: |
-      **🐻 Bear Market Characteristics:**
-      
-      **Price Action:**
-      - Lower highs and lower lows
-      - Failed rallies ("dead cat bounces")
-      - Support levels breaking
-      - High volatility
-      
-      **Sentiment:**
+      Bear Market:
+      - Falling prices
       - Fear and pessimism
-      - Capitulation selling
-      - "Never investing again" attitudes
-      - Media bearish
+      - Economic slowdown
+      - Hard to profit
+      - Usually shorter (months)
       
-      **Duration:**
-      - Average: 9-12 months
-      - Can be sharp (-50% in months) or grinding
+      Historical Pattern:
+      Bull markets last 3-5 years
+      Bear markets last 6-18 months
       
-      **Examples:**
-      - 2008: -57% over 17 months
-      - 2020 COVID: -34% in 1 month
-      - 2022: -25% over 10 months
-      - 2000-2002: -49% over 30 months
+      What to Do:
       
-      **Strategy:**
-      ✅ Raise cash (20-40%)
-      ✅ Focus on quality/defensive stocks
-      ✅ DCA (dollar-cost average) on the way down
-      ✅ Use tighter stop losses
-      ✅ Wait for confirmation before buying
-      
-      ⚠️ **Don't Try to Catch Falling Knives:**
-      Just because a stock is down 50% doesn't make it cheap!
-      It could fall another 50%.
-
-  - type: explanation
-    content: |
-      **📊 Market Cycle Phases:**
-      
-      **Phase 1: Accumulation (Bear Market Bottom)**
-      - Smart money buying
-      - Sentiment extremely negative
-      - Valuations low
-      - Volume low
-      
-      **Phase 2: Mark-Up (Bull Market)**
-      - Prices rising steadily
-      - More participants joining
-      - Sentiment improving
-      - Economic recovery
-      
-      **Phase 3: Distribution (Bull Market Top)**
-      - Smart money selling
-      - Retail euphoric and buying
-      - Valuations extreme
-      - Warning signs appearing
-      
-      **Phase 4: Mark-Down (Bear Market)**
-      - Prices falling
-      - Panic selling
-      - Economic deterioration
-      - "Never investing again"
-      
-      → Then back to Phase 1 (repeat)
-      
-      **Historical Truth:**
-      - Bull markets last longer than bear markets
-      - Markets recover 100% of the time (so far)
-      - S&P 500 up ~10% annually over 100 years
-      - Bears are scary but temporary
-      - Bulls are calm but powerful
+      Bull: Ride it, don't get greedy
+      Bear: Buy quality on dips, be patient
 
   - type: key_takeaways
     content: |
-      🎯 **Key Takeaways:**
+      🎯 Remember:
       
-      1. **Bull** = 20%+ rise, **Bear** = 20%+ fall
-      2. Bull markets last 4-5 years, bears last 9-12 months
-      3. Adapt your strategy to market conditions
-      4. Bear markets are scary but create opportunities
-      5. Long-term: Markets trend upward
-      
-      💡 **Remember:**
-      "Bull markets are born on pessimism, grow on skepticism, mature on optimism, and die on euphoria."
-      - Sir John Templeton
-      
-      **Investing Truth:**
-      Time IN the market > Timing THE market
+      1. Bull = up 20%+, Bear = down 20%+
+      2. Bulls last longer than bears
+      3. Both are normal and cyclical
+      4. Don't panic in bears
+      5. Don't get too excited in bulls
 
 quiz:
   - id: q1
     type: multiple_choice
-    text: "What officially defines a bear market?"
+    text: "Market drops 25% from peak. What is this?"
     options:
-      - text: "A 20% or greater decline from recent highs"
+      - text: "Bear market"
         is_correct: true
-      - text: "A 10% decline"
+      - text: "Bull market"
         is_correct: false
-      - text: "Any market decline"
+      - text: "Correction"
         is_correct: false
-      - text: "A 50% decline"
-        is_correct: false
-    explanation: "A bear market is officially defined as a 20% or greater decline from recent peak prices."
+    explanation: "20%+ decline = bear market"
     xp_reward: 10
 
   - id: q2
-    type: multiple_choice
-    text: "On average, which lasts longer?"
-    options:
-      - text: "Bull markets (4-5 years)"
-        is_correct: true
-      - text: "Bear markets (4-5 years)"
-        is_correct: false
-      - text: "They last the same time"
-        is_correct: false
-      - text: "Neither lasts more than 6 months"
-        is_correct: false
-    explanation: "Bull markets average 4-5 years while bear markets average 9-12 months. Bulls climb slowly, bears fall fast."
-    xp_reward: 10
-
-  - id: q3
     type: true_false
-    text: "Once a bear market starts, you should immediately sell all your stocks."
+    text: "Bear markets typically last longer than bull markets."
     correct_answer: false
-    explanation: "False! Panic selling often locks in losses at the worst time. Better to have a plan, DCA into quality, and wait for recovery."
-    xp_reward: 10
-
-  - id: q4
-    type: multiple_choice
-    text: "What is a 10-20% market decline called?"
-    options:
-      - text: "A correction"
-        is_correct: true
-      - text: "A bear market"
-        is_correct: false
-      - text: "A crash"
-        is_correct: false
-      - text: "A bull market"
-        is_correct: false
-    explanation: "A correction is a 10-20% decline—normal and healthy. Not a bear market until -20% is reached."
+    explanation: "False! Bulls last years, bears usually last months."
     xp_reward: 10
 
 xp_reward: 50
 tags:
-  - market-concepts
-  - bull-market
-  - bear-market
   - market-cycles
-  - market-psychology
+  - bull-bear
+  - basics

@@ -154,12 +154,17 @@ class TelegramBotAdapter:
             CallbackQueryHandler(self.handle_remove_key, pattern="^remove:")
         )
 
+        # General message handler (must be last)
+        self.application.add_handler(
+            MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message)
+        )
+
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command"""
         user = update.effective_user
 
         welcome_text = f"""
-👋 Welcome to FIML Educational Bot, {user.first_name}!
+👋 Welcome to Trading Educational Bot, {user.first_name}!
 
 I'll help you learn trading and investing with **real market data**.
 
@@ -171,9 +176,10 @@ First, let's set up your data access:
 
 Choose your path:
 /addkey - Add API keys for premium data
+/lesson - Browse and start lessons
 /help - See all available commands
 
-💡 New to this? Start with the free tier!
+💡 New to this? Start learning with the free tier by clicking on /lesson !
 """
 
         await update.message.reply_text(welcome_text, parse_mode="Markdown")
@@ -690,7 +696,16 @@ No providers connected yet.
         # Update streak
         await self.gamification.update_streak(user_id)
 
-        await query.edit_message_text(str(rendered), parse_mode="Markdown")
+        # Convert to string and handle Telegram's 4096 char limit
+        content = str(rendered)
+        max_length = 4000  # Leave some margin
+        
+        if len(content) > max_length:
+            # Truncate with ellipsis
+            content = content[:max_length] + "\n\n...[Content truncated - lesson too long]\n\nUse /quiz to test your knowledge!"
+        
+        # Send without Markdown parsing to avoid entity parsing errors
+        await query.edit_message_text(content)
 
     async def cmd_quiz(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Start a quiz for current lesson"""
@@ -739,10 +754,11 @@ No providers connected yet.
         keyboard = []
         if question["type"] == "multiple_choice":
             for i, opt in enumerate(question["options"]):
+                # Use index instead of full text to avoid 64-byte callback limit
                 keyboard.append([
                     InlineKeyboardButton(
                         opt["text"],
-                        callback_data=f"quiz_answer:{session_id}:0:{opt['text']}"
+                        callback_data=f"quiz_answer:{session_id}:0:{i}"
                     )
                 ])
         elif question["type"] == "true_false":
@@ -765,11 +781,41 @@ No providers connected yet.
 
         user_id = str(update.effective_user.id)
 
-        # Parse callback data: quiz_answer:session_id:question_index:answer
+        # Parse callback data: quiz_answer:session_id:question_index:answer_index_or_text
         parts = query.data.split(":")
         session_id = parts[1]
         question_idx = int(parts[2])
-        answer = ":".join(parts[3:])  # Handle answers with colons
+        answer_data = ":".join(parts[3:])  # Handle answers with colons
+
+        # Get the session to access question options
+        session = self.quiz_system.get_session(session_id)
+        if not session:
+            await query.edit_message_text("❌ Quiz session not found.")
+            return
+
+        questions = session.get("questions", [])
+        if question_idx >= len(questions):
+            await query.edit_message_text("❌ Invalid question.")
+            return
+
+        question = questions[question_idx]
+        
+        # Convert answer_data to actual answer text
+        if question["type"] == "multiple_choice":
+            # answer_data is an index for multiple choice
+            try:
+                opt_idx = int(answer_data)
+                if opt_idx < len(question["options"]):
+                    answer = question["options"][opt_idx]["text"]
+                else:
+                    await query.edit_message_text("❌ Invalid answer.")
+                    return
+            except ValueError:
+                await query.edit_message_text("❌ Invalid answer format.")
+                return
+        else:
+            # answer_data is the text itself for true/false
+            answer = answer_data
 
         # Record answer
         result = self.quiz_system.answer_question(session_id, question_idx, answer)
@@ -786,6 +832,7 @@ No providers connected yet.
 
         # Check if quiz complete
         score = self.quiz_system.get_quiz_score(session_id)
+        # Re-fetch session for latest state
         session = self.quiz_system.get_session(session_id)
 
         if session and score:
@@ -815,11 +862,12 @@ No providers connected yet.
 
                 keyboard = []
                 if question["type"] == "multiple_choice":
-                    for opt in question["options"]:
+                    for i, opt in enumerate(question["options"]):
+                        # Use index instead of text to avoid 64-byte callback limit
                         keyboard.append([
                             InlineKeyboardButton(
                                 opt["text"],
-                                callback_data=f"quiz_answer:{session_id}:{current_idx}:{opt['text']}"
+                                callback_data=f"quiz_answer:{session_id}:{current_idx}:{i}"
                             )
                         ])
                 elif question["type"] == "true_false":
@@ -841,6 +889,70 @@ No providers connected yet.
                 return
 
         await query.edit_message_text(text, parse_mode="Markdown")
+
+    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle general text messages (non-command)"""
+        user_id = str(update.effective_user.id)
+        message = update.message.text
+
+        # Check if user has an active mentor session FIRST
+        mentor_persona = context.user_data.get("mentor_persona")
+        
+        if mentor_persona:
+            # User is chatting with a mentor - route to mentor service
+            await update.message.reply_text("🤔 Thinking...")
+            
+            try:
+                response = await self.mentor_service.respond(
+                    user_id=user_id,
+                    question=message,
+                    persona=mentor_persona,
+                    context={}
+                )
+                
+                response_text = f"{response['icon']} **{response['mentor']}**\n\n"
+                response_text += response['text']
+                
+                # Add suggested lessons if any
+                if response.get('related_lessons'):
+                    response_text += "\n\n📚 **Related lessons:**\n"
+                    for lesson_id in response['related_lessons']:
+                        response_text += f"• {lesson_id}\n"
+                
+                await update.message.reply_text(response_text, parse_mode="Markdown")
+                
+            except Exception as e:
+                logger.error("Failed to generate mentor response", error=str(e), user_id=user_id)
+                await update.message.reply_text(
+                    "❌ Sorry, I'm having trouble generating a response right now. "
+                    "Please try again or use /help for other options."
+                )
+            return
+
+        # Only check for greetings if NOT in mentor mode
+        greetings = ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]
+        if any(greeting in message.lower() for greeting in greetings):
+            await update.message.reply_text(
+                f"👋 Hello! I'm the FIML Educational Bot.\n\n"
+                f"I can help you learn about trading and investing.\n\n"
+                f"Try these commands:\n"
+                f"• /help - See all commands\n"
+                f"• /lesson - Start learning\n"
+                f"• /mentor - Chat with AI mentor\n"
+                f"• /progress - View your progress",
+                parse_mode="Markdown"
+            )
+            return
+
+        # For other messages, suggest using mentor or commands
+        await update.message.reply_text(
+            f"💬 I understand you want to chat!\n\n"
+            f"For educational conversations, try:\n"
+            f"• /mentor - Chat with an AI trading mentor\n"
+            f"• /help - See what I can do\n\n"
+            f"Or ask me about specific topics using /lesson",
+            parse_mode="Markdown"
+        )
 
     async def cmd_mentor(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Start AI mentor interaction"""

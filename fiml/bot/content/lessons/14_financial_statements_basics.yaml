@@ -1,223 +1,84 @@
 id: fundamentals_001
-title: "Reading Financial Statements Basics"
+version: "2.0"
+title: "Financial Statements Basics"
 category: fundamentals
 difficulty: intermediate
-duration_minutes: 8
+duration_minutes: 5
+
 learning_objectives:
-  - Understand the three main financial statements
-  - Learn what each statement tells you
-  - Identify key metrics on each statement
-  - Recognize red flags in financials
-prerequisites:
-  - stock_basics_001
-  - valuation_001
+  - Understand three key financial statements
+  - Read income statement
+  - Interpret balance sheet basics
+
 sections:
   - type: introduction
     content: |
-      Every public company must publish financial statements quarterly. These are like 
-      a company's report card—showing how healthy the business really is.
-      
-      **The Three Financial Statements:**
-      
-      1. **Income Statement** = Profitability (Did we make money?)
-      2. **Balance Sheet** = Financial Health (What do we own vs. owe?)
-      3. **Cash Flow Statement** = Liquidity (Where did money come from/go?)
-      
-      Think of a person's finances:
-      - Income Statement = Monthly salary and expenses
-      - Balance Sheet = Total assets (house, car) and debts (mortgage, loans)
-      - Cash Flow = Actual cash in/out of bank account
+      Three key financial statements:
+      1. Income Statement (profits)
+      2. Balance Sheet (assets/liabilities)
+      3. Cash Flow Statement (cash movement)
 
   - type: explanation
     content: |
-      **📊 Income Statement (Profit & Loss):**
+      Income Statement:
+      Shows profitability
       
-      Shows revenue, expenses, and profit over a period (quarter/year).
+      Revenue (sales)
+      - Costs
+      - Expenses
+      = Net Income (profit)
       
-      **Key Components:**
-      ```
-      Revenue (Sales)                    $1,000,000
-      - Cost of Goods Sold (COGS)       - $400,000
-      ==========================================
-      Gross Profit                       $600,000
-      - Operating Expenses               - $300,000
-      ==========================================
-      Operating Income (EBIT)            $300,000
-      - Interest & Taxes                 - $80,000
-      ==========================================
-      Net Income (Bottom Line)           $220,000
-      ```
+      Balance Sheet:
+      Shows financial position
       
-      **What to Look For:**
-      ✅ Revenue growth (comparing to prior quarters/years)
-      ✅ Gross margin stable or improving (Gross Profit ÷ Revenue)
-      ✅ Operating margin healthy (Operating Income ÷ Revenue)
-      ✅ Net income growing
+      Assets = what company owns
+      Liabilities = what company owes
+      Equity = assets - liabilities
       
-      🚩 **Red Flags:**
-      - Revenue declining
-      - Margins shrinking
-      - Losses (negative net income)
-      - One-time charges every quarter (suspicious!)
-
-  - type: explanation
-    content: |
-      **🏦 Balance Sheet (Snapshot):**
+      Cash Flow:
+      Shows cash movement
       
-      Shows what the company owns (assets) and owes (liabilities) at a point in time.
+      Operating cash flow = most important
+      Must be positive long-term
       
-      **Structure:**
-      ```
-      ASSETS = LIABILITIES + EQUITY
-      
-      Assets (What we own):
-      - Current Assets              $500,000
-        (Cash, inventory, receivables)
-      - Long-term Assets            $800,000
-        (Property, equipment, intangibles)
-      Total Assets               $1,300,000
-      
-      Liabilities (What we owe):
-      - Current Liabilities         $200,000
-        (Payables, short-term debt)
-      - Long-term Liabilities       $400,000
-        (Long-term debt, pensions)
-      Total Liabilities            $600,000
-      
-      Equity (Shareholders' ownership)
-      - Shareholder Equity          $700,000
-      ```
-      
-      **Key Ratios:**
-      - **Current Ratio** = Current Assets ÷ Current Liabilities
-        (Should be > 1.5 for safety)
-      - **Debt-to-Equity** = Total Debt ÷ Equity
-        (Lower is better, < 1.0 ideal for most companies)
-      
-      🚩 **Red Flags:**
-      - Current ratio < 1 (can't pay short-term bills)
-      - Debt-to-equity > 2 (too much leverage)
-      - Declining assets
-      - Growing liabilities faster than assets
-
-  - type: explanation
-    content: |
-      **💰 Cash Flow Statement:**
-      
-      Shows actual cash movement—where money came from and where it went.
-      
-      **Three Sections:**
-      ```
-      Operating Cash Flow (from business)     $250,000
-      - Normal business operations
-      - Most important section!
-      
-      Investing Cash Flow (assets)           -$100,000
-      - Buying/selling property, equipment
-      - Acquisitions
-      
-      Financing Cash Flow (debt/equity)      -$50,000
-      - Taking/repaying loans
-      - Issuing/buying back stock
-      - Paying dividends
-      
-      =============================================
-      Net Cash Change                         $100,000
-      ```
-      
-      **Why Cash Flow Matters:**
-      - **Profit ≠ Cash!** (Can show profit but run out of cash)
-      - Operating cash flow should be positive
-      - Should cover capital expenditures
-      - Indicates real business health
-      
-      **Free Cash Flow (FCF):**
-      FCF = Operating Cash Flow - Capital Expenditures
-      → Money available for dividends, buybacks, growth
-      
-      🚩 **Red Flags:**
-      - Negative operating cash flow
-      - FCF consistently negative
-      - Cash burn rate too high
-      - Net income positive but cash flow negative (earnings manipulation?)
+      Key Metrics:
+      - Profit margin = net income ÷ revenue
+      - Debt-to-equity = total debt ÷ equity
+      - Current ratio = assets ÷ liabilities
 
   - type: key_takeaways
     content: |
-      🎯 **Key Takeaways:**
+      🎯 Remember:
       
-      1. **Income Statement** = Profitability over time
-      2. **Balance Sheet** = Financial position at a moment
-      3. **Cash Flow Statement** = Where money actually went
-      4. All three must be healthy for a quality company
-      5. Look for consistent growth in key metrics
-      
-      💡 **Quality Company Checklist:**
-      - [ ] Revenue growing
-      - [ ] Profit margins stable/improving
-      - [ ] Positive & growing operating cash flow
-      - [ ] Current ratio > 1.5
-      - [ ] Debt-to-equity < 1.0
-      - [ ] Free cash flow positive
-      
-      "Revenue is vanity, profit is sanity, but cash is king."
+      1. Income statement = profitability
+      2. Balance sheet = financial health
+      3. Cash flow = actual cash
+      4. Profitable ≠ cash flow positive
+      5. Read all three together
 
 quiz:
   - id: q1
     type: multiple_choice
-    text: "Which statement shows whether a company made a profit?"
+    text: "Which statement shows profitability?"
     options:
-      - text: "Income Statement"
+      - text: "Income statement"
         is_correct: true
-      - text: "Balance Sheet"
+      - text: "Balance sheet"
         is_correct: false
-      - text: "Cash Flow Statement"
+      - text: "Cash flow statement"
         is_correct: false
-      - text: "Annual Report Cover"
-        is_correct: false
-    explanation: "The Income Statement shows revenue, expenses, and net income (profit or loss) over a period."
+    explanation: "Income statement shows revenue, expenses, and net income (profit)."
     xp_reward: 10
 
   - id: q2
-    type: multiple_choice
-    text: "What does a current ratio of 0.8 indicate?"
-    options:
-      - text: "Company may struggle to pay short-term bills"
-        is_correct: true
-      - text: "Company is very healthy"
-        is_correct: false
-      - text: "Company has too much cash"
-        is_correct: false
-      - text: "This is an ideal ratio"
-        is_correct: false
-    explanation: "Current Ratio = Current Assets ÷ Current Liabilities. A ratio < 1.0 means current liabilities exceed current assets—a liquidity risk."
-    xp_reward: 10
-
-  - id: q3
     type: true_false
-    text: "A company can show profit on the income statement but still run out of cash."
+    text: "A company can be profitable but have negative cash flow."
     correct_answer: true
-    explanation: "True! Profit is an accounting concept. Cash flow is reality. Many profitable companies fail due to cash flow problems."
-    xp_reward: 10
-
-  - id: q4
-    type: multiple_choice
-    text: "What is Free Cash Flow (FCF)?"
-    options:
-      - text: "Operating Cash Flow minus Capital Expenditures"
-        is_correct: true
-      - text: "Total Revenue minus Total Expenses"
-        is_correct: false
-      - text: "Net Income divided by Shares Outstanding"
-        is_correct: false
-      - text: "Cash from financing activities"
-        is_correct: false
-    explanation: "FCF = Operating Cash Flow - CapEx. It's the cash available for dividends, buybacks, and growth after maintaining operations."
+    explanation: "True! Accounting profit ≠ cash. Check both statements."
     xp_reward: 10
 
 xp_reward: 50
 tags:
-  - fundamentals
-  - financial-statements
-  - income-statement
-  - balance-sheet
-  - cash-flow
+  - financials
+  - statements
+  - analysis

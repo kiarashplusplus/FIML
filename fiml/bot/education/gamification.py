@@ -3,11 +3,13 @@ Component 9: Gamification Engine
 XP, levels, streaks, badges, and achievements
 """
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Dict, List, Optional, TypedDict
 
 import structlog
+
+from fiml.sessions.store import SessionStore
 
 logger = structlog.get_logger(__name__)
 
@@ -120,14 +122,70 @@ class GamificationEngine:
         ),
     }
 
-    def __init__(self) -> None:
+    def __init__(self, session_store: Optional[SessionStore] = None) -> None:
         self._user_stats: Dict[str, UserStats] = {}
-        logger.info("GamificationEngine initialized")
+        self._session_store = session_store
+        logger.info("GamificationEngine initialized", has_session_store=session_store is not None)
+
+    async def _save_user_stats(self, user_id: str) -> None:
+        """Save user stats to session store"""
+        if not self._session_store or user_id not in self._user_stats:
+            return
+        
+        stats = self._user_stats[user_id]
+        data = asdict(stats)
+        
+        # Convert datetime to ISO string
+        if data.get("last_activity"):
+            data["last_activity"] = data["last_activity"].isoformat()
+        
+        # Store in session store context
+        key = f"gamification:{user_id}"
+        try:
+            if hasattr(self._session_store, '_redis') and self._session_store._redis:
+                await self._session_store._redis.set(
+                    key,
+                    str(data),  # Redis expects string
+                    ex=86400 * 365  # 1 year expiry
+                )
+        except Exception as e:
+            logger.error("Failed to save user stats", user_id=user_id, error=str(e))
+
+    async def _load_user_stats(self, user_id: str) -> Optional[UserStats]:
+        """Load user stats from session store"""
+        if not self._session_store:
+            return None
+        
+        key = f"gamification:{user_id}"
+        try:
+            if hasattr(self._session_store, '_redis') and self._session_store._redis:
+                data_str = await self._session_store._redis.get(key)
+                if not data_str:
+                    return None
+                
+                # Parse the string representation back to dict
+                import ast
+                data = ast.literal_eval(data_str)
+                
+                # Convert ISO string back to datetime
+                if data.get("last_activity"):
+                    data["last_activity"] = datetime.fromisoformat(data["last_activity"])
+                
+                return UserStats(**data)
+        except Exception as e:
+            logger.error("Failed to load user stats", user_id=user_id, error=str(e))
+            return None
 
     async def get_or_create_stats(self, user_id: str) -> UserStats:
         """Get user stats or create new"""
         if user_id not in self._user_stats:
-            self._user_stats[user_id] = UserStats(user_id=user_id)
+            # Try to load from session store first
+            stats = await self._load_user_stats(user_id)
+            if stats:
+                self._user_stats[user_id] = stats
+            else:
+                self._user_stats[user_id] = UserStats(user_id=user_id)
+                await self._save_user_stats(user_id)
         return self._user_stats[user_id]
 
     async def award_xp(self, user_id: str, action: str, metadata: Optional[Dict] = None) -> Dict:
@@ -159,6 +217,12 @@ class GamificationEngine:
         stats.total_xp += xp
         new_level = self._calculate_level(stats.total_xp)
 
+        # Track completions
+        if action in ["quiz_passed", "quiz_perfect"]:
+            stats.quizzes_completed += 1
+        elif action == "lesson_completed":
+            stats.lessons_completed += 1
+
         # Check level up
         level_up = new_level > old_level
 
@@ -168,6 +232,9 @@ class GamificationEngine:
 
         # Update activity
         stats.last_activity = datetime.now(UTC)
+        
+        # Save to session store
+        await self._save_user_stats(user_id)
 
         result = {
             "xp_earned": xp,
@@ -226,6 +293,9 @@ class GamificationEngine:
             stats.streak_days += 1
             stats.last_activity = now
 
+            # Save to session store
+            await self._save_user_stats(user_id)
+
             # Award streak XP
             await self.award_xp(user_id, "streak_day")
 
@@ -240,6 +310,9 @@ class GamificationEngine:
             old_streak = stats.streak_days
             stats.streak_days = 1
             stats.last_activity = now
+            
+            # Save to session store
+            await self._save_user_stats(user_id)
 
             logger.info("Streak broken", user_id=user_id, old_streak=old_streak)
 
@@ -261,6 +334,9 @@ class GamificationEngine:
         # Award XP
         if badge.xp_reward > 0:
             stats.total_xp += badge.xp_reward
+        
+        # Save to session store
+        await self._save_user_stats(user_id)
 
         logger.info("Badge awarded", user_id=user_id, badge_id=badge_id, xp_reward=badge.xp_reward)
 
@@ -348,7 +424,7 @@ class GamificationEngine:
     def add_xp(self, user_id: str, amount: int, reason: str) -> None:
         """
         Synchronous wrapper for adding XP
-        Note: Uses simplified logic for testing
+        Note: Uses simplified logic for testing, does not persist
         """
         if user_id not in self._user_stats:
             self._user_stats[user_id] = UserStats(user_id=user_id)
@@ -398,7 +474,7 @@ class GamificationEngine:
         ]
 
     def award_badge_sync(self, user_id: str, badge_id: str, description: str = "") -> bool:
-        """Award badge to user (sync version for non-async contexts)"""
+        """Award badge to user (sync version for non-async contexts, does not persist)"""
         if user_id not in self._user_stats:
             self._user_stats[user_id] = UserStats(user_id=user_id)
 

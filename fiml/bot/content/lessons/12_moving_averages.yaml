@@ -1,165 +1,81 @@
 id: technical_002
-title: "Moving Averages: Finding the Trend"
+version: "2.0"
+title: "Moving Averages"
 category: technical_analysis
-difficulty: intermediate
-duration_minutes: 7
+difficulty: beginner
+duration_minutes: 4
+
 learning_objectives:
-  - Understand what moving averages are
-  - Learn the 50-day and 200-day MAs
-  - Identify trend direction using MAs
-  - Recognize golden/death crosses
-prerequisites:
-  - stock_basics_001
-  - technical_001
+  - Understand moving averages
+  - Use 50-day and 200-day MAs
+  - Identify trends
+
 sections:
   - type: introduction
     content: |
-      Stock prices zigzag up and down. How do you see the overall trend through the noise?
+      Moving Average (MA) = average price over time
       
-      **Moving Average (MA)** = The average price over a specific number of days
-      
-      Think of it like smoothing out a bumpy road:
-      - Daily prices = bumpy ride
-      - Moving average = smooth highway showing direction
-      
-      Most important MAs:
-      - **50-day MA**: Short/medium-term trend
-      - **200-day MA**: Long-term trend
-      
-      **Golden Cross** = 50-day crosses ABOVE 200-day (bullish!)
-      **Death Cross** = 50-day crosses BELOW 200-day (bearish!)
-
-  - type: live_example
-    content: |
-      **{symbol} Moving Average Analysis:**
-      
-      Current Price: ${price}
-      50-day MA: ${ma_50}
-      200-day MA: ${ma_200}
-      
-      **Trend Analysis:**
-      {trend_analysis}
-      
-      **Position Relative to MAs:**
-      - Price vs 50-day: {vs_50_day}
-      - Price vs 200-day: {vs_200_day}
-      
-      **Interpretation:**
-      Price above both MAs = Strong uptrend
-      Price below both MAs = Strong downtrend
-      Price between MAs = Transitional period
-    fiml_query:
-      symbol: SPY
-      metrics:
-        - price
-        - ma_50
-        - ma_200
+      Smooths out noise, shows trend direction
 
   - type: explanation
     content: |
-      **📊 MA Strategies:**
+      Common MAs:
       
-      **1. Trend Identification**
-      - Price > MA = Uptrend
-      - Price < MA = Downtrend
-      - Price crossing MA = Trend change
+      50-day MA:
+      - Short-term trend
+      - More responsive
       
-      **2. Support/Resistance**
-      - In uptrends: MA acts as support
-      - In downtrends: MA acts as resistance
-      - Bounces off MA = good entry points
+      200-day MA:
+      - Long-term trend
+      - Slower to change
       
-      **3. Golden Cross (Bullish)**
-      - 50-day crosses above 200-day
-      - Signals shift to uptrend
-      - Historical accuracy: ~70%
-      - Example: March 2009 (start of bull market)
+      How to Use:
       
-      **4. Death Cross (Bearish)**
-      - 50-day crosses below 200-day
-      - Signals shift to downtrend
-      - Warning sign to reduce exposure
-      - Example: January 2008 (before crash)
+      Price > 200-day MA = uptrend
+      Price < 200-day MA = downtrend
       
-      **⚠️ Limitations:**
-      - Lagging indicator (shows what happened)
-      - Many false signals in choppy markets
-      - Works best in strong trends
-      - Combine with other indicators
+      Golden Cross:
+      50-day crosses ABOVE 200-day = bullish
+      
+      Death Cross:
+      50-day crosses BELOW 200-day = bearish
+      
+      Support/Resistance:
+      MAs often act as support/resistance levels
 
   - type: key_takeaways
     content: |
-      🎯 **Key Takeaways:**
+      🎯 Remember:
       
-      1. **Moving averages smooth price action** to reveal trends
-      2. 50-day MA = medium-term, 200-day MA = long-term
-      3. Golden Cross (50 > 200) = bullish signal
-      4. Death Cross (50 < 200) = bearish signal
-      5. MAs act as support in uptrends, resistance in downtrends
-      
-      💡 **Pro Tip:** Don't use MAs alone! Combine with:
-      - Volume confirmation
-      - Support/resistance levels
-      - Overall market trend
-      - Fundamental analysis
+      1. MA = average price over period
+      2. 50-day = short-term trend
+      3. 200-day = long-term trend
+      4. Price above MA = bullish
+      5. Golden cross = bullish signal
 
 quiz:
   - id: q1
     type: multiple_choice
-    text: "What is a Golden Cross?"
+    text: "Stock price is above its 200-day MA. What does this suggest?"
     options:
-      - text: "50-day MA crosses above 200-day MA"
+      - text: "Uptrend"
         is_correct: true
-      - text: "50-day MA crosses below 200-day MA"
+      - text: "Downtrend"
         is_correct: false
-      - text: "Price crosses above 50-day MA"
+      - text: "No trend"
         is_correct: false
-      - text: "200-day MA crosses above price"
-        is_correct: false
-    explanation: "A Golden Cross occurs when the 50-day MA crosses above the 200-day MA, signaling a potential shift to an uptrend."
+    explanation: "Price above 200-day MA indicates uptrend/strength."
     xp_reward: 10
 
   - id: q2
-    type: multiple_choice
-    text: "If a stock price is above both the 50-day and 200-day MAs, what does this suggest?"
-    options:
-      - text: "Strong uptrend"
-        is_correct: true
-      - text: "Strong downtrend"
-        is_correct: false
-      - text: "Neutral/sideways market"
-        is_correct: false
-      - text: "The stock will crash soon"
-        is_correct: false
-    explanation: "Price above both MAs indicates strong bullish momentum and an established uptrend."
-    xp_reward: 10
-
-  - id: q3
     type: true_false
-    text: "Moving averages are leading indicators that predict future price movements."
-    correct_answer: false
-    explanation: "False! MAs are LAGGING indicators—they show what has already happened. They don't predict the future."
-    xp_reward: 10
-
-  - id: q4
-    type: multiple_choice
-    text: "In a strong uptrend, what role does the 50-day MA typically play?"
-    options:
-      - text: "Acts as support where price bounces"
-        is_correct: true
-      - text: "Acts as resistance where price gets rejected"
-        is_correct: false
-      - text: "Has no relationship with price"
-        is_correct: false
-      - text: "Always above the price"
-        is_correct: false
-    explanation: "In uptrends, the MA often acts as dynamic support. Traders buy when price pulls back to the MA."
+    text: "Golden cross occurs when 50-day MA crosses above 200-day MA."
+    correct_answer: true
+    explanation: "True! This is a bullish signal suggesting uptrend."
     xp_reward: 10
 
 xp_reward: 50
 tags:
   - technical-analysis
   - moving-averages
-  - trend-following
-  - golden-cross
-  - death-cross
+  - trends

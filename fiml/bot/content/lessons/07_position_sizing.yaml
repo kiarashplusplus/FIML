@@ -1,183 +1,82 @@
-id: risk_001
-title: "Position Sizing: How Much to Invest?"
+id: risk_management_001
+version: "2.0"
+title: "Position Sizing"
 category: risk_management
 difficulty: intermediate
-duration_minutes: 7
+duration_minutes: 4
+
 learning_objectives:
-  - Understand position sizing principles
-  - Learn the 1-2% risk rule
-  - Calculate appropriate position sizes
-  - Avoid over-concentration risk
-prerequisites:
-  - stock_basics_001
-  - stock_basics_004
+  - Calculate proper position sizes
+  - Manage portfolio risk
+  - Avoid over-concentration
+
 sections:
   - type: introduction
     content: |
-      One of the biggest mistakes new investors make: putting too much money in one stock.
+      Position sizing = how much to invest in each stock
       
-      Imagine having $10,000 and buying $9,000 worth of one stock. If it drops 20%, you've 
-      lost $1,800 (18% of your total portfolio). Ouch!
-      
-      **Position sizing** determines how much to invest in each stock to manage risk effectively.
-      
-      The golden rule: **Never risk more than 1-2% of your portfolio on a single trade.**
+      Rule: Never risk more than you can afford to lose
 
   - type: explanation
     content: |
-      **📊 The 1-2% Risk Rule:**
+      The 5% Rule:
       
-      **What it means:**
-      No single trade should risk losing more than 1-2% of your total portfolio.
+      Never put >5% of portfolio in one stock
       
-      **Example with $10,000 portfolio:**
-      - 1% risk = Maximum $100 loss per trade
-      - 2% risk = Maximum $200 loss per trade
+      $10,000 portfolio → max $500 per stock
       
-      **How to calculate:**
-      1. Decide your max risk per trade (1-2% of portfolio)
-      2. Set your stop-loss level
-      3. Calculate position size
+      Why:
+      - One bad pick won't destroy you
+      - Forces diversification
+      - Reduces emotional attachment
       
-      **Formula:**
-      Position Size = (Portfolio × Risk %) ÷ (Entry Price - Stop Loss Price)
+      Position Sizing Strategies:
       
-      **Real Example:**
-      - Portfolio: $10,000
-      - Risk per trade: 2% = $200
-      - Stock price: $100
-      - Stop loss: $95 (5% below entry)
-      - Loss per share if stopped out: $5
+      Equal Weight:
+      - Same $ amount each stock
+      - Simple, balanced
       
-      Position Size = $200 ÷ $5 = 40 shares
-      Investment = 40 shares × $100 = $4,000 (40% of portfolio, but only 2% at risk!)
-
-  - type: explanation
-    content: |
-      **🎯 Position Sizing Guidelines:**
+      Risk-Based:
+      - Smaller positions for risky stocks
+      - Larger for stable stocks
       
-      **Aggressive (Higher Risk):**
-      - Risk: 2-3% per trade
-      - Max single position: 15-20% of portfolio
-      - Suitable for: Experienced traders, higher risk tolerance
-      - Downside: Larger drawdowns possible
-      
-      **Moderate (Balanced):**
-      - Risk: 1-2% per trade
-      - Max single position: 8-12% of portfolio
-      - Suitable for: Most investors
-      - Best balance of growth and protection
-      
-      **Conservative (Lower Risk):**
-      - Risk: 0.5-1% per trade
-      - Max single position: 5-8% of portfolio
-      - Suitable for: Beginners, low risk tolerance, retirement accounts
-      - Downside: Slower growth
-      
-      **Number of Positions:**
-      - Minimum: 8-10 stocks (for diversification)
-      - Maximum: 20-30 stocks (too many = hard to manage)
-      - Sweet spot: 12-20 stocks across sectors
-
-  - type: explanation
-    content: |
-      **⚠️ Common Position Sizing Mistakes:**
-      
-      **1. Equal Dollar Amounts**
-      ❌ Putting $1,000 in every stock regardless of risk
-      ✅ Adjust size based on volatility and conviction
-      
-      **2. Over-Concentration**
-      ❌ 50% of portfolio in one "sure thing"
-      ✅ Even the best stocks can crash
-      - Enron was once a blue-chip
-      - Nokia dominated phones
-      - Kodak invented digital cameras (but failed)
-      
-      **3. Ignoring Correlation**
-      ❌ 10 different tech stocks = not diversified!
-      ✅ Spread across sectors and asset classes
-      
-      **4. Revenge Trading**
-      ❌ Doubling down after a loss to "get even"
-      ✅ Stick to your system regardless of emotion
-      
-      **5. No Stop Losses**
-      ❌ "I'll hold forever, it will come back"
-      ✅ Hope is not a strategy—protect your capital
+      Conviction-Based:
+      - More $ in high-conviction picks
+      - Less in speculative plays
 
   - type: key_takeaways
     content: |
-      🎯 **Key Takeaways:**
+      🎯 Remember:
       
-      1. **Never risk more than 1-2% per trade**
-      2. Position size = (Portfolio × Risk%) ÷ (Entry - Stop Loss)
-      3. No single stock should be > 10-15% of portfolio
-      4. Diversify across 12-20 different stocks
-      5. Always use stop losses to limit downside
-      
-      💡 **Golden Rule:** It's not about how much you make on winners—it's about how 
-      much you DON'T lose on losers!
-      
-      "The goal is to compound wealth over time, which means surviving every mistake."
+      1. Max 5% per position (conservative)
+      2. Max 10% for experienced traders
+      3. Diversify across 15-20 stocks minimum
+      4. Size down risky positions
+      5. Don't bet everything on one idea
 
 quiz:
   - id: q1
     type: multiple_choice
-    text: "You have a $20,000 portfolio and follow the 2% risk rule. What's your maximum loss per trade?"
+    text: "You have $20,000. Using 5% rule, max per stock?"
     options:
-      - text: "$400"
+      - text: "$1,000"
         is_correct: true
-      - text: "$200"
-        is_correct: false
       - text: "$2,000"
         is_correct: false
-      - text: "$4,000"
+      - text: "$5,000"
         is_correct: false
-    explanation: "2% of $20,000 = $400. This is your maximum acceptable loss on any single trade."
+    explanation: "$20,000 × 5% = $1,000 max per position"
     xp_reward: 10
 
   - id: q2
-    type: multiple_choice
-    text: "What is the main benefit of the 1-2% risk rule?"
-    options:
-      - text: "Survive multiple consecutive losses without major damage"
-        is_correct: true
-      - text: "Guarantee profits on every trade"
-        is_correct: false
-      - text: "Allow larger position sizes"
-        is_correct: false
-      - text: "Eliminate all risk"
-        is_correct: false
-    explanation: "With 2% risk, you could lose 10 trades in a row and only be down 20%. This survival allows you to trade another day and recover."
-    xp_reward: 10
-
-  - id: q3
     type: true_false
-    text: "If you're very confident in a stock, it's okay to put 50% of your portfolio in it."
+    text: "It's okay to put 50% in your highest conviction stock."
     correct_answer: false
-    explanation: "False! Even the 'safest' stocks can crash unexpectedly. Overconfidence leads to devastating losses. Never exceed 10-15% in any single position."
-    xp_reward: 10
-
-  - id: q4
-    type: multiple_choice
-    text: "Portfolio: $10K, Risk: 1%, Stock: $50, Stop Loss: $48. How many shares to buy?"
-    options:
-      - text: "50 shares"
-        is_correct: true
-      - text: "100 shares"
-        is_correct: false
-      - text: "200 shares"
-        is_correct: false
-      - text: "25 shares"
-        is_correct: false
-    explanation: "Max risk = $10,000 × 1% = $100. Risk per share = $50 - $48 = $2. Shares = $100 ÷ $2 = 50 shares."
+    explanation: "False! Even great ideas can fail. Never risk >10% on one stock."
     xp_reward: 10
 
 xp_reward: 50
 tags:
   - risk-management
   - position-sizing
-  - portfolio-management
-  - stop-loss
-  - money-management
+  - portfolio

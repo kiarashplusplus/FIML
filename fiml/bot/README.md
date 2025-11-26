@@ -56,6 +56,8 @@ Multi-platform educational trading bot with BYOK (Bring Your Own Key) architectu
 - ✅ Daily streaks
 - ✅ Badge awards
 - ✅ Progress tracking
+- ✅ Redis/PostgreSQL persistence (via SessionStore)
+- ✅ Standalone fallback mode (in-memory)
 
 **Component 11: EducationalComplianceFilter**
 - ✅ Detects financial advice language
@@ -86,6 +88,16 @@ ENCRYPTION_KEY=your-encryption-key-here
 
 # Storage path for encrypted keys (optional)
 KEY_STORAGE_PATH=./data/keys
+
+# Redis configuration (optional - required for persistent progress tracking)
+# If not available, bot runs in standalone mode with in-memory progress
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+
+# PostgreSQL configuration (optional - required for session archival)
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/fiml
 ```
 
 ### 3. Install Dependencies
@@ -107,6 +119,21 @@ python -m fiml.bot.run_bot
 # Or directly
 cd fiml/bot
 python run_bot.py
+```
+
+**Note**: The bot supports two operational modes:
+- **Persistent mode** (with Redis + PostgreSQL): User progress, XP, streaks, and badges are saved and persist across bot restarts
+- **Standalone mode** (without Redis/PostgreSQL): Progress is stored in-memory and resets when bot restarts
+
+To enable persistent storage, start Redis and PostgreSQL services:
+```bash
+# Using Docker Compose (from repository root)
+make up
+
+# Or manually start Redis
+redis-server
+
+# The bot will automatically detect and use available services
 ```
 
 ### 5. Test the Bot
@@ -140,6 +167,26 @@ Open Telegram and find your bot. Try these commands:
 │  User's API Keys → FIML        │  ← Data Access
 └────────────────────────────────┘
 ```
+
+### Progress Persistence Architecture
+
+```
+┌────────────────────────────────┐
+│  GamificationEngine            │  ← XP, Levels, Streaks, Badges
+└────────────────────────────────┘
+              ↓
+┌────────────────────────────────┐
+│  SessionStore (optional)       │  ← Redis (L1) + PostgreSQL (L2)
+└────────────────────────────────┘
+              ↓
+    ┌─────────────────┐    ┌─────────────────┐
+    │ Redis (hot data)│    │ PostgreSQL (DB) │
+    │ TTL: 1 year     │    │ Archives        │
+    └─────────────────┘    └─────────────────┘
+```
+
+**Without Redis/PostgreSQL**: Bot uses in-memory dict for progress (resets on restart)  
+**With Redis/PostgreSQL**: Progress persists with 1-year TTL, auto-archived to PostgreSQL
 
 ## Supported Providers
 

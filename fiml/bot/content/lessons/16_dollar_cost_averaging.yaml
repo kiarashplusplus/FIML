@@ -1,198 +1,89 @@
-id: investment_strategies_001
-title: "Dollar-Cost Averaging (DCA)"
-version: "1.0"
-changelog:
-  - version: "1.0"
-    date: "2024-11-24"
-    changes:
-      - "Initial release with FIML integration"
-      - "4 quiz questions covering DCA strategy"
-
-category: investment_strategies
+id: investing_strategy_002
+version: "2.0"
+title: "Dollar Cost Averaging"
+category: strategy
 difficulty: beginner
-duration_minutes: 6
-prerequisites: []
-tags:
-  - investing
-  - strategies
-  - discipline
-  - volatility
-  - automation
+duration_minutes: 4
 
 learning_objectives:
-  - Understand what dollar-cost averaging means
-  - Learn how DCA reduces timing risk
-  - Compare lump sum investing vs DCA
-  - Recognize when DCA is most beneficial
-  - Implement systematic investing discipline
+  - Understand DCA strategy
+  - Calculate benefits
+  - Implement DCA plan
 
 sections:
   - type: introduction
     content: |
-      Imagine you have $12,000 to invest. Should you invest it all at once, or spread it out over time?
-      
-      **Dollar-Cost Averaging (DCA)** is the strategy of investing a fixed amount at regular intervals, regardless of market conditions.
-      
-      Instead of investing $12,000 today, you might invest $1,000 per month for 12 months.
-      
-      Why would you do this? Let's find out!
+      Dollar Cost Averaging (DCA):
+      Invest same amount regularly, regardless of price
 
   - type: explanation
-    title: "How Dollar-Cost Averaging Works"
     content: |
-      **The Mechanics:**
+      How It Works:
       
-      With DCA, you invest the same dollar amount on a regular schedule:
-      - Weekly, monthly, or quarterly
-      - Regardless of whether markets are up or down
-      - Automatically or manually
+      Invest $500/month for 6 months
       
-      **The Math:**
+      Month 1: $50/share → buy 10 shares
+      Month 2: $40/share → buy 12.5 shares
+      Month 3: $60/share → buy 8.3 shares
       
-      When prices are HIGH → Your fixed $$ buys FEWER shares
-      When prices are LOW → Your fixed $$ buys MORE shares
+      Total: 30.8 shares
+      Average cost: ~$48.70/share
       
-      Result: Your average cost per share is lower than the average price!
+      vs Lump Sum:
+      Invest $3,000 at once in Month 1
+      $50/share → 60 shares
       
-      **Example:**
-      Month 1: $100 buys 2 shares at $50 each
-      Month 2: $100 buys 5 shares at $20 each  
-      Month 3: $100 buys 3.33 shares at $30 each
+      Benefits:
       
-      Total: $300 bought 10.33 shares
-      Average price: ($50+$20+$30)/3 = $33.33
-      Your cost: $300/10.33 = $29.04 per share ✅
+      ✅ Removes emotion/timing stress
+      ✅ Automatic discipline
+      ✅ Lowers average cost in volatile markets
+      ✅ Easier to start (don't need big sum)
       
-      You paid LESS than the average price!
-
-  - type: explanation
-    title: "DCA vs. Lump Sum: The Debate"
-    content: |
-      **Lump Sum Advantages:**
-      - ✅ Historically better returns (time in market beats timing)
-      - ✅ Immediate full exposure to growth
-      - ✅ No cash drag (uninvested money earns nothing)
+      Downsides:
       
-      **DCA Advantages:**
-      - ✅ Reduces regret if you invest right before a crash
-      - ✅ Psychologically easier during volatility
-      - ✅ Enforces discipline (prevents emotional decisions)
-      - ✅ Practical for most people (investing from salary)
+      ❌ In rising markets, lump sum wins
+      ❌ Miss potential early gains
       
-      **The Research:**
-      Vanguard found lump sum outperforms DCA about 2/3 of the time.
-      
-      BUT: DCA wins on risk-adjusted returns and peace of mind.
-      
-      **The Reality:**
-      Most people don't have a lump sum to invest anyway! They invest from their paycheck each month—that's DCA by default.
-
-  - type: live_example
-    title: "DCA in Action with Real Data"
-    content: |
-      Let's see how DCA would perform with real market data.
-      
-      Imagine you invested $500/month in {symbol} over the past year:
-      
-      {fiml_data_dca_simulation}
-      
-      Notice how:
-      - You bought more shares when price dropped
-      - You bought fewer shares when price rose
-      - Your average cost smoothed out volatility
-      
-      This is DCA protecting you from bad timing!
-    fiml_query:
-      symbol: SPY
-      metrics:
-        - price
-        - volume
-      timeframe: 1Y
-      simulation_type: dca
-
-  - type: explanation
-    title: "When DCA Makes the Most Sense"
-    content: |
-      **Best Use Cases:**
-      
-      1. **Regular Savings:** Investing part of each paycheck
-         - 401(k) contributions = DCA
-         - Monthly brokerage transfers = DCA
-      
-      2. **High Volatility:** When markets are choppy
-         - Reduces chance of buying at peak
-         - Takes advantage of dips automatically
-      
-      3. **Emotional Comfort:** If you fear market timing
-         - Removes decision paralysis
-         - "Set and forget" approach
-      
-      4. **Large Inheritance:** When you have a lump sum
-         - Spread over 6-12 months to reduce regret
-         - Balance peace of mind vs optimal returns
-      
-      **When NOT to Use DCA:**
-      - Emergency fund (need it liquid)
-      - Short-term goals (< 3 years)
-      - After extensive research if you're confident
-      
-      **The Bottom Line:**
-      Perfect is the enemy of good. DCA gets you invested consistently, and that beats trying to time the market!
+      When to Use:
+      - You get paid monthly
+      - Market is volatile
+      - You're risk-averse
+      - You're a beginner
 
   - type: key_takeaways
-    title: "Remember"
-    points:
-      - "DCA = investing fixed amounts at regular intervals"
-      - "Automatically buys more shares when prices are low"
-      - "Reduces timing risk and emotional decision-making"
-      - "Lump sum often wins historically, but DCA wins psychologically"
-      - "Most people DCA by default (investing from salary)"
-      - "The best strategy is the one you'll stick with"
+    content: |
+      🎯 Remember:
+      
+      1. DCA = invest same $ at regular intervals
+      2. Removes timing decisions
+      3. Works best in volatile/falling markets
+      4. Automate it!
+      5. Great for beginners
 
 quiz:
-  questions:
-    - id: dca_definition
-      type: multiple_choice
-      text: "You have $6,000 to invest. Which is dollar-cost averaging?"
-      options:
-        - "Invest all $6,000 today"
-        - "Invest $500 per month for 12 months"
-        - "Wait for a market crash, then invest"
-        - "Invest $6,000 in the safest stock"
-      correct: 1
-      explanation: "DCA means spreading investments over time with regular fixed amounts, like $500/month. This reduces timing risk compared to investing all at once."
-      points: 10
+  - id: q1
+    type: multiple_choice
+    text: "Main advantage of dollar cost averaging?"
+    options:
+      - text: "Removes emotion and timing stress"
+        is_correct: true
+      - text: "Guarantees profits"
+        is_correct: false
+      - text: "Always beats lump sum"
+        is_correct: false
+    explanation: "DCA's main benefit is discipline and removing the need to time the market."
+    xp_reward: 10
 
-    - id: dca_advantage
-      type: multiple_choice
-      text: "What happens when you use DCA and the stock price drops?"
-      options:
-        - "You lose money and should stop"
-        - "Your fixed dollars buy MORE shares"
-        - "Your fixed dollars buy FEWER shares"
-        - "You should wait for the price to recover"
-      correct: 1
-      explanation: "When prices drop, your fixed dollar amount buys MORE shares. This is the key benefit of DCA—you automatically buy more when things are 'on sale'!"
-      points: 10
-
-    - id: dca_vs_lump_sum
-      type: true_false
-      text: "True or False: Dollar-cost averaging always produces better returns than lump sum investing."
-      correct: false
-      explanation: "False! Historically, lump sum investing wins about 2/3 of the time because 'time in the market beats timing the market.' BUT DCA often wins on risk-adjusted returns and emotional comfort, making it easier to stick with."
-      points: 10
-
-    - id: dca_real_world
-      type: multiple_choice
-      text: "Which of these is an example of dollar-cost averaging?"
-      options:
-        - "Investing your entire bonus at once"
-        - "Contributing to your 401(k) each paycheck"
-        - "Buying stock only when you think it's cheap"
-        - "Saving cash until you have $10,000"
-      correct: 1
-      explanation: "401(k) contributions each paycheck are classic DCA—you invest a fixed amount regularly regardless of market conditions. Most people DCA by default!"
-      points: 10
+  - id: q2
+    type: true_false
+    text: "DCA performs best in steadily rising markets."
+    correct_answer: false
+    explanation: "False! Lump sum wins in rising markets. DCA shines in volatile/falling markets."
+    xp_reward: 10
 
 xp_reward: 50
-estimated_completion_time: "6 minutes"
+tags:
+  - dollar-cost-averaging
+  - strategy
+  - discipline

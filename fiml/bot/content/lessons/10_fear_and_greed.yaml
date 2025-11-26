@@ -1,211 +1,86 @@
 id: psychology_001
-title: "Fear and Greed: The Market's Two Emotions"
-category: trading_psychology
-difficulty: intermediate
-duration_minutes: 6
+version: "2.0"
+title: "Fear and Greed"
+category: psychology
+difficulty: beginner
+duration_minutes: 4
+
 learning_objectives:
-  - Understand how emotions drive markets
-  - Recognize fear and greed in yourself and the market
-  - Learn to make rational decisions despite emotions
-  - Apply contrarian thinking when appropriate
-prerequisites:
-  - stock_basics_001
+  - Recognize emotional biases
+  - Control fear and greed
+  - Make rational decisions
+
 sections:
   - type: introduction
     content: |
-      **"Be fearful when others are greedy, and greedy when others are fearful."**  
-      - Warren Buffett
+      Markets are driven by two emotions:
       
-      Markets are driven by two primary emotions:
-      
-      **GREED** (Euphoria, FOMO):
-      "This stock will go up forever! I need to buy NOW!"
-      → Result: Buying at tops, overpaying, bubbles
-      
-      **FEAR** (Panic, Despair):
-      "Everything is crashing! I need to sell NOW!"
-      → Result: Selling at bottoms, missing recoveries
-      
-      The best investors recognize these emotions in themselves AND in the market, 
-      then act rationally despite them.
+      FEAR → panic selling
+      GREED → reckless buying
 
   - type: explanation
     content: |
-      **🔥 GREED Phase Characteristics:**
+      Fear Mistakes:
       
-      **Market Signs:**
-      - "This time it's different" narratives
-      - Everyone is making money (or says they are)
-      - Taxi drivers giving stock tips
-      - Valuations at historic highs
-      - IPOs 2x on first day
-      - "Can't miss" opportunities everywhere
+      - Panic sell during crashes
+      - Miss recovery gains
+      - Sell winners too early
+      - Avoid stocks after bad news
       
-      **Personal Signs:**
-      - FOMO (Fear of Missing Out)
-      - Checking portfolio 10x per day
-      - Buying without research
-      - Ignoring risks
-      - Overconfidence
-      - Leverage/margin use increasing
+      Greed Mistakes:
       
-      **Historical Examples:**
-      - Dot-com bubble (1999-2000): "Profits don't matter!"
-      - Housing bubble (2005-2007): "Real estate only goes up!"
-      - Crypto bubble (2021): "Bitcoin to $1 million!"
-      - Meme stocks (2021): "YOLO! Diamond hands!"
+      - Chase "hot" stocks
+      - Hold losers too long
+      - Ignore risk
+      - FOMO (fear of missing out)
       
-      **⚠️ What to Do:**
-      - Take profits on winners
-      - Raise cash levels
-      - Increase quality standards
-      - Reduce position sizes
-      - Be more selective
-
-  - type: explanation
-    content: |
-      **😱 FEAR Phase Characteristics:**
+      The Solution:
       
-      **Market Signs:**
-      - Headlines: "Stocks Enter Bear Market"
-      - Panic selling, huge down days
-      - "I'll never invest again" sentiment
-      - Quality stocks at bargain prices
-      - Volume spikes on down days
-      - VIX (fear index) elevated
+      Have a PLAN before emotions hit:
       
-      **Personal Signs:**
-      - Checking portfolio constantly (now painful)
-      - Can't sleep at night
-      - Urge to "sell everything"
-      - Regret about past decisions
-      - Swearing off stocks forever
-      - Focus only on losses
+      1. Set buy/sell rules in advance
+      2. Use stop-losses
+      3. Take profits at targets
+      4. Don't check portfolio daily
+      5. Dollar-cost average
       
-      **Historical Examples:**
-      - 2008 Financial Crisis: S&P 500 -57%
-      - March 2020 COVID: S&P 500 -34% in one month
-      - 2022 Bear Market: Nasdaq -33%
-      
-      **⚠️ What to Do:**
-      - Have cash ready to deploy
-      - Buy quality at discounts
-      - Stick to your plan
-      - Remember: "This too shall pass"
-      - DCA (dollar-cost average) in
-      - Historical truth: Markets always recovered
-
-  - type: explanation
-    content: |
-      **🎯 Mastering Your Emotions:**
-      
-      **Strategy #1: Have a Plan Before Emotions Hit**
-      - Set entry and exit points BEFORE buying
-      - Use limit orders, not market orders
-      - Define stop losses in advance
-      - "If price reaches X, I will do Y"
-      
-      **Strategy #2: Use a Checklist**
-      Before every trade, ask:
-      - [ ] Have I researched this thoroughly?
-      - [ ] Is my position size appropriate (1-2% risk)?
-      - [ ] Do I have a stop loss set?
-      - [ ] Am I buying based on FOMO?
-      - [ ] Would I buy this if I had cash today?
-      
-      **Strategy #3: Zoom Out**
-      - Look at 5-year charts, not 5-minute
-      - What will matter in 10 years?
-      - Is this really a crisis or just volatility?
-      
-      **Strategy #4: Automate**
-      - DCA: Buy same amount every month
-      - Rebalancing: Sell winners, buy losers quarterly
-      - Removes emotion from equation
-      
-      **Strategy #5: Accept Volatility**
-      - Stocks go down 10-20% every year (normal)
-      - Bear markets happen every 3-5 years
-      - Price is what you pay, value is what you get
+      Warren Buffett:
+      "Be fearful when others are greedy"
+      "Be greedy when others are fearful"
 
   - type: key_takeaways
     content: |
-      🎯 **Key Takeaways:**
+      🎯 Remember:
       
-      1. **Greed makes you buy high**, fear makes you sell low
-      2. Best opportunities come when others are fearful
-      3. Biggest risks appear when everyone is greedy
-      4. Have a plan BEFORE emotions take over
-      5. Successful investors control emotions, not markets
-      
-      💡 **The Cycle:**
-      ```
-      Greed → Euphoria → Peak → Fear → Panic → Bottom → 
-      Hope → Optimism → Greed (repeat)
-      ```
-      
-      **Your Edge:** Recognize where we are in the cycle and act accordingly.
-      
-      "The stock market is a device for transferring money from the impatient to the patient."  
-      - Warren Buffett
+      1. Emotions are your enemy
+      2. Make rules when calm
+      3. Stick to plan during chaos
+      4. Market crashes = opportunities
+      5. Slow and steady wins
 
 quiz:
   - id: q1
     type: multiple_choice
-    text: "When should you be most cautious about buying stocks?"
+    text: "Stock you bought at $100 drops to $80. Best action?"
     options:
-      - text: "When everyone is euphoric and 'can't lose'"
+      - text: "Review fundamentals, stick to plan"
         is_correct: true
-      - text: "When markets are crashing and everyone is selling"
+      - text: "Panic sell immediately"
         is_correct: false
-      - text: "During periods of low volatility"
+      - text: "Buy more without analysis"
         is_correct: false
-      - text: "When interest rates are low"
-        is_correct: false
-    explanation: "Extreme greed and euphoria typically mark market tops. The best opportunities come when others are fearful."
+    explanation: "Don't let fear drive decisions. Check if thesis is still valid."
     xp_reward: 10
 
   - id: q2
     type: true_false
-    text: "FOMO (Fear of Missing Out) usually leads to good investment decisions."
+    text: "You should check your portfolio every hour."
     correct_answer: false
-    explanation: "False! FOMO causes you to buy near tops without proper research. It's an emotion-driven mistake."
-    xp_reward: 10
-
-  - id: q3
-    type: multiple_choice
-    text: "What is the best way to overcome emotional trading?"
-    options:
-      - text: "Have a pre-defined plan with entry/exit points and stop losses"
-        is_correct: true
-      - text: "Trade more frequently to get used to emotions"
-        is_correct: false
-      - text: "Ignore the market completely"
-        is_correct: false
-      - text: "Only buy when you feel confident"
-        is_correct: false
-    explanation: "A pre-defined trading plan removes emotion from decision-making. You follow the plan regardless of how you feel."
-    xp_reward: 10
-
-  - id: q4
-    type: multiple_choice
-    text: "According to Warren Buffett, when should you be greedy?"
-    options:
-      - text: "When others are fearful"
-        is_correct: true
-      - text: "When everyone is buying"
-        is_correct: false
-      - text: "When stocks are at all-time highs"
-        is_correct: false
-      - text: "Never be greedy"
-        is_correct: false
-    explanation: "The best opportunities come when fear is high and prices are low. That's when you should act with conviction (be 'greedy')."
+    explanation: "False! Frequent checking increases emotional decisions. Weekly/monthly is better."
     xp_reward: 10
 
 xp_reward: 50
 tags:
-  - trading-psychology
+  - psychology
   - emotions
-  - fear-greed
-  - market-sentiment
-  - behavioral-finance
+  - discipline

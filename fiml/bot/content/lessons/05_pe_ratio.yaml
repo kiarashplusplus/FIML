@@ -1,183 +1,81 @@
-id: valuation_001
-title: "P/E Ratio: Is This Stock Expensive?"
-category: valuation
+id: stock_basics_005
+version: "2.0"
+title: "P/E Ratio Explained"
+category: fundamentals
 difficulty: beginner
-duration_minutes: 7
+duration_minutes: 4
+
 learning_objectives:
-  - Understand the Price-to-Earnings (P/E) ratio
-  - Learn how to interpret P/E values
-  - Compare P/E ratios across stocks and industries
-  - Recognize when a stock might be overvalued or undervalued
-prerequisites:
-  - stock_basics_001
-  - stock_basics_004
+  - Calculate P/E ratio
+  - Interpret valuation levels
+  - Compare stocks effectively
+
 sections:
   - type: introduction
     content: |
-      Imagine two restaurants for sale:
-      - Restaurant A: Costs $1M, makes $100K/year profit → Takes 10 years to break even
-      - Restaurant B: Costs $500K, makes $100K/year profit → Takes 5 years to break even
+      P/E Ratio = Price-to-Earnings
       
-      Which is a better deal? Restaurant B! You're paying less for the same earnings.
+      Shows how much you pay for $1 of earnings
       
-      The **P/E Ratio** does the same thing for stocks—it tells you how many years of 
-      earnings you're paying for when you buy a stock.
-      
-      **Formula:** P/E Ratio = Share Price ÷ Earnings Per Share (EPS)
-
-  - type: live_example
-    content: |
-      **Live Data for {symbol}:**
-      
-      Share Price: ${price}
-      Earnings Per Share (EPS): ${eps}
-      
-      **P/E Ratio: {pe_ratio}**
-      
-      **What this means:**
-      You're paying ${pe_ratio} for every $1 of annual earnings.
-      
-      Or: At current earnings, it would take {pe_ratio} years for the company to 
-      earn back the stock's price.
-      
-      **Category:** {pe_category}
-    fiml_query:
-      symbol: AAPL
-      metrics:
-        - price
-        - eps
-        - pe_ratio
+      Formula: Stock Price ÷ Earnings Per Share
 
   - type: explanation
     content: |
-      **📊 Interpreting P/E Ratios:**
+      How to Read P/E:
       
-      **🟢 Low P/E (< 15)**
-      - **Potentially undervalued** or out of favor
-      - May indicate value opportunity
-      - Could also mean slow growth or problems
-      - Examples: Mature industries (utilities, banks)
+      Low P/E (< 15):
+      - Potentially undervalued
+      - Slower growth expected
+      - Value stock
       
-      **🟡 Fair P/E (15-25)**
-      - Market average, **reasonably priced**
-      - Neither cheap nor expensive
-      - Most established companies
+      Medium P/E (15-25):
+      - Fairly valued
+      - Average market valuation
       
-      **🟠 High P/E (25-40)**
-      - **Growth expectations** priced in
-      - Investors expect strong future earnings
-      - Higher risk if growth doesn't materialize
-      - Examples: Tech companies, growth stocks
+      High P/E (> 25):
+      - Potentially overvalued
+      - High growth expected
+      - Growth stock
       
-      **🔴 Very High P/E (> 40)**
-      - **Speculative** or extreme growth expectations
-      - Can indicate overvaluation
-      - High risk of correction
-      - Examples: Hot IPOs, meme stocks
+      Example:
+      Stock A: $100, EPS $5 → P/E = 20
+      Stock B: $50, EPS $1 → P/E = 50
       
-      **⚠️ Negative P/E**
-      - Company is losing money
-      - No P/E ratio (or shown as N/A)
-      - Common for startups or turnarounds
-      - High risk!
-
-  - type: explanation
-    content: |
-      **🎯 Using P/E for Comparison:**
-      
-      P/E ratios are most useful when comparing:
-      
-      **1. Similar Companies**
-      ✅ Apple (P/E: 25) vs. Microsoft (P/E: 30)
-      ❌ Apple (P/E: 25) vs. Ford (P/E: 8) → Different industries!
-      
-      **2. Company vs. Industry Average**
-      - Tech industry average P/E: 25
-      - Stock A P/E: 18 → Potentially undervalued
-      - Stock B P/E: 40 → Potentially overvalued
-      
-      **3. Historical P/E**
-      - Stock typically trades at P/E of 20
-      - Currently at P/E of 12 → Worth investigating why
-      - Currently at P/E of 35 → May be overheated
-      
-      **⚠️ P/E Limitations:**
-      - Doesn't work for unprofitable companies
-      - Can be manipulated by accounting
-      - Ignores debt and growth rate
-      - Industry context matters
-      - Past earnings don't guarantee future
+      Stock B is "more expensive" per dollar of earnings
 
   - type: key_takeaways
     content: |
-      🎯 **Key Takeaways:**
+      🎯 Remember:
       
-      1. **P/E Ratio** = Price ÷ Earnings Per Share
-      2. Lower P/E can mean value opportunity (or problems)
-      3. Higher P/E reflects growth expectations (or overvaluation)
-      4. Compare P/E within the same industry
-      5. Use P/E with other metrics—never in isolation
-      
-      💡 **Remember:** A "good" P/E depends on the industry, growth rate, and market 
-      conditions. There's no universal rule!
+      1. P/E = price ÷ earnings per share
+      2. Lower P/E = cheaper relative to earnings
+      3. Compare P/E within same industry
+      4. High P/E = growth expectations
+      5. Consider P/E with other metrics
 
 quiz:
   - id: q1
     type: multiple_choice
-    text: "If a stock trades at $50 and has EPS of $5, what is its P/E ratio?"
+    text: "Stock at $80, EPS $4. What's the P/E?"
     options:
-      - text: "10"
+      - text: "20"
         is_correct: true
-      - text: "5"
+      - text: "4"
         is_correct: false
-      - text: "50"
+      - text: "80"
         is_correct: false
-      - text: "0.1"
-        is_correct: false
-    explanation: "P/E = Price ÷ EPS = $50 ÷ $5 = 10. You're paying 10x annual earnings."
+    explanation: "P/E = $80 ÷ $4 = 20"
     xp_reward: 10
 
   - id: q2
-    type: multiple_choice
-    text: "What does a P/E ratio of 30 generally indicate?"
-    options:
-      - text: "Investors expect strong growth"
-        is_correct: true
-      - text: "The stock is definitely overvalued"
-        is_correct: false
-      - text: "The company is losing money"
-        is_correct: false
-      - text: "The stock is undervalued"
-        is_correct: false
-    explanation: "A P/E of 30 is above average, indicating investors are willing to pay a premium due to growth expectations."
-    xp_reward: 10
-
-  - id: q3
     type: true_false
-    text: "You should always buy the stock with the lowest P/E ratio."
+    text: "A P/E of 50 always means a stock is overvalued."
     correct_answer: false
-    explanation: "False! A low P/E might indicate problems or slow growth. Always investigate WHY a P/E is low and compare within the same industry."
-    xp_reward: 10
-
-  - id: q4
-    type: multiple_choice
-    text: "Stock A (tech) has P/E of 25. Stock B (utility) has P/E of 12. Which is necessarily cheaper?"
-    options:
-      - text: "Neither—they're in different industries"
-        is_correct: true
-      - text: "Stock B is cheaper"
-        is_correct: false
-      - text: "Stock A is cheaper"
-        is_correct: false
-      - text: "Both are equally priced"
-        is_correct: false
-    explanation: "You can't compare P/E across different industries. Tech companies typically have higher P/E ratios than utilities due to growth expectations."
+    explanation: "False! High P/E can be justified if company has high growth. Tech stocks often have high P/E ratios."
     xp_reward: 10
 
 xp_reward: 50
 tags:
   - valuation
   - pe-ratio
-  - earnings
-  - fundamental-analysis
-  - stock-selection
+  - analysis

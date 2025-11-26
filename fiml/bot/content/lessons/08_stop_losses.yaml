@@ -1,200 +1,84 @@
-id: risk_002
-title: "Stop Losses: Your Safety Net"
+id: risk_management_002
+version: "2.0"
+title: "Stop Losses"
 category: risk_management
-difficulty: beginner
-duration_minutes: 6
+difficulty: intermediate
+duration_minutes: 4
+
 learning_objectives:
-  - Understand what stop-loss orders are
-  - Learn different types of stop losses
-  - Know where to place stop losses
-  - Avoid common stop-loss mistakes
-prerequisites:
-  - stock_basics_002
-  - risk_001
+  - Understand stop-loss orders
+  - Set appropriate stop levels
+  - Protect capital
+
 sections:
   - type: introduction
     content: |
-      Imagine driving without brakes. Terrifying, right? That's trading without stop losses!
+      Stop-loss = automatic sell order if price drops
       
-      A **stop-loss order** is an automatic sell order that triggers when a stock drops to 
-      a specified price. It's your emergency brake—protecting you from catastrophic losses.
-      
-      **Why crucial:**
-      - Limits losses to predetermined amounts
-      - Removes emotion from loss-taking
-      - Protects capital for future opportunities
-      - Lets you sleep at night!
-      
-      **Without stop losses:** A 10% loss requires an 11% gain to recover.  
-      A 50% loss requires a 100% gain to recover!
+      Purpose: Limit losses before they get big
 
   - type: explanation
     content: |
-      **📊 Types of Stop-Loss Orders:**
+      How It Works:
       
-      **1. Fixed-Price Stop Loss**
-      - Set at specific price: "Sell if drops to $45"
-      - Simple and predictable
-      - Best for: Clear support levels
+      Buy stock at $100
+      Set stop-loss at $90
       
-      **Example:**
-      Buy at $50, set stop at $47 (6% loss max)
+      If price drops to $90 → auto-sells
+      Max loss: 10%
       
-      **2. Percentage Stop Loss**
-      - Set as % below entry: "Sell if drops 8%"
-      - Automatically adjusts with position size
-      - Best for: Consistent risk management
+      Types:
       
-      **Example:**
-      Buy at $100, set 8% stop → Triggers at $92
+      Fixed Percentage:
+      - 7-10% below buy price
+      - Simple, consistent
       
-      **3. Trailing Stop Loss**
-      - Moves UP with price, never down
-      - Locks in profits as stock rises
-      - Best for: Trending stocks
+      Technical Level:
+      - Below support
+      - Below moving average
       
-      **Example:**
-      - Buy at $50, set 10% trailing stop (triggers at $45)
-      - Stock rises to $60 → stop moves to $54 (10% below $60)
-      - Stock rises to $70 → stop moves to $63
-      - If stock falls from $70 to $63 → stop triggers, you exit with profit!
+      Trailing Stop:
+      - Follows price up
+      - Locks in profits
       
-      **4. Time-Based Stop**
-      - Exit after a set time if not profitable
-      - Best for: Swing trades with thesis deadlines
-
-  - type: explanation
-    content: |
-      **🎯 Where to Place Stop Losses:**
-      
-      **1. Below Support Levels**
-      - Give stock room to breathe
-      - Avoid getting "shaken out" by normal volatility
-      - Example: Support at $48, place stop at $47
-      
-      **2. Percentage-Based**
-      - 5-8%: Tight for low-volatility stocks
-      - 8-12%: Moderate for average stocks
-      - 12-20%: Wide for volatile growth stocks
-      
-      **3. ATR (Average True Range)**
-      - Use 2x ATR below entry (advanced)
-      - Adapts to stock's normal volatility
-      
-      **4. Round Numbers**
-      - Avoid exact round numbers ($50, $100)
-      - Many traders put stops there
-      - Use $49.50 or $50.50 instead
-      
-      **⚠️ Too Tight:**
-      Stop at $99 when you buy at $100 = You'll get stopped out by noise
-      
-      **⚠️ Too Loose:**
-      Stop at $80 when you buy at $100 = 20% loss violates 1-2% risk rule!
-
-  - type: explanation
-    content: |
-      **🚨 Common Stop-Loss Mistakes:**
-      
-      **Mistake #1: No Stop Loss**
-      "I'll just hold and wait for it to come back"
-      → Result: -90% losses, capital tied up for years
-      
-      **Mistake #2: Moving Stop Loss Down**
-      "It'll bounce back, I'll lower my stop"
-      → Result: Turning small loss into disaster
-      
-      **Mistake #3: Stop Too Tight**
-      "I'll use a 2% stop on a volatile stock"
-      → Result: Stopped out by normal fluctuation, then stock rallies
-      
-      **Mistake #4: Mental Stop Loss**
-      "I don't need to set it, I'll sell manually"
-      → Result: Emotion takes over, you don't sell, massive loss
-      
-      **Mistake #5: Same Stop for All Stocks**
-      "I always use 10% stops"
-      → Result: Doesn't account for different volatilities
-      
-      **✅ Best Practices:**
-      - ALWAYS set the stop when entering the trade
-      - Never move stop DOWN (only up as profit grows)
-      - Use appropriate stop width for volatility
-      - Accept stop-outs as cost of doing business
-      - Review stopped trades to improve entries
+      Example: 10% trailing stop
+      Buy at $100, stop at $90
+      Price rises to $120 → stop moves to $108
+      Price drops to $108 → sells (locked in 8% gain)
 
   - type: key_takeaways
     content: |
-      🎯 **Key Takeaways:**
+      🎯 Remember:
       
-      1. **Stop losses are mandatory**, not optional
-      2. Set stops immediately when entering a trade
-      3. Never move stops down—only up or leave them
-      4. Place stops below support, not at round numbers
-      5. Use wider stops for volatile stocks, tighter for stable stocks
-      
-      💡 **Professional Trader Wisdom:**
-      "Amateurs focus on how much they can make.  
-      Professionals focus on how much they can lose.  
-      Stop losses keep amateurs from becoming professionals."
+      1. Stop-loss limits downside
+      2. Set 7-10% below entry
+      3. Don't move stops lower (discipline!)
+      4. Trailing stops lock profits
+      5. Better to exit early than lose big
 
 quiz:
   - id: q1
     type: multiple_choice
-    text: "You buy a stock at $80. Where should you place your stop loss?"
+    text: "Buy at $50, 10% stop-loss. Where's the stop?"
     options:
-      - text: "Below a support level, allowing for normal volatility"
+      - text: "$45"
         is_correct: true
-      - text: "At $79 (very tight)"
+      - text: "$40"
         is_correct: false
-      - text: "At $60 (25% down)"
+      - text: "$55"
         is_correct: false
-      - text: "Don't use a stop loss"
-        is_correct: false
-    explanation: "Stops should be below technical support with room for normal price fluctuation, typically 5-12% depending on volatility."
+    explanation: "$50 × (1 - 0.10) = $45 stop-loss"
     xp_reward: 10
 
   - id: q2
-    type: multiple_choice
-    text: "What is a trailing stop loss?"
-    options:
-      - text: "A stop that moves up with price but never down"
-        is_correct: true
-      - text: "A stop placed at the end of the trading day"
-        is_correct: false
-      - text: "A stop that follows time, not price"
-        is_correct: false
-      - text: "A mental stop you don't actually set"
-        is_correct: false
-    explanation: "Trailing stops follow the price upward, locking in profits while still protecting against reverses."
-    xp_reward: 10
-
-  - id: q3
     type: true_false
-    text: "If a stock is dropping, it's okay to move your stop-loss lower to avoid being stopped out."
+    text: "You should move stop-loss lower if stock drops."
     correct_answer: false
-    explanation: "False! Never move stops down. This violates risk management and often turns small losses into disasters. Accept the stop-out."
-    xp_reward: 10
-
-  - id: q4
-    type: multiple_choice
-    text: "Why should you avoid placing stops at exact round numbers like $50.00?"
-    options:
-      - text: "Many traders place stops there, causing cascading sell-offs"
-        is_correct: true
-      - text: "Round numbers are lucky"
-        is_correct: false
-      - text: "It's illegal to use round numbers"
-        is_correct: false
-      - text: "There's no reason to avoid them"
-        is_correct: false
-    explanation: "Clusters of stop orders at round numbers can trigger each other, causing sharp drops. Use $49.75 or $50.25 instead."
+    explanation: "False! Moving stops lower = increasing risk. Stick to your plan or exit."
     xp_reward: 10
 
 xp_reward: 50
 tags:
-  - risk-management
   - stop-loss
-  - trading-discipline
-  - exit-strategy
-  - capital-preservation
+  - risk-management
+  - protection

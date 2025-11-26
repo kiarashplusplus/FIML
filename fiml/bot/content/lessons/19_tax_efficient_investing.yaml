@@ -1,285 +1,95 @@
-id: tax_strategy_001
+id: tax_001
+version: "2.0"
 title: "Tax-Efficient Investing"
-version: "1.0"
-changelog:
-  - version: "1.0"
-    date: "2024-11-24"
-    changes:
-      - "Initial release"
-      - "5 quiz questions covering tax strategies"
-
 category: tax_strategy
 difficulty: intermediate
-duration_minutes: 8
-prerequisites: []
-tags:
-  - taxes
-  - capital_gains
-  - tax_loss_harvesting
-  - retirement_accounts
-  - strategy
+duration_minutes: 5
 
 learning_objectives:
-  - Understand the difference between short-term and long-term capital gains
-  - Learn about tax-advantaged account types
-  - Master tax-loss harvesting strategies
-  - Optimize asset location across account types
-  - Minimize tax drag on investment returns
+  - Understand capital gains taxes
+  - Optimize account types
+  - Minimize tax burden
 
 sections:
   - type: introduction
     content: |
-      Two investors each make $10,000 in investment profits.
+      Taxes can eat 20-40% of your returns!
       
-      Investor A keeps $10,000.
-      Investor B keeps $6,300.
-      
-      **What happened?** Taxes!
-      
-      The difference between paying 0% and 37% on your gains can be the difference between comfortable retirement and financial struggle.
-      
-      Let's learn how to keep more of what you earn—legally and ethically.
+      Smart tax strategy = keep more money
 
   - type: explanation
-    title: "Capital Gains: Short-Term vs Long-Term"
     content: |
-      **The Big Tax Rule:**
+      Capital Gains Tax:
       
-      How long you hold an investment determines how it's taxed!
+      Short-term (<1 year hold):
+      - Taxed as income (up to 37%)
       
-      **Short-Term Capital Gains (held ≤ 1 year):**
-      - Taxed as ordinary income
-      - Same rate as your salary
-      - Rates: 10% to 37% (depending on income)
-      - Example: Day trading, quick flips
+      Long-term (>1 year hold):
+      - 0%, 15%, or 20% (usually 15%)
       
-      **Long-Term Capital Gains (held > 1 year):**
-      - Special preferential tax rates
-      - Rates: 0%, 15%, or 20% (much lower!)
-      - Example: Buy-and-hold investing
+      Account Types:
       
-      **The Power of Waiting:**
+      401(k)/Traditional IRA:
+      - Tax deduction now
+      - Tax on withdrawals
+      - RMDs at age 73
       
-      Scenario: You bought stock for $10,000, now worth $20,000 ($10,000 gain)
+      Roth IRA:
+      - No deduction now
+      - Tax-free withdrawals!
+      - No RMDs
       
-      If you're in the 24% tax bracket:
-      - Sell in 11 months (short-term): Pay $2,400 tax → Keep $7,600
-      - Sell in 13 months (long-term): Pay $1,500 tax → Keep $8,500
+      Taxable:
+      - No limits
+      - Pay capital gains
+      - More flexibility
       
-      **Waiting 2 extra months saved you $900!**
+      Asset Location:
       
-      **Long-Term Capital Gains Rates (check current year):**
-      - Low income: 0% tax
-      - Middle income: 15% tax
-      - High income: 20% tax
-      
-      (Exact brackets change annually - consult IRS guidance)
-      
-      This is why Warren Buffett's tax rate is lower than his secretary's!
-
-  - type: explanation
-    title: "Tax-Advantaged Accounts"
-    content: |
-      **Three Account Types:**
-      
-      1. **Taxable (Brokerage) Accounts**
-         - No contribution limits
-         - Pay taxes on gains when you sell
-         - Pay taxes on dividends each year
-         - Flexibility: withdraw anytime
-         - Best for: After maxing retirement accounts
-      
-      2. **Traditional IRA/401(k) (Tax-Deferred)**
-         - Contributions reduce current taxable income
-         - Grow tax-free inside account
-         - Pay ordinary income tax on withdrawals
-         - Contribution limits: ~$7,000 IRA, ~$23,000 401(k) (check current year)
-         - Penalty if withdraw before age 59½
-         - Best for: High earners now, lower income in retirement
-      
-      3. **Roth IRA/401(k) (Tax-Free)**
-         - No tax deduction for contributions
-         - Grow tax-free inside account
-         - Withdrawals completely tax-free in retirement!
-         - Same contribution limits
-         - No required distributions
-         - Best for: Young people, low current tax bracket
-      
-      **The Math:**
-      
-      Invest $6,000/year for 30 years at 8% return = $680,000
-      
-      Taxable account:
-      - Pay tax on gains every year
-      - Final value after taxes: ~$490,000
-      
-      Tax-deferred (Traditional):
-      - No taxes along the way
-      - Pay tax on $680,000 at withdrawal (say 24%)
-      - Keep $517,000
-      
-      Roth:
-      - Pay tax on contributions now
-      - Keep entire $680,000 tax-free!
-      
-      **Tax savings: $190,000+ vs taxable account!**
-
-  - type: explanation
-    title: "Tax-Loss Harvesting"
-    content: |
-      **The Strategy:**
-      
-      Use your losses to offset your gains!
-      
-      **How It Works:**
-      
-      1. Sell investments that have lost value
-      2. Use those losses to offset capital gains
-      3. Up to $3,000/year can offset ordinary income
-      4. Excess losses carry forward to future years
-      5. Immediately buy a similar (but not identical) investment
-      
-      **Example:**
-      
-      This year:
-      - Stock A: +$10,000 gain
-      - Stock B: -$4,000 loss
-      
-      Without harvesting:
-      - Owe tax on $10,000 at 15% = $1,500
-      
-      With harvesting:
-      - Sell Stock B to realize -$4,000 loss
-      - Net gain: $10,000 - $4,000 = $6,000
-      - Owe tax on $6,000 at 15% = $900
-      - **Saved $600 in taxes!**
-      - Buy similar stock to Stock B next day
-      
-      **The Wash Sale Rule:**
-      
-      ⚠️ You can't buy the "substantially identical" security within 30 days before or after the sale!
-      
-      Not allowed:
-      - Sell Apple → Buy Apple 20 days later
-      
-      Allowed:
-      - Sell Apple → Buy Microsoft immediately
-      - Sell S&P 500 ETF (SPY) → Buy different S&P 500 ETF (VOO)
-      - Sell tech stock → Buy tech sector ETF
-      
-      **Best Practices:**
-      - Harvest losses in down years
-      - Don't let tax tail wag investment dog
-      - Works best in taxable accounts (not IRAs)
-      - Automate with robo-advisors (like Betterment)
-
-  - type: explanation
-    title: "Asset Location Strategy"
-    content: |
-      **The Concept:**
-      
-      Different investments belong in different account types!
-      
-      **Tax-Inefficient (put in Roth/Traditional IRA):**
+      Tax-advantaged accounts:
       - High-dividend stocks
-      - REITs (real estate investment trusts)
-      - Bonds (generate interest income)
-      - Actively managed funds (lots of turnover)
+      - Bonds
+      - REITs
+      - Frequent trades
       
-      Why? These generate lots of taxable income, so shield them!
-      
-      **Tax-Efficient (put in taxable accounts):**
-      - Low-dividend growth stocks
+      Taxable accounts:
       - Index funds (low turnover)
-      - Tax-managed funds
-      - Municipal bonds (already tax-free)
-      
-      Why? These don't generate much tax, plus you get:
-      - Long-term capital gains rates (0-20%)
-      - Tax-loss harvesting opportunities
-      - Step-up in basis at death (for heirs)
-      
-      **Example Allocation:**
-      
-      Total portfolio: $100,000
-      - 60% stocks, 40% bonds
-      
-      Poor location:
-      - Taxable: $30,000 bonds (interest taxed every year)
-      - Roth IRA: $30,000 stocks (wasted tax-free growth)
-      
-      Smart location:
-      - Taxable: $60,000 stocks (capital gains treatment)
-      - Roth IRA: $40,000 bonds (tax-free interest!)
-      
-      Same allocation, less tax, more wealth!
+      - Growth stocks (no dividends)
+      - Long-term holds
 
   - type: key_takeaways
-    title: "Remember"
-    points:
-      - "Hold investments > 1 year for long-term capital gains rates (0-20%)"
-      - "Max out Roth IRA if young, Traditional if high earner"
-      - "Tax-loss harvest to offset gains (watch 30-day wash sale rule)"
-      - "Put tax-inefficient assets (bonds, REITs) in retirement accounts"
-      - "Put tax-efficient assets (index funds) in taxable accounts"
-      - "Taxes can cost you 30%+ of returns—optimize aggressively!"
+    content: |
+      🎯 Remember:
+      
+      1. Hold >1 year for lower taxes
+      2. Max Roth IRA first (tax-free!)
+      3. Put dividends in tax-advantaged accounts
+      4. Growth stocks in taxable OK
+      5. Tax-loss harvesting saves money
 
 quiz:
-  questions:
-    - id: capital_gains_rates
-      type: multiple_choice
-      text: "You bought stock for $5,000 and sold it 8 months later for $8,000. How is your $3,000 gain taxed?"
-      options:
-        - "0% (tax-free)"
-        - "15% long-term capital gains"
-        - "As ordinary income (same as salary)"
-        - "20% flat rate"
-      correct: 2
-      explanation: "Since you held for less than 1 year, this is a short-term capital gain taxed as ordinary income at your marginal tax rate (could be 10-37%). Waiting 4 more months would give you long-term rates (0-20%)!"
-      points: 10
+  - id: q1
+    type: multiple_choice
+    text: "How long to hold for long-term capital gains?"
+    options:
+      - text: ">1 year"
+        is_correct: true
+      - text: ">6 months"
+        is_correct: false
+      - text: ">2 years"
+        is_correct: false
+    explanation: "Hold >1 year for preferential long-term capital gains rates."
+    xp_reward: 10
 
-    - id: roth_vs_traditional
-      type: multiple_choice
-      text: "Which account type offers completely TAX-FREE withdrawals in retirement?"
-      options:
-        - "Traditional IRA"
-        - "Roth IRA"
-        - "Taxable brokerage account"
-        - "401(k)"
-      correct: 1
-      explanation: "Roth IRA contributions are taxed now, but all growth and withdrawals are completely tax-free in retirement! Traditional accounts are tax-deferred (pay later), and taxable accounts pay taxes on gains."
-      points: 10
-
-    - id: tax_loss_harvesting
-      type: true_false
-      text: "True or False: Tax-loss harvesting means selling losing investments to offset capital gains."
-      correct: true
-      explanation: "True! Tax-loss harvesting is selling investments at a loss to offset gains, reducing your tax bill. Up to $3,000 in losses can offset ordinary income per year, and excess losses carry forward."
-      points: 10
-
-    - id: wash_sale_rule
-      type: multiple_choice
-      text: "You sold Apple stock at a loss on December 15. When is the earliest you can buy Apple again without violating the wash sale rule?"
-      options:
-        - "December 16 (next day)"
-        - "December 31 (end of year)"
-        - "January 15 (30 days later)"
-        - "April 15 (tax day)"
-      correct: 2
-      explanation: "The wash sale rule prohibits buying substantially identical securities within 30 days before or after the sale. From Dec 15, you must wait until Jan 15 (31 days). You CAN buy a similar stock (like Microsoft) immediately."
-      points: 10
-
-    - id: asset_location
-      type: multiple_choice
-      text: "Which investment should you prioritize holding in a Roth IRA for maximum tax efficiency?"
-      options:
-        - "Tax-free municipal bonds"
-        - "Low-dividend growth stocks"
-        - "High-dividend stocks or REITs"
-        - "Index funds"
-      correct: 2
-      explanation: "High-dividend stocks and REITs generate lots of taxable income, so they're perfect for Roth IRAs where that income grows tax-free! Tax-efficient investments (index funds, growth stocks) are better in taxable accounts where you can use long-term cap gains rates."
-      points: 10
+  - id: q2
+    type: true_false
+    text: "Roth IRA withdrawals in retirement are tax-free."
+    correct_answer: true
+    explanation: "True! Roth IRA = pay tax now, tax-free growth and withdrawals."
+    xp_reward: 10
 
 xp_reward: 50
-estimated_completion_time: "8 minutes"
+tags:
+  - taxes
+  - strategy
+  - optimization

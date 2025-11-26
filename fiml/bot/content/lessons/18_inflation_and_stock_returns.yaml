@@ -1,240 +1,83 @@
 id: economics_001
+version: "2.0"
 title: "Inflation and Stock Returns"
-version: "1.0"
-changelog:
-  - version: "1.0"
-    date: "2024-11-24"
-    changes:
-      - "Initial release with FIML integration"
-      - "5 quiz questions covering inflation concepts"
-
 category: economics
 difficulty: intermediate
-duration_minutes: 7
-prerequisites: []
-tags:
-  - inflation
-  - real_returns
-  - purchasing_power
-  - economics
-  - long_term_investing
+duration_minutes: 4
 
 learning_objectives:
-  - Understand the difference between nominal and real returns
-  - Learn how inflation erodes purchasing power
-  - Calculate inflation-adjusted returns
-  - Identify inflation hedges and risks
-  - Make informed long-term investment decisions
+  - Understand inflation impact on stocks
+  - Know which stocks benefit from inflation
+  - Protect purchasing power
 
 sections:
   - type: introduction
     content: |
-      Your stock portfolio gained 8% last year. Congratulations! 🎉
+      Inflation = rising prices over time
       
-      But wait... inflation was 3%.
-      
-      Did you really make 8%? Or did you make 5%?
-      
-      **The answer matters more than you think!**
-      
-      Understanding the difference between **nominal returns** (what you see) and **real returns** (what you actually gain in purchasing power) is crucial for long-term investing success.
+      Your money buys less tomorrow than today
 
   - type: explanation
-    title: "Nominal vs Real Returns"
     content: |
-      **Nominal Return:**
-      - What your account statement shows
-      - The percentage your money grew
-      - Example: $10,000 → $10,800 = 8% nominal return
+      Inflation vs Stocks:
       
-      **Real Return:**
-      - What you actually gained in purchasing power
-      - Nominal return minus inflation
-      - Example: 8% nominal - 3% inflation = 5% real return
+      Historically, stocks beat inflation:
+      - Stocks: ~10% annual return
+      - Inflation: ~3% annual
+      - Real return: ~7%
       
-      **Why It Matters:**
+      Why Stocks Beat Inflation:
+      Companies can raise prices → earnings grow → stock price rises
       
-      Year 1: You have $10,000
-      Year 2: You have $10,800 (+8%)
+      High Inflation Problems:
+      - Higher interest rates
+      - Lower P/E multiples
+      - Uncertainty hurts stocks
       
-      But if inflation was 3%:
-      - That TV you wanted now costs $1,030 (was $1,000)
-      - Your groceries cost $103 (were $100)
-      - Everything is 3% more expensive!
+      Inflation-Resistant Stocks:
+      - Energy (oil, gas)
+      - Real estate (REITs)
+      - Commodities (gold, silver)
+      - Companies with pricing power
       
-      Your $10,800 buys what $10,485 would have bought last year.
-      
-      **Real return = 5%, not 8%**
-      
-      **The Formula:**
-      Real Return ≈ Nominal Return - Inflation Rate
-      
-      (Technically: Real Return = ((1 + Nominal) / (1 + Inflation)) - 1, but the simple formula is close enough for most purposes)
-
-  - type: explanation
-    title: "Why Inflation Matters for Investors"
-    content: |
-      **The Silent Wealth Destroyer:**
-      
-      At 3% inflation, your money loses half its purchasing power in 24 years!
-      
-      **Historical Reality:**
-      - Average inflation (1926-2023): ~3% per year
-      - Some periods much higher (1970s: 7%+ average)
-      - Some periods lower (2010s: 1-2% average)
-      
-      **Stock Returns vs Inflation:**
-      
-      Historically (since 1926):
-      - Stocks: ~10% nominal return
-      - Inflation: ~3% average
-      - Real stock return: ~7% per year
-      
-      **That 7% real return is what actually grows your wealth!**
-      
-      **The Retirement Trap:**
-      
-      Many retirees think: "I'll need $50,000/year to live comfortably."
-      
-      But in 20 years at 3% inflation:
-      - You'll need $90,306/year for the same lifestyle!
-      - Your nest egg must keep growing, not just preserve
-      
-      This is why "safe" investments that don't beat inflation actually make you poorer over time.
-
-  - type: live_example
-    title: "Real Returns with Live Data"
-    content: |
-      Let's calculate real returns using actual market data:
-      
-      {fiml_data_inflation_adjusted}
-      
-      Notice how:
-      - Nominal returns look impressive
-      - Real returns tell the true story
-      - Some "gains" were actually losses after inflation
-      
-      Always think in real terms for long-term decisions!
-    fiml_query:
-      symbol: SPY
-      metrics:
-        - price
-        - returns
-      timeframe: 10Y
-      adjustment_type: inflation_adjusted
-
-  - type: explanation
-    title: "Inflation Hedges and Strategies"
-    content: |
-      **Assets That Fight Inflation:**
-      
-      1. **Stocks** ✅
-         - Companies can raise prices
-         - Earnings grow with inflation
-         - Best long-term inflation hedge
-      
-      2. **Real Estate** ✅
-         - Rents increase with inflation
-         - Property values rise
-         - Leverage amplifies returns
-      
-      3. **TIPS (Treasury Inflation-Protected Securities)** ✅
-         - Principal adjusts with CPI
-         - Guaranteed real return
-         - Government-backed
-      
-      4. **Commodities** ⚠️
-         - Gold, oil, etc.
-         - Volatile
-         - Sometimes hedge, sometimes don't
-      
-      **Assets That Lose to Inflation:**
-      
-      1. **Cash** ❌
-         - Loses 3% per year in purchasing power
-         - Only for emergency fund and short-term needs
-      
-      2. **Bonds (non-inflation adjusted)** ⚠️
-         - Fixed payments lose purchasing power
-         - Okay for diversification, not inflation protection
-      
-      3. **Fixed Annuities** ❌
-         - Fixed payments eroded by inflation
-         - Consider inflation-adjusted annuities instead
-      
-      **Your Strategy:**
-      - Young investors: Mostly stocks (best inflation hedge)
-      - Moderate investors: Stocks + TIPS + real estate
-      - Retirees: Balanced portfolio with inflation protection
-      - Everyone: NEVER keep long-term savings in cash!
+      Inflation-Hurt Stocks:
+      - Long-duration growth stocks
+      - High-debt companies
+      - Fixed-income investments
 
   - type: key_takeaways
-    title: "Remember"
-    points:
-      - "Real return = Nominal return minus inflation"
-      - "Real returns measure actual purchasing power growth"
-      - "Historical stock real returns: ~7% per year"
-      - "At 3% inflation, money halves in value in 24 years"
-      - "Stocks are the best long-term inflation hedge"
-      - "Cash loses purchasing power every year"
-      - "Always plan retirement needs with inflation in mind"
+    content: |
+      🎯 Remember:
+      
+      1. Stocks historically beat inflation
+      2. High inflation = market volatility
+      3. Energy/commodities benefit
+      4. Growth stocks suffer
+      5. Stay invested long-term
 
 quiz:
-  questions:
-    - id: real_vs_nominal
-      type: multiple_choice
-      text: "Your portfolio returned 9% last year. Inflation was 4%. What was your real return?"
-      options:
-        - "9%"
-        - "13%"
-        - "5%"
-        - "4%"
-      correct: 2
-      explanation: "Real return ≈ Nominal return - Inflation = 9% - 4% = 5%. This is your actual purchasing power gain after accounting for rising prices."
-      points: 10
+  - id: q1
+    type: multiple_choice
+    text: "Historically, what beats inflation?"
+    options:
+      - text: "Stocks"
+        is_correct: true
+      - text: "Cash"
+        is_correct: false
+      - text: "Bonds"
+        is_correct: false
+    explanation: "Stocks average ~10% vs ~3% inflation over long periods."
+    xp_reward: 10
 
-    - id: inflation_impact
-      type: multiple_choice
-      text: "If inflation averages 3% per year, how long until your money loses half its purchasing power?"
-      options:
-        - "10 years"
-        - "24 years"
-        - "50 years"
-        - "Never"
-      correct: 1
-      explanation: "Using the Rule of 72: 72 ÷ 3 = 24 years. At 3% annual inflation, prices double (money's value halves) in approximately 24 years. This is why investing is crucial!"
-      points: 10
-
-    - id: best_inflation_hedge
-      type: multiple_choice
-      text: "Which asset class has historically been the best long-term inflation hedge?"
-      options:
-        - "Cash in a savings account"
-        - "Government bonds"
-        - "Stocks"
-        - "Gold"
-      correct: 2
-      explanation: "Stocks have been the best long-term inflation hedge, averaging ~10% nominal returns (7% real) since 1926. Companies can raise prices, so earnings grow with inflation."
-      points: 10
-
-    - id: retirement_inflation
-      type: true_false
-      text: "True or False: If you need $50,000/year to retire today, you'll need the same amount in 20 years."
-      correct: false
-      explanation: "False! Due to inflation, you'll need much more. At 3% inflation, you'd need $90,306/year in 20 years to maintain the same lifestyle. Always factor inflation into retirement planning!"
-      points: 10
-
-    - id: cash_risk
-      type: multiple_choice
-      text: "Why is keeping long-term savings in cash a bad idea?"
-      options:
-        - "Banks charge storage fees"
-        - "Cash loses purchasing power to inflation"
-        - "Cash is too risky"
-        - "The government taxes cash holdings"
-      correct: 1
-      explanation: "Cash loses purchasing power every year due to inflation. At 3% inflation, $10,000 in cash buys only $7,400 worth of goods in 10 years. Inflation is a silent wealth destroyer!"
-      points: 10
+  - id: q2
+    type: true_false
+    text: "High inflation is always good for stocks."
+    correct_answer: false
+    explanation: "False! High inflation causes rate hikes and uncertainty, hurting stocks."
+    xp_reward: 10
 
 xp_reward: 50
-estimated_completion_time: "7 minutes"
+tags:
+  - inflation
+  - economics
+  - returns

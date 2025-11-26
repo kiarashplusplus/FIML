@@ -1,347 +1,97 @@
 id: investment_planning_001
+version: "2.0"
 title: "Creating Your Investment Plan"
-version: "1.0"
-changelog:
-  - version: "1.0"
-    date: "2024-11-24"
-    changes:
-      - "Initial release - capstone lesson"
-      - "5 quiz questions bringing together all concepts"
-
-category: investment_planning
+category: planning
 difficulty: intermediate
-duration_minutes: 8
-prerequisites:
-  - stock_basics_001
-  - diversification_001
-  - position_sizing_001
-tags:
-  - planning
-  - strategy
-  - goals
-  - asset_allocation
-  - rebalancing
-  - capstone
+duration_minutes: 5
 
 learning_objectives:
-  - Create a personalized investment plan
-  - Determine appropriate asset allocation
-  - Set realistic financial goals with timelines
-  - Establish rebalancing procedures
-  - Build an investment policy statement
-  - Commit to long-term investing discipline
+  - Set financial goals
+  - Determine asset allocation
+  - Build investment policy
 
 sections:
   - type: introduction
     content: |
-      Congratulations! 🎉 You've completed 19 lessons covering:
-      - Stock fundamentals
-      - Valuation and analysis
-      - Risk management
-      - Portfolio construction
-      - Tax efficiency
-      - Market psychology
+      Time to put it all together!
       
-      Now it's time to **put it all together** into YOUR personal investment plan.
-      
-      This lesson is your roadmap to turning knowledge into action.
-      
-      By the end, you'll have a concrete plan you can implement today!
+      Let's build YOUR investment plan.
 
   - type: explanation
-    title: "Step 1: Define Your Goals"
     content: |
-      **Without clear goals, you're just gambling.**
+      Step 1: Define Goals
       
-      **The Goal Framework:**
+      - Retirement (25-30x annual expenses)
+      - House down payment
+      - Financial independence
       
-      1. **What are you saving for?**
-         - Retirement (most people)
-         - House down payment (5-10 years)
-         - Child's education (10-18 years)
-         - Financial independence (varies)
+      Timeline determines strategy:
+      - <3 years: avoid stocks
+      - 3-10 years: 60% stocks
+      - 10+ years: 80-100% stocks
       
-      2. **When do you need the money?**
-         - < 3 years: NOT for stocks (too risky)
-         - 3-10 years: Balanced approach (60/40 stocks/bonds)
-         - 10+ years: Aggressive stocks (80-100%)
+      Step 2: Assess Risk
       
-      3. **How much do you need?**
-         - Retirement: 25-30x annual expenses (4% rule)
-         - House: Down payment + closing costs
-         - Education: $100K-$300K+ per child
+      Can you handle 30% portfolio drop?
+      - Yes + buy more → 80%+ stocks
+      - Worried but hold → 60% stocks
+      - Panic sell → 40% stocks
       
-      **Example Goals:**
+      Step 3: Asset Allocation
       
-      Sarah, age 30:
-      - Goal 1: Retire at 60 with $50,000/year income
-        * Need: $1.25M ($50K × 25)
-        * Timeline: 30 years
-        * Strategy: Aggressive growth (90% stocks)
+      Simple 3-fund portfolio:
+      - 60% US Total Market (VTI)
+      - 20% International (VXUS)
+      - 20% Bonds (BND)
       
-      - Goal 2: House down payment in 7 years
-        * Need: $80,000
-        * Timeline: 7 years
-        * Strategy: Moderate (60% stocks, 40% bonds)
+      Step 4: Automate
       
-      **Your Turn:**
-      Write down 1-3 specific goals with dollar amounts and timelines!
-
-  - type: explanation
-    title: "Step 2: Assess Your Risk Tolerance"
-    content: |
-      **Two types of risk tolerance:**
+      - Emergency fund first (3-6 months)
+      - Max 401(k) match
+      - Max Roth IRA ($7,000)
+      - Then taxable
       
-      1. **Ability to take risk:**
-         - Long time horizon = high ability
-         - Short time horizon = low ability
-         - Stable job + emergency fund = higher ability
-         - Unstable income = lower ability
+      Step 5: Rebalance
       
-      2. **Willingness to take risk:**
-         - Can you sleep at night if portfolio drops 30%?
-         - Would you panic sell or buy more?
-         - How did you feel in March 2020 crash?
-      
-      **The Acid Test:**
-      
-      Imagine your $100,000 portfolio drops to $70,000 tomorrow.
-      
-      - "I'd panic and sell everything" → Conservative (40% stocks)
-      - "I'd be worried but hold" → Moderate (60% stocks)
-      - "I'd buy more!" → Aggressive (80%+ stocks)
-      
-      **Age-Based Rule of Thumb:**
-      
-      Stock allocation = 110 - your age
-      - Age 25: 85% stocks
-      - Age 40: 70% stocks
-      - Age 65: 45% stocks
-      
-      But adjust based on personal risk tolerance!
-      
-      **Reality Check:**
-      Historically, stocks have recovered from every crash. But YOU have to survive the emotional rollercoaster to benefit!
-
-  - type: explanation
-    title: "Step 3: Build Your Asset Allocation"
-    content: |
-      **The Most Important Decision:**
-      
-      Asset allocation determines 90%+ of your returns!
-      
-      **The Basic Allocations:**
-      
-      **Aggressive (80-100% stocks):**
-      - Who: Young investors (20s-30s), long timeline, high risk tolerance
-      - Example: 90% Total Stock Market, 10% Bonds
-      - Expected return: ~9% per year
-      - Volatility: High (30-50% drops possible)
-      
-      **Moderate (60% stocks, 40% bonds):**
-      - Who: Middle-age (40s-50s), medium timeline, moderate risk
-      - Example: 60% Total Stock, 40% Total Bond
-      - Expected return: ~7% per year
-      - Volatility: Medium (20-30% drops possible)
-      
-      **Conservative (30-40% stocks):**
-      - Who: Near/in retirement, low risk tolerance
-      - Example: 40% Total Stock, 60% Total Bond
-      - Expected return: ~5% per year
-      - Volatility: Low (10-20% drops possible)
-      
-      **The Three-Fund Portfolio (Simple & Effective):**
-      
-      1. **US Total Stock Market** (VTI) - 60%
-      2. **International Stocks** (VXUS) - 20%
-      3. **Total Bond Market** (BND) - 20%
-      
-      That's it! This beats 80%+ of active investors.
-      
-      **Diversification Within Stocks:**
-      - 70-80% US stocks
-      - 20-30% international stocks
-      - Consider small-cap tilt (10-20%)
-      
-      **Your Action:**
-      Choose your target allocation based on goals and risk tolerance!
-
-  - type: explanation
-    title: "Step 4: Implement and Rebalance"
-    content: |
-      **Getting Started:**
-      
-      1. **Emergency Fund First!**
-         - 3-6 months expenses in savings
-         - NOT invested—needs to be liquid
-      
-      2. **Max Tax-Advantaged Accounts:**
-         - 401(k) up to employer match (free money!)
-         - Then Roth IRA ($7,000/year)
-         - Then max 401(k) ($23,000/year)
-         - Then taxable brokerage
-      
-      3. **Automate Everything:**
-         - Set up automatic transfers
-         - Enable dividend reinvestment
-         - Dollar-cost average consistently
-      
-      **Rebalancing Strategy:**
-      
-      Over time, winners grow and allocation drifts:
-      
-      Start: 80% stocks, 20% bonds
-      After 2 years: 85% stocks, 15% bonds (stocks outperformed)
-      
-      **Rebalancing Options:**
-      
-      1. **Calendar-based:**
-         - Rebalance every 6-12 months
-         - Simple, easy to remember
-      
-      2. **Threshold-based:**
-         - Rebalance when allocation drifts 5%+
-         - More tax-efficient
-         - Example: Rebalance when stocks hit 85% (started at 80%)
-      
-      3. **New Money:**
-         - Direct new investments to underweight assets
-         - Most tax-efficient
-         - Example: Stocks grew to 85%? Invest next 3 months' savings in bonds
-      
-      **How to Rebalance:**
-      - In tax-advantaged accounts: Sell winners, buy losers (no tax)
-      - In taxable accounts: Use new money when possible
-      
-      **Why Rebalance:**
-      - Maintains your risk level
-      - Forces "buy low, sell high" discipline
-      - Prevents overconcentration
-
-  - type: explanation
-    title: "Step 5: Write Your Investment Policy Statement"
-    content: |
-      **Your Contract with Future You:**
-      
-      An Investment Policy Statement (IPS) prevents emotional decisions during market chaos.
-      
-      **Essential Components:**
-      
-      **1. Goals & Timeline:**
-      "I am investing for retirement in 30 years, targeting $1.5M in today's dollars."
-      
-      **2. Asset Allocation:**
-      "Target: 80% stocks (60% US, 20% international), 20% bonds"
-      
-      **3. Rebalancing Rules:**
-      "Rebalance annually each January, or when any allocation drifts 5%+ from target"
-      
-      **4. Contribution Plan:**
-      "Contribute $1,000/month: $500 to 401(k), $500 to Roth IRA"
-      
-      **5. What I'll Do During a Crash:**
-      "If market drops 20%+, I will INCREASE contributions if possible, not sell. Recessions are buying opportunities."
-      
-      **6. What I Won't Do:**
-      "I will not: day trade, chase hot stocks, panic sell, try to time the market, check portfolio more than monthly"
-      
-      **7. Review Schedule:**
-      "Review goals annually, update IPS every 5 years or after major life changes"
-      
-      **Sample Simple IPS:**
-      
-      ```
-      Investment Policy Statement - John Doe
-      
-      Goal: Retire at 60 (25 years) with $2M
-      Risk: Moderate (can handle 30% drops)
-      
-      Allocation:
-      - 70% VTI (US Total Market)
-      - 20% VXUS (International)
-      - 10% BND (Bonds)
-      
-      Contributions: $2,000/month
-      - $1,500 to 401(k)
-      - $500 to Roth IRA
-      
-      Rebalance: Annually in January
-      
-      During market crashes: Stay the course. Increase contributions if possible.
-      
-      Next review: January [next year]
-      ```
-      
-      **Your Action:**
-      Write your IPS today! Keep it simple, then stick to it.
+      - Annually OR
+      - When drift >5%
+      - Use new money when possible
 
   - type: key_takeaways
-    title: "Your Investment Journey Starts Now"
-    points:
-      - "Define specific goals with dollar amounts and timelines"
-      - "Assess risk tolerance honestly (ability + willingness)"
-      - "Choose asset allocation based on goals and risk (stocks + bonds)"
-      - "Automate contributions and rebalancing"
-      - "Write an Investment Policy Statement and stick to it"
-      - "The best plan is one you'll actually follow"
-      - "Consistency beats perfection—start today!"
+    content: |
+      🎯 Your Action Plan:
+      
+      1. Write specific goals + timelines
+      2. Choose allocation based on risk
+      3. Set up automatic contributions
+      4. Rebalance annually
+      5. Stick to plan during crashes!
+      
+      💡 Best plan = one you'll follow!
 
 quiz:
-  questions:
-    - id: retirement_goal_calculation
-      type: multiple_choice
-      text: "Using the 4% rule, if you need $60,000/year in retirement, what's your target nest egg?"
-      options:
-        - "$600,000"
-        - "$1,000,000"
-        - "$1,500,000"
-        - "$2,000,000"
-      correct: 2
-      explanation: "The 4% rule suggests multiplying your annual needs by 25: $60,000 × 25 = $1,500,000. This assumes you can safely withdraw 4% per year without running out of money in a 30-year retirement."
-      points: 10
+  - id: q1
+    type: multiple_choice
+    text: "Need $60K/year in retirement. 4% rule target?"
+    options:
+      - text: "$1.5 million"
+        is_correct: true
+      - text: "$600,000"
+        is_correct: false
+      - text: "$3 million"
+        is_correct: false
+    explanation: "$60K × 25 = $1.5M (4% rule)"
+    xp_reward: 10
 
-    - id: asset_allocation_by_age
-      type: multiple_choice
-      text: "You're 35 years old saving for retirement at 65. Which allocation is most appropriate?"
-      options:
-        - "100% bonds (very safe)"
-        - "50% stocks, 50% bonds"
-        - "80% stocks, 20% bonds"
-        - "100% stocks (maximum growth)"
-      correct: 2
-      explanation: "With a 30-year timeline, 80% stocks provides growth potential while 20% bonds adds some stability. The '110 - age' rule suggests 75% stocks (110 - 35 = 75), so 80% is appropriate for an aggressive investor with high risk tolerance."
-      points: 10
+  - id: q2
+    type: true_false
+    text: "During market crashes, panic sell everything."
+    correct_answer: false
+    explanation: "False! Crashes are buying opportunities. Stick to your plan."
+    xp_reward: 10
 
-    - id: rebalancing_concept
-      type: true_false
-      text: "True or False: Rebalancing means selling winners and buying losers to maintain your target allocation."
-      correct: true
-      explanation: "True! Rebalancing enforces 'buy low, sell high' discipline. If stocks outperform and grow from 80% to 90% of your portfolio, you sell some stocks and buy bonds to get back to your 80/20 target."
-      points: 10
-
-    - id: three_fund_portfolio
-      type: multiple_choice
-      text: "Which is NOT part of the classic 'three-fund portfolio'?"
-      options:
-        - "US Total Stock Market"
-        - "International Stocks"
-        - "Individual tech stocks"
-        - "Total Bond Market"
-      correct: 2
-      explanation: "The three-fund portfolio consists of: US Total Stock Market (VTI), International Stocks (VXUS), and Total Bond Market (BND). Individual stocks aren't included—the strategy uses broad index funds for maximum diversification."
-      points: 10
-
-    - id: investment_policy_statement
-      type: multiple_choice
-      text: "What is the main purpose of an Investment Policy Statement (IPS)?"
-      options:
-        - "To impress your financial advisor"
-        - "To prevent emotional decisions during market volatility"
-        - "To maximize short-term trading profits"
-        - "To track daily market movements"
-      correct: 1
-      explanation: "An IPS is your contract with yourself, documenting your strategy and rules. It prevents emotional panic selling during crashes and helps you stay disciplined. 'What will I do in a crash?' should be written BEFORE the crash happens!"
-      points: 10
-
-xp_reward: 50
-estimated_completion_time: "8 minutes"
+xp_reward: 100
+tags:
+  - planning
+  - strategy
+  - capstone

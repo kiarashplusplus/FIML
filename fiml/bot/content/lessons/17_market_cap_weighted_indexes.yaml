@@ -1,207 +1,85 @@
-id: market_concepts_002
-title: "Understanding Market Cap Weighted Indexes"
-version: "1.0"
-changelog:
-  - version: "1.0"
-    date: "2024-11-24"
-    changes:
-      - "Initial release with FIML integration"
-      - "4 quiz questions covering index weighting"
-
-category: market_concepts
+id: market_basics_002
+version: "2.0"
+title: "Market Cap Weighted Indexes"
+category: market_basics
 difficulty: intermediate
-duration_minutes: 7
-prerequisites:
-  - understanding_market_cap
-tags:
-  - indexes
-  - market_cap
-  - portfolio
-  - concentration
-  - S&P500
+duration_minutes: 4
 
 learning_objectives:
-  - Understand how market-cap weighting works in indexes
-  - Recognize concentration risk in major indexes
-  - Learn why some stocks dominate index performance
-  - Compare market-cap vs equal-weight indexes
-  - Make informed decisions about index fund investing
+  - Understand index weighting
+  - Know how S&P 500 works
+  - Recognize concentration risk
 
 sections:
   - type: introduction
     content: |
-      When you invest in the S&P 500 through an index fund, are you equally invested in all 500 companies?
+      Most indexes are market-cap weighted
       
-      **No!** The S&P 500 is **market-cap weighted**, meaning:
-      - Bigger companies = bigger slice of your investment
-      - Smaller companies = smaller slice
-      
-      Apple alone can be ~7% of your "500-stock portfolio"!
-      
-      Is this good or bad? Let's explore how index weighting works and what it means for your money.
+      Larger companies = bigger weight in index
 
   - type: explanation
-    title: "How Market-Cap Weighting Works"
     content: |
-      **The Formula:**
+      How It Works:
       
-      Each stock's weight = (Its market cap) / (Total market cap of all stocks)
+      S&P 500 example:
+      - Apple (7% of index)
+      - Microsoft (6%)
+      - Tiny company (0.01%)
       
-      **Example S&P 500 Breakdown (simplified):**
+      Math:
+      If Apple rises 10%, index rises ~0.7%
+      If tiny company rises 10%, index barely moves
       
-      If total S&P 500 market cap = $40 trillion
+      Top 10 Stocks:
+      Make up ~30% of S&P 500
       
-      Apple market cap = $3 trillion
-      Apple weight = $3T / $40T = 7.5% of the index
+      Pros:
+      ✅ Self-rebalancing (winners naturally grow)
+      ✅ Low turnover = low fees
+      ✅ Reflects market consensus
       
-      Small company market cap = $20 billion  
-      Small company weight = $20B / $40T = 0.05% of the index
+      Cons:
+      ❌ Concentrated in mega-caps
+      ❌ Can create bubbles
+      ❌ Buys high, sells low (adds winners)
       
-      **What This Means:**
-      - Every $100 you invest → $7.50 goes to Apple
-      - Every $100 you invest → $0.05 goes to small company
-      - Apple has 150x more influence than the small company!
-      
-      **The Top 10 Reality:**
-      In the S&P 500, the top 10 stocks often represent 25-30% of the entire index.
-      
-      You're not equally diversified—you're heavily concentrated in mega-caps!
-
-  - type: live_example
-    title: "Real Index Concentration"
-    content: |
-      Let's look at actual index concentration using live data:
-      
-      {fiml_data_index_weights}
-      
-      Notice:
-      - Technology stocks dominate
-      - Top holdings change over time
-      - Your "diversified" index fund has concentration risk
-      
-      This isn't bad—these companies got big for a reason! But it's important to understand.
-    fiml_query:
-      symbol: SPY
-      metrics:
-        - top_holdings
-        - sector_allocation
-        - concentration_risk
-
-  - type: explanation
-    title: "Market-Cap vs Equal-Weight Indexes"
-    content: |
-      **Market-Cap Weighted (Standard):**
-      - Examples: S&P 500 (SPY), Total Market (VTI)
-      - Bigger companies = bigger impact
-      - Pros:
-        * Mirrors overall market
-        * Lower turnover (automatic rebalancing)
-        * Tax efficient
-        * Winners keep winning
-      - Cons:
-        * Concentration in mega-caps
-        * Buying more of what's already expensive
-        * Less exposure to smaller stocks
-      
-      **Equal-Weight:**
-      - Examples: S&P 500 Equal Weight (RSP)
-      - All 500 stocks get 0.2% each (1/500)
-      - Pros:
-        * True diversification across all stocks
-        * More exposure to smaller companies
-        * Value tilt (buy what's cheaper)
-      - Cons:
-        * Higher turnover (frequent rebalancing)
-        * Higher fees
-        * May lag in strong bull markets
-      
-      **Historical Performance:**
-      Over long periods, equal-weight often outperforms market-cap weighted, but with higher volatility!
-
-  - type: explanation
-    title: "The Concentration Question"
-    content: |
-      **Is Concentration Bad?**
-      
-      Not necessarily! Here's why:
-      
-      ✅ **Why It's Okay:**
-      - Big companies got big by being successful
-      - Reflects market's collective wisdom
-      - Low-cost way to own the winners
-      - Automatic portfolio adjustment
-      
-      ⚠️ **When It's Risky:**
-      - If top 10 stocks are in a bubble
-      - If you own multiple similar index funds
-      - If you have no international exposure
-      - If tech sector crashes
-      
-      **Real-World Example:**
-      In 2000, tech stocks were 30%+ of S&P 500
-      Tech crashed 2000-2002
-      S&P 500 fell 49% (concentration risk realized!)
-      
-      **The Solution:**
-      - Know what you own (check your fund's top holdings)
-      - Consider equal-weight or sector funds for balance
-      - International diversification
-      - Don't fight the market, but be aware of concentration
+      Alternative: Equal Weight:
+      Every stock gets same %
+      More balanced, higher returns historically
 
   - type: key_takeaways
-    title: "Remember"
-    points:
-      - "Market-cap weighted = bigger companies get bigger slice"
-      - "S&P 500 top 10 stocks = ~25-30% of the index"
-      - "You're not equally invested in all 500 stocks"
-      - "Equal-weight indexes spread money evenly but cost more"
-      - "Concentration isn't bad, but be aware of it"
-      - "Check your index fund's top holdings regularly"
+    content: |
+      🎯 Remember:
+      
+      1. Market-cap = bigger companies, bigger weight
+      2. S&P 500 = cap-weighted
+      3. Top 10 = ~30% of S&P 500
+      4. Creates concentration risk
+      5. Equal-weight is alternative
 
 quiz:
-  questions:
-    - id: market_cap_weight_definition
-      type: multiple_choice
-      text: "In a market-cap weighted index, what determines how much of the index each stock represents?"
-      options:
-        - "All stocks get equal weight"
-        - "Stocks are weighted by price"
-        - "Stocks are weighted by market capitalization"
-        - "Stocks are randomly weighted"
-      correct: 2
-      explanation: "Market-cap weighted means each stock's weight equals its market cap divided by total index market cap. Bigger companies = bigger slice of your investment."
-      points: 10
+  - id: q1
+    type: multiple_choice
+    text: "In market-cap weighted index, what gets more weight?"
+    options:
+      - text: "Larger companies"
+        is_correct: true
+      - text: "All companies equally"
+        is_correct: false
+      - text: "Smaller companies"
+        is_correct: false
+    explanation: "Larger market cap = larger index weight."
+    xp_reward: 10
 
-    - id: sp500_concentration
-      type: multiple_choice
-      text: "If you invest $1,000 in the S&P 500 and Apple is 7% of the index, how much goes to Apple?"
-      options:
-        - "$2 (since 500 stocks = $2 each)"
-        - "$70 (7% of $1,000)"
-        - "$14 (1/500th of $1,000)"
-        - "$100 (equal weight)"
-      correct: 1
-      explanation: "7% of $1,000 = $70. In market-cap weighted indexes, larger companies get proportionally more of your investment. You're NOT equally invested in all 500 stocks!"
-      points: 10
-
-    - id: equal_weight_vs_market_cap
-      type: true_false
-      text: "True or False: Equal-weight indexes give every stock the same amount of money, regardless of company size."
-      correct: true
-      explanation: "True! Equal-weight indexes (like RSP for S&P 500) invest the same amount in each stock. If there are 500 stocks, each gets 0.2% (1/500). This provides true diversification but requires frequent rebalancing."
-      points: 10
-
-    - id: concentration_risk
-      type: multiple_choice
-      text: "What is the main risk of market-cap weighted indexes like the S&P 500?"
-      options:
-        - "Too many small companies"
-        - "Equal exposure to all sectors"
-        - "Concentration in a few mega-cap stocks"
-        - "Not enough technology stocks"
-      correct: 2
-      explanation: "The main risk is concentration—the top 10 stocks often make up 25-30% of the index. If these mega-caps decline, the entire index suffers significantly."
-      points: 10
+  - id: q2
+    type: true_false
+    text: "Top 10 stocks make up ~30% of the S&P 500."
+    correct_answer: true
+    explanation: "True! This shows concentration in mega-caps."
+    xp_reward: 10
 
 xp_reward: 50
-estimated_completion_time: "7 minutes"
+tags:
+  - indexes
+  - weighting
+  - sp500
