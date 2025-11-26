@@ -109,8 +109,14 @@ class TestHealthEndpoints:
         # May return 200 (healthy) or 503 (unhealthy) depending on db availability
         assert response.status_code in [200, 503]
         data = response.json()
-        assert "status" in data
-        assert "service" in data or "error" in data
+        # When healthy, returns {"status": ..., "service": ...}
+        # When unhealthy, returns {"detail": ...}
+        if response.status_code == 200:
+            assert "status" in data
+            assert "service" in data
+        else:
+            # 503 returns HTTPException detail
+            assert "detail" in data
 
     def test_health_cache_endpoint_exists(self, client):
         """Test that /health/cache endpoint exists"""
