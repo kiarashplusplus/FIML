@@ -15,8 +15,6 @@ from fiml.dsl.executor import ExecutionTaskInfo, TaskExecutor, fk_dsl_executor
 from fiml.dsl.parser import (
     AssetSpec,
     ConditionSpec,
-    FKDSLParser,
-    FKDSLTransformer,
     MetricSpec,
     TimeframeSpec,
     fk_dsl_parser,

@@ -85,6 +85,10 @@ class BaseProvider(ABC):
         """Fetch news articles"""
         pass
 
+    async def fetch_technical(self, asset: Asset) -> ProviderResponse:
+        """Fetch technical indicators"""
+        raise NotImplementedError("Provider does not support technical analysis")
+
     async def fetch_options_chain(self, asset: Asset) -> ProviderResponse:
         """Fetch options chain data"""
         return ProviderResponse(

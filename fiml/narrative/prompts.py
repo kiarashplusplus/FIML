@@ -129,7 +129,7 @@ class PromptTemplateLibrary:
                 "system": (
                     "You are a professional market analyst providing detailed market "
                     "context for experienced traders and investors. Use professional "
-                    "terminology, include technical levels, and provide actionable insights."
+                    "terminology, include technical levels, and provide analytical insights."
                 ),
                 "user": (
                     "Generate professional market context for {asset_name} ({symbol}).\n\n"
@@ -188,7 +188,8 @@ class PromptTemplateLibrary:
                 "system": (
                     "You are a technical analyst providing indicator interpretation "
                     "for investors familiar with basic technical analysis. Use standard "
-                    "terminology and provide clear buy/sell/neutral signals with context."
+                    "for investors familiar with basic technical analysis. Use standard "
+                    "terminology and provide clear technical indications with context."
                 ),
                 "user": (
                     "Provide technical analysis summary for {symbol}.\n\n"
@@ -212,13 +213,13 @@ class PromptTemplateLibrary:
                 "system": (
                     "You are an experienced technical analyst providing professional-grade "
                     "technical analysis. Include pattern recognition, multiple timeframe analysis, "
-                    "and confluence of indicators. Provide specific entry/exit considerations."
+                    "and confluence of indicators. Provide specific technical level considerations."
                 ),
                 "user": (
                     "Professional technical analysis for {symbol}.\n\n"
                     "{technical_data}\n\n"
                     "Analyze indicator confluence, identify key support/resistance levels, "
-                    "discuss chart patterns, and provide actionable technical insights "
+                    "discuss chart patterns, and provide actionable technical observations "
                     "with specific price levels and conditions."
                 ),
             },

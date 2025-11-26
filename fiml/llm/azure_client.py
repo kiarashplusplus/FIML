@@ -171,6 +171,23 @@ class AzureOpenAIClient:
                     # Handle other HTTP errors
                     if response.status_code != 200:
                         error_text = response.text
+
+                        # Special handling for O1 models that only support temperature=1
+                        if response.status_code == 400 and "temperature" in error_text and "1" in error_text:
+                            logger.warning(
+                                "Model requires temperature=1.0, retrying",
+                                attempt=attempt + 1,
+                            )
+                            payload["temperature"] = 1.0
+                            # Don't increment attempt counter for this adjustment, just retry immediately
+                            # But we need to be careful not to infinite loop.
+                            # Since we modify payload, next loop will use temp=1.0.
+                            # We can just continue to next attempt, or recurse.
+                            # Simplest is to modify payload and let the loop continue (consuming an attempt)
+                            # or just continue.
+                            # Actually, if I just modify payload and continue, it will retry with new payload.
+                            continue
+
                         self._error_count += 1
                         logger.error(
                             "Azure OpenAI API error",

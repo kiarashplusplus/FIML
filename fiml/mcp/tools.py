@@ -19,6 +19,7 @@ from fiml.core.models import (
     Market,
     SearchByCoinResponse,
     SearchBySymbolResponse,
+    StructuralData,
     TaskInfo,
     TaskStatus,
 )
@@ -356,6 +357,41 @@ async def search_by_symbol(
         # Extract data from response
         data = response.data if response else {}
 
+        # Fetch additional data based on depth
+        fundamental_data = {}
+        technical_data = {}
+
+        if depth in [AnalysisDepth.STANDARD, AnalysisDepth.DEEP]:
+            try:
+                # Fetch fundamentals
+                fund_plan = await arbitration_engine.arbitrate_request(
+                    asset=asset,
+                    data_type=DataType.FUNDAMENTALS,
+                    user_region="US",
+                )
+                fund_response = await arbitration_engine.execute_with_fallback(
+                    fund_plan, asset, DataType.FUNDAMENTALS
+                )
+                if fund_response:
+                    fundamental_data = fund_response.data
+            except Exception as e:
+                logger.warning(f"Failed to fetch fundamentals: {e}", symbol=symbol)
+
+            try:
+                # Fetch technicals
+                tech_plan = await arbitration_engine.arbitrate_request(
+                    asset=asset,
+                    data_type=DataType.TECHNICAL,
+                    user_region="US",
+                )
+                tech_response = await arbitration_engine.execute_with_fallback(
+                    tech_plan, asset, DataType.TECHNICAL
+                )
+                if tech_response:
+                    technical_data = tech_response.data
+            except Exception as e:
+                logger.warning(f"Failed to fetch technicals: {e}", symbol=symbol)
+
         task_id = f"analysis-{symbol.lower()}-{uuid.uuid4().hex[:8]}"
 
         cached_data = CachedData(
@@ -368,6 +404,20 @@ async def search_by_symbol(
             ttl=300,  # 5 minutes
             confidence=response.confidence if response else 0.0,
         )
+
+        # Create structural data object
+        structural_data = None
+        if fundamental_data:
+            structural_data = StructuralData(
+                market_cap=fundamental_data.get("market_cap"),
+                pe_ratio=fundamental_data.get("pe_ratio"),
+                beta=fundamental_data.get("beta"),
+                avg_volume=fundamental_data.get("avg_volume"),
+                week_52_high=fundamental_data.get("week_52_high"),
+                week_52_low=fundamental_data.get("week_52_low"),
+                sector=fundamental_data.get("sector"),
+                industry=fundamental_data.get("industry"),
+            )
 
         task_info = TaskInfo(
             id=task_id,
@@ -446,17 +496,27 @@ async def search_by_symbol(
                             "change": cached_data.change,
                             "change_percent": cached_data.change_percent,
                             "volume": data.get("volume", 0),
+                            "market_cap": fundamental_data.get("market_cap", 0),
+                            "pe_ratio": fundamental_data.get("pe_ratio", 0),
                         },
                         preferences=preferences,
                         data_sources=[response.provider] if response else [],
                     )
 
+                    # Add fundamental data
+                    if fundamental_data:
+                        context.fundamental_data = fundamental_data
+
                     # Add technical data for standard/deep
                     if depth in [AnalysisDepth.STANDARD, AnalysisDepth.DEEP]:
-                        context.technical_data = {
-                            "trend": "bullish" if cached_data.change_percent > 0 else "bearish",
-                            "strength": "strong" if abs(cached_data.change_percent) > 2 else "moderate",
-                        }
+                        if technical_data:
+                            context.technical_data = technical_data
+                        else:
+                            # Fallback to basic calculated technicals if fetch failed
+                            context.technical_data = {
+                                "trend": "bullish" if cached_data.change_percent > 0 else "bearish",
+                                "strength": "strong" if abs(cached_data.change_percent) > 2 else "moderate",
+                            }
 
                     # Add sentiment for deep
                     if depth == AnalysisDepth.DEEP:
@@ -510,7 +570,11 @@ async def search_by_symbol(
                     f"Narrative generation failed, continuing without: {e}",
                     symbol=symbol,
                 )
-                # Continue without narrative - graceful fallback
+                # DEBUG: Append error to disclaimer
+                error_msg = str(e)
+                if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                    error_msg += f" | Response: {e.response.text}"
+                disclaimer += f" [DEBUG ERROR: {error_msg}]"
 
         # Track query in session if session_id provided
         if session_id:
@@ -533,6 +597,7 @@ async def search_by_symbol(
             market=market.value,
             currency="USD",
             cached=cached_data,
+            structural_data=structural_data,
             task=task_info,
             disclaimer=disclaimer,
             data_lineage=data_lineage,

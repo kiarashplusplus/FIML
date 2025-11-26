@@ -302,6 +302,8 @@ class DataArbitrationEngine:
             return await provider.fetch_fundamentals(asset)
         elif data_type == DataType.NEWS:
             return await provider.fetch_news(asset)
+        elif data_type == DataType.TECHNICAL:
+            return await provider.fetch_technical(asset)
         else:
             raise ValueError(f"Unsupported data type: {data_type}")
 

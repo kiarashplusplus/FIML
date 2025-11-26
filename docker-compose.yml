@@ -90,10 +90,11 @@ services:
   ray-head:
     image: rayproject/ray:2.9.0-py311
     container_name: fiml-ray-head
-    command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --block
+    command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --metrics-export-port=8080 --block
     ports:
       - "6379:6379"
       - "8265:8265" # Ray dashboard
+      - "8080:8080" # Ray metrics
     volumes:
       - ./fiml:/app/fiml
     networks:
@@ -161,6 +162,46 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Exporters
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: fiml-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://fiml:fiml_password@postgres:5432/fiml?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: fiml-redis-exporter
+    environment:
+      REDIS_ADDR: "redis:6379"
+    ports:
+      - "9121:9121"
+    networks:
+      - fiml-network
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: fiml-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - fiml-network
+    restart: unless-stopped
 
   # Prometheus
   prometheus:

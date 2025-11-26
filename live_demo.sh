@@ -415,10 +415,33 @@ try:
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
-        print(f\"    Price: \${cached.get('price', 'N/A')}\")
-        print(f\"    Fields: Price + Technical indicators + Basic narrative\")
-        has_narrative = 'narrative' in result
-        print(f\"    Narrative: {'Yes' if has_narrative else 'No'}\")
+        structural = result.get('structural_data') or {}
+        
+        print(f\"    Price:      \${cached.get('price', 'N/A')}\")
+        if structural:
+            mcap = structural.get('market_cap')
+            pe = structural.get('pe_ratio')
+            print(f\"    Market Cap: \${mcap:,.0f}\" if mcap else \"    Market Cap: N/A\")
+            print(f\"    PE Ratio:   {pe:.2f}\" if pe else \"    PE Ratio:   N/A\")
+            
+        print(f\"    Fields:     Price + Fundamentals + Technicals + Basic narrative\")
+        narrative = result.get('narrative')
+        sections = narrative.get('sections', []) if narrative else []
+        if narrative:
+            if len(sections) > 0:
+                print(f\"    Narrative:  Yes\")
+            else:
+                summary = narrative.get('summary', '')
+                if \"ERROR\" in summary:
+                    print(f\"    Narrative:  Error: {summary}\")
+                else:
+                    print(f\"    Narrative:  No (LLM not configured)\")
+        else:
+            disclaimer = result.get('disclaimer', '')
+            if \"DEBUG ERROR\" in disclaimer:
+                print(f\"    Narrative:  Error: {disclaimer}\")
+            else:
+                print(f\"    Narrative:  No (LLM not configured)\")
 except:
     print(\"    Query failed\")
 "
@@ -433,16 +456,37 @@ try:
     if not data.get('isError', False):
         result = json.loads(data['content'][0]['text'])
         cached = result.get('cached', {})
-        print(f\"    Price: \${cached.get('price', 'N/A')}\")
-        print(f\"    Fields: Full analysis + Fundamentals + Sentiment + Comprehensive narrative\")
-        has_narrative = 'narrative' in result
-        print(f\"    Narrative: {'Yes' if has_narrative else 'No'}\")
-        if has_narrative:
-            narrative = result.get('narrative', {})
-            sections = narrative.get('sections', [])
-            print(f\"    Sections: {len(sections)}\")
-except:
-    print(\"    Query failed\")
+        structural = result.get('structural_data') or {}
+        
+        print(f\"    Price:      \${cached.get('price', 'N/A')}\")
+        if structural:
+            print(f\"    Sector:     {structural.get('sector', 'N/A')}\")
+            print(f\"    Beta:       {structural.get('beta', 'N/A')}\")
+            
+        print(f\"    Fields:     Full analysis + Deep Fundamentals + Sentiment + Comprehensive narrative\")
+        
+        narrative = result.get('narrative')
+        sections = narrative.get('sections', []) if narrative else []
+        
+        if narrative:
+            if len(sections) > 0:
+                print(f\"    Narrative:  Yes ({len(sections)} sections)\")
+                summary = narrative.get('summary', 'N/A')
+                print(f\"    Summary:    {summary[:100]}...\")
+            else:
+                summary = narrative.get('summary', '')
+                if \"ERROR\" in summary:
+                    print(f\"    Narrative:  Error: {summary}\")
+                else:
+                    print(f\"    Narrative:  No (LLM not configured)\")
+        else:
+             disclaimer = result.get('disclaimer', '')
+             if \"DEBUG ERROR\" in disclaimer:
+                 print(f\"    Narrative:  Error: {disclaimer}\")
+             else:
+                 print(f\"    Narrative:  No (LLM not configured)\")
+except Exception as e:
+    print(f\"    Query failed: {e}\")
 "
 fi
 
