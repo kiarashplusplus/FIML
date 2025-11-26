@@ -35,10 +35,6 @@ if ! command_exists docker; then
     MISSING_DEPS+=("docker")
 fi
 
-if ! command_exists docker-compose; then
-    MISSING_DEPS+=("docker-compose")
-fi
-
 if ! command_exists python3; then
     MISSING_DEPS+=("python3")
 fi
@@ -86,11 +82,11 @@ case $choice in
         
         # Build images
         echo "🏗️  Building Docker images..."
-        docker-compose build
+        docker compose build
         
         # Start services
         echo "🚀 Starting services..."
-        docker-compose up -d
+        docker compose up -d
         
         # Wait for services
         echo "⏳ Waiting for services to be ready..."
@@ -98,7 +94,7 @@ case $choice in
         
         # Initialize database
         echo "📊 Initializing database..."
-        docker-compose exec -T postgres psql -U fiml -d fiml -f /docker-entrypoint-initdb.d/init.sql 2>/dev/null || true
+        docker compose exec -T postgres psql -U fiml -d fiml -f /docker-entrypoint-initdb.d/init.sql 2>/dev/null || true
         
         # Check health
         echo ""

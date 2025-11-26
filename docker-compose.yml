@@ -93,7 +93,7 @@ services:
     command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --block
     ports:
       - "6379:6379"
-      - "8265:8265"  # Ray dashboard
+      - "8265:8265" # Ray dashboard
     volumes:
       - ./fiml:/app/fiml
     networks:
@@ -132,6 +132,12 @@ services:
     deploy:
       replicas: 2
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "celery -A fiml.tasks.celery inspect ping -d celery@$$HOSTNAME || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Celery Beat (Scheduler)
   celery-beat:
@@ -149,6 +155,12 @@ services:
     networks:
       - fiml-network
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "python -c 'import sys; from celery import Celery; app = Celery(\"fiml\"); app.config_from_object(\"fiml.core.config:settings\"); sys.exit(0)' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Prometheus
   prometheus:
