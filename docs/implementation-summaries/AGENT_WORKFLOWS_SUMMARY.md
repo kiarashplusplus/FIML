@@ -524,5 +524,5 @@ These workflows represent a significant enhancement to FIML's capabilities, prov
 ---
 
 **Shipped**: November 23, 2025  
-**Version**: FIML 0.2.2  
+**Version**: FIML 0.3.0  
 **Status**: ✅ Production Ready

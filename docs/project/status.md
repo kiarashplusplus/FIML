@@ -4,7 +4,7 @@ Current project status and metrics.
 
 ## Version
 
-**Current**: 0.2.2
+**Current**: 0.3.0
 
 ## Phase Status
 

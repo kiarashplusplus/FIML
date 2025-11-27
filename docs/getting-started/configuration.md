@@ -202,7 +202,7 @@ Project metadata and dependencies are defined in `pyproject.toml`:
 ```toml
 [project]
 name = "fiml"
-version = "0.2.2"
+version = "0.3.0"
 description = "Financial Intelligence Meta-Layer"
 requires-python = ">=3.11"
 ```

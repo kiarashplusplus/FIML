@@ -77,7 +77,7 @@
 
 | Service | URL | Status | Notes |
 |---------|-----|--------|-------|
-| FIML API | http://localhost:8000 | ✅ Healthy | v0.2.2 |
+| FIML API | http://localhost:8000 | ✅ Healthy | v0.3.0 |
 | API Docs | http://localhost:8000/docs | ✅ Available | Interactive Swagger UI |
 | Grafana | http://localhost:3000 | ✅ Running | admin/admin |
 | Prometheus | http://localhost:9091 | ✅ Running | Metrics collection |

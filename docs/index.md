@@ -3,34 +3,34 @@
 **An AI-Native Financial Data MCP Server with Intelligent Provider Orchestration**
 
 !!! info "Project Status"
-    ✅ **PHASE 1 COMPLETE** | 🚧 **PHASE 2 IN DEVELOPMENT (60%)** | **Version**: 0.2.2 | **Tests**: 439 passed (100% success rate)
+    ✅ **PHASE 1 COMPLETE** | 🚧 **PHASE 2 ACTIVE DEVELOPMENT (60%)** | 🚀 **Version**: 0.3.0 | **Tests**: 1,403 collected (100% pass rate) | 🌍 **NEW**: Multilingual Compliance (9 languages)
     
     [![FIML CI/CD Pipeline](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml)
     [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
 
 ## Overview
 
-FIML is an MCP (Model Context Protocol) server that provides intelligent financial data access through a unified interface. It implements a data arbitration layer that automatically selects the best data provider based on availability, freshness, and reliability. The project is designed with a 10-year extensibility roadmap.
+FIML is an MCP (Model Context Protocol) server that provides intelligent financial data access through a unified interface. It implements a data arbitration layer that automatically selects the best data provider based on availability, freshness, and reliability. The platform includes a comprehensive compliance guardrail system supporting 9 languages for global regulatory compliance. The project is designed with a 10-year extensibility roadmap.
 
 ## 🌟 Key Features
 
 ### ✅ Core Infrastructure (100%)
 
 - **🔀 Data Arbitration Engine**: Multi-provider scoring (5 factors), automatic fallback, conflict resolution
-- **🏗️ Provider System**: 5 working providers - Yahoo Finance, Alpha Vantage, FMP, CCXT, Mock
+- **🏗️ Provider System**: 17 working providers across stocks, crypto, forex, and news
 - **⚡ Cache Architecture**: L1 (Redis 10-100ms) and L2 (PostgreSQL 300-700ms) with intelligent optimizations
     - Cache warming for popular symbols
     - Intelligent eviction policies (LRU/LFU)
     - Latency tracking and hit rate optimization
     - 1000+ concurrent request support
 - **📊 FK-DSL Parser**: Complete Lark-based grammar with execution framework
-- **🔧 MCP Server**: FastAPI-based server with 4 fully operational MCP tools
+- **🔧 MCP Server**: FastAPI-based server with 9 fully operational MCP tools
 - **🌐 WebSocket Streaming**: Real-time price and OHLCV data streaming (650 lines)
 - **📦 Docker Deployment**: Complete docker-compose.yml with 12 services configured
-- **🧪 Test Suite**: 464 tests total, 439 passing (100% success rate), comprehensive coverage
+- **🧪 Test Suite**: 1,403 tests collected, 100% pass rate on core suite, comprehensive coverage
 - **💰 Live Data**: Real stock prices (AAPL, TSLA, MSFT) from multiple providers
 - **₿ Crypto Support**: BTC, ETH via CCXT multi-exchange integration
-- **🛡️ Compliance Framework**: Regional checks (8 regions), disclaimers, investment advice detection
+- **🛡️ Compliance Guardrail (v0.3.0)**: Multilingual compliance (9 languages), prescriptive verb blocking, advice removal
 - **📈 Monitoring Hooks**: Prometheus metrics endpoints, health checks
 
 ## 🏗️ Architecture
