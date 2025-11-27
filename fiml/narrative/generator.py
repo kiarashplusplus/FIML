@@ -41,6 +41,7 @@ class NarrativeGenerator:
         self,
         azure_client: Optional[AzureOpenAIClient] = None,
         disclaimer_generator: Optional[DisclaimerGenerator] = None,
+        enable_compliance_guardrail: bool = True,
     ):
         """
         Initialize narrative generator
@@ -48,14 +49,29 @@ class NarrativeGenerator:
         Args:
             azure_client: Azure OpenAI client (creates new if None)
             disclaimer_generator: Disclaimer generator (creates new if None)
+            enable_compliance_guardrail: Whether to apply compliance guardrail (default: True)
         """
         self.azure_client = azure_client or AzureOpenAIClient()
         self.disclaimer_generator = (
             disclaimer_generator or DisclaimerGenerator()
         )
         self.prompt_library = prompt_library
+        self.enable_compliance_guardrail = enable_compliance_guardrail
 
-        logger.info("Narrative generator initialized")
+        # Initialize compliance guardrail
+        if enable_compliance_guardrail:
+            from fiml.compliance.guardrail import ComplianceGuardrail
+            self._guardrail = ComplianceGuardrail(
+                disclaimer_generator=self.disclaimer_generator,
+                auto_add_disclaimer=False,  # We handle disclaimers separately
+            )
+        else:
+            self._guardrail = None
+
+        logger.info(
+            "Narrative generator initialized",
+            compliance_guardrail=enable_compliance_guardrail,
+        )
 
     async def generate_narrative(
         self,
@@ -206,6 +222,10 @@ class NarrativeGenerator:
         narrative.confidence = quality_metrics.overall_quality
         narrative.metadata["quality_metrics"] = quality_metrics.model_dump()
 
+        # Apply compliance guardrail to ensure no advice language
+        if self._guardrail and self.enable_compliance_guardrail:
+            narrative = self._apply_compliance_guardrail(narrative)
+
         logger.info(
             "Narrative generated successfully",
             symbol=context.asset_symbol,
@@ -215,6 +235,41 @@ class NarrativeGenerator:
             quality=quality_metrics.overall_quality,
         )
 
+        return narrative
+
+    def _apply_compliance_guardrail(self, narrative: Narrative) -> Narrative:
+        """
+        Apply compliance guardrail to all narrative text content
+
+        Args:
+            narrative: Generated narrative
+
+        Returns:
+            Narrative with compliance-checked content
+        """
+        if not self._guardrail:
+            return narrative
+
+        # Process summary
+        if narrative.summary:
+            result = self._guardrail.process(narrative.summary)
+            narrative.summary = result.processed_text
+            if result.violations_found:
+                narrative.metadata["compliance_violations"] = len(result.violations_found)
+
+        # Process each section
+        for section in narrative.sections:
+            result = self._guardrail.process(section.content)
+            section.content = result.processed_text
+
+        # Process key insights
+        processed_insights = []
+        for insight in narrative.key_insights:
+            result = self._guardrail.process(insight)
+            processed_insights.append(result.processed_text)
+        narrative.key_insights = processed_insights
+
+        logger.debug("Compliance guardrail applied to narrative")
         return narrative
 
     async def _generate_market_context(
