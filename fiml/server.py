@@ -115,6 +115,11 @@ app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 # Include Alert router
 app.include_router(alert_router, prefix="/api", tags=["alerts"])
 
+# Include Bot router (for Mobile/Web apps)
+from fiml.bot.router import router as bot_router
+
+app.include_router(bot_router, prefix="/api/bot", tags=["bot"])
+
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
