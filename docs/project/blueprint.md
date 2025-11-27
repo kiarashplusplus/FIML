@@ -4821,7 +4821,9 @@ class EvaluationSuite:
 - ✅ Core MCP server with Yahoo Finance, Alpha Vantage, FMP, CCXT  
 - ✅ Data arbitration engine with scoring, fallback, and conflict resolution  
 - ✅ L1/L2 caching (Redis + PostgreSQL/TimescaleDB in Docker)  
-- ✅ 4 working MCP tools: `search-by-symbol`, `search-by-coin`, `execute-fk-dsl`, `get-task-status`  
+- ✅ 9 working MCP tools (4 core data tools + 5 session management tools)
+  - Core: `search-by-symbol`, `search-by-coin`, `execute-fk-dsl`, `get-task-status`
+  - Session: `create-analysis-session`, `get-session-info`, `list-sessions`, `extend-session`, `get-session-analytics`  
 - ✅ FK-DSL parser (complete Lark-based grammar)  
 - ✅ Multi-agent orchestration framework (Ray-based)  
 - ✅ Real-time WebSocket streaming (price and OHLCV data)  
@@ -4909,7 +4911,9 @@ class EvaluationSuite:
 1. ✅ Core MCP server (Python/FastAPI)  
 2. ✅ Integration with Yahoo Finance, Alpha Vantage, FMP, CCXT  
 3. ✅ L1/L2 caching (Redis + PostgreSQL/TimescaleDB)  
-4. ✅ Four MCP tools: `search-by-symbol`, `search-by-coin`, `execute-fk-dsl`, `get-task-status`  
+4. ✅ Nine MCP tools (4 core + 5 session management):
+   - Core: `search-by-symbol`, `search-by-coin`, `execute-fk-dsl`, `get-task-status`
+   - Session: `create-analysis-session`, `get-session-info`, `list-sessions`, `extend-session`, `get-session-analytics`  
 5. ✅ FK-DSL parser and execution engine  
 6. ✅ Multi-agent orchestration framework (Ray)  
 7. ✅ WebSocket streaming for real-time data  

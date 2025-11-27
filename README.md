@@ -63,7 +63,7 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
   - Latency tracking and hit rate optimization
   - 1000+ concurrent request support
 - **📊 FK-DSL Parser**: Complete Lark-based grammar with execution framework
-- **🔧 MCP Server**: FastAPI-based server with 4 fully operational MCP tools
+- **🔧 MCP Server**: FastAPI-based server with 9 fully operational MCP tools
 - **🌐 WebSocket Streaming**: Real-time price and OHLCV data streaming (650 lines)
 - **📦 Docker Deployment**: Complete docker-compose.yml with 12 services configured
 - **🧪 Test Suite**: 🎉 **1,403 tests collected (100% pass rate on core suite)**, comprehensive coverage
@@ -130,6 +130,28 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
 │  Alpha Vantage | FMP | CCXT | Yahoo Finance | Custom    │
 └─────────────────────────────────────────────────────────┘
 ```
+
+### 📋 Understanding FIML's Structure
+
+FIML distinguishes between two types of capabilities:
+
+| Type | Description | Examples |
+|------|-------------|----------|
+| **External MCP Tools** | API endpoints callable by AI clients (ChatGPT, Claude) via the MCP protocol | `search-by-symbol`, `execute-fk-dsl`, `create-analysis-session` |
+| **Internal Components** | Architectural layers that power the MCP tools behind the scenes | Arbitration Engine, Cache Manager, Provider Registry, Ray Agents |
+
+**9 MCP Tools** (external API surface):
+- **Core Data Tools**: `search-by-symbol`, `search-by-coin`, `get-task-status`, `execute-fk-dsl`
+- **Session Management**: `create-analysis-session`, `get-session-info`, `list-sessions`, `extend-session`, `get-session-analytics`
+
+**Internal Components** (not directly callable, power the tools):
+- Data Arbitration Engine (5-factor provider scoring)
+- L1/L2 Cache Architecture (Redis + PostgreSQL)
+- 17 Data Providers (Yahoo Finance, Alpha Vantage, CCXT, etc.)
+- Ray-based Multi-Agent Orchestration (8 specialized agents)
+- FK-DSL Parser and Execution Framework
+- Compliance Guardrail System (9 languages)
+- WebSocket Streaming Infrastructure
 
 ## 🚀 Quick Start
 
@@ -282,7 +304,14 @@ See [examples/websocket_streaming.py](examples/websocket_streaming.py) for compl
 
 ### MCP Tools
 
-#### 1. Search by Symbol (Equity)
+> **Note**: MCP (Model Context Protocol) Tools are the externally-callable API endpoints that clients like ChatGPT and Claude can invoke. These are distinct from FIML's internal architectural components (arbitration engine, cache manager, provider registry, Ray agents, etc.) which power these tools behind the scenes.
+
+FIML exposes **9 MCP tools** organized into two categories:
+
+#### Core Data Tools (4 tools)
+
+##### 1. search-by-symbol
+Search for a stock by symbol with instant cached data and async deep analysis.
 
 ```json
 {
@@ -291,12 +320,14 @@ See [examples/websocket_streaming.py](examples/websocket_streaming.py) for compl
     "symbol": "TSLA",
     "market": "US",
     "depth": "standard",
-    "language": "en"
+    "language": "en",
+    "sessionId": "optional-session-uuid"
   }
 }
 ```
 
-#### 2. Search by Coin (Cryptocurrency)
+##### 2. search-by-coin
+Search for cryptocurrency with instant cached data and async deep analysis.
 
 ```json
 {
@@ -305,18 +336,105 @@ See [examples/websocket_streaming.py](examples/websocket_streaming.py) for compl
     "symbol": "BTC",
     "exchange": "binance",
     "pair": "USDT",
-    "depth": "deep"
+    "depth": "deep",
+    "language": "en"
   }
 }
 ```
 
-#### 3. Execute FK-DSL Query
+##### 3. get-task-status
+Poll or stream updates for an async analysis task.
+
+```json
+{
+  "name": "get-task-status",
+  "arguments": {
+    "taskId": "task-uuid-from-search",
+    "stream": false
+  }
+}
+```
+
+##### 4. execute-fk-dsl
+Execute a Financial Knowledge DSL query for complex multi-step analysis.
 
 ```json
 {
   "name": "execute-fk-dsl",
   "arguments": {
-    "query": "EVALUATE TSLA: PRICE, VOLATILITY(30d), CORRELATE(BTC, SPY), TECHNICAL(RSI, MACD)"
+    "query": "EVALUATE TSLA: PRICE, VOLATILITY(30d), CORRELATE(BTC, SPY), TECHNICAL(RSI, MACD)",
+    "async": true
+  }
+}
+```
+
+#### Session Management Tools (5 tools)
+
+##### 5. create-analysis-session
+Create a new analysis session for tracking multi-query workflows.
+
+```json
+{
+  "name": "create-analysis-session",
+  "arguments": {
+    "assets": ["AAPL", "MSFT", "GOOGL"],
+    "sessionType": "portfolio",
+    "userId": "user-123",
+    "ttlHours": 24,
+    "tags": ["tech-stocks", "q4-analysis"]
+  }
+}
+```
+
+##### 6. get-session-info
+Get information about an existing session.
+
+```json
+{
+  "name": "get-session-info",
+  "arguments": {
+    "sessionId": "session-uuid"
+  }
+}
+```
+
+##### 7. list-sessions
+List sessions for a user.
+
+```json
+{
+  "name": "list-sessions",
+  "arguments": {
+    "userId": "user-123",
+    "includeArchived": false,
+    "limit": 50
+  }
+}
+```
+
+##### 8. extend-session
+Extend session expiration time.
+
+```json
+{
+  "name": "extend-session",
+  "arguments": {
+    "sessionId": "session-uuid",
+    "hours": 24
+  }
+}
+```
+
+##### 9. get-session-analytics
+Get session analytics and statistics.
+
+```json
+{
+  "name": "get-session-analytics",
+  "arguments": {
+    "userId": "user-123",
+    "sessionType": "portfolio",
+    "days": 30
   }
 }
 ```
