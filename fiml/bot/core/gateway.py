@@ -3,6 +3,7 @@ Component 3: Unified Bot Gateway
 Central message processing hub for multi-platform educational bot
 """
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
@@ -21,6 +22,34 @@ from fiml.narrative.models import (
 )
 
 logger = structlog.get_logger(__name__)
+
+# Maximum length for narrative summary in market query responses
+MAX_NARRATIVE_SUMMARY_LENGTH = 500
+
+# Common stock and crypto symbols for extraction from user queries
+COMMON_SYMBOLS = [
+    "AAPL", "GOOGL", "GOOG", "MSFT", "AMZN", "TSLA", "META", "NVDA",
+    "JPM", "V", "WMT", "PG", "JNJ", "UNH", "DIS", "NFLX", "PYPL",
+    "INTC", "CSCO", "VZ", "PFE", "KO", "PEP", "NKE", "MCD", "BA",
+    "GE", "IBM", "GM", "F", "T", "XOM", "CVX", "ORCL", "CRM", "AMD",
+    "SPY", "QQQ", "BTC", "ETH",
+]
+
+# Mapping of company names to stock symbols
+COMPANY_TO_SYMBOL = {
+    "APPLE": "AAPL",
+    "GOOGLE": "GOOGL",
+    "ALPHABET": "GOOGL",
+    "MICROSOFT": "MSFT",
+    "AMAZON": "AMZN",
+    "TESLA": "TSLA",
+    "FACEBOOK": "META",
+    "NVIDIA": "NVDA",
+    "NETFLIX": "NFLX",
+    "DISNEY": "DIS",
+    "BITCOIN": "BTC",
+    "ETHEREUM": "ETH",
+}
 
 
 class IntentType(Enum):
@@ -554,7 +583,8 @@ class UnifiedBotGateway:
                 narrative = await self.narrative_generator.generate_narrative(
                     context=narrative_context
                 )
-                narrative_text = f"\n\n📝 **Educational Insight:**\n{narrative.summary[:500]}..."
+                summary = narrative.summary[:MAX_NARRATIVE_SUMMARY_LENGTH]
+                narrative_text = f"\n\n📝 **Educational Insight:**\n{summary}..."
 
             except Exception as narrative_error:
                 logger.debug(
@@ -615,81 +645,20 @@ class UnifiedBotGateway:
         """
         query_upper = query.upper()
 
-        # Common stock symbols to look for
-        common_symbols = [
-            "AAPL",
-            "GOOGL",
-            "GOOG",
-            "MSFT",
-            "AMZN",
-            "TSLA",
-            "META",
-            "NVDA",
-            "JPM",
-            "V",
-            "WMT",
-            "PG",
-            "JNJ",
-            "UNH",
-            "DIS",
-            "NFLX",
-            "PYPL",
-            "INTC",
-            "CSCO",
-            "VZ",
-            "PFE",
-            "KO",
-            "PEP",
-            "NKE",
-            "MCD",
-            "BA",
-            "GE",
-            "IBM",
-            "GM",
-            "F",
-            "T",
-            "XOM",
-            "CVX",
-            "ORCL",
-            "CRM",
-            "AMD",
-            "SPY",
-            "QQQ",
-            "BTC",
-            "ETH",
-        ]
-
         # Check for explicit symbol mentions
         words = query_upper.split()
         for word in words:
             # Remove common punctuation
             clean_word = word.strip(".,!?$")
-            if clean_word in common_symbols:
+            if clean_word in COMMON_SYMBOLS:
                 return clean_word
 
         # Check for company name mentions
-        company_map = {
-            "APPLE": "AAPL",
-            "GOOGLE": "GOOGL",
-            "ALPHABET": "GOOGL",
-            "MICROSOFT": "MSFT",
-            "AMAZON": "AMZN",
-            "TESLA": "TSLA",
-            "FACEBOOK": "META",
-            "NVIDIA": "NVDA",
-            "NETFLIX": "NFLX",
-            "DISNEY": "DIS",
-            "BITCOIN": "BTC",
-            "ETHEREUM": "ETH",
-        }
-
-        for company_name, symbol in company_map.items():
+        for company_name, symbol in COMPANY_TO_SYMBOL.items():
             if company_name in query_upper:
                 return symbol
 
         # Check for $ prefix (e.g., $AAPL)
-        import re
-
         dollar_match = re.search(r"\$([A-Z]{1,5})", query_upper)
         if dollar_match:
             return dollar_match.group(1)
