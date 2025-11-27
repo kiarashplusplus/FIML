@@ -60,7 +60,13 @@ class GuardrailResult:
 
     @property
     def was_modified(self) -> bool:
-        """Check if the text was modified"""
+        """
+        Check if the text was modified by the guardrail.
+
+        Returns True when the guardrail made compliance modifications to the
+        original text, such as replacing advice language with descriptive
+        alternatives or adding required disclaimers.
+        """
         return self.action == GuardrailAction.MODIFIED
 
     @property
@@ -193,40 +199,59 @@ class MultilingualPatterns:
     # Advice patterns by language (pattern, replacement)
     ADVICE_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
         "en": [
-            (r"\byou should (buy|sell|invest|hold|trade)\b", "consider reviewing"),
+            # Direct advice patterns - improved for grammatical correctness
+            (
+                r"\byou should (buy|sell|invest in|hold|trade)\b",
+                "one may consider reviewing options to \\1",
+            ),
             (
                 r"\bi (recommend|suggest|advise) (that you |you )?(buy|sell|invest|hold)\b",
-                "data indicates",
+                "the data shows factors related to",
             ),
             (
                 r"\b(buy|sell|invest in|trade) (now|immediately|today|asap)\b",
-                "is currently available for trading",
+                "trading options are currently available",
             ),
             (
                 r"\bthis is a (good|great|excellent|perfect) (time|opportunity) to (buy|sell|invest)\b",
-                "current market conditions exist",
+                "current market conditions may be relevant for analysis",
             ),
-            (r"\bdon'?t (buy|sell|invest)\b", "current conditions may warrant review"),
-            (r"\bavoid (buying|selling|investing)\b", "current conditions may warrant review"),
-            (r"\bstrong (buy|sell)\b", "notable activity"),
-            (r"\boverweight\b", "increased allocation noted"),
-            (r"\bunderweight\b", "decreased allocation noted"),
             (
-                r"\bwill (definitely|certainly|surely|absolutely) (go|rise|fall|increase|decrease)\b",
-                "has shown movement",
+                r"\bdon'?t (buy|sell|invest in)\b",
+                "caution may be warranted regarding",
             ),
-            (r"\bguaranteed to\b", "has historically shown"),
-            (r"\bsure to\b", "has historically shown"),
-            (r"\bwill reach \$\d+", "is at current levels"),
-            (r"\bprice target\b", "current price level"),
             (
-                r"\b(buy|sell|get|grab|dump|hold) (it|this|these|the stock)\b",
-                "it is currently trading",
+                r"\bavoid (buying|selling|investing in)\b",
+                "careful consideration is suggested for",
             ),
-            (r"\bget in (now|before|while)\b", "current trading activity observed"),
-            (r"\bget out (now|before|while)\b", "current trading activity observed"),
-            (r"\bjump in\b", "current trading activity observed"),
-            (r"\bpull out\b", "current trading activity observed"),
+            # Strong buy/sell recommendations
+            (r"\bstrong (buy|sell)\b", "notable \\1 activity"),
+            (r"\b(overweight|underweight)\b", "adjusted allocation"),
+            # Prediction patterns - improved grammar
+            (
+                r"\bwill (definitely|certainly|surely|absolutely) (go up|rise|fall|increase|decrease)\b",
+                "has historically shown \\2 movement",
+            ),
+            (
+                r"\bguaranteed to (rise|fall|increase|decrease|succeed)\b",
+                "has shown historical patterns of \\1",
+            ),
+            (
+                r"\bsure to (rise|fall|increase|decrease|make)\b",
+                "has shown historical patterns of \\1",
+            ),
+            (r"\bwill reach \$(\d+)", "is currently trading (historical highs around $\\1)"),
+            (r"\bprice target\b", "price analysis level"),
+            # Action imperative patterns
+            (
+                r"\b(buy|sell|get|grab|dump) (it|this|these|the stock|this stock)\b",
+                "this asset is currently trading",
+            ),
+            (r"\bhold (it|this|these|the stock)\b", "the current position is noted"),
+            (r"\bget in (now|before|while)\b", "trading activity is currently ongoing"),
+            (r"\bget out (now|before|while)\b", "exit options are available"),
+            (r"\bjump in\b", "entry options are available"),
+            (r"\bpull out\b", "exit options are available"),
         ],
         "es": [
             (r"\bdebería(s)? (comprar|vender|invertir)\b", "considere revisar"),
@@ -382,21 +407,31 @@ class MultilingualPatterns:
         ],
     }
 
-    # Opinion as fact patterns by language
+    # Opinion as fact patterns by language - improved for grammatical correctness
     OPINION_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
         "en": [
             (
                 r"\bthis (stock|asset|investment) is (undervalued|overvalued)\b",
-                "this asset has current metrics",
+                "this \\1 has metrics that some analysts consider relevant",
             ),
             (
                 r"\b(definitely|certainly|obviously|clearly) a (buy|sell|hold)\b",
-                "currently trading",
+                "currently showing \\2 activity",
             ),
-            (r"\bno-brainer\b", "current data available"),
-            (r"\beasy money\b", "trading opportunity present"),
-            (r"\bcannot lose\b", "risk is inherent in trading"),
-            (r"\brisk-free\b", "with associated risks"),
+            (r"\ba no-brainer\b", "an opportunity that warrants analysis"),
+            (r"\bno-brainer\b", "opportunity that warrants analysis"),
+            (r"\beasy money\b", "a trading opportunity"),
+            (r"\b(you |one )?cannot lose\b", "all investments carry inherent risk"),
+            (r"\brisk-free\b", "an option with associated risks"),
+            (r"\ba risk-free\b", "an option with associated risks"),
+            (r"\bsafe bet\b", "an opportunity requiring due diligence"),
+            (r"\ba safe bet\b", "an opportunity requiring due diligence"),
+            (r"\bguaranteed (returns?|profit|gains?)\b", "potential \\1 (not guaranteed)"),
+            (
+                r"\b(is |are )?guaranteed to (rise|fall|succeed)\b",
+                "has historical patterns related to \\2",
+            ),
+            (r"\b(is |are )?sure to (rise|fall|make)\b", "has historical patterns related to \\2"),
         ],
         "es": [
             (r"\b(está|es) (infravalorado|sobrevalorado)\b", "tiene métricas actuales"),
@@ -468,18 +503,34 @@ class MultilingualPatterns:
         ],
     }
 
-    # Certainty patterns by language
+    # Certainty patterns by language - improved for grammatical flow
     CERTAINTY_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
         "en": [
-            (r"\bwill (increase|rise|go up|climb|surge)\b", "has shown upward movement"),
-            (r"\bwill (decrease|fall|drop|decline|plunge)\b", "has shown downward movement"),
-            (r"\bgoing to (increase|rise|go up)\b", "has recently moved"),
-            (r"\bgoing to (decrease|fall|drop)\b", "has recently moved"),
-            (r"\bexpect(?:ed|s)? to (reach|hit|exceed)\b", "has historically reached"),
-            (r"\blikely to (increase|rise|go up)\b", "has shown positive trends"),
-            (r"\blikely to (decrease|fall|drop)\b", "has shown negative trends"),
-            (r"\bpredicted to\b", "has shown historical patterns of"),
-            (r"\bforecast(?:ed)? to\b", "has shown historical patterns of"),
+            (
+                r"\bwill (increase|rise|go up|climb|surge)\b",
+                "has historically shown \\1 patterns",
+            ),
+            (
+                r"\bwill (decrease|fall|drop|decline|plunge)\b",
+                "has historically shown \\1 patterns",
+            ),
+            (
+                r"\b(is |are )?going to (increase|rise|go up)\b",
+                "has shown recent upward movement",
+            ),
+            (
+                r"\b(is |are )?going to (decrease|fall|drop)\b",
+                "has shown recent downward movement",
+            ),
+            (
+                r"\bexpect(?:ed|s)? to (reach|hit|exceed)\b",
+                "has historically been known to \\1",
+            ),
+            (r"\blikely to (increase|rise|go up)\b", "has shown positive trend indicators"),
+            (r"\blikely to (decrease|fall|drop)\b", "has shown negative trend indicators"),
+            (r"\bpredicted to (rise|fall|reach|hit)\b", "has historical patterns of \\1"),
+            (r"\bforecast(?:ed)? to (rise|fall|reach)\b", "has historical patterns of \\1"),
+            (r"\bbound to (rise|fall|succeed|fail)\b", "has historical tendencies to \\1"),
         ],
         "es": [
             (r"\bva a (subir|aumentar|crecer)\b", "ha mostrado movimiento alcista"),
@@ -664,12 +715,20 @@ class ComplianceGuardrail:
         ... )
     """
 
+    # Configurable thresholds
+    LANGUAGE_DETECTION_MIN_SCORE = (
+        3  # Minimum language indicator matches to override English default
+    )
+    STRICT_MODE_MAX_VIOLATIONS = 5  # Maximum violations before blocking in strict mode
+
     def __init__(
         self,
         disclaimer_generator: Optional[DisclaimerGenerator] = None,
         strict_mode: bool = False,
         auto_add_disclaimer: bool = True,
         default_language: SupportedLanguage = SupportedLanguage.ENGLISH,
+        language_detection_threshold: int = LANGUAGE_DETECTION_MIN_SCORE,
+        strict_mode_violation_limit: int = STRICT_MODE_MAX_VIOLATIONS,
     ):
         """
         Initialize the Compliance Guardrail
@@ -679,11 +738,15 @@ class ComplianceGuardrail:
             strict_mode: If True, blocks content with severe violations instead of modifying
             auto_add_disclaimer: If True, automatically adds disclaimers when missing
             default_language: Default language for processing (default: English)
+            language_detection_threshold: Minimum score to detect non-English language (default: 3)
+            strict_mode_violation_limit: Maximum violations before blocking in strict mode (default: 5)
         """
         self.disclaimer_generator = disclaimer_generator or DisclaimerGenerator()
         self.strict_mode = strict_mode
         self.auto_add_disclaimer = auto_add_disclaimer
         self.default_language = default_language
+        self.language_detection_threshold = language_detection_threshold
+        self.strict_mode_violation_limit = strict_mode_violation_limit
 
         # Cache for compiled patterns by language
         self._compiled_patterns_cache: Dict[str, Dict[str, List]] = {}
@@ -802,7 +865,7 @@ class ComplianceGuardrail:
 
         # Require a minimum threshold to override English default
         # This prevents false detection from common words
-        if max_score < 3:
+        if max_score < self.language_detection_threshold:
             return "en"
 
         logger.debug(
@@ -869,7 +932,7 @@ class ComplianceGuardrail:
             violations.extend(self._scan_for_patterns(text, english_patterns["advice"], "Advice"))
 
         # Step 2: If violations found in strict mode, block the content
-        if self.strict_mode and len(violations) > 5:
+        if self.strict_mode and len(violations) > self.strict_mode_violation_limit:
             logger.warning(
                 "Content blocked due to excessive violations",
                 violation_count=len(violations),
@@ -910,7 +973,11 @@ class ComplianceGuardrail:
             processed_text, tone_mods = self._ensure_descriptive_tone(processed_text)
             modifications.extend(tone_mods)
 
-        # Step 7: Check and add disclaimer if needed
+        # Step 7: Clean up any grammar issues from replacements
+        if modifications:
+            processed_text = self._cleanup_grammar(processed_text)
+
+        # Step 8: Check and add disclaimer if needed
         disclaimer_added = False
         if self.auto_add_disclaimer and not self._has_disclaimer(processed_text, lang_code):
             disclaimer = self.disclaimer_generator.generate(
@@ -1098,25 +1165,32 @@ class ComplianceGuardrail:
         modifications = []
         result = text
 
-        # Generic prescriptive to descriptive conversions
+        # Generic prescriptive to descriptive conversions - improved for sentence context
+        # These patterns are designed to work with common sentence structures
         prescriptive_replacements: Dict[str, str] = {
-            r"\bshould buy\b": "is available for purchase",
-            r"\bshould sell\b": "is available for sale",
-            r"\bshould invest\b": "presents investment opportunities",
-            r"\bshould hold\b": "is currently held",
-            r"\bshould consider\b": "may be considered",
-            r"\bmust buy\b": "is available for purchase",
-            r"\bmust sell\b": "is available for sale",
-            r"\bneed to buy\b": "is available for purchase",
-            r"\bneed to sell\b": "is available for sale",
-            r"\bbetter to buy\b": "is available for purchase",
-            r"\bbetter to sell\b": "is available for sale",
-            r"\brecommend buying\b": "buying is an option",
-            r"\brecommend selling\b": "selling is an option",
-            r"\badvise buying\b": "buying is an option",
-            r"\badvise selling\b": "selling is an option",
-            r"\bsuggest buying\b": "buying is an option",
-            r"\bsuggest selling\b": "selling is an option",
+            # "You should/must" patterns - preserve sentence flow
+            r"\b(you |one )?should buy\b": "purchasing options are available for",
+            r"\b(you |one )?should sell\b": "selling options are available for",
+            r"\b(you |one )?should invest( in)?\b": "investment options exist for",
+            r"\b(you |one )?should hold\b": "holding remains an option for",
+            r"\b(you |one )?should consider\b": "one may analyze",
+            r"\b(you |one )?must buy\b": "purchasing is possible for",
+            r"\b(you |one )?must sell\b": "selling is possible for",
+            r"\b(you |one )?need to buy\b": "buying is an available option for",
+            r"\b(you |one )?need to sell\b": "selling is an available option for",
+            r"\b(it'?s |it is )?better to buy\b": "buying may be considered for",
+            r"\b(it'?s |it is )?better to sell\b": "selling may be considered for",
+            # Recommendation patterns
+            r"\b(i |we )?(strongly )?recommend buying\b": "buying is one available option",
+            r"\b(i |we )?(strongly )?recommend selling\b": "selling is one available option",
+            r"\b(i |we )?(strongly )?recommend investing( in)?\b": "investing is one available option",
+            r"\b(i |we )?advise buying\b": "buying is one available option",
+            r"\b(i |we )?advise selling\b": "selling is one available option",
+            r"\b(i |we )?suggest buying\b": "buying is one available option",
+            r"\b(i |we )?suggest selling\b": "selling is one available option",
+            # Additional prescriptive patterns
+            r"\b(you |one )?ought to (buy|sell|invest)\b": "\\2ing is an available option",
+            r"\b(you |one )?have to (buy|sell)\b": "\\2ing is an available option",
         }
 
         for pattern, replacement in prescriptive_replacements.items():
@@ -1126,6 +1200,46 @@ class ComplianceGuardrail:
                 modifications.append(f"Converted prescriptive phrase: {pattern}")
 
         return result, modifications
+
+    def _cleanup_grammar(self, text: str) -> str:
+        """
+        Clean up common grammar issues after pattern replacement
+
+        Args:
+            text: Text to clean up
+
+        Returns:
+            Text with grammar issues fixed
+        """
+        result = text
+
+        # Fix common grammar issues from pattern replacement
+        grammar_fixes = [
+            # Fix double articles
+            (r"\ba an\b", "an"),
+            (r"\ban a\b", "a"),
+            (r"\bthe the\b", "the"),
+            # Fix double "is"
+            (r"\bis is\b", "is"),
+            (r"\bare are\b", "are"),
+            (r"\bhas has\b", "has"),
+            (r"\bhave have\b", "have"),
+            # Fix "is has" type issues
+            (r"\bis has\b", "has"),
+            (r"\bare have\b", "have"),
+            # Fix spacing issues
+            (r"\s{2,}", " "),
+            # Fix sentence-initial lowercase after replacement
+            (r"^\s*([a-z])", lambda m: m.group(0).upper()),
+        ]
+
+        for pattern, replacement in grammar_fixes:
+            if callable(replacement):
+                result = re.sub(pattern, replacement, result)
+            else:
+                result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+
+        return result.strip()
 
     def _has_disclaimer(self, text: str, lang_code: str = "en") -> bool:
         """
