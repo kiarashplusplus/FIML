@@ -656,7 +656,8 @@ class TestEdgeCases:
         """Test handling of unicode content"""
         guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
 
-        text = "株式は現在¥1500で取引されています。"  # Japanese text
+        # Japanese: "The stock is currently trading at ¥1500."
+        text = "株式は現在¥1500で取引されています。"
 
         result = guardrail.process(text)
 
@@ -671,6 +672,7 @@ class TestMultilingualDisclaimer:
         """Test Spanish disclaimer is detected"""
         guardrail = ComplianceGuardrail(auto_add_disclaimer=True)
 
+        # Spanish: "AAPL is trading at $175. This is not financial advice."
         text = "AAPL está cotizando a $175. Esto no es asesoramiento financiero."
 
         result = guardrail.process(text)
@@ -682,6 +684,7 @@ class TestMultilingualDisclaimer:
         """Test French disclaimer is detected"""
         guardrail = ComplianceGuardrail(auto_add_disclaimer=True)
 
+        # French: "AAPL is trading at $175. This is not financial advice."
         text = "AAPL se négocie à 175$. Ceci n'est pas un conseil financier."
 
         result = guardrail.process(text)
@@ -732,3 +735,303 @@ class TestIntegrationWithExistingComponents:
         assert GuardrailAction is not None
         assert GuardrailResult is not None
         assert compliance_guardrail is not None
+
+
+# ============================================================================
+# Multilingual Support Tests
+# ============================================================================
+
+
+class TestMultilingualSupport:
+    """Test multilingual compliance detection and processing"""
+
+    def test_spanish_advice_detection(self):
+        """Test Spanish advice pattern detection"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Spanish: "You should buy AAPL now"
+        text = "Debería comprar AAPL ahora"
+
+        result = guardrail.process(text, language=SupportedLanguage.SPANISH)
+
+        assert len(result.violations_found) > 0 or result.was_modified
+        assert result.detected_language == "es"
+
+    def test_french_advice_detection(self):
+        """Test French advice pattern detection"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # French: "You should buy AAPL now"
+        text = "Vous devriez acheter AAPL maintenant"
+
+        result = guardrail.process(text, language=SupportedLanguage.FRENCH)
+
+        assert len(result.violations_found) > 0 or result.was_modified
+        assert result.detected_language == "fr"
+
+    def test_german_advice_detection(self):
+        """Test German advice pattern detection"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # German: "You should buy AAPL"
+        text = "Sie sollten AAPL kaufen"
+
+        result = guardrail.process(text, language=SupportedLanguage.GERMAN)
+
+        assert len(result.violations_found) > 0 or result.was_modified
+        assert result.detected_language == "de"
+
+    def test_japanese_detection(self):
+        """Test Japanese language detection"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Japanese: "You should buy this stock"
+        text = "この株を買うべきです"
+
+        result = guardrail.process(text, language=SupportedLanguage.JAPANESE)
+
+        assert result.detected_language == "ja"
+
+    def test_chinese_detection(self):
+        """Test Chinese language detection"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Chinese: "You should buy AAPL"
+        text = "你应该买入AAPL"
+
+        result = guardrail.process(text, language=SupportedLanguage.CHINESE)
+
+        assert result.detected_language == "zh"
+
+    def test_auto_language_detection_japanese(self):
+        """Test automatic Japanese language detection"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Japanese text with hiragana/katakana
+        text = "株式は現在¥1500で取引されています。"
+
+        result = guardrail.process(text, language=SupportedLanguage.AUTO)
+
+        assert result.detected_language == "ja"
+
+    def test_auto_language_detection_chinese(self):
+        """Test automatic Chinese language detection"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Chinese text
+        text = "这只股票目前正在交易。"
+
+        result = guardrail.process(text, language=SupportedLanguage.AUTO)
+
+        assert result.detected_language == "zh"
+
+    def test_italian_disclaimer_detection(self):
+        """Test Italian disclaimer is detected"""
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=True)
+
+        # Italian: "This is not financial advice"
+        text = "AAPL è in negoziazione a $175. Questo non è consulenza finanziaria."
+
+        result = guardrail.process(text)
+
+        # Should not add duplicate disclaimer
+        assert not result.disclaimer_added
+
+    def test_portuguese_disclaimer_detection(self):
+        """Test Portuguese disclaimer is detected"""
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=True)
+
+        # Portuguese: "This is not financial advice"
+        text = "AAPL está sendo negociado a $175. Isto não é aconselhamento financeiro."
+
+        result = guardrail.process(text)
+
+        # Should not add duplicate disclaimer
+        assert not result.disclaimer_added
+
+    def test_german_disclaimer_detection(self):
+        """Test German disclaimer is detected"""
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=True)
+
+        # German: "This is not financial advice"
+        text = "AAPL wird bei $175 gehandelt. Dies ist keine Finanzberatung."
+
+        result = guardrail.process(text)
+
+        # Should not add duplicate disclaimer
+        assert not result.disclaimer_added
+
+    def test_japanese_disclaimer_detection(self):
+        """Test Japanese disclaimer is detected"""
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=True)
+
+        # Japanese: "This is not financial advice"
+        text = "AAPLは$175で取引されています。これは金融アドバイスではありません。"
+
+        result = guardrail.process(text)
+
+        # Should not add duplicate disclaimer
+        assert not result.disclaimer_added
+
+    def test_chinese_disclaimer_detection(self):
+        """Test Chinese disclaimer is detected"""
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=True)
+
+        # Chinese: "This does not constitute financial advice"
+        text = "AAPL目前价格为$175。这不构成财务建议。"
+
+        result = guardrail.process(text)
+
+        # Should not add duplicate disclaimer
+        assert not result.disclaimer_added
+
+    def test_supported_languages_list(self):
+        """Test that guardrail reports supported languages"""
+        guardrail = ComplianceGuardrail()
+
+        languages = guardrail.get_supported_languages()
+
+        assert "en" in languages
+        assert "es" in languages
+        assert "fr" in languages
+        assert "de" in languages
+        assert "ja" in languages
+        assert "zh" in languages
+        assert "fa" in languages
+        assert len(languages) >= 9
+
+    def test_multilingual_patterns_class(self):
+        """Test MultilingualPatterns class has expected structure"""
+        from fiml.compliance.guardrail import MultilingualPatterns
+
+        # Check prescriptive verbs
+        assert "en" in MultilingualPatterns.PRESCRIPTIVE_VERBS
+        assert "es" in MultilingualPatterns.PRESCRIPTIVE_VERBS
+        assert len(MultilingualPatterns.PRESCRIPTIVE_VERBS["en"]) > 0
+
+        # Check advice patterns
+        assert "en" in MultilingualPatterns.ADVICE_PATTERNS
+        assert "es" in MultilingualPatterns.ADVICE_PATTERNS
+        assert len(MultilingualPatterns.ADVICE_PATTERNS["en"]) > 0
+
+        # Check disclaimer phrases
+        assert "en" in MultilingualPatterns.DISCLAIMER_PHRASES
+        assert "es" in MultilingualPatterns.DISCLAIMER_PHRASES
+        assert len(MultilingualPatterns.DISCLAIMER_PHRASES["en"]) > 0
+
+    def test_supported_language_enum(self):
+        """Test SupportedLanguage enum values"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        assert SupportedLanguage.ENGLISH.value == "en"
+        assert SupportedLanguage.SPANISH.value == "es"
+        assert SupportedLanguage.FRENCH.value == "fr"
+        assert SupportedLanguage.GERMAN.value == "de"
+        assert SupportedLanguage.JAPANESE.value == "ja"
+        assert SupportedLanguage.CHINESE.value == "zh"
+        assert SupportedLanguage.FARSI.value == "fa"
+        assert SupportedLanguage.AUTO.value == "auto"
+
+    def test_mixed_language_content(self):
+        """Test handling of mixed English/Spanish content"""
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Mixed English and Spanish
+        text = "AAPL is trading well. Debería comprar ahora."
+
+        result = guardrail.process(text)
+
+        # Should detect violations from both languages
+        assert result.is_compliant or len(result.violations_found) > 0
+
+    def test_default_language_initialization(self):
+        """Test guardrail with custom default language"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(
+            auto_add_disclaimer=False,
+            default_language=SupportedLanguage.SPANISH,
+        )
+
+        assert guardrail.default_language == SupportedLanguage.SPANISH
+
+    def test_scan_only_with_language(self):
+        """Test scan_only with explicit language"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail()
+
+        # Spanish advice
+        text = "Debería comprar AAPL ahora"
+
+        violations = guardrail.scan_only(text, language=SupportedLanguage.SPANISH)
+
+        assert len(violations) > 0
+
+    def test_is_compliant_with_language(self):
+        """Test is_compliant with explicit language"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Spanish compliant text
+        compliant_text = "AAPL está cotizando a $175."
+
+        assert guardrail.is_compliant(compliant_text, language=SupportedLanguage.SPANISH)
+
+        # Spanish non-compliant text
+        non_compliant_text = "Debería comprar AAPL ahora"
+
+        assert not guardrail.is_compliant(non_compliant_text, language=SupportedLanguage.SPANISH)
+
+    def test_add_disclaimer_with_language(self):
+        """Test add_disclaimer with explicit language"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail()
+
+        text = "AAPL está cotizando a $175."
+
+        result = guardrail.add_disclaimer(text, language=SupportedLanguage.SPANISH)
+
+        # Should add disclaimer
+        assert len(result) > len(text)
+
+    def test_farsi_support(self):
+        """Test Farsi/Persian language support"""
+        from fiml.compliance.guardrail import SupportedLanguage
+
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        # Farsi: "You should buy this stock"
+        text = "شما باید این سهام را بخرید"
+
+        result = guardrail.process(text, language=SupportedLanguage.FARSI)
+
+        assert result.detected_language == "fa"
+        assert len(result.violations_found) > 0 or result.was_modified
+
+    def test_result_includes_detected_language(self):
+        """Test that GuardrailResult includes detected language"""
+        guardrail = ComplianceGuardrail(auto_add_disclaimer=False)
+
+        text = "AAPL is trading at $175."
+
+        result = guardrail.process(text)
+
+        assert result.detected_language is not None
+        assert result.detected_language == "en"

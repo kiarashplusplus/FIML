@@ -7,6 +7,7 @@ A final processing layer that:
 - Blocks prescriptive verbs
 - Ensures the tone is descriptive only
 - Adds disclaimers automatically
+- Supports multiple languages (English, Spanish, French, German, Italian, Portuguese, Japanese, Chinese, Farsi)
 """
 
 import re
@@ -29,6 +30,21 @@ class GuardrailAction(str, Enum):
     BLOCKED = "blocked"  # Content was blocked due to severe violations
 
 
+class SupportedLanguage(str, Enum):
+    """Languages supported by the compliance guardrail"""
+
+    ENGLISH = "en"
+    SPANISH = "es"
+    FRENCH = "fr"
+    GERMAN = "de"
+    ITALIAN = "it"
+    PORTUGUESE = "pt"
+    JAPANESE = "ja"
+    CHINESE = "zh"
+    FARSI = "fa"
+    AUTO = "auto"  # Auto-detect language
+
+
 @dataclass
 class GuardrailResult:
     """Result of guardrail processing"""
@@ -40,6 +56,7 @@ class GuardrailResult:
     violations_found: List[str] = field(default_factory=list)
     disclaimer_added: bool = False
     confidence: float = 1.0
+    detected_language: Optional[str] = None
 
     @property
     def was_modified(self) -> bool:
@@ -52,12 +69,585 @@ class GuardrailResult:
         return self.action in (GuardrailAction.PASSED, GuardrailAction.MODIFIED)
 
 
+class MultilingualPatterns:
+    """
+    Multilingual patterns for compliance detection and replacement.
+
+    Provides prescriptive verbs, advice patterns, and replacements
+    for multiple languages.
+    """
+
+    # Prescriptive verbs by language
+    PRESCRIPTIVE_VERBS: Dict[str, List[str]] = {
+        "en": [
+            r"\bshould\b",
+            r"\bmust\b",
+            r"\bought to\b",
+            r"\bneed to\b",
+            r"\bhave to\b",
+            r"\bbetter to\b",
+            r"\badvise\b",
+            r"\brecommend\b",
+            r"\bsuggest\b",
+            r"\burge\b",
+            r"\bencourage\b",
+        ],
+        "es": [
+            r"\bdebe\b",
+            r"\bdebería\b",
+            r"\bdeberías\b",
+            r"\bhay que\b",
+            r"\btiene que\b",
+            r"\bnecesita\b",
+            r"\brecomiendo\b",
+            r"\brecomendamos\b",
+            r"\bsugiero\b",
+            r"\baconsejo\b",
+            r"\bcompre\b",
+            r"\bvenda\b",
+            r"\binvierta\b",
+        ],
+        "fr": [
+            r"\bdevrait\b",
+            r"\bdevriez\b",
+            r"\bdoit\b",
+            r"\bdevez\b",
+            r"\bfaut\b",
+            r"\bconseille\b",
+            r"\brecommande\b",
+            r"\bsuggère\b",
+            r"\bachetez\b",
+            r"\bvendez\b",
+            r"\binvestissez\b",
+        ],
+        "de": [
+            r"\bsollte\b",
+            r"\bsollten\b",
+            r"\bmuss\b",
+            r"\bmüssen\b",
+            r"\bempfehle\b",
+            r"\bempfehlen\b",
+            r"\brate\b",
+            r"\braten\b",
+            r"\bkaufen Sie\b",
+            r"\bverkaufen Sie\b",
+        ],
+        "it": [
+            r"\bdovrebbe\b",
+            r"\bdeve\b",
+            r"\bbisogna\b",
+            r"\bconsiglio\b",
+            r"\braccomando\b",
+            r"\bsuggerisco\b",
+            r"\bcompri\b",
+            r"\bvenda\b",
+            r"\binvesta\b",
+        ],
+        "pt": [
+            r"\bdeve\b",
+            r"\bdeveria\b",
+            r"\bprecisa\b",
+            r"\brecomendo\b",
+            r"\bsugiro\b",
+            r"\baconselho\b",
+            r"\bcompre\b",
+            r"\bvenda\b",
+            r"\binvista\b",
+        ],
+        "ja": [
+            r"べき",
+            r"なければならない",
+            r"必要があります",
+            r"お勧めします",
+            r"推奨します",
+            r"買うべき",
+            r"売るべき",
+            r"投資すべき",
+            r"買ってください",
+            r"売ってください",
+        ],
+        "zh": [
+            r"应该",
+            r"必须",
+            r"需要",
+            r"建议",
+            r"推荐",
+            r"买入",
+            r"卖出",
+            r"投资",
+            r"购买",
+            r"出售",
+        ],
+        "fa": [
+            r"باید",
+            r"بایست",
+            r"لازم است",
+            r"توصیه می‌کنم",
+            r"پیشنهاد می‌کنم",
+            r"بخرید",
+            r"بفروشید",
+            r"سرمایه‌گذاری کنید",
+        ],
+    }
+
+    # Advice patterns by language (pattern, replacement)
+    ADVICE_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
+        "en": [
+            (r"\byou should (buy|sell|invest|hold|trade)\b", "consider reviewing"),
+            (
+                r"\bi (recommend|suggest|advise) (that you |you )?(buy|sell|invest|hold)\b",
+                "data indicates",
+            ),
+            (
+                r"\b(buy|sell|invest in|trade) (now|immediately|today|asap)\b",
+                "is currently available for trading",
+            ),
+            (
+                r"\bthis is a (good|great|excellent|perfect) (time|opportunity) to (buy|sell|invest)\b",
+                "current market conditions exist",
+            ),
+            (r"\bdon'?t (buy|sell|invest)\b", "current conditions may warrant review"),
+            (r"\bavoid (buying|selling|investing)\b", "current conditions may warrant review"),
+            (r"\bstrong (buy|sell)\b", "notable activity"),
+            (r"\boverweight\b", "increased allocation noted"),
+            (r"\bunderweight\b", "decreased allocation noted"),
+            (
+                r"\bwill (definitely|certainly|surely|absolutely) (go|rise|fall|increase|decrease)\b",
+                "has shown movement",
+            ),
+            (r"\bguaranteed to\b", "has historically shown"),
+            (r"\bsure to\b", "has historically shown"),
+            (r"\bwill reach \$\d+", "is at current levels"),
+            (r"\bprice target\b", "current price level"),
+            (
+                r"\b(buy|sell|get|grab|dump|hold) (it|this|these|the stock)\b",
+                "it is currently trading",
+            ),
+            (r"\bget in (now|before|while)\b", "current trading activity observed"),
+            (r"\bget out (now|before|while)\b", "current trading activity observed"),
+            (r"\bjump in\b", "current trading activity observed"),
+            (r"\bpull out\b", "current trading activity observed"),
+        ],
+        "es": [
+            (r"\bdebería(s)? (comprar|vender|invertir)\b", "considere revisar"),
+            (
+                r"\b(compre|venda|invierta) (ahora|inmediatamente|hoy)\b",
+                "está disponible para operar",
+            ),
+            (
+                r"\bes (buen|excelente|perfecto) momento para (comprar|vender)\b",
+                "las condiciones actuales existen",
+            ),
+            (
+                r"\bno (compre|venda|invierta)\b",
+                "las condiciones actuales pueden requerir revisión",
+            ),
+            (
+                r"\bevite (comprar|vender|invertir)\b",
+                "las condiciones actuales pueden requerir revisión",
+            ),
+            (r"\brecomiendo (comprar|vender)\b", "los datos indican"),
+            (r"\bva a (subir|bajar|aumentar|caer)\b", "ha mostrado movimiento"),
+            (r"\bgarantizado\b", "históricamente ha mostrado"),
+            (r"\bseguro que (sube|baja)\b", "históricamente ha mostrado"),
+            (r"\bobjetivo de precio\b", "nivel de precio actual"),
+            (r"\bcompra fuerte\b", "actividad notable"),
+            (r"\bventa fuerte\b", "actividad notable"),
+        ],
+        "fr": [
+            (r"\bvous devriez (acheter|vendre|investir)\b", "à considérer"),
+            (
+                r"\b(achetez|vendez|investissez) (maintenant|immédiatement|aujourd'hui)\b",
+                "disponible pour le trading",
+            ),
+            (
+                r"\bc'est (un bon|le bon|un excellent) moment pour (acheter|vendre)\b",
+                "les conditions actuelles existent",
+            ),
+            (
+                r"\bn'(achetez|vendez|investissez) pas\b",
+                "les conditions actuelles peuvent nécessiter une révision",
+            ),
+            (
+                r"\bévitez d'(acheter|vendre|investir)\b",
+                "les conditions actuelles peuvent nécessiter une révision",
+            ),
+            (r"\bje (recommande|conseille) d'(acheter|vendre)\b", "les données indiquent"),
+            (r"\bva (monter|baisser|augmenter|chuter)\b", "a montré un mouvement"),
+            (r"\bgaranti\b", "a historiquement montré"),
+            (r"\bcible de prix\b", "niveau de prix actuel"),
+            (r"\bachat fort\b", "activité notable"),
+            (r"\bvente forte\b", "activité notable"),
+        ],
+        "de": [
+            (r"\bSie sollten (kaufen|verkaufen|investieren)\b", "zu überprüfen"),
+            (
+                r"\b(kaufen|verkaufen|investieren) Sie (jetzt|sofort|heute)\b",
+                "ist derzeit handelbar",
+            ),
+            (
+                r"\bist (ein guter|der richtige|ein ausgezeichneter) Zeitpunkt zum (Kaufen|Verkaufen)\b",
+                "aktuelle Marktbedingungen existieren",
+            ),
+            (
+                r"\b(kaufen|verkaufen|investieren) Sie nicht\b",
+                "aktuelle Bedingungen erfordern möglicherweise Überprüfung",
+            ),
+            (
+                r"\bvermeiden Sie (zu kaufen|zu verkaufen|zu investieren)\b",
+                "aktuelle Bedingungen erfordern möglicherweise Überprüfung",
+            ),
+            (r"\bich empfehle (zu kaufen|zu verkaufen)\b", "Daten zeigen"),
+            (r"\bwird (steigen|fallen|zunehmen|abnehmen)\b", "hat Bewegung gezeigt"),
+            (r"\bgarantiert\b", "hat historisch gezeigt"),
+            (r"\bKursziel\b", "aktuelles Kursniveau"),
+            (r"\bstarker Kauf\b", "bemerkenswerte Aktivität"),
+            (r"\bstarker Verkauf\b", "bemerkenswerte Aktivität"),
+        ],
+        "it": [
+            (r"\bdovresti (comprare|vendere|investire)\b", "da considerare"),
+            (r"\b(compra|vendi|investi) (ora|immediatamente|oggi)\b", "disponibile per il trading"),
+            (
+                r"\bè (un buon|il momento giusto|un ottimo) momento per (comprare|vendere)\b",
+                "le condizioni attuali esistono",
+            ),
+            (
+                r"\bnon (comprare|vendere|investire)\b",
+                "le condizioni attuali potrebbero richiedere revisione",
+            ),
+            (
+                r"\bevita di (comprare|vendere|investire)\b",
+                "le condizioni attuali potrebbero richiedere revisione",
+            ),
+            (r"\b(consiglio|raccomando) di (comprare|vendere)\b", "i dati indicano"),
+            (r"\b(salirà|scenderà|aumenterà|diminuirà)\b", "ha mostrato movimento"),
+            (r"\bgarantito\b", "storicamente ha mostrato"),
+            (r"\bobbiettivo di prezzo\b", "livello di prezzo attuale"),
+            (r"\bforte acquisto\b", "attività notevole"),
+            (r"\bforte vendita\b", "attività notevole"),
+        ],
+        "pt": [
+            (r"\bvocê deveria (comprar|vender|investir)\b", "a considerar"),
+            (
+                r"\b(compre|venda|invista) (agora|imediatamente|hoje)\b",
+                "disponível para negociação",
+            ),
+            (
+                r"\bé (um bom|o momento certo|um excelente) momento para (comprar|vender)\b",
+                "as condições atuais existem",
+            ),
+            (r"\bnão (compre|venda|invista)\b", "as condições atuais podem requerer revisão"),
+            (r"\bevite (comprar|vender|investir)\b", "as condições atuais podem requerer revisão"),
+            (r"\b(recomendo|sugiro) (comprar|vender)\b", "os dados indicam"),
+            (r"\bvai (subir|cair|aumentar|diminuir)\b", "mostrou movimento"),
+            (r"\bgarantido\b", "historicamente mostrou"),
+            (r"\balvo de preço\b", "nível de preço atual"),
+            (r"\bcompra forte\b", "atividade notável"),
+            (r"\bvenda forte\b", "atividade notável"),
+        ],
+        "ja": [
+            (r"買うべきです", "検討する価値があります"),
+            (r"売るべきです", "検討する価値があります"),
+            (r"投資すべきです", "検討する価値があります"),
+            (r"今すぐ(買|売|投資)", "現在取引可能です"),
+            (r"(買|売|投資)を(お勧め|推奨)します", "データが示しています"),
+            (r"必ず(上がる|下がる|上昇|下落)", "動きを示しています"),
+            (r"確実に(上がる|下がる)", "過去に示しています"),
+            (r"目標株価", "現在の価格水準"),
+            (r"強い買い", "注目すべき活動"),
+            (r"強い売り", "注目すべき活動"),
+        ],
+        "zh": [
+            (r"应该(买入|卖出|投资)", "值得考虑"),
+            (r"(现在|立即|今天)(买入|卖出|投资)", "目前可交易"),
+            (r"(建议|推荐)(买入|卖出)", "数据显示"),
+            (r"不要(买入|卖出|投资)", "当前情况可能需要审查"),
+            (r"避免(买入|卖出|投资)", "当前情况可能需要审查"),
+            (r"一定会(上涨|下跌|增加|减少)", "已显示波动"),
+            (r"保证(上涨|下跌)", "历史上显示"),
+            (r"目标价", "当前价格水平"),
+            (r"强烈买入", "值得关注的活动"),
+            (r"强烈卖出", "值得关注的活动"),
+        ],
+        "fa": [
+            (r"باید (بخرید|بفروشید|سرمایه‌گذاری کنید)", "قابل بررسی است"),
+            (r"(الان|فوری|امروز) (بخرید|بفروشید)", "در حال حاضر قابل معامله است"),
+            (r"(توصیه|پیشنهاد) می‌کنم (بخرید|بفروشید)", "داده‌ها نشان می‌دهد"),
+            (r"(نخرید|نفروشید|سرمایه‌گذاری نکنید)", "شرایط فعلی ممکن است نیاز به بررسی داشته باشد"),
+            (r"حتما (بالا|پایین) می‌رود", "حرکت نشان داده است"),
+            (r"تضمین شده", "در گذشته نشان داده است"),
+            (r"هدف قیمت", "سطح قیمت فعلی"),
+            (r"خرید قوی", "فعالیت قابل توجه"),
+            (r"فروش قوی", "فعالیت قابل توجه"),
+        ],
+    }
+
+    # Opinion as fact patterns by language
+    OPINION_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
+        "en": [
+            (
+                r"\bthis (stock|asset|investment) is (undervalued|overvalued)\b",
+                "this asset has current metrics",
+            ),
+            (
+                r"\b(definitely|certainly|obviously|clearly) a (buy|sell|hold)\b",
+                "currently trading",
+            ),
+            (r"\bno-brainer\b", "current data available"),
+            (r"\beasy money\b", "trading opportunity present"),
+            (r"\bcannot lose\b", "risk is inherent in trading"),
+            (r"\brisk-free\b", "with associated risks"),
+        ],
+        "es": [
+            (r"\b(está|es) (infravalorado|sobrevalorado)\b", "tiene métricas actuales"),
+            (
+                r"\b(definitivamente|claramente|obviamente) (comprar|vender)\b",
+                "actualmente cotizando",
+            ),
+            (r"\bdinero fácil\b", "oportunidad de trading presente"),
+            (r"\bno puede perder\b", "el riesgo es inherente al trading"),
+            (r"\bsin riesgo\b", "con riesgos asociados"),
+        ],
+        "fr": [
+            (r"\b(est|sont) (sous-évalué|surévalué)\b", "a des métriques actuelles"),
+            (
+                r"\b(définitivement|clairement|évidemment) (acheter|vendre)\b",
+                "actuellement en trading",
+            ),
+            (r"\bargent facile\b", "opportunité de trading présente"),
+            (r"\bne peut pas perdre\b", "le risque est inhérent au trading"),
+            (r"\bsans risque\b", "avec des risques associés"),
+        ],
+        "de": [
+            (r"\b(ist|sind) (unterbewertet|überbewertet)\b", "hat aktuelle Kennzahlen"),
+            (r"\b(definitiv|eindeutig|offensichtlich) (kaufen|verkaufen)\b", "derzeit handelbar"),
+            (r"\bleichtes Geld\b", "Handelsmöglichkeit vorhanden"),
+            (r"\bkann nicht verlieren\b", "Risiko ist dem Handel inhärent"),
+            (r"\brisikofrei\b", "mit verbundenen Risiken"),
+        ],
+        "it": [
+            (r"\b(è|sono) (sottovalutato|sopravvalutato)\b", "ha metriche attuali"),
+            (
+                r"\b(sicuramente|chiaramente|ovviamente) (comprare|vendere)\b",
+                "attualmente in trading",
+            ),
+            (r"\bsoldi facili\b", "opportunità di trading presente"),
+            (r"\bnon può perdere\b", "il rischio è inerente al trading"),
+            (r"\bsenza rischio\b", "con rischi associati"),
+        ],
+        "pt": [
+            (r"\b(está|é) (subvalorizado|sobrevalorizado)\b", "tem métricas atuais"),
+            (
+                r"\b(definitivamente|claramente|obviamente) (comprar|vender)\b",
+                "atualmente negociando",
+            ),
+            (r"\bdinheiro fácil\b", "oportunidade de trading presente"),
+            (r"\bnão pode perder\b", "o risco é inerente ao trading"),
+            (r"\bsem risco\b", "com riscos associados"),
+        ],
+        "ja": [
+            (r"(割安|割高)です", "現在の指標があります"),
+            (r"絶対に(買い|売り)", "現在取引中"),
+            (r"簡単にお金", "取引機会があります"),
+            (r"損することはない", "リスクは取引に固有です"),
+            (r"リスクなし", "関連するリスクがあります"),
+        ],
+        "zh": [
+            (r"(被低估|被高估)", "有当前指标"),
+            (r"绝对要(买|卖)", "目前正在交易"),
+            (r"轻松赚钱", "存在交易机会"),
+            (r"不会亏损", "风险是交易固有的"),
+            (r"无风险", "存在相关风险"),
+        ],
+        "fa": [
+            (r"(کم‌ارزش‌گذاری|بیش‌ارزش‌گذاری) شده", "دارای معیارهای فعلی است"),
+            (r"قطعا باید (بخرید|بفروشید)", "در حال معامله است"),
+            (r"پول آسان", "فرصت معاملاتی وجود دارد"),
+            (r"نمی‌توانید ضرر کنید", "ریسک ذاتی معاملات است"),
+            (r"بدون ریسک", "با ریسک‌های مرتبط"),
+        ],
+    }
+
+    # Certainty patterns by language
+    CERTAINTY_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
+        "en": [
+            (r"\bwill (increase|rise|go up|climb|surge)\b", "has shown upward movement"),
+            (r"\bwill (decrease|fall|drop|decline|plunge)\b", "has shown downward movement"),
+            (r"\bgoing to (increase|rise|go up)\b", "has recently moved"),
+            (r"\bgoing to (decrease|fall|drop)\b", "has recently moved"),
+            (r"\bexpect(?:ed|s)? to (reach|hit|exceed)\b", "has historically reached"),
+            (r"\blikely to (increase|rise|go up)\b", "has shown positive trends"),
+            (r"\blikely to (decrease|fall|drop)\b", "has shown negative trends"),
+            (r"\bpredicted to\b", "has shown historical patterns of"),
+            (r"\bforecast(?:ed)? to\b", "has shown historical patterns of"),
+        ],
+        "es": [
+            (r"\bva a (subir|aumentar|crecer)\b", "ha mostrado movimiento alcista"),
+            (r"\bva a (bajar|caer|disminuir)\b", "ha mostrado movimiento bajista"),
+            (r"\bse espera que (alcance|llegue|supere)\b", "históricamente ha alcanzado"),
+            (r"\bprobablemente (suba|aumente)\b", "ha mostrado tendencias positivas"),
+            (r"\bprobablemente (baje|caiga)\b", "ha mostrado tendencias negativas"),
+            (r"\bse predice que\b", "ha mostrado patrones históricos de"),
+        ],
+        "fr": [
+            (r"\bva (monter|augmenter|grimper)\b", "a montré un mouvement haussier"),
+            (r"\bva (baisser|chuter|diminuer)\b", "a montré un mouvement baissier"),
+            (r"\bon s'attend à (atteindre|dépasser)\b", "a historiquement atteint"),
+            (r"\bdevrait (monter|augmenter)\b", "a montré des tendances positives"),
+            (r"\bdevrait (baisser|chuter)\b", "a montré des tendances négatives"),
+            (r"\bprévu pour\b", "a montré des modèles historiques de"),
+        ],
+        "de": [
+            (r"\bwird (steigen|zunehmen|klettern)\b", "hat Aufwärtsbewegung gezeigt"),
+            (r"\bwird (fallen|sinken|abnehmen)\b", "hat Abwärtsbewegung gezeigt"),
+            (r"\bwird voraussichtlich (erreichen|übertreffen)\b", "hat historisch erreicht"),
+            (r"\bwahrscheinlich (steigen|zunehmen)\b", "hat positive Trends gezeigt"),
+            (r"\bwahrscheinlich (fallen|sinken)\b", "hat negative Trends gezeigt"),
+            (r"\bprognostiziert\b", "hat historische Muster gezeigt von"),
+        ],
+        "it": [
+            (r"\b(salirà|aumenterà|crescerà)\b", "ha mostrato movimento rialzista"),
+            (r"\b(scenderà|calerà|diminuirà)\b", "ha mostrato movimento ribassista"),
+            (r"\bsi prevede che (raggiunga|superi)\b", "storicamente ha raggiunto"),
+            (r"\bprobabilmente (salirà|aumenterà)\b", "ha mostrato tendenze positive"),
+            (r"\bprobabilmente (scenderà|calerà)\b", "ha mostrato tendenze negative"),
+        ],
+        "pt": [
+            (r"\bvai (subir|aumentar|crescer)\b", "mostrou movimento de alta"),
+            (r"\bvai (cair|diminuir|descer)\b", "mostrou movimento de baixa"),
+            (r"\bespera-se que (alcance|atinja|supere)\b", "historicamente alcançou"),
+            (r"\bprovavelmente (subirá|aumentará)\b", "mostrou tendências positivas"),
+            (r"\bprovavelmente (cairá|diminuirá)\b", "mostrou tendências negativas"),
+        ],
+        "ja": [
+            (r"(上がる|上昇する|増加する)でしょう", "上昇の動きを示しています"),
+            (r"(下がる|下落する|減少する)でしょう", "下降の動きを示しています"),
+            (r"(到達|達成)すると予想", "歴史的に到達しています"),
+            (r"おそらく(上がる|上昇)", "ポジティブなトレンドを示しています"),
+            (r"おそらく(下がる|下落)", "ネガティブなトレンドを示しています"),
+        ],
+        "zh": [
+            (r"将会(上涨|增加|攀升)", "已显示上行走势"),
+            (r"将会(下跌|减少|下降)", "已显示下行走势"),
+            (r"预计将(达到|超过)", "历史上曾达到"),
+            (r"可能会(上涨|增加)", "已显示积极趋势"),
+            (r"可能会(下跌|减少)", "已显示消极趋势"),
+        ],
+        "fa": [
+            (r"(افزایش|رشد|صعود) خواهد کرد", "حرکت صعودی نشان داده است"),
+            (r"(کاهش|سقوط|نزول) خواهد کرد", "حرکت نزولی نشان داده است"),
+            (r"انتظار می‌رود (برسد|تجاوز کند)", "در گذشته رسیده است"),
+            (r"احتمالا (افزایش|رشد) می‌یابد", "روندهای مثبت نشان داده است"),
+            (r"احتمالا (کاهش|سقوط) می‌کند", "روندهای منفی نشان داده است"),
+        ],
+    }
+
+    # Required disclaimer phrases by language
+    DISCLAIMER_PHRASES: Dict[str, List[str]] = {
+        "en": [
+            "not financial advice",
+            "not investment advice",
+            "informational purposes only",
+            "educational purposes only",
+            "data analysis only",
+            "consult a financial advisor",
+            "consult a qualified professional",
+            "past performance",
+        ],
+        "es": [
+            "no es asesoramiento financiero",
+            "no es consejo de inversión",
+            "solo con fines informativos",
+            "solo con fines educativos",
+            "solo análisis de datos",
+            "consulte a un asesor financiero",
+            "rendimiento pasado",
+        ],
+        "fr": [
+            "n'est pas un conseil financier",
+            "n'est pas un conseil d'investissement",
+            "à des fins d'information uniquement",
+            "à des fins éducatives uniquement",
+            "analyse de données uniquement",
+            "consultez un conseiller financier",
+            "performance passée",
+        ],
+        "de": [
+            "keine finanzberatung",
+            "keine anlageberatung",
+            "nur zu informationszwecken",
+            "nur zu bildungszwecken",
+            "nur datenanalyse",
+            "konsultieren sie einen finanzberater",
+            "vergangene leistung",
+        ],
+        "it": [
+            "non è consulenza finanziaria",
+            "non è consulenza sugli investimenti",
+            "solo a scopo informativo",
+            "solo a scopo educativo",
+            "solo analisi dei dati",
+            "consultare un consulente finanziario",
+            "performance passata",
+        ],
+        "pt": [
+            "não é aconselhamento financeiro",
+            "não é aconselhamento de investimento",
+            "apenas para fins informativos",
+            "apenas para fins educacionais",
+            "apenas análise de dados",
+            "consulte um consultor financeiro",
+            "desempenho passado",
+        ],
+        "ja": [
+            "金融アドバイスではありません",
+            "投資アドバイスではありません",
+            "情報提供のみ",
+            "教育目的のみ",
+            "データ分析のみ",
+            "ファイナンシャルアドバイザーに相談してください",
+            "過去のパフォーマンス",
+        ],
+        "zh": [
+            "不构成财务建议",
+            "不构成投资建议",
+            "仅供参考",
+            "仅供教育目的",
+            "仅供数据分析",
+            "请咨询财务顾问",
+            "过去的表现",
+        ],
+        "fa": [
+            "مشاوره مالی نیست",
+            "مشاوره سرمایه‌گذاری نیست",
+            "فقط برای اهداف اطلاعاتی",
+            "فقط برای اهداف آموزشی",
+            "فقط تجزیه و تحلیل داده",
+            "با یک مشاور مالی مشورت کنید",
+            "عملکرد گذشته",
+        ],
+    }
+
+    # Language detection indicators
+    LANGUAGE_INDICATORS: Dict[str, List[str]] = {
+        "es": ["está", "esto", "pero", "como", "para", "con", "que", "los", "las", "una", "del"],
+        "fr": ["est", "cette", "mais", "comme", "pour", "avec", "que", "les", "une", "des", "dans"],
+        "de": ["ist", "diese", "aber", "wie", "für", "mit", "dass", "die", "der", "das", "und"],
+        "it": ["è", "questa", "ma", "come", "per", "con", "che", "gli", "una", "del", "nella"],
+        "pt": ["está", "esta", "mas", "como", "para", "com", "que", "os", "as", "uma", "do"],
+        "ja": ["は", "が", "を", "に", "で", "と", "も", "の", "です", "ます", "した"],
+        "zh": ["的", "是", "在", "了", "和", "有", "这", "为", "与", "以", "但"],
+        "fa": ["است", "این", "اما", "برای", "با", "که", "از", "را", "در", "به", "می"],
+    }
+
+
 class ComplianceGuardrail:
     """
     Compliance Guardrail Layer for financial outputs
 
     Ensures all outputs are descriptive only and do not contain
     investment advice, recommendations, or prescriptive language.
+    Supports multiple languages for global compliance.
 
     Example usage:
         >>> guardrail = ComplianceGuardrail()
@@ -66,108 +656,20 @@ class ComplianceGuardrail:
         "AAPL stock is currently available for trading."
         >>> print(result.was_modified)
         True
+
+        # With language specification
+        >>> result = guardrail.process(
+        ...     "Debería comprar AAPL ahora!",
+        ...     language=SupportedLanguage.SPANISH
+        ... )
     """
-
-    # Prescriptive verbs that indicate advice (with word boundaries)
-    PRESCRIPTIVE_VERBS: List[str] = [
-        r"\bshould\b",
-        r"\bmust\b",
-        r"\bought to\b",
-        r"\bneed to\b",
-        r"\bhave to\b",
-        r"\bbetter to\b",
-        r"\badvise\b",
-        r"\brecommend\b",
-        r"\bsuggest\b",
-        r"\burge\b",
-        r"\bencourage\b",
-    ]
-
-    # Advice-like language patterns (more specific than just verbs)
-    ADVICE_PATTERNS: List[Tuple[str, str]] = [
-        # Direct advice patterns
-        (r"\byou should (buy|sell|invest|hold|trade)\b", "consider reviewing"),
-        (
-            r"\bi (recommend|suggest|advise) (that you |you )?(buy|sell|invest|hold)\b",
-            "data indicates",
-        ),
-        (
-            r"\b(buy|sell|invest in|trade) (now|immediately|today|asap)\b",
-            "is currently available for trading",
-        ),
-        (
-            r"\bthis is a (good|great|excellent|perfect) (time|opportunity) to (buy|sell|invest)\b",
-            "current market conditions exist",
-        ),
-        (r"\bdon'?t (buy|sell|invest)\b", "current conditions may warrant review"),
-        (r"\bavoid (buying|selling|investing)\b", "current conditions may warrant review"),
-        # Strong buy/sell recommendations
-        (r"\bstrong (buy|sell)\b", "notable activity"),
-        (r"\boverweight\b", "increased allocation noted"),
-        (r"\bunderweight\b", "decreased allocation noted"),
-        # Prediction patterns
-        (
-            r"\bwill (definitely|certainly|surely|absolutely) (go|rise|fall|increase|decrease)\b",
-            "has shown movement",
-        ),
-        (r"\bguaranteed to\b", "has historically shown"),
-        (r"\bsure to\b", "has historically shown"),
-        (r"\bwill reach \$\d+", "is at current levels"),
-        (r"\bprice target\b", "current price level"),
-        # Action imperative patterns
-        (r"\b(buy|sell|get|grab|dump|hold) (it|this|these|the stock)\b", "it is currently trading"),
-        (r"\bget in (now|before|while)\b", "current trading activity observed"),
-        (r"\bget out (now|before|while)\b", "current trading activity observed"),
-        (r"\bjump in\b", "current trading activity observed"),
-        (r"\bpull out\b", "current trading activity observed"),
-    ]
-
-    # Patterns that indicate opinion presented as fact
-    OPINION_AS_FACT_PATTERNS: List[Tuple[str, str]] = [
-        (
-            r"\bthis (stock|asset|investment) is (undervalued|overvalued)\b",
-            "this asset has current metrics",
-        ),
-        (r"\b(definitely|certainly|obviously|clearly) a (buy|sell|hold)\b", "currently trading"),
-        (r"\bno-brainer\b", "current data available"),
-        (r"\beasy money\b", "trading opportunity present"),
-        (r"\bcannot lose\b", "risk is inherent in trading"),
-        (r"\brisk-free\b", "with associated risks"),
-    ]
-
-    # Future certainty language to convert to descriptive
-    CERTAINTY_PATTERNS: List[Tuple[str, str]] = [
-        (r"\bwill (increase|rise|go up|climb|surge)\b", "has shown upward movement"),
-        (r"\bwill (decrease|fall|drop|decline|plunge)\b", "has shown downward movement"),
-        (r"\bgoing to (increase|rise|go up)\b", "has recently moved"),
-        (r"\bgoing to (decrease|fall|drop)\b", "has recently moved"),
-        (r"\bexpect(?:ed|s)? to (reach|hit|exceed)\b", "has historically reached"),
-        (r"\blikely to (increase|rise|go up)\b", "has shown positive trends"),
-        (r"\blikely to (decrease|fall|drop)\b", "has shown negative trends"),
-        (r"\bpredicted to\b", "has shown historical patterns of"),
-        (r"\bforecast(?:ed)? to\b", "has shown historical patterns of"),
-    ]
-
-    # Required disclaimer phrases that must be present
-    REQUIRED_DISCLAIMER_PHRASES: List[str] = [
-        "not financial advice",
-        "not investment advice",
-        "informational purposes only",
-        "educational purposes only",
-        "data analysis only",
-        "consult a financial advisor",
-        "consult a qualified professional",
-        "past performance",
-        # Multilingual support
-        "no es asesoramiento financiero",
-        "n'est pas un conseil financier",
-    ]
 
     def __init__(
         self,
         disclaimer_generator: Optional[DisclaimerGenerator] = None,
         strict_mode: bool = False,
         auto_add_disclaimer: bool = True,
+        default_language: SupportedLanguage = SupportedLanguage.ENGLISH,
     ):
         """
         Initialize the Compliance Guardrail
@@ -176,39 +678,147 @@ class ComplianceGuardrail:
             disclaimer_generator: Generator for disclaimers (creates new if None)
             strict_mode: If True, blocks content with severe violations instead of modifying
             auto_add_disclaimer: If True, automatically adds disclaimers when missing
+            default_language: Default language for processing (default: English)
         """
         self.disclaimer_generator = disclaimer_generator or DisclaimerGenerator()
         self.strict_mode = strict_mode
         self.auto_add_disclaimer = auto_add_disclaimer
+        self.default_language = default_language
 
-        # Compile regex patterns for efficiency
-        self._compiled_prescriptive = [
-            re.compile(pattern, re.IGNORECASE) for pattern in self.PRESCRIPTIVE_VERBS
-        ]
-        self._compiled_advice = [
-            (re.compile(pattern, re.IGNORECASE), replacement)
-            for pattern, replacement in self.ADVICE_PATTERNS
-        ]
-        self._compiled_opinion = [
-            (re.compile(pattern, re.IGNORECASE), replacement)
-            for pattern, replacement in self.OPINION_AS_FACT_PATTERNS
-        ]
-        self._compiled_certainty = [
-            (re.compile(pattern, re.IGNORECASE), replacement)
-            for pattern, replacement in self.CERTAINTY_PATTERNS
-        ]
+        # Cache for compiled patterns by language
+        self._compiled_patterns_cache: Dict[str, Dict[str, List]] = {}
 
         logger.info(
             "Compliance guardrail initialized",
             strict_mode=strict_mode,
             auto_add_disclaimer=auto_add_disclaimer,
+            default_language=default_language.value,
         )
+
+    def _get_compiled_patterns(self, lang_code: str) -> Dict[str, List]:
+        """
+        Get compiled regex patterns for a specific language
+
+        Args:
+            lang_code: Language code (e.g., 'en', 'es', 'fr')
+
+        Returns:
+            Dictionary of compiled patterns for the language
+        """
+        if lang_code in self._compiled_patterns_cache:
+            return self._compiled_patterns_cache[lang_code]
+
+        patterns = MultilingualPatterns
+
+        # Get patterns for language, fallback to English if not available
+        prescriptive = patterns.PRESCRIPTIVE_VERBS.get(
+            lang_code, patterns.PRESCRIPTIVE_VERBS.get("en", [])
+        )
+        advice = patterns.ADVICE_PATTERNS.get(lang_code, patterns.ADVICE_PATTERNS.get("en", []))
+        opinion = patterns.OPINION_PATTERNS.get(lang_code, patterns.OPINION_PATTERNS.get("en", []))
+        certainty = patterns.CERTAINTY_PATTERNS.get(
+            lang_code, patterns.CERTAINTY_PATTERNS.get("en", [])
+        )
+
+        compiled = {
+            "prescriptive": [
+                re.compile(pattern, re.IGNORECASE | re.UNICODE) for pattern in prescriptive
+            ],
+            "advice": [
+                (re.compile(pattern, re.IGNORECASE | re.UNICODE), replacement)
+                for pattern, replacement in advice
+            ],
+            "opinion": [
+                (re.compile(pattern, re.IGNORECASE | re.UNICODE), replacement)
+                for pattern, replacement in opinion
+            ],
+            "certainty": [
+                (re.compile(pattern, re.IGNORECASE | re.UNICODE), replacement)
+                for pattern, replacement in certainty
+            ],
+        }
+
+        self._compiled_patterns_cache[lang_code] = compiled
+        return compiled
+
+    def detect_language(self, text: str) -> str:
+        """
+        Detect the language of the input text
+
+        Uses simple heuristics based on language-specific indicators.
+        Returns 'en' (English) as default for ambiguous cases.
+
+        Args:
+            text: Input text to analyze
+
+        Returns:
+            Language code (e.g., 'en', 'es', 'fr')
+        """
+        if not text:
+            return "en"
+
+        text_lower = text.lower()
+        scores: Dict[str, int] = {}
+
+        # Check for non-Latin scripts first (Japanese, Chinese, Farsi)
+        # Japanese: Hiragana, Katakana, and some Kanji
+        if any("\u3040" <= c <= "\u309f" or "\u30a0" <= c <= "\u30ff" for c in text):
+            return "ja"
+
+        # Chinese: CJK unified ideographs (excluding Japanese-specific)
+        if any("\u4e00" <= c <= "\u9fff" for c in text) and not any(
+            "\u3040" <= c <= "\u309f" or "\u30a0" <= c <= "\u30ff" for c in text
+        ):
+            return "zh"
+
+        # Farsi/Persian: Arabic script with Persian-specific characters
+        if any("\u0600" <= c <= "\u06ff" for c in text):
+            return "fa"
+
+        # For Latin-script languages, use word indicators
+        for lang_code, indicators in MultilingualPatterns.LANGUAGE_INDICATORS.items():
+            # Skip non-Latin script languages (already handled above)
+            if lang_code in ("ja", "zh", "fa"):
+                continue
+
+            # Use word boundary matching to avoid false positives
+            score = 0
+            for indicator in indicators:
+                # Count occurrences as whole words
+                pattern = rf"\b{re.escape(indicator)}\b"
+                matches = re.findall(pattern, text_lower)
+                score += len(matches)
+
+            if score > 0:
+                scores[lang_code] = score
+
+        # If no strong signal, default to English
+        if not scores:
+            return "en"
+
+        # Get the highest scoring language
+        max_score = max(scores.values())
+        detected = max(scores, key=scores.get)  # type: ignore
+
+        # Require a minimum threshold to override English default
+        # This prevents false detection from common words
+        if max_score < 3:
+            return "en"
+
+        logger.debug(
+            "Language detected",
+            detected_language=detected,
+            scores=scores,
+        )
+
+        return detected
 
     def process(
         self,
         text: str,
         asset_class: AssetClass = AssetClass.EQUITY,
         region: Region = Region.US,
+        language: SupportedLanguage = SupportedLanguage.AUTO,
     ) -> GuardrailResult:
         """
         Process text through the compliance guardrail
@@ -217,6 +827,7 @@ class ComplianceGuardrail:
             text: Input text to process
             asset_class: Type of asset for disclaimer customization
             region: User's region for compliance requirements
+            language: Language of the text (AUTO for auto-detection)
 
         Returns:
             GuardrailResult with processed text and modification details
@@ -228,21 +839,41 @@ class ComplianceGuardrail:
                 processed_text=text,
             )
 
+        # Determine language
+        if language == SupportedLanguage.AUTO:
+            lang_code = self.detect_language(text)
+        else:
+            lang_code = language.value
+
         violations: List[str] = []
         modifications: List[str] = []
         processed_text = text
 
-        # Step 1: Scan for violations
-        violations.extend(self._scan_for_prescriptive_verbs(text))
-        violations.extend(self._scan_for_advice_patterns(text))
-        violations.extend(self._scan_for_opinion_patterns(text))
-        violations.extend(self._scan_for_certainty_patterns(text))
+        # Get compiled patterns for the detected/specified language
+        patterns = self._get_compiled_patterns(lang_code)
+
+        # Also get English patterns for mixed-language content
+        english_patterns = self._get_compiled_patterns("en") if lang_code != "en" else None
+
+        # Step 1: Scan for violations in primary language
+        violations.extend(self._scan_for_prescriptive_verbs(text, patterns["prescriptive"]))
+        violations.extend(self._scan_for_patterns(text, patterns["advice"], "Advice"))
+        violations.extend(self._scan_for_patterns(text, patterns["opinion"], "Opinion"))
+        violations.extend(self._scan_for_patterns(text, patterns["certainty"], "Certainty"))
+
+        # Also scan for English patterns in non-English text (mixed content)
+        if english_patterns:
+            violations.extend(
+                self._scan_for_prescriptive_verbs(text, english_patterns["prescriptive"])
+            )
+            violations.extend(self._scan_for_patterns(text, english_patterns["advice"], "Advice"))
 
         # Step 2: If violations found in strict mode, block the content
         if self.strict_mode and len(violations) > 5:
             logger.warning(
                 "Content blocked due to excessive violations",
                 violation_count=len(violations),
+                language=lang_code,
             )
             return GuardrailResult(
                 action=GuardrailAction.BLOCKED,
@@ -250,27 +881,38 @@ class ComplianceGuardrail:
                 processed_text="",
                 violations_found=violations,
                 confidence=0.0,
+                detected_language=lang_code,
             )
 
         # Step 3: Remove/replace advice-like language
-        processed_text, advice_mods = self._remove_advice_language(processed_text)
+        processed_text, advice_mods = self._remove_patterns(processed_text, patterns["advice"])
         modifications.extend(advice_mods)
 
+        # Also process English patterns for mixed content
+        if english_patterns:
+            processed_text, en_mods = self._remove_patterns(
+                processed_text, english_patterns["advice"]
+            )
+            modifications.extend(en_mods)
+
         # Step 4: Remove/replace opinion as fact patterns
-        processed_text, opinion_mods = self._remove_opinion_patterns(processed_text)
+        processed_text, opinion_mods = self._remove_patterns(processed_text, patterns["opinion"])
         modifications.extend(opinion_mods)
 
         # Step 5: Convert certainty language to descriptive
-        processed_text, certainty_mods = self._convert_certainty_language(processed_text)
+        processed_text, certainty_mods = self._remove_patterns(
+            processed_text, patterns["certainty"]
+        )
         modifications.extend(certainty_mods)
 
-        # Step 6: Ensure descriptive tone
-        processed_text, tone_mods = self._ensure_descriptive_tone(processed_text)
-        modifications.extend(tone_mods)
+        # Step 6: Ensure descriptive tone (English-specific)
+        if lang_code == "en":
+            processed_text, tone_mods = self._ensure_descriptive_tone(processed_text)
+            modifications.extend(tone_mods)
 
         # Step 7: Check and add disclaimer if needed
         disclaimer_added = False
-        if self.auto_add_disclaimer and not self._has_disclaimer(processed_text):
+        if self.auto_add_disclaimer and not self._has_disclaimer(processed_text, lang_code):
             disclaimer = self.disclaimer_generator.generate(
                 asset_class=asset_class,
                 region=region,
@@ -295,6 +937,7 @@ class ComplianceGuardrail:
             violations=len(violations),
             modifications=len(modifications),
             disclaimer_added=disclaimer_added,
+            language=lang_code,
         )
 
         return GuardrailResult(
@@ -305,37 +948,69 @@ class ComplianceGuardrail:
             violations_found=violations,
             disclaimer_added=disclaimer_added,
             confidence=confidence,
+            detected_language=lang_code,
         )
 
-    def scan_only(self, text: str) -> List[str]:
+    def scan_only(
+        self,
+        text: str,
+        language: SupportedLanguage = SupportedLanguage.AUTO,
+    ) -> List[str]:
         """
         Scan text for violations without modifying it
 
         Args:
             text: Input text to scan
+            language: Language of the text (AUTO for auto-detection)
 
         Returns:
             List of violations found
         """
+        if language == SupportedLanguage.AUTO:
+            lang_code = self.detect_language(text)
+        else:
+            lang_code = language.value
+
+        patterns = self._get_compiled_patterns(lang_code)
+
         violations = []
-        violations.extend(self._scan_for_prescriptive_verbs(text))
-        violations.extend(self._scan_for_advice_patterns(text))
-        violations.extend(self._scan_for_opinion_patterns(text))
-        violations.extend(self._scan_for_certainty_patterns(text))
+        violations.extend(self._scan_for_prescriptive_verbs(text, patterns["prescriptive"]))
+        violations.extend(self._scan_for_patterns(text, patterns["advice"], "Advice"))
+        violations.extend(self._scan_for_patterns(text, patterns["opinion"], "Opinion"))
+        violations.extend(self._scan_for_patterns(text, patterns["certainty"], "Certainty"))
+
+        # Also check English patterns for mixed content
+        if lang_code != "en":
+            english_patterns = self._get_compiled_patterns("en")
+            violations.extend(
+                self._scan_for_prescriptive_verbs(text, english_patterns["prescriptive"])
+            )
+            violations.extend(self._scan_for_patterns(text, english_patterns["advice"], "Advice"))
+
         return violations
 
-    def is_compliant(self, text: str) -> bool:
+    def is_compliant(
+        self,
+        text: str,
+        language: SupportedLanguage = SupportedLanguage.AUTO,
+    ) -> bool:
         """
         Check if text is already compliant
 
         Args:
             text: Input text to check
+            language: Language of the text (AUTO for auto-detection)
 
         Returns:
             True if text is compliant, False otherwise
         """
-        violations = self.scan_only(text)
-        has_disclaimer = self._has_disclaimer(text)
+        if language == SupportedLanguage.AUTO:
+            lang_code = self.detect_language(text)
+        else:
+            lang_code = language.value
+
+        violations = self.scan_only(text, language)
+        has_disclaimer = self._has_disclaimer(text, lang_code)
         return len(violations) == 0 and (has_disclaimer or not self.auto_add_disclaimer)
 
     def add_disclaimer(
@@ -343,6 +1018,7 @@ class ComplianceGuardrail:
         text: str,
         asset_class: AssetClass = AssetClass.EQUITY,
         region: Region = Region.US,
+        language: SupportedLanguage = SupportedLanguage.AUTO,
     ) -> str:
         """
         Add a disclaimer to text if not already present
@@ -351,11 +1027,17 @@ class ComplianceGuardrail:
             text: Input text
             asset_class: Type of asset for disclaimer customization
             region: User's region for compliance requirements
+            language: Language of the text (AUTO for auto-detection)
 
         Returns:
             Text with disclaimer added
         """
-        if self._has_disclaimer(text):
+        if language == SupportedLanguage.AUTO:
+            lang_code = self.detect_language(text)
+        else:
+            lang_code = language.value
+
+        if self._has_disclaimer(text, lang_code):
             return text
 
         disclaimer = self.disclaimer_generator.generate(
@@ -365,72 +1047,45 @@ class ComplianceGuardrail:
         )
         return self._add_disclaimer(text, disclaimer)
 
-    def _scan_for_prescriptive_verbs(self, text: str) -> List[str]:
+    def _scan_for_prescriptive_verbs(
+        self,
+        text: str,
+        compiled_patterns: List,
+    ) -> List[str]:
         """Scan for prescriptive verbs in text"""
         violations = []
-        for pattern in self._compiled_prescriptive:
+        for pattern in compiled_patterns:
             matches = pattern.findall(text)
             if matches:
                 violations.append(f"Prescriptive verb found: {pattern.pattern}")
         return violations
 
-    def _scan_for_advice_patterns(self, text: str) -> List[str]:
-        """Scan for advice patterns in text"""
+    def _scan_for_patterns(
+        self,
+        text: str,
+        compiled_patterns: List[Tuple],
+        pattern_type: str,
+    ) -> List[str]:
+        """Scan for specific patterns in text"""
         violations = []
-        for pattern, _ in self._compiled_advice:
+        for pattern, _ in compiled_patterns:
             if pattern.search(text):
-                violations.append(f"Advice pattern found: {pattern.pattern}")
+                violations.append(f"{pattern_type} pattern found: {pattern.pattern}")
         return violations
 
-    def _scan_for_opinion_patterns(self, text: str) -> List[str]:
-        """Scan for opinion-as-fact patterns in text"""
-        violations = []
-        for pattern, _ in self._compiled_opinion:
-            if pattern.search(text):
-                violations.append(f"Opinion pattern found: {pattern.pattern}")
-        return violations
-
-    def _scan_for_certainty_patterns(self, text: str) -> List[str]:
-        """Scan for certainty patterns in text"""
-        violations = []
-        for pattern, _ in self._compiled_certainty:
-            if pattern.search(text):
-                violations.append(f"Certainty pattern found: {pattern.pattern}")
-        return violations
-
-    def _remove_advice_language(self, text: str) -> Tuple[str, List[str]]:
-        """Remove or replace advice language patterns"""
+    def _remove_patterns(
+        self,
+        text: str,
+        compiled_patterns: List[Tuple],
+    ) -> Tuple[str, List[str]]:
+        """Remove or replace patterns in text"""
         modifications = []
         result = text
 
-        for pattern, replacement in self._compiled_advice:
+        for pattern, replacement in compiled_patterns:
             if pattern.search(result):
                 result = pattern.sub(replacement, result)
-                modifications.append(f"Replaced advice pattern: {pattern.pattern}")
-
-        return result, modifications
-
-    def _remove_opinion_patterns(self, text: str) -> Tuple[str, List[str]]:
-        """Remove or replace opinion-as-fact patterns"""
-        modifications = []
-        result = text
-
-        for pattern, replacement in self._compiled_opinion:
-            if pattern.search(result):
-                result = pattern.sub(replacement, result)
-                modifications.append(f"Replaced opinion pattern: {pattern.pattern}")
-
-        return result, modifications
-
-    def _convert_certainty_language(self, text: str) -> Tuple[str, List[str]]:
-        """Convert certainty language to descriptive language"""
-        modifications = []
-        result = text
-
-        for pattern, replacement in self._compiled_certainty:
-            if pattern.search(result):
-                result = pattern.sub(replacement, result)
-                modifications.append(f"Converted certainty pattern: {pattern.pattern}")
+                modifications.append(f"Replaced pattern: {pattern.pattern}")
 
         return result, modifications
 
@@ -472,10 +1127,26 @@ class ComplianceGuardrail:
 
         return result, modifications
 
-    def _has_disclaimer(self, text: str) -> bool:
-        """Check if text contains a required disclaimer"""
+    def _has_disclaimer(self, text: str, lang_code: str = "en") -> bool:
+        """
+        Check if text contains a required disclaimer
+
+        Args:
+            text: Text to check
+            lang_code: Language code to check disclaimers for
+
+        Returns:
+            True if disclaimer is present
+        """
         text_lower = text.lower()
-        return any(phrase in text_lower for phrase in self.REQUIRED_DISCLAIMER_PHRASES)
+
+        # Always check ALL language disclaimer phrases to handle mixed content
+        # and cases where language detection may not be accurate
+        all_phrases: List[str] = []
+        for phrases in MultilingualPatterns.DISCLAIMER_PHRASES.values():
+            all_phrases.extend(phrases)
+
+        return any(phrase in text_lower for phrase in all_phrases)
 
     def _add_disclaimer(self, text: str, disclaimer: str) -> str:
         """Add disclaimer to text"""
@@ -504,6 +1175,15 @@ class ComplianceGuardrail:
         total_reduction = (violation_count + modification_count) * reduction_per_item
 
         return max(0.5, base_confidence - total_reduction)
+
+    def get_supported_languages(self) -> List[str]:
+        """
+        Get list of supported language codes
+
+        Returns:
+            List of supported language codes
+        """
+        return list(MultilingualPatterns.PRESCRIPTIVE_VERBS.keys())
 
 
 # Global guardrail instance for convenience

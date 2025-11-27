@@ -13,6 +13,7 @@ logger = get_logger(__name__)
 
 class AssetClass(str, Enum):
     """Asset classes for disclaimer customization"""
+
     EQUITY = "equity"
     CRYPTO = "crypto"
     DERIVATIVE = "derivative"
@@ -200,8 +201,7 @@ class DisclaimerGenerator:
 
         # Add asset-specific disclaimer
         asset_specific = region_templates.get(
-            asset_class.value,
-            self.templates["GLOBAL"].get(asset_class.value, "")
+            asset_class.value, self.templates["GLOBAL"].get(asset_class.value, "")
         )
 
         if asset_specific:
@@ -246,8 +246,7 @@ class DisclaimerGenerator:
         # Add specific disclaimers for each asset class
         for asset_class in set(asset_classes):  # Remove duplicates
             asset_specific = region_templates.get(
-                asset_class.value,
-                self.templates["GLOBAL"].get(asset_class.value, "")
+                asset_class.value, self.templates["GLOBAL"].get(asset_class.value, "")
             )
             if asset_specific and asset_specific not in disclaimers:
                 disclaimers.append(asset_specific)
@@ -294,12 +293,8 @@ class DisclaimerGenerator:
                 "FIML is not a registered investment advisor, broker-dealer, or financial planner. "
                 "We provide information, not advice."
             ),
-            "EU": (
-                "FIML does not provide regulated investment services under MiFID II."
-            ),
-            "UK": (
-                "FIML is not authorized or regulated by the Financial Conduct Authority."
-            ),
+            "EU": ("FIML does not provide regulated investment services under MiFID II."),
+            "UK": ("FIML is not authorized or regulated by the Financial Conduct Authority."),
             "JP": (
                 "FIMLは金融商品取引業者ではありません。"
                 "FIML is not a licensed financial instruments business operator."
