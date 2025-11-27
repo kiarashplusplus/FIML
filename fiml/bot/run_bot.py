@@ -26,7 +26,7 @@ structlog.configure(
     processors=[
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.add_log_level,
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
     context_class=dict,
@@ -69,15 +69,13 @@ def main() -> None:
 
 
 async def run_async(
-    bot_token: str,
-    encryption_key: Optional[bytes],
-    storage_path: str,
-    session_store: SessionStore
+    bot_token: str, encryption_key: Optional[bytes], storage_path: str, session_store: SessionStore
 ) -> None:
     """Async runner to handle SessionStore lifecycle"""
 
     # Try to initialize session store (Redis + PostgreSQL)
     session_store_enabled = False
+    session_store_or_none: Optional[SessionStore] = session_store
     try:
         await session_store.initialize()
         session_store_enabled = True
@@ -86,25 +84,24 @@ async def run_async(
     except Exception as e:
         logger.warning(f"SessionStore unavailable, running in standalone mode: {e}")
         print("⚠️  Redis/PostgreSQL unavailable - running with in-memory progress (won't persist)")
-        session_store = None  # Gamification will use in-memory dict
+        session_store_or_none = None  # Gamification will use in-memory dict
 
     try:
         # Initialize components
         key_manager = UserProviderKeyManager(
-            encryption_key=encryption_key,
-            storage_path=storage_path
+            encryption_key=encryption_key, storage_path=storage_path
         )
 
         provider_configurator = FIMLProviderConfigurator(key_manager)
 
         # Initialize gamification (with or without session store)
-        gamification = GamificationEngine(session_store=session_store)
+        gamification = GamificationEngine(session_store=session_store_or_none)
 
         telegram_bot = TelegramBotAdapter(
             token=bot_token,
             key_manager=key_manager,
             provider_configurator=provider_configurator,
-            gamification=gamification
+            gamification=gamification,
         )
 
         # Run the bot
@@ -137,8 +134,8 @@ async def run_async(
             pass
 
         # Cleanup session store if it was initialized
-        if session_store_enabled and session_store:
-            await session_store.shutdown()
+        if session_store_enabled and session_store_or_none:
+            await session_store_or_none.shutdown()
             logger.info("SessionStore shutdown complete")
 
 

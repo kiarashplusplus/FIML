@@ -2,6 +2,7 @@
 Tests for AIMentorService (Component 8)
 Tests AI mentor personas and response generation
 """
+
 from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
 
 
@@ -18,9 +19,7 @@ class TestAIMentorService:
         mentor = AIMentorService()
 
         response = await mentor.respond(
-            user_id="user_123",
-            question="What is a stock?",
-            persona=MentorPersona.MAYA
+            user_id="user_123", question="What is a stock?", persona=MentorPersona.MAYA
         )
 
         assert response is not None
@@ -36,7 +35,7 @@ class TestAIMentorService:
         response = await mentor.respond(
             user_id="user_123",
             question="How do I analyze stock performance?",
-            persona=MentorPersona.THEO
+            persona=MentorPersona.THEO,
         )
 
         assert response is not None
@@ -52,7 +51,7 @@ class TestAIMentorService:
         response = await mentor.respond(
             user_id="user_123",
             question="How do I control my emotions when trading?",
-            persona=MentorPersona.ZARA
+            persona=MentorPersona.ZARA,
         )
 
         assert response is not None
@@ -105,9 +104,7 @@ class TestAIMentorService:
         """Test that mentor can suggest relevant lessons"""
         mentor = AIMentorService()
 
-        suggestions = mentor._suggest_lessons(
-            question="I want to learn about valuation"
-        )
+        suggestions = mentor._suggest_lessons(question="I want to learn about valuation")
 
         assert suggestions is not None
         assert isinstance(suggestions, list)
@@ -117,16 +114,16 @@ class TestAIMentorService:
         mentor = AIMentorService()
 
         response = await mentor.respond(
-            user_id="user_123",
-            question="Should I buy this stock?",
-            persona=MentorPersona.MAYA
+            user_id="user_123", question="Should I buy this stock?", persona=MentorPersona.MAYA
         )
 
         # Should include disclaimer or redirect
         assert response is not None
         # Check for compliance-related text
         lower_response = response["text"].lower()
-        assert any(word in lower_response for word in ['educational', 'learn', 'understand', 'not advice'])
+        assert any(
+            word in lower_response for word in ["educational", "learn", "understand", "not advice"]
+        )
 
     async def test_template_fallback(self):
         """Test graceful fallback to templates when FIML unavailable"""
@@ -134,9 +131,7 @@ class TestAIMentorService:
 
         # Should work even if FIML narrative generation fails
         response = await mentor.respond(
-            user_id="user_123",
-            question="What is diversification?",
-            persona=MentorPersona.MAYA
+            user_id="user_123", question="What is diversification?", persona=MentorPersona.MAYA
         )
 
         assert response is not None

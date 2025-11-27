@@ -2,15 +2,10 @@
 Tests for cache optimization features
 """
 
-
 import pytest
 
-from fiml.cache import (
-    BatchUpdateScheduler,
-    CacheAnalytics,
-    EvictionPolicy,
-    PredictiveCacheWarmer,
-)
+from fiml.cache import (BatchUpdateScheduler, CacheAnalytics, EvictionPolicy,
+                        PredictiveCacheWarmer)
 from fiml.cache.l1_cache import L1Cache
 from fiml.cache.manager import CacheManager
 from fiml.core.models import DataType
@@ -38,8 +33,8 @@ class TestL1CacheBatchOperations:
         cache = L1Cache()
 
         # Verify methods exist
-        assert hasattr(cache, 'get_many')
-        assert hasattr(cache, 'set_many')
+        assert hasattr(cache, "get_many")
+        assert hasattr(cache, "set_many")
 
         # Verify they're callable
         assert callable(cache.get_many)
@@ -55,7 +50,7 @@ class TestCacheManagerBatchOperations:
         manager = CacheManager()
 
         # Verify method exists
-        assert hasattr(manager, 'get_prices_batch')
+        assert hasattr(manager, "get_prices_batch")
         assert callable(manager.get_prices_batch)
 
     @pytest.mark.asyncio
@@ -64,7 +59,7 @@ class TestCacheManagerBatchOperations:
         manager = CacheManager()
 
         # Verify method exists
-        assert hasattr(manager, 'set_prices_batch')
+        assert hasattr(manager, "set_prices_batch")
         assert callable(manager.set_prices_batch)
 
     def test_cache_manager_has_batch_methods(self):
@@ -72,8 +67,8 @@ class TestCacheManagerBatchOperations:
         manager = CacheManager()
 
         # Check that batch methods exist
-        assert hasattr(manager, 'get_prices_batch')
-        assert hasattr(manager, 'set_prices_batch')
+        assert hasattr(manager, "get_prices_batch")
+        assert hasattr(manager, "set_prices_batch")
 
 
 class TestDatetimeTimezoneAwareness:
@@ -82,16 +77,19 @@ class TestDatetimeTimezoneAwareness:
     def test_cache_manager_exists(self):
         """Verify cache manager can be imported"""
         from fiml.cache.manager import CacheManager
+
         assert CacheManager is not None
 
     def test_l1_cache_exists(self):
         """Verify L1 cache can be imported"""
         from fiml.cache.l1_cache import L1Cache
+
         assert L1Cache is not None
 
     def test_l2_cache_exists(self):
         """Verify L2 cache can be imported"""
         from fiml.cache.l2_cache import L2Cache
+
         assert L2Cache is not None
 
 
@@ -101,6 +99,7 @@ class TestCacheWarmingIntegration:
     @pytest.mark.asyncio
     async def test_warming_pattern_tracking(self):
         """Test that warming tracks access patterns"""
+
         class MockProviderRegistry:
             def get_provider_for_data_type(self, data_type, asset):
                 return None
@@ -135,6 +134,7 @@ class TestBatchScheduler:
 
     def test_scheduler_initialization(self):
         """Test scheduler can be initialized"""
+
         class MockProviderRegistry:
             pass
 
@@ -175,4 +175,3 @@ class TestCacheAnalytics:
         stats = analytics.get_overall_stats()
         assert stats["total_hits"] == 1
         assert stats["total_misses"] == 0
-

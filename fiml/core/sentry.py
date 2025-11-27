@@ -121,7 +121,8 @@ def capture_exception(exception: Exception, **kwargs: Any) -> str | None:
     with sentry_sdk.push_scope() as scope:
         for key, value in kwargs.items():
             scope.set_extra(key, value)
-        return sentry_sdk.capture_exception(exception)
+        event_id: str | None = sentry_sdk.capture_exception(exception)
+        return event_id
 
 
 def capture_message(message: str, level: LogLevel = "info", **kwargs: Any) -> str | None:
@@ -139,7 +140,8 @@ def capture_message(message: str, level: LogLevel = "info", **kwargs: Any) -> st
     with sentry_sdk.push_scope() as scope:
         for key, value in kwargs.items():
             scope.set_extra(key, value)
-        return sentry_sdk.capture_message(message, level=level)
+        event_id: str | None = sentry_sdk.capture_message(message, level=level)
+        return event_id
 
 
 def set_user(user_id: str | None = None, **kwargs: Any) -> None:

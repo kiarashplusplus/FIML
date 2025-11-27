@@ -23,10 +23,7 @@ class TestTaskExecutor:
         """Test executing a fetch price task"""
         executor = TaskExecutor()
 
-        task = ExecutionTask(
-            type=TaskType.FETCH_PRICE,
-            params={"symbol": "AAPL"}
-        )
+        task = ExecutionTask(type=TaskType.FETCH_PRICE, params={"symbol": "AAPL"})
 
         context = {}
 
@@ -42,8 +39,7 @@ class TestTaskExecutor:
         executor = TaskExecutor()
 
         task = ExecutionTask(
-            type=TaskType.FETCH_OHLCV,
-            params={"symbol": "AAPL", "timeframe": "1d"}
+            type=TaskType.FETCH_OHLCV, params={"symbol": "AAPL", "timeframe": "1d"}
         )
 
         result = await executor.execute(task, {})
@@ -54,10 +50,7 @@ class TestTaskExecutor:
         """Test executing a fetch fundamentals task"""
         executor = TaskExecutor()
 
-        task = ExecutionTask(
-            type=TaskType.FETCH_FUNDAMENTALS,
-            params={"symbol": "AAPL"}
-        )
+        task = ExecutionTask(type=TaskType.FETCH_FUNDAMENTALS, params={"symbol": "AAPL"})
 
         result = await executor.execute(task, {})
         assert result is not None
@@ -67,10 +60,7 @@ class TestTaskExecutor:
         """Test executing a fetch news task"""
         executor = TaskExecutor()
 
-        task = ExecutionTask(
-            type=TaskType.FETCH_NEWS,
-            params={"symbol": "AAPL"}
-        )
+        task = ExecutionTask(type=TaskType.FETCH_NEWS, params={"symbol": "AAPL"})
 
         result = await executor.execute(task, {})
         assert result is not None
@@ -82,7 +72,7 @@ class TestTaskExecutor:
 
         task = ExecutionTask(
             type=TaskType.COMPUTE_TECHNICAL,
-            params={"symbol": "AAPL", "indicators": ["RSI", "MACD"]}
+            params={"symbol": "AAPL", "indicators": ["RSI", "MACD"]},
         )
 
         result = await executor.execute(task, {})
@@ -93,10 +83,7 @@ class TestTaskExecutor:
         """Test executing a compute sentiment task"""
         executor = TaskExecutor()
 
-        task = ExecutionTask(
-            type=TaskType.COMPUTE_SENTIMENT,
-            params={"symbol": "AAPL"}
-        )
+        task = ExecutionTask(type=TaskType.COMPUTE_SENTIMENT, params={"symbol": "AAPL"})
 
         result = await executor.execute(task, {})
         # Might return None for unimplemented tasks
@@ -107,10 +94,7 @@ class TestTaskExecutor:
         """Test executing a filter assets task"""
         executor = TaskExecutor()
 
-        task = ExecutionTask(
-            type=TaskType.FILTER_ASSETS,
-            params={"criteria": {}}
-        )
+        task = ExecutionTask(type=TaskType.FILTER_ASSETS, params={"criteria": {}})
 
         result = await executor.execute(task, {})
         # Might return list or dict
@@ -121,10 +105,7 @@ class TestTaskExecutor:
         """Test executing a compare metrics task"""
         executor = TaskExecutor()
 
-        task = ExecutionTask(
-            type=TaskType.COMPARE_METRICS,
-            params={"symbols": ["AAPL", "MSFT"]}
-        )
+        task = ExecutionTask(type=TaskType.COMPARE_METRICS, params={"symbols": ["AAPL", "MSFT"]})
 
         result = await executor.execute(task, {})
         # Might return None for unimplemented tasks
@@ -135,10 +116,7 @@ class TestTaskExecutor:
         """Test executing an aggregate task"""
         executor = TaskExecutor()
 
-        task = ExecutionTask(
-            type=TaskType.AGGREGATE,
-            params={}
-        )
+        task = ExecutionTask(type=TaskType.AGGREGATE, params={})
 
         result = await executor.execute(task, {})
         # Might return None for unimplemented tasks
@@ -155,7 +133,7 @@ class TestExecutionTaskInfo:
             status=TaskStatus.PENDING,
             query="GET PRICE FOR AAPL",
             total_steps=5,
-            completed_steps=0
+            completed_steps=0,
         )
 
         assert info.task_id == "test-123"
@@ -175,16 +153,11 @@ class TestDSLExecutorEdgeCases:
         plan = ExecutionPlan(query="complex query")
 
         # Create tasks with dependencies
-        task1 = ExecutionTask(
-            type=TaskType.FETCH_PRICE,
-            params={"symbol": "AAPL"}
-        )
+        task1 = ExecutionTask(type=TaskType.FETCH_PRICE, params={"symbol": "AAPL"})
         task1_id = plan.add_task(task1)
 
         task2 = ExecutionTask(
-            type=TaskType.COMPUTE_TECHNICAL,
-            params={"symbol": "AAPL"},
-            dependencies=[task1_id]
+            type=TaskType.COMPUTE_TECHNICAL, params={"symbol": "AAPL"}, dependencies=[task1_id]
         )
         plan.add_task(task2)
 

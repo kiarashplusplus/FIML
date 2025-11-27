@@ -189,11 +189,7 @@ class TestMultiAssetMonitoring:
         """Test monitoring a single asset"""
         response = client.get(
             "/dashboard/assets/monitor",
-            params={
-                "symbols": ["AAPL"],
-                "asset_type": "equity",
-                "market": "US"
-            }
+            params={"symbols": ["AAPL"], "asset_type": "equity", "market": "US"},
         )
 
         # May fail if no providers available in test environment
@@ -214,11 +210,7 @@ class TestMultiAssetMonitoring:
         """Test monitoring multiple assets"""
         response = client.get(
             "/dashboard/assets/monitor",
-            params={
-                "symbols": ["AAPL", "GOOGL", "MSFT"],
-                "asset_type": "equity",
-                "market": "US"
-            }
+            params={"symbols": ["AAPL", "GOOGL", "MSFT"], "asset_type": "equity", "market": "US"},
         )
 
         # May fail if no providers available

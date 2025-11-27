@@ -1,4 +1,5 @@
 """Custom conftest for task_registry tests that uses the existing Docker Redis on port 6380"""
+
 import pytest
 import redis
 
@@ -9,7 +10,7 @@ from fiml.monitoring.task_registry import TaskRegistry
 @pytest.fixture
 def redis_client():
     """Provide a real Redis client connected to the Docker Redis on port 6380"""
-    client = redis.Redis(host='localhost', port=6380, db=0, decode_responses=False)
+    client = redis.Redis(host="localhost", port=6380, db=0, decode_responses=False)
     yield client
     # Cleanup: delete all task keys
     for key in client.scan_iter("fiml:task:*"):
@@ -35,5 +36,5 @@ def sample_task():
         status=TaskStatus.PENDING,
         query="test query",
         created_at=None,
-        updated_at=None
+        updated_at=None,
     )

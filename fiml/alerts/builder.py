@@ -32,6 +32,7 @@ logger = get_logger(__name__)
 # Models
 class DeliveryMethod(str, Enum):
     """Alert delivery methods"""
+
     EMAIL = "email"
     TELEGRAM = "telegram"
     WEBHOOK = "webhook"
@@ -39,6 +40,7 @@ class DeliveryMethod(str, Enum):
 
 class TriggerType(str, Enum):
     """Types of alert triggers"""
+
     WATCHDOG_EVENT = "watchdog_event"
     PRICE_THRESHOLD = "price_threshold"
     VOLUME_THRESHOLD = "volume_threshold"
@@ -47,6 +49,7 @@ class TriggerType(str, Enum):
 
 class EmailConfig(BaseModel):
     """Email delivery configuration"""
+
     smtp_host: str
     smtp_port: int = 587
     smtp_user: str
@@ -58,12 +61,14 @@ class EmailConfig(BaseModel):
 
 class TelegramConfig(BaseModel):
     """Telegram delivery configuration"""
+
     bot_token: str
     chat_ids: List[str]
 
 
 class WebhookConfig(BaseModel):
     """Webhook delivery configuration"""
+
     url: HttpUrl
     method: str = "POST"
     headers: Dict[str, str] = Field(default_factory=dict)
@@ -72,6 +77,7 @@ class WebhookConfig(BaseModel):
 
 class AlertTrigger(BaseModel):
     """Alert trigger configuration"""
+
     type: TriggerType
     event_filter: Optional[EventFilter] = None
     price_threshold: Optional[float] = None
@@ -82,6 +88,7 @@ class AlertTrigger(BaseModel):
 
 class AlertConfig(BaseModel):
     """Complete alert configuration"""
+
     alert_id: str
     name: str
     description: str
@@ -135,19 +142,19 @@ class AlertBuilder:
         from fiml.core.config import settings
 
         # Email config
-        smtp_host = getattr(settings, 'smtp_host', None)
+        smtp_host = getattr(settings, "smtp_host", None)
         if smtp_host:
             self._default_email_config = EmailConfig(
                 smtp_host=smtp_host,
-                smtp_port=getattr(settings, 'smtp_port', 587),
-                smtp_user=getattr(settings, 'smtp_user', ''),
-                smtp_password=getattr(settings, 'smtp_password', ''),
-                from_email=getattr(settings, 'smtp_from_email', ''),
+                smtp_port=getattr(settings, "smtp_port", 587),
+                smtp_user=getattr(settings, "smtp_user", ""),
+                smtp_password=getattr(settings, "smtp_password", ""),
+                from_email=getattr(settings, "smtp_from_email", ""),
                 to_emails=[],
             )
 
         # Telegram config
-        telegram_token = getattr(settings, 'telegram_bot_token', None)
+        telegram_token = getattr(settings, "telegram_bot_token", None)
         if telegram_token:
             self._default_telegram_config = TelegramConfig(
                 bot_token=telegram_token,
@@ -258,6 +265,7 @@ class AlertBuilder:
 
     def _subscribe_to_watchdog_events(self, config: AlertConfig) -> None:
         """Subscribe to watchdog events for an alert"""
+
         def event_handler(event: WatchdogEvent) -> None:
             """Callback for watchdog events - creates async task"""
             asyncio.create_task(self._handle_event(config, event))
@@ -333,10 +341,10 @@ class AlertBuilder:
 
         try:
             # Create message
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"FIML Alert: {config.name}"
-            msg['From'] = config.email_config.from_email
-            msg['To'] = ', '.join(config.email_config.to_emails)
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = f"FIML Alert: {config.name}"
+            msg["From"] = config.email_config.from_email
+            msg["To"] = ", ".join(config.email_config.to_emails)
 
             # Create HTML body
             html_body = f"""
@@ -360,23 +368,17 @@ class AlertBuilder:
             </html>
             """
 
-            msg.attach(MIMEText(html_body, 'html'))
+            msg.attach(MIMEText(html_body, "html"))
 
             # Capture config locally for closure safety
             email_config = config.email_config
 
             # Send email in thread to avoid blocking
             def send_smtp() -> None:
-                with smtplib.SMTP(
-                    email_config.smtp_host,
-                    email_config.smtp_port
-                ) as server:
+                with smtplib.SMTP(email_config.smtp_host, email_config.smtp_port) as server:
                     if email_config.use_tls:
                         server.starttls()
-                    server.login(
-                        email_config.smtp_user,
-                        email_config.smtp_password
-                    )
+                    server.login(email_config.smtp_user, email_config.smtp_password)
                     server.send_message(msg)
 
             # Run SMTP in thread pool to avoid blocking
@@ -415,16 +417,14 @@ class AlertBuilder:
                     )
 
                     payload = {
-                        'chat_id': chat_id,
-                        'text': message,
-                        'parse_mode': 'Markdown',
+                        "chat_id": chat_id,
+                        "text": message,
+                        "parse_mode": "Markdown",
                     }
 
                     async with session.post(url, json=payload) as resp:
                         if resp.status != 200:
-                            logger.error(
-                                f"Telegram API error: {resp.status} - {await resp.text()}"
-                            )
+                            logger.error(f"Telegram API error: {resp.status} - {await resp.text()}")
 
             logger.info(f"Telegram message sent for alert: {config.name}")
 
@@ -439,30 +439,31 @@ class AlertBuilder:
         try:
             # Prepare payload
             payload = {
-                'alert_id': config.alert_id,
-                'alert_name': config.name,
-                'event': event.to_dict(),
-                'timestamp': datetime.now(timezone.utc).isoformat(),
+                "alert_id": config.alert_id,
+                "alert_name": config.name,
+                "event": event.to_dict(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             # Prepare headers
             headers = config.webhook_config.headers.copy()
-            headers['Content-Type'] = 'application/json'
+            headers["Content-Type"] = "application/json"
 
             if config.webhook_config.auth_token:
-                headers['Authorization'] = f"Bearer {config.webhook_config.auth_token}"
+                headers["Authorization"] = f"Bearer {config.webhook_config.auth_token}"
 
             # Send webhook
-            async with aiohttp.ClientSession() as session, session.request(
-                method=config.webhook_config.method,
-                url=str(config.webhook_config.url),
-                json=payload,
-                headers=headers,
-            ) as resp:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.request(
+                    method=config.webhook_config.method,
+                    url=str(config.webhook_config.url),
+                    json=payload,
+                    headers=headers,
+                ) as resp,
+            ):
                 if resp.status not in [200, 201, 202, 204]:
-                    logger.error(
-                        f"Webhook error: {resp.status} - {await resp.text()}"
-                    )
+                    logger.error(f"Webhook error: {resp.status} - {await resp.text()}")
 
             logger.info(f"Webhook sent for alert: {config.name}")
 

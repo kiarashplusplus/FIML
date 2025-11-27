@@ -122,10 +122,7 @@ class CCXTProvider(BaseProvider):
                 asset=asset_symbol,
                 error=error_msg[:200],
             )
-            raise ProviderRateLimitError(
-                "Exchange rate limit exceeded",
-                retry_after=60
-            )
+            raise ProviderRateLimitError("Exchange rate limit exceeded", retry_after=60)
 
         # Handle maintenance mode
         if isinstance(exception, ccxt.OnMaintenance):
@@ -233,10 +230,12 @@ class CCXTProvider(BaseProvider):
             # Suppress ResourceWarning for expected CCXT cleanup messages during initialization
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed")
-                self._exchange = exchange_class({
-                    'enableRateLimit': True,
-                    'timeout': self.config.timeout_seconds * 1000,  # milliseconds
-                })
+                self._exchange = exchange_class(
+                    {
+                        "enableRateLimit": True,
+                        "timeout": self.config.timeout_seconds * 1000,  # milliseconds
+                    }
+                )
 
                 # Load markets
                 await self._exchange.load_markets()
@@ -320,6 +319,7 @@ class CCXTProvider(BaseProvider):
             raise
         except Exception as e:
             self._handle_ccxt_exception(e, operation="fetch_price", asset_symbol=asset.symbol)
+            raise  # This line will never be reached but satisfies mypy
 
     async def fetch_ohlcv(
         self, asset: Asset, timeframe: str = "1d", limit: int = 100
@@ -347,11 +347,7 @@ class CCXTProvider(BaseProvider):
             ccxt_timeframe = timeframe_map.get(timeframe, "1d")
 
             # Fetch OHLCV data
-            ohlcv = await self._exchange.fetch_ohlcv(
-                symbol,
-                timeframe=ccxt_timeframe,
-                limit=limit
-            )
+            ohlcv = await self._exchange.fetch_ohlcv(symbol, timeframe=ccxt_timeframe, limit=limit)
 
             if not ohlcv:
                 raise ProviderError(f"No OHLCV data for {symbol}")
@@ -360,14 +356,16 @@ class CCXTProvider(BaseProvider):
             ohlcv_data = []
             for candle in ohlcv:
                 # CCXT format: [timestamp, open, high, low, close, volume]
-                ohlcv_data.append({
-                    "timestamp": datetime.fromtimestamp(candle[0] / 1000).isoformat(),
-                    "open": float(candle[1]),
-                    "high": float(candle[2]),
-                    "low": float(candle[3]),
-                    "close": float(candle[4]),
-                    "volume": float(candle[5]),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": datetime.fromtimestamp(candle[0] / 1000).isoformat(),
+                        "open": float(candle[1]),
+                        "high": float(candle[2]),
+                        "low": float(candle[3]),
+                        "close": float(candle[4]),
+                        "volume": float(candle[5]),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -398,6 +396,7 @@ class CCXTProvider(BaseProvider):
             raise
         except Exception as e:
             self._handle_ccxt_exception(e, operation="fetch_ohlcv", asset_symbol=asset.symbol)
+            raise  # This line will never be reached but satisfies mypy
 
     async def fetch_fundamentals(self, asset: Asset) -> ProviderResponse:
         """
@@ -448,8 +447,12 @@ class CCXTProvider(BaseProvider):
                 "taker_fee": float(market.get("taker", 0.0)),
                 "precision_price": market.get("precision", {}).get("price", 8),
                 "precision_amount": market.get("precision", {}).get("amount", 8),
-                "min_amount": float(market.get("limits", {}).get("amount", {}).get("min", 0.0) or 0.0),
-                "max_amount": float(market.get("limits", {}).get("amount", {}).get("max", 0.0) or 0.0),
+                "min_amount": float(
+                    market.get("limits", {}).get("amount", {}).get("min", 0.0) or 0.0
+                ),
+                "max_amount": float(
+                    market.get("limits", {}).get("amount", {}).get("max", 0.0) or 0.0
+                ),
                 "min_cost": float(market.get("limits", {}).get("cost", {}).get("min", 0.0) or 0.0),
             }
 
@@ -473,7 +476,10 @@ class CCXTProvider(BaseProvider):
             # Re-raise ProviderError as-is
             raise
         except Exception as e:
-            self._handle_ccxt_exception(e, operation="fetch_fundamentals", asset_symbol=asset.symbol)
+            self._handle_ccxt_exception(
+                e, operation="fetch_fundamentals", asset_symbol=asset.symbol
+            )
+            raise  # This line will never be reached but satisfies mypy
 
     async def fetch_news(self, asset: Asset, limit: int = 10) -> ProviderResponse:
         """
@@ -521,9 +527,9 @@ class CCXTProvider(BaseProvider):
         """Get provider health metrics"""
         try:
             # Check exchange status
-            if self._exchange and hasattr(self._exchange, 'fetch_status'):
+            if self._exchange and hasattr(self._exchange, "fetch_status"):
                 status = await self._exchange.fetch_status()
-                is_healthy = status.get('status') == 'ok'
+                is_healthy = status.get("status") == "ok"
             else:
                 # Fallback: try fetching a common pair
                 test_asset = Asset(symbol="BTC/USDT", asset_type=AssetType.CRYPTO)
@@ -555,9 +561,9 @@ class CCXTProvider(BaseProvider):
         """Check provider health"""
         try:
             # Check exchange status
-            if self._exchange and hasattr(self._exchange, 'fetch_status'):
+            if self._exchange and hasattr(self._exchange, "fetch_status"):
                 status = await self._exchange.fetch_status()
-                is_healthy = status.get('status') == 'ok'
+                is_healthy = status.get("status") == "ok"
             else:
                 # Fallback: try fetching a common pair
                 test_asset = Asset(symbol="BTC/USDT", asset_type=AssetType.CRYPTO)
@@ -606,31 +612,22 @@ class CCXTMultiExchangeProvider:
         if exchanges is None:
             exchanges = ["binance", "coinbase", "kraken"]
 
-        self.exchanges = {
-            exchange_id: CCXTProvider(exchange_id)
-            for exchange_id in exchanges
-        }
+        self.exchanges = {exchange_id: CCXTProvider(exchange_id) for exchange_id in exchanges}
 
     async def initialize_all(self) -> None:
         """Initialize all exchanges"""
-        await asyncio.gather(*[
-            provider.initialize()
-            for provider in self.exchanges.values()
-        ])
+        await asyncio.gather(*[provider.initialize() for provider in self.exchanges.values()])
 
     async def shutdown_all(self) -> None:
         """Shutdown all exchanges"""
-        await asyncio.gather(*[
-            provider.shutdown()
-            for provider in self.exchanges.values()
-        ])
+        await asyncio.gather(*[provider.shutdown() for provider in self.exchanges.values()])
 
     async def fetch_price_from_all(self, asset: Asset) -> List[ProviderResponse]:
         """Fetch price from all exchanges"""
-        results = await asyncio.gather(*[
-            provider.fetch_price(asset)
-            for provider in self.exchanges.values()
-        ], return_exceptions=True)
+        results = await asyncio.gather(
+            *[provider.fetch_price(asset) for provider in self.exchanges.values()],
+            return_exceptions=True,
+        )
 
         # Filter out errors
         return [r for r in results if isinstance(r, ProviderResponse)]

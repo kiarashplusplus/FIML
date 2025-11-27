@@ -79,7 +79,7 @@ class EarningsAnomalyWatchdog(BaseWatchdog):
                         severity=severity,
                         asset=asset,
                         description=f"{symbol} {'beat' if surprise_pct > 0 else 'missed'} "
-                                  f"earnings by {abs(surprise_pct):.1f}%",
+                        f"earnings by {abs(surprise_pct):.1f}%",
                         data={
                             "actual_eps": actual,
                             "estimated_eps": estimate,
@@ -266,7 +266,7 @@ class FundingRateWatchdog(BaseWatchdog):
                         severity=severity,
                         asset=asset,
                         description=f"{symbol} extreme funding rate: "
-                                  f"{avg_funding * 100:.3f}% per 8h",
+                        f"{avg_funding * 100:.3f}% per 8h",
                         data={
                             "avg_funding_rate": avg_funding,
                             "funding_rate_pct": avg_funding * 100,
@@ -309,7 +309,9 @@ class LiquidityDropWatchdog(BaseWatchdog):
         for symbol in self._monitored_symbols:
             try:
                 # Determine asset type
-                asset_type = AssetType.CRYPTO if symbol in ["BTC", "ETH", "SOL"] else AssetType.EQUITY
+                asset_type = (
+                    AssetType.CRYPTO if symbol in ["BTC", "ETH", "SOL"] else AssetType.EQUITY
+                )
                 asset = Asset(symbol=symbol, asset_type=asset_type)
 
                 # Get current order book depth
@@ -494,10 +496,12 @@ class ExchangeOutageWatchdog(BaseWatchdog):
             try:
                 start_time = datetime.now(timezone.utc)
 
-                async with aiohttp.ClientSession() as session, session.get(
-                    health_url,
-                    timeout=aiohttp.ClientTimeout(total=self._timeout_threshold)
-                ) as response:
+                async with (
+                    aiohttp.ClientSession() as session,
+                    session.get(
+                        health_url, timeout=aiohttp.ClientTimeout(total=self._timeout_threshold)
+                    ) as response,
+                ):
                     elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
 
                     if response.status != 200:
@@ -605,8 +609,7 @@ class PriceAnomalyWatchdog(BaseWatchdog):
                 # Keep only last 2 minutes
                 cutoff_time = current_time - timedelta(minutes=2)
                 self._price_history[symbol] = [
-                    (t, p) for t, p in self._price_history[symbol]
-                    if t > cutoff_time
+                    (t, p) for t, p in self._price_history[symbol] if t > cutoff_time
                 ]
 
                 # Check for rapid movement (need at least 2 data points)
@@ -615,10 +618,7 @@ class PriceAnomalyWatchdog(BaseWatchdog):
 
                 # Get price from 1 minute ago
                 minute_ago = current_time - timedelta(minutes=1)
-                past_prices = [
-                    p for t, p in self._price_history[symbol]
-                    if t <= minute_ago
-                ]
+                past_prices = [p for t, p in self._price_history[symbol] if t <= minute_ago]
 
                 if not past_prices:
                     continue
@@ -630,14 +630,16 @@ class PriceAnomalyWatchdog(BaseWatchdog):
                 if abs(price_change_pct) > self._rapid_move_threshold:
                     severity = Severity.CRITICAL if abs(price_change_pct) > 10 else Severity.HIGH
 
-                    event_type = EventType.FLASH_CRASH if price_change_pct < -10 else EventType.PRICE_ANOMALY
+                    event_type = (
+                        EventType.FLASH_CRASH if price_change_pct < -10 else EventType.PRICE_ANOMALY
+                    )
 
                     return WatchdogEvent(
                         type=event_type,
                         severity=severity,
                         asset=asset,
                         description=f"{symbol} rapid price movement: "
-                                  f"{'+' if price_change_pct > 0 else ''}{price_change_pct:.2f}% in 1 min",
+                        f"{'+' if price_change_pct > 0 else ''}{price_change_pct:.2f}% in 1 min",
                         data={
                             "current_price": current_price,
                             "past_price": past_price,

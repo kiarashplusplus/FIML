@@ -118,7 +118,9 @@ class PerformanceMonitor:
         self._tasks_failed: int = 0
 
     @contextmanager
-    def track(self, operation: str, threshold: Optional[float] = None) -> Generator[None, None, None]:
+    def track(
+        self, operation: str, threshold: Optional[float] = None
+    ) -> Generator[None, None, None]:
         """
         Track synchronous operation timing
 
@@ -135,7 +137,9 @@ class PerformanceMonitor:
             self._record_timing(operation, elapsed, threshold)
 
     @asynccontextmanager
-    async def track_async(self, operation: str, threshold: Optional[float] = None) -> AsyncGenerator[None, None]:
+    async def track_async(
+        self, operation: str, threshold: Optional[float] = None
+    ) -> AsyncGenerator[None, None]:
         """
         Track asynchronous operation timing
 
@@ -151,7 +155,9 @@ class PerformanceMonitor:
             elapsed = time.perf_counter() - start
             self._record_timing(operation, elapsed, threshold)
 
-    def _record_timing(self, operation: str, elapsed: float, threshold: Optional[float] = None) -> None:
+    def _record_timing(
+        self, operation: str, elapsed: float, threshold: Optional[float] = None
+    ) -> None:
         """Record operation timing"""
         # Store timing
         if operation not in self._operation_times:
@@ -203,7 +209,9 @@ class PerformanceMonitor:
         """Record cache operation timing (metrics tracked by cache.analytics module)"""
         pass
 
-    def record_provider_request(self, provider: str, operation: str, elapsed: float, success: bool) -> None:
+    def record_provider_request(
+        self, provider: str, operation: str, elapsed: float, success: bool
+    ) -> None:
         """Record provider API request"""
         status = "success" if success else "error"
         PROVIDER_REQUESTS.labels(provider=provider, operation=operation, status=status).inc()
@@ -285,10 +293,7 @@ class PerformanceMonitor:
         return {
             "cache": self.get_cache_metrics(),
             "slow_queries": len(self._slow_queries),
-            "operations": {
-                op: self.get_operation_stats(op)
-                for op in self.get_all_operations()
-            },
+            "operations": {op: self.get_operation_stats(op) for op in self.get_all_operations()},
             "tasks": {
                 "completed": self._tasks_completed,
                 "failed": self._tasks_failed,

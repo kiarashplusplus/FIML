@@ -71,9 +71,7 @@ class TestPerformanceTargets:
         # Pre-warm cache with some symbols
         for symbol in symbols[:3]:
             await cache_manager.l1.set(
-                f"price:{symbol}",
-                {"price": 150.0, "symbol": symbol},
-                ttl_seconds=300
+                f"price:{symbol}", {"price": 150.0, "symbol": symbol}, ttl_seconds=300
             )
 
         # Simulate requests (80% to cached symbols, 20% to uncached)
@@ -138,7 +136,9 @@ class TestPerformanceTargets:
         print(f"  Completed: {completed}")
         print(f"  Failed: {failed}")
 
-        assert completion_rate >= 0.95, f"Task completion rate {completion_rate:.2%} below target of 95%"
+        assert (
+            completion_rate >= 0.95
+        ), f"Task completion rate {completion_rate:.2%} below target of 95%"
 
     @pytest.mark.asyncio
     async def test_system_uptime_simulation(self, base_url: str = "http://localhost:8000"):
@@ -224,10 +224,7 @@ class TestPerformanceTargets:
         await provider_registry.initialize()
 
         asset = Asset(
-            symbol="AAPL",
-            name="Apple Inc.",
-            asset_type=AssetType.EQUITY,
-            market=Market.US
+            symbol="AAPL", name="Apple Inc.", asset_type=AssetType.EQUITY, market=Market.US
         )
 
         successful_requests = 0
@@ -269,7 +266,7 @@ class TestPerformanceTargets:
         print(f"  - Slow queries: {metrics.get('slow_queries', 0)}")
 
         assert metrics is not None, "Performance metrics not available"
-        assert 'cache' in metrics, "Cache metrics not available"
+        assert "cache" in metrics, "Cache metrics not available"
 
 
 class TestPerformanceRegression:
@@ -289,11 +286,11 @@ class TestPerformanceRegression:
         current_metrics = performance_monitor.get_metrics_summary()
 
         # Example check
-        operations = current_metrics.get('operations', {})
+        operations = current_metrics.get("operations", {})
 
         for op_name, stats in operations.items():
-            if stats and 'p95' in stats:
-                p95 = stats['p95']
+            if stats and "p95" in stats:
+                p95 = stats["p95"]
 
                 # In real implementation, compare with baseline
                 # baseline_p95 = load_baseline(op_name)

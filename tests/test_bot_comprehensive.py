@@ -20,11 +20,13 @@ from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
 from fiml.bot.education.gamification import GamificationEngine, UserStats
 from fiml.bot.education.lesson_engine import LessonContentEngine
-from fiml.bot.education.quiz_system import QuizQuestion, QuizSession, QuizSystem
+from fiml.bot.education.quiz_system import (QuizQuestion, QuizSession,
+                                            QuizSystem)
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def temp_storage_dir():
@@ -42,10 +44,7 @@ def encryption_key():
 @pytest.fixture
 def key_manager(encryption_key, temp_storage_dir):
     """UserProviderKeyManager instance with file-based storage"""
-    return UserProviderKeyManager(
-        encryption_key=encryption_key,
-        storage_path=temp_storage_dir
-    )
+    return UserProviderKeyManager(encryption_key=encryption_key, storage_path=temp_storage_dir)
 
 
 @pytest.fixture
@@ -74,11 +73,7 @@ def temp_lessons_dir():
             "learning_objectives": ["Learn basics", "Understand concepts"],
             "prerequisites": [],
             "sections": [
-                {
-                    "type": "introduction",
-                    "content": "Welcome to the test lesson",
-                    "metadata": {}
-                }
+                {"type": "introduction", "content": "Welcome to the test lesson", "metadata": {}}
             ],
             "quiz_questions": [
                 {
@@ -88,18 +83,18 @@ def temp_lessons_dir():
                     "options": [
                         {"id": "a", "text": "3"},
                         {"id": "b", "text": "4"},
-                        {"id": "c", "text": "5"}
+                        {"id": "c", "text": "5"},
                     ],
                     "correct_answer": "b",
-                    "xp_reward": 10
+                    "xp_reward": 10,
                 }
             ],
             "xp_reward": 50,
-            "next_lesson": None
+            "next_lesson": None,
         }
 
         lesson_file = Path(tmpdir) / "test_lesson_1.yaml"
-        with open(lesson_file, 'w') as f:
+        with open(lesson_file, "w") as f:
             yaml.dump(lesson_data, f)
 
         # Create second lesson
@@ -111,20 +106,14 @@ def temp_lessons_dir():
             "duration_minutes": 15,
             "learning_objectives": ["Advanced concepts"],
             "prerequisites": ["test_lesson_1"],
-            "sections": [
-                {
-                    "type": "explanation",
-                    "content": "Advanced content",
-                    "metadata": {}
-                }
-            ],
+            "sections": [{"type": "explanation", "content": "Advanced content", "metadata": {}}],
             "quiz_questions": [],
             "xp_reward": 75,
-            "next_lesson": None
+            "next_lesson": None,
         }
 
         lesson_file_2 = Path(tmpdir) / "test_lesson_2.yaml"
-        with open(lesson_file_2, 'w') as f:
+        with open(lesson_file_2, "w") as f:
             yaml.dump(lesson_data_2, f)
 
         yield tmpdir
@@ -145,6 +134,7 @@ def quiz_system():
 # ============================================================================
 # UserProviderKeyManager Tests (File-based storage)
 # ============================================================================
+
 
 class TestUserProviderKeyManager:
     """Test key management with file-based encrypted storage"""
@@ -269,7 +259,7 @@ class TestUserProviderKeyManager:
         """Test storing key with metadata"""
         user_id = "test_user"
         provider = "alpha_vantage"
-        api_key = "test_av_key"
+        api_key = "ABC123XYZ4567890"
         metadata = {"tier": "free", "limit": 500}
 
         success = await key_manager.store_user_key(user_id, provider, api_key, metadata)
@@ -284,6 +274,7 @@ class TestUserProviderKeyManager:
 # FIMLProviderConfigurator Tests
 # ============================================================================
 
+
 class TestFIMLProviderConfigurator:
     """Test provider configuration management"""
 
@@ -297,7 +288,7 @@ class TestFIMLProviderConfigurator:
         """Test getting user-specific provider configuration"""
         user_id = "test_user"
         provider_name = "alpha_vantage"
-        api_key = "test-av-key"
+        api_key = "ABC123XYZ4567890"
 
         # Store user key
         await key_manager.store_user_key(user_id, provider_name, api_key)
@@ -326,11 +317,7 @@ class TestFIMLProviderConfigurator:
         """Test configuring multiple providers for user"""
         user_id = "test_user"
 
-        providers = {
-            "alpha_vantage": "av-key",
-            "polygon": "polygon-key",
-            "finnhub": "finnhub-key"
-        }
+        providers = {"alpha_vantage": "ABC123XYZ4567890", "polygon": "abcd1234EFGH5678ijkl9012MNOP3456", "finnhub": "abcdefgh12345678ijkl"}
 
         for provider, key in providers.items():
             await key_manager.store_user_key(user_id, provider, key)
@@ -361,6 +348,7 @@ class TestFIMLProviderConfigurator:
 # ============================================================================
 # GamificationEngine Tests
 # ============================================================================
+
 
 class TestGamificationEngine:
     """Test gamification system (XP, levels, badges)"""
@@ -489,6 +477,7 @@ class TestGamificationEngine:
 # LessonContentEngine Tests
 # ============================================================================
 
+
 class TestLessonContentEngine:
     """Test lesson content management and rendering"""
 
@@ -602,12 +591,7 @@ class TestLessonContentEngine:
 
     def test_validate_lesson(self, lesson_engine):
         """Test lesson validation"""
-        lesson_data = {
-            "id": "test",
-            "title": "Test",
-            "sections": [],
-            "quiz": {"questions": []}
-        }
+        lesson_data = {"id": "test", "title": "Test", "sections": [], "quiz": {"questions": []}}
 
         is_valid = lesson_engine.validate_lesson(lesson_data)
         assert isinstance(is_valid, bool)
@@ -615,11 +599,7 @@ class TestLessonContentEngine:
     def test_can_access_lesson(self, lesson_engine):
         """Test lesson access check"""
         user_id = "test_user"
-        lesson_data = {
-            "id": "test_lesson_1",
-            "title": "Test",
-            "prerequisites": []
-        }
+        lesson_data = {"id": "test_lesson_1", "title": "Test", "prerequisites": []}
 
         can_access = lesson_engine.can_access_lesson(user_id, lesson_data)
         assert isinstance(can_access, bool)
@@ -628,6 +608,7 @@ class TestLessonContentEngine:
 # ============================================================================
 # QuizSystem Tests
 # ============================================================================
+
 
 class TestQuizSystem:
     """Test interactive quiz functionality"""
@@ -647,11 +628,8 @@ class TestQuizSystem:
                 id="q1",
                 type="multiple_choice",
                 text="What is 2+2?",
-                options=[
-                    {"id": "a", "text": "3"},
-                    {"id": "b", "text": "4"}
-                ],
-                correct_answer="b"
+                options=[{"id": "a", "text": "3"}, {"id": "b", "text": "4"}],
+                correct_answer="b",
             )
         ]
 
@@ -674,10 +652,10 @@ class TestQuizSystem:
                 text="What is 2+2?",
                 options=[
                     {"id": "a", "text": "3", "correct": False},
-                    {"id": "b", "text": "4", "correct": True}
+                    {"id": "b", "text": "4", "correct": True},
                 ],
                 correct_answer="4",
-                xp_reward=10
+                xp_reward=10,
             )
         ]
 
@@ -699,11 +677,8 @@ class TestQuizSystem:
                 id="q1",
                 type="multiple_choice",
                 text="What is 2+2?",
-                options=[
-                    {"id": "a", "text": "3"},
-                    {"id": "b", "text": "4", "correct": True}
-                ],
-                correct_answer="4"
+                options=[{"id": "a", "text": "3"}, {"id": "b", "text": "4", "correct": True}],
+                correct_answer="4",
             )
         ]
 
@@ -721,10 +696,22 @@ class TestQuizSystem:
         lesson_id = "test_lesson"
 
         questions = [
-            QuizQuestion(id="q1", type="multiple_choice", text="Q1",
-                        options=[{"text": "a", "correct": True}], correct_answer="a", xp_reward=10),
-            QuizQuestion(id="q2", type="multiple_choice", text="Q2",
-                        options=[{"text": "b", "correct": True}], correct_answer="b", xp_reward=10),
+            QuizQuestion(
+                id="q1",
+                type="multiple_choice",
+                text="Q1",
+                options=[{"text": "a", "correct": True}],
+                correct_answer="a",
+                xp_reward=10,
+            ),
+            QuizQuestion(
+                id="q2",
+                type="multiple_choice",
+                text="Q2",
+                options=[{"text": "b", "correct": True}],
+                correct_answer="b",
+                xp_reward=10,
+            ),
         ]
 
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
@@ -750,7 +737,7 @@ class TestQuizSystem:
                 type="numeric",
                 text="What is pi (approximately)?",
                 correct_answer=3.14159,
-                tolerance=0.01
+                tolerance=0.01,
             )
         ]
 
@@ -798,8 +785,13 @@ class TestQuizSystem:
         lesson_id = "test_lesson"
 
         questions = [
-            QuizQuestion(id="q1", type="multiple_choice", text="Q",
-                        options=[{"text": "a", "correct": True}], correct_answer="a"),
+            QuizQuestion(
+                id="q1",
+                type="multiple_choice",
+                text="Q",
+                options=[{"text": "a", "correct": True}],
+                correct_answer="a",
+            ),
         ]
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
 
@@ -820,8 +812,15 @@ class TestQuizSystem:
         lesson_id = "test_lesson"
 
         # Complete a quiz
-        questions = [QuizQuestion(id="q1", type="multiple_choice", text="Q",
-                                 options=[{"text": "a", "correct": True}], correct_answer="a")]
+        questions = [
+            QuizQuestion(
+                id="q1",
+                type="multiple_choice",
+                text="Q",
+                options=[{"text": "a", "correct": True}],
+                correct_answer="a",
+            )
+        ]
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)
         await quiz_system.submit_answer(session.session_id, "a")
 
@@ -840,7 +839,7 @@ class TestQuizSystem:
                 id="q1",
                 type="true_false",
                 text="Is Python a programming language?",
-                correct_answer="true"
+                correct_answer="true",
             )
         ]
 
@@ -883,11 +882,7 @@ class TestQuizSystem:
 
         questions = [
             QuizQuestion(
-                id="q1",
-                type="numeric",
-                text="What is pi?",
-                correct_answer=3.14159,
-                tolerance=0.001
+                id="q1", type="numeric", text="What is pi?", correct_answer=3.14159, tolerance=0.001
             )
         ]
 
@@ -904,12 +899,7 @@ class TestQuizSystem:
         lesson_id = "test_lesson"
 
         questions = [
-            QuizQuestion(
-                id="q1",
-                type="numeric",
-                text="What is pi?",
-                correct_answer=3.14159
-            )
+            QuizQuestion(id="q1", type="numeric", text="What is pi?", correct_answer=3.14159)
         ]
 
         session = await quiz_system.start_quiz(user_id, lesson_id, questions)

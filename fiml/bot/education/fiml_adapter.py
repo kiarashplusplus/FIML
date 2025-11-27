@@ -36,10 +36,7 @@ class FIMLEducationalDataAdapter:
         logger.info("FIMLEducationalDataAdapter initialized with FIML integration")
 
     async def get_educational_snapshot(
-        self,
-        symbol: str,
-        user_id: str,
-        context: str = "lesson"
+        self, symbol: str, user_id: str, context: str = "lesson"
     ) -> Dict:
         """
         Get market data formatted for education using FIML arbitration
@@ -58,13 +55,12 @@ class FIMLEducationalDataAdapter:
 
             # Get arbitration plan (will use user's keys via FIMLProviderConfigurator)
             plan = await self.arbitration_engine.arbitrate_request(
-                asset=asset,
-                data_type=DataType.PRICE,
-                user_region="US"
+                asset=asset, data_type=DataType.PRICE, user_region="US"
             )
 
             # Execute the plan to get actual data
             from fiml.providers.registry import provider_registry
+
             provider = provider_registry.get_provider(plan.primary_provider)
             if not provider:
                 raise ValueError(f"Provider {plan.primary_provider} not found")
@@ -87,12 +83,12 @@ class FIMLEducationalDataAdapter:
                     "current": current_price,
                     "change": change,
                     "change_percent": change_percent,
-                    "explanation": self.explain_price_movement(change_percent)
+                    "explanation": self.explain_price_movement(change_percent),
                 },
                 "volume": {
                     "current": volume,
                     "average": avg_volume,
-                    "interpretation": self.explain_volume(volume, avg_volume)
+                    "interpretation": self.explain_volume(volume, avg_volume),
                 },
                 "fundamentals": {
                     "pe_ratio": quote.get("pe_ratio"),
@@ -101,17 +97,18 @@ class FIMLEducationalDataAdapter:
                         self.explain_pe_ratio(float(quote["pe_ratio"]))
                         if quote.get("pe_ratio") is not None
                         else "P/E ratio not available"
-                    )
+                    ),
                 },
                 "disclaimer": "📚 Live market data for educational purposes only",
                 "data_source": f"Via FIML from {plan.primary_provider}",
-                "timestamp": quote.get("timestamp")
+                "timestamp": quote.get("timestamp"),
             }
 
             # Safely calculate freshness if timestamps available
             if quote.get("timestamp") and quote.get("fetched_at"):
                 try:
                     from datetime import datetime
+
                     ts = quote.get("timestamp")
                     fetched = quote.get("fetched_at")
                     if isinstance(ts, datetime) and isinstance(fetched, datetime):
@@ -124,16 +121,12 @@ class FIMLEducationalDataAdapter:
                 symbol=symbol,
                 user_id=user_id,
                 provider=plan.primary_provider,
-                context=context
+                context=context,
             )
 
         except Exception as e:
             # Fallback to template data if FIML integration fails
-            logger.warning(
-                "Failed to get live data, using template",
-                symbol=symbol,
-                error=str(e)
-            )
+            logger.warning("Failed to get live data, using template", symbol=symbol, error=str(e))
             educational_data = self._get_template_snapshot(symbol)
 
         return educational_data
@@ -147,20 +140,20 @@ class FIMLEducationalDataAdapter:
                 "current": 150.25,
                 "change": -2.30,
                 "change_percent": -1.51,
-                "explanation": self.explain_price_movement(-1.51)
+                "explanation": self.explain_price_movement(-1.51),
             },
             "volume": {
                 "current": 75000000,
                 "average": 50000000,
-                "interpretation": self.explain_volume(75000000, 50000000)
+                "interpretation": self.explain_volume(75000000, 50000000),
             },
             "fundamentals": {
                 "pe_ratio": 28.5,
                 "market_cap": "2.5T",
-                "explanation": "P/E ratio of 28.5 suggests investors expect growth"
+                "explanation": "P/E ratio of 28.5 suggests investors expect growth",
             },
             "disclaimer": "📚 Sample data for educational purposes",
-            "data_source": "Template (FIML integration pending)"
+            "data_source": "Template (FIML integration pending)",
         }
 
     def explain_price_movement(self, change_percent: float) -> str:
@@ -232,18 +225,18 @@ class FIMLEducationalDataAdapter:
         output.append(f"📊 **{data['symbol']} - {data['name']}**\n")
 
         # Price info
-        price = data.get('price', {})
+        price = data.get("price", {})
         output.append(f"**Current Price:** ${price.get('current', 0):.2f}")
         output.append(f"**Change:** {price.get('change_percent', 0):+.2f}%")
         output.append(f"_({price.get('explanation', '')})_\n")
 
         # Volume info
-        volume = data.get('volume', {})
+        volume = data.get("volume", {})
         output.append(f"**Volume:** {volume.get('current', 0):,} shares")
         output.append(f"_({volume.get('interpretation', '')})_\n")
 
         # Fundamentals
-        fund = data.get('fundamentals', {})
+        fund = data.get("fundamentals", {})
         if fund:
             output.append(f"**P/E Ratio:** {fund.get('pe_ratio', 'N/A')}")
             output.append(f"**Market Cap:** {fund.get('market_cap', 'N/A')}")
@@ -257,8 +250,8 @@ class FIMLEducationalDataAdapter:
     async def format_for_quiz(self, data: Dict) -> str:
         """Format data for quiz questions"""
 
-        price = data.get('price', {})
-        volume = data.get('volume', {})
+        price = data.get("price", {})
+        volume = data.get("volume", {})
 
         return (
             f"**{data['symbol']}**\n"
@@ -270,7 +263,7 @@ class FIMLEducationalDataAdapter:
         """Format data for AI mentor context"""
 
         # Provide concise data for mentor to reference
-        price = data.get('price', {})
+        price = data.get("price", {})
 
         return (
             f"Current {data['symbol']} data:\n"
@@ -281,8 +274,8 @@ class FIMLEducationalDataAdapter:
     def create_chart_description(self, data: Dict) -> str:
         """Create text description of what a chart would show"""
 
-        price = data.get('price', {})
-        change = price.get('change_percent', 0)
+        price = data.get("price", {})
+        change = price.get("change_percent", 0)
 
         if change > 0:
             trend = "upward trend"

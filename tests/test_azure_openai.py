@@ -17,12 +17,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from fiml.core.exceptions import (
-    ConfigurationError,
-    ProviderError,
-    ProviderTimeoutError,
-    RateLimitError,
-)
+from fiml.core.exceptions import (ConfigurationError, ProviderError,
+                                  ProviderTimeoutError, RateLimitError)
 from fiml.llm.azure_client import AzureOpenAIClient
 
 
@@ -115,9 +111,7 @@ class TestClientInitialization:
         """Test initialization fails without deployment name"""
         mock_settings.azure_openai_deployment_name = None
 
-        with pytest.raises(
-            ConfigurationError, match="deployment name is not configured"
-        ):
+        with pytest.raises(ConfigurationError, match="deployment name is not configured"):
             AzureOpenAIClient()
 
     def test_endpoint_trailing_slash_removed(self, mock_settings):
@@ -135,9 +129,9 @@ class TestGenerateNarrative:
     @pytest.mark.asyncio
     async def test_generate_narrative_success(self, client, mock_response):
         """Test successful narrative generation"""
-        mock_response["choices"][0]["message"]["content"] = (
-            "AAPL stock is trading at $175.50, up $2.30 today."
-        )
+        mock_response["choices"][0]["message"][
+            "content"
+        ] = "AAPL stock is trading at $175.50, up $2.30 today."
 
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = MagicMock(
@@ -160,9 +154,7 @@ class TestGenerateNarrative:
     @pytest.mark.asyncio
     async def test_generate_narrative_different_language(self, client, mock_response):
         """Test narrative generation in different language"""
-        mock_response["choices"][0]["message"]["content"] = (
-            "AAPL株は$175.50で取引されています。"
-        )
+        mock_response["choices"][0]["message"]["content"] = "AAPL株は$175.50で取引されています。"
 
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = MagicMock(
@@ -261,9 +253,9 @@ class TestSummarizeAnalysis:
     @pytest.mark.asyncio
     async def test_summarize_analysis_custom_length(self, client, mock_response):
         """Test summarization with custom max length"""
-        mock_response["choices"][0]["message"]["content"] = (
-            "This is a short summary for testing purposes and validation of the response."
-        )
+        mock_response["choices"][0]["message"][
+            "content"
+        ] = "This is a short summary for testing purposes and validation of the response."
 
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = MagicMock(
@@ -274,7 +266,10 @@ class TestSummarizeAnalysis:
             data = {"test": "data"}
             summary = await client.summarize_analysis(data, max_length=100)
 
-            assert summary == "This is a short summary for testing purposes and validation of the response."
+            assert (
+                summary
+                == "This is a short summary for testing purposes and validation of the response."
+            )
             # Check that max_completion_tokens was calculated based on max_length
             call_args = mock_post.call_args
             payload = call_args.kwargs["json"]
@@ -326,9 +321,7 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_timeout(self, client):
         """Test health check with timeout"""
-        with patch(
-            "httpx.AsyncClient.post", new_callable=AsyncMock
-        ) as mock_post:
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.side_effect = httpx.TimeoutException("Timeout")
 
             health = await client.health_check()
@@ -667,4 +660,3 @@ class TestEdgeCases:
             assert health["available"] is False
             assert health["authenticated"] is False
             assert health["operational"] is False
-

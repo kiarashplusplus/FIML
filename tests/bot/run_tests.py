@@ -16,12 +16,15 @@ if __name__ == "__main__":
 
     # Run bot tests only
     bot_tests_dir = Path(__file__).parent
-    exit_code = pytest.main([
-        str(bot_tests_dir),
-        "-v",
-        "--tb=short",
-        "-p", "no:cacheprovider",
-        "--override-ini=addopts=",  # Clear global addopts
-    ])
+    exit_code = pytest.main(
+        [
+            str(bot_tests_dir),
+            "-v",
+            "--tb=short",
+            "-p",
+            "no:cacheprovider",
+            "--override-ini=addopts=",  # Clear global addopts
+        ]
+    )
 
     sys.exit(exit_code)

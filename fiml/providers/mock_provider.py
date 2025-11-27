@@ -118,23 +118,12 @@ class MockProvider(BaseProvider):
 
         mock_technicals = {
             "rsi": 65.5,
-            "macd": {
-                "macd": 1.5,
-                "signal": 1.2,
-                "histogram": 0.3
-            },
+            "macd": {"macd": 1.5, "signal": 1.2, "histogram": 0.3},
             "ma_50": 105.0,
             "ma_200": 95.0,
-            "bollinger": {
-                "upper": 110.0,
-                "middle": 102.0,
-                "lower": 94.0
-            },
+            "bollinger": {"upper": 110.0, "middle": 102.0, "lower": 94.0},
             "atr": 2.5,
-            "stochastic": {
-                "k": 75.0,
-                "d": 70.0
-            }
+            "stochastic": {"k": 75.0, "d": 70.0},
         }
 
         return ProviderResponse(

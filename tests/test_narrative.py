@@ -17,15 +17,9 @@ import pytest
 
 from fiml.llm.azure_client import AzureOpenAIClient
 from fiml.narrative.generator import NarrativeGenerator
-from fiml.narrative.models import (
-    ExpertiseLevel,
-    Language,
-    Narrative,
-    NarrativeContext,
-    NarrativePreferences,
-    NarrativeSection,
-    NarrativeType,
-)
+from fiml.narrative.models import (ExpertiseLevel, Language, Narrative,
+                                   NarrativeContext, NarrativePreferences,
+                                   NarrativeSection, NarrativeType)
 from fiml.narrative.prompts import PromptTemplateLibrary, prompt_library
 
 # ============================================================================
@@ -495,9 +489,7 @@ class TestNarrativeGenerator:
             assert len(narrative.sections) > 0
 
     @pytest.mark.asyncio
-    async def test_extract_key_insights(
-        self, mock_azure_client, sample_context
-    ):
+    async def test_extract_key_insights(self, mock_azure_client, sample_context):
         """Test key insights extraction"""
         insights_response = {
             "choices": [
@@ -532,9 +524,7 @@ class TestNarrativeGenerator:
         assert len(insights) <= 5
 
     @pytest.mark.asyncio
-    async def test_extract_insights_fallback(
-        self, mock_azure_client, sample_context
-    ):
+    async def test_extract_insights_fallback(self, mock_azure_client, sample_context):
         """Test insights extraction fallback when LLM fails"""
         mock_azure_client._make_request.side_effect = Exception("LLM error")
 
@@ -660,9 +650,7 @@ class TestErrorHandling:
     """Test error handling in narrative generation"""
 
     @pytest.mark.asyncio
-    async def test_market_context_generation_failure(
-        self, mock_azure_client, sample_price_data
-    ):
+    async def test_market_context_generation_failure(self, mock_azure_client, sample_price_data):
         """Test handling of market context generation failure"""
         mock_azure_client._make_request.side_effect = Exception("API Error")
 
@@ -757,9 +745,7 @@ class TestErrorHandling:
         assert section is None
 
     @pytest.mark.asyncio
-    async def test_risk_narrative_generation_failure(
-        self, mock_azure_client, sample_risk_data
-    ):
+    async def test_risk_narrative_generation_failure(self, mock_azure_client, sample_risk_data):
         """Test handling of risk narrative generation failure"""
         mock_azure_client._make_request.side_effect = Exception("API Error")
 
@@ -775,9 +761,7 @@ class TestErrorHandling:
         assert section is None
 
     @pytest.mark.asyncio
-    async def test_summary_generation_failure(
-        self, mock_azure_client, sample_context
-    ):
+    async def test_summary_generation_failure(self, mock_azure_client, sample_context):
         """Test handling of summary generation failure"""
         mock_azure_client._make_request.side_effect = Exception("API Error")
 
@@ -786,9 +770,7 @@ class TestErrorHandling:
         sections = []
         insights = ["Test insight"]
 
-        summary = await generator._generate_executive_summary(
-            sample_context, sections, insights
-        )
+        summary = await generator._generate_executive_summary(sample_context, sections, insights)
 
         # Should return fallback summary
         assert summary is not None
@@ -868,9 +850,7 @@ class TestAdditionalCoverage:
         # Should have low completeness score due to missing expected sections
         assert quality_metrics.completeness_score < 1.0
 
-    def test_extract_risk_factors_with_various_conditions(
-        self, mock_azure_client, sample_context
-    ):
+    def test_extract_risk_factors_with_various_conditions(self, mock_azure_client, sample_context):
         """Test risk factor extraction with different data conditions"""
         generator = NarrativeGenerator(azure_client=mock_azure_client)
 
@@ -884,9 +864,7 @@ class TestAdditionalCoverage:
         assert len(risk_factors) > 0
         assert any("volatility" in rf.lower() for rf in risk_factors)
 
-    def test_fallback_extract_insights_various_scenarios(
-        self, mock_azure_client
-    ):
+    def test_fallback_extract_insights_various_scenarios(self, mock_azure_client):
         """Test fallback insights extraction with various data"""
         generator = NarrativeGenerator(azure_client=mock_azure_client)
 

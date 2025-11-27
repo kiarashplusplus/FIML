@@ -60,7 +60,8 @@ class FileKeyStorage(KeyStorageInterface):
 
         try:
             with open(user_file, "r") as f:
-                return json.load(f)
+                data: Dict[str, Dict[str, Any]] = json.load(f)
+                return data
         except Exception as e:
             logger.error("Failed to load user data", user_id=user_id, error=str(e))
             return {}
@@ -82,7 +83,7 @@ class FileKeyStorage(KeyStorageInterface):
         user_id: str,
         provider: str,
         encrypted_key: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Store encrypted API key in JSON file"""
         try:
@@ -94,7 +95,7 @@ class FileKeyStorage(KeyStorageInterface):
                 "provider": provider,
                 "encrypted_key": encrypted_key,
                 "added_at": datetime.now(UTC).isoformat(),
-                "metadata": metadata or {}
+                "metadata": metadata or {},
             }
 
             # Save
@@ -142,12 +143,7 @@ class FileKeyStorage(KeyStorageInterface):
         user_data = self._load_user_data(user_id)
         return list(user_data.keys())
 
-    async def update_metadata(
-        self,
-        user_id: str,
-        provider: str,
-        metadata: Dict[str, Any]
-    ) -> bool:
+    async def update_metadata(self, user_id: str, provider: str, metadata: Dict[str, Any]) -> bool:
         """Update metadata for existing key"""
         try:
             user_data = self._load_user_data(user_id)
@@ -162,7 +158,9 @@ class FileKeyStorage(KeyStorageInterface):
             return self._save_user_data(user_id, user_data)
 
         except Exception as e:
-            logger.error("Failed to update metadata", user_id=user_id, provider=provider, error=str(e))
+            logger.error(
+                "Failed to update metadata", user_id=user_id, provider=provider, error=str(e)
+            )
             return False
 
     async def get_all_keys(self, user_id: str) -> Dict[str, Dict[str, Any]]:

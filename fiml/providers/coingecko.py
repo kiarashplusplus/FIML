@@ -89,14 +89,16 @@ class CoinGeckoProvider(BaseProvider):
         # (e.g., BTCETH should remain btceth, not be parsed as BTC)
         for suffix in ["USDT", "BUSD", "USD"]:  # Stablecoins/fiat only
             if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
-                potential_symbol = clean_symbol[:-len(suffix)]
+                potential_symbol = clean_symbol[: -len(suffix)]
                 if potential_symbol in self._symbol_to_id:
                     return self._symbol_to_id[potential_symbol]
 
         # If no mapping found, return lowercase as coin ID (API will handle it)
         return clean_symbol.lower()
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to CoinGecko"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -107,9 +109,7 @@ class CoinGeckoProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -202,13 +202,15 @@ class CoinGeckoProvider(BaseProvider):
 
             ohlcv_data = []
             for bar in response_data[:limit]:
-                ohlcv_data.append({
-                    "timestamp": bar[0],  # Timestamp in ms
-                    "open": float(bar[1]),
-                    "high": float(bar[2]),
-                    "low": float(bar[3]),
-                    "close": float(bar[4]),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": bar[0],  # Timestamp in ms
+                        "open": float(bar[1]),
+                        "high": float(bar[2]),
+                        "low": float(bar[3]),
+                        "close": float(bar[4]),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,

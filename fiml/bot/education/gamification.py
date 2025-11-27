@@ -16,6 +16,7 @@ logger = structlog.get_logger(__name__)
 
 class LevelData(TypedDict):
     """Type definition for level data"""
+
     level: int
     title: str
     xp_required: int
@@ -142,14 +143,13 @@ class GamificationEngine:
         # Store in session store context
         key = f"gamification:{user_id}"
         try:
-            if hasattr(self._session_store, '_redis') and self._session_store._redis:
+            if hasattr(self._session_store, "_redis") and self._session_store._redis:
                 await self._session_store._redis.set(
-                    key,
-                    str(data),  # Redis expects string
-                    ex=86400 * 365  # 1 year expiry
+                    key, str(data), ex=86400 * 365  # Redis expects string  # 1 year expiry
                 )
         except Exception as e:
             logger.error("Failed to save user stats", user_id=user_id, error=str(e))
+        return None
 
     async def _load_user_stats(self, user_id: str) -> Optional[UserStats]:
         """Load user stats from session store"""
@@ -158,13 +158,14 @@ class GamificationEngine:
 
         key = f"gamification:{user_id}"
         try:
-            if hasattr(self._session_store, '_redis') and self._session_store._redis:
+            if hasattr(self._session_store, "_redis") and self._session_store._redis:
                 data_str = await self._session_store._redis.get(key)
                 if not data_str:
                     return None
 
                 # Parse the string representation back to dict
                 import ast
+
                 data = ast.literal_eval(data_str)
 
                 # Convert ISO string back to datetime
@@ -175,6 +176,8 @@ class GamificationEngine:
         except Exception as e:
             logger.error("Failed to load user stats", user_id=user_id, error=str(e))
             return None
+
+        return None
 
     async def get_or_create_stats(self, user_id: str) -> UserStats:
         """Get user stats or create new"""
@@ -455,7 +458,7 @@ class GamificationEngine:
         return {
             "level": stats.level,
             "name": self.get_level_title(stats.level),
-            "xp": stats.total_xp
+            "xp": stats.total_xp,
         }
 
     def get_user_badges(self, user_id: str) -> List[Dict]:
@@ -468,7 +471,7 @@ class GamificationEngine:
             {
                 "id": badge_id,
                 "name": self.BADGES[badge_id].name if badge_id in self.BADGES else badge_id,
-                "description": ""
+                "description": "",
             }
             for badge_id in stats.badges
         ]
@@ -528,6 +531,5 @@ class GamificationEngine:
         stats = self._user_stats[user_id]
         return {
             "current_streak": stats.streak_days,
-            "longest_streak": stats.streak_days  # Simplified
+            "longest_streak": stats.streak_days,  # Simplified
         }
-

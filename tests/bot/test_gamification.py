@@ -2,7 +2,6 @@
 Tests for GamificationEngine (Component 9)
 """
 
-
 import pytest
 
 from fiml.bot.education.gamification import GamificationEngine

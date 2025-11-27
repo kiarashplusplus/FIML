@@ -9,14 +9,14 @@ from fiml.narrative.batch import BatchNarrativeGenerator
 from fiml.narrative.cache import NarrativeCache, narrative_cache
 from fiml.narrative.generator import NarrativeGenerator
 from fiml.narrative.models import (
-    ExpertiseLevel,
-    Language,
-    Narrative,
-    NarrativeContext,
-    NarrativePreferences,
-    NarrativeQualityMetrics,
-    NarrativeSection,
-    NarrativeType,
+                                   ExpertiseLevel,
+                                   Language,
+                                   Narrative,
+                                   NarrativeContext,
+                                   NarrativePreferences,
+                                   NarrativeQualityMetrics,
+                                   NarrativeSection,
+                                   NarrativeType,
 )
 from fiml.narrative.prompts import PromptTemplateLibrary, prompt_library
 from fiml.narrative.templates import TemplateLibrary, template_library

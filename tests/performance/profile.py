@@ -41,10 +41,7 @@ class Profiler:
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     def profile_with_cprofile(
-        self,
-        target_code: str,
-        duration: int = 60,
-        sort_by: str = "cumulative"
+        self, target_code: str, duration: int = 60, sort_by: str = "cumulative"
     ) -> str:
         """
         Profile code with cProfile
@@ -82,7 +79,7 @@ class Profiler:
         ps.print_stats(50)  # Top 50 functions
 
         report_file = self.output_dir / f"cprofile_{self.timestamp}.txt"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             f.write(s.getvalue())
 
         print(f"Stats saved to: {output_file}")
@@ -90,15 +87,12 @@ class Profiler:
 
         # Print summary
         print("\nTop 10 slowest functions:")
-        print(s.getvalue().split('\n')[5:15])
+        print(s.getvalue().split("\n")[5:15])
 
         return str(output_file)
 
     def profile_with_pyspy(
-        self,
-        pid: Optional[int] = None,
-        duration: int = 60,
-        rate: int = 100
+        self, pid: Optional[int] = None, duration: int = 60, rate: int = 100
     ) -> str:
         """
         Profile running process with py-spy
@@ -118,10 +112,14 @@ class Profiler:
         cmd = [
             "py-spy",
             "record",
-            "-o", str(output_file),
-            "--duration", str(duration),
-            "--rate", str(rate),
-            "--format", "flamegraph"
+            "-o",
+            str(output_file),
+            "--duration",
+            str(duration),
+            "--rate",
+            str(rate),
+            "--format",
+            "flamegraph",
         ]
 
         if pid:
@@ -156,6 +154,7 @@ class Profiler:
 
         try:
             import importlib.util
+
             if importlib.util.find_spec("memory_profiler") is None:
                 raise ImportError("memory_profiler not installed")
 
@@ -263,7 +262,7 @@ asyncio.run(benchmark_providers())
         report_text = "\n".join(report)
 
         report_file = self.output_dir / f"summary_{self.timestamp}.txt"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             f.write(report_text)
 
         print(report_text)
@@ -273,50 +272,37 @@ asyncio.run(benchmark_providers())
 def main():
     parser = argparse.ArgumentParser(description="Performance profiling")
     parser.add_argument(
-        '--mode',
-        choices=['cprofile', 'pyspy', 'memory', 'all'],
-        default='cprofile',
-        help='Profiling mode'
+        "--mode",
+        choices=["cprofile", "pyspy", "memory", "all"],
+        default="cprofile",
+        help="Profiling mode",
     )
     parser.add_argument(
-        '--target',
-        choices=['cache', 'providers', 'custom'],
-        default='cache',
-        help='What to profile'
+        "--target",
+        choices=["cache", "providers", "custom"],
+        default="cache",
+        help="What to profile",
     )
-    parser.add_argument(
-        '--duration',
-        type=int,
-        default=60,
-        help='Profiling duration in seconds'
-    )
-    parser.add_argument(
-        '--pid',
-        type=int,
-        help='Process ID to profile (for py-spy)'
-    )
-    parser.add_argument(
-        '--code',
-        type=str,
-        help='Custom code to profile'
-    )
+    parser.add_argument("--duration", type=int, default=60, help="Profiling duration in seconds")
+    parser.add_argument("--pid", type=int, help="Process ID to profile (for py-spy)")
+    parser.add_argument("--code", type=str, help="Custom code to profile")
 
     args = parser.parse_args()
 
     profiler = Profiler()
 
-    if args.mode == 'cprofile' or args.mode == 'all':
-        if args.target == 'cache':
+    if args.mode == "cprofile" or args.mode == "all":
+        if args.target == "cache":
             profiler.profile_cache_operations()
-        elif args.target == 'providers':
+        elif args.target == "providers":
             profiler.profile_provider_fetches()
         elif args.code:
             profiler.profile_with_cprofile(args.code, args.duration)
 
-    if args.mode == 'pyspy' or args.mode == 'all':
+    if args.mode == "pyspy" or args.mode == "all":
         profiler.profile_with_pyspy(args.pid, args.duration)
 
-    if args.mode == 'memory' or args.mode == 'all':
+    if args.mode == "memory" or args.mode == "all":
         if args.code:
             profiler.analyze_memory(args.code, args.duration)
 

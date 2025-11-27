@@ -154,7 +154,7 @@ class AzureOpenAIClient:
                         retry_after = int(response.headers.get("Retry-After", 60))
 
                         if attempt < self.max_retries - 1:
-                            wait_time = min(retry_after, 2 ** attempt)
+                            wait_time = min(retry_after, 2**attempt)
                             logger.warning(
                                 "Rate limit hit, retrying",
                                 attempt=attempt + 1,
@@ -173,7 +173,11 @@ class AzureOpenAIClient:
                         error_text = response.text
 
                         # Special handling for O1 models that only support temperature=1
-                        if response.status_code == 400 and "temperature" in error_text and "1" in error_text:
+                        if (
+                            response.status_code == 400
+                            and "temperature" in error_text
+                            and "1" in error_text
+                        ):
                             logger.warning(
                                 "Model requires temperature=1.0, retrying",
                                 attempt=attempt + 1,
@@ -197,7 +201,7 @@ class AzureOpenAIClient:
 
                         if attempt < self.max_retries - 1:
                             # Exponential backoff
-                            wait_time = 2 ** attempt
+                            wait_time = 2**attempt
                             logger.warning(
                                 "Retrying request",
                                 attempt=attempt + 1,
@@ -223,7 +227,7 @@ class AzureOpenAIClient:
                 )
 
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     await asyncio.sleep(wait_time)
                     continue
 
@@ -237,7 +241,7 @@ class AzureOpenAIClient:
                 )
 
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     await asyncio.sleep(wait_time)
                     continue
 
@@ -251,9 +255,7 @@ class AzureOpenAIClient:
                 f"Azure OpenAI request failed after {self.max_retries} attempts: {last_exception}"
             )
 
-    async def generate_narrative(
-        self, context: Dict[str, Any], language: str = "en"
-    ) -> str:
+    async def generate_narrative(self, context: Dict[str, Any], language: str = "en") -> str:
         """
         Generate a natural language narrative from context data
 
@@ -375,9 +377,7 @@ class AzureOpenAIClient:
             logger.error("Failed to analyze sentiment", error=str(e))
             raise
 
-    async def summarize_analysis(
-        self, data: Dict[str, Any], max_length: int = 500
-    ) -> str:
+    async def summarize_analysis(self, data: Dict[str, Any], max_length: int = 500) -> str:
         """
         Summarize analysis data into concise text
 
@@ -574,9 +574,7 @@ class AzureOpenAIClient:
         }
 
         try:
-            max_tokens = {"concise": 300, "professional": 500, "detailed": 800}.get(
-                style, 500
-            )
+            max_tokens = {"concise": 300, "professional": 500, "detailed": 800}.get(style, 500)
 
             response = await self._make_request(
                 messages=[system_message, user_message],
@@ -870,9 +868,7 @@ class AzureOpenAIClient:
             f"This is not financial advice. FIML provides data analysis only."
         )
 
-    def _fallback_price_movement(
-        self, symbol: str, change_pct: float, volume: int
-    ) -> str:
+    def _fallback_price_movement(self, symbol: str, change_pct: float, volume: int) -> str:
         """Generate fallback price movement explanation"""
         direction = "gained" if change_pct > 0 else "declined"
         magnitude = "significantly" if abs(change_pct) > 3 else "moderately"
@@ -909,10 +905,7 @@ class AzureOpenAIClient:
         if not parts:
             parts.append("Technical indicators are available for analysis")
 
-        return (
-            ". ".join(parts)
-            + ". This is technical analysis, not investment advice."
-        )
+        return ". ".join(parts) + ". This is technical analysis, not investment advice."
 
     def _fallback_risk_assessment(
         self,
@@ -965,6 +958,4 @@ class AzureOpenAIClient:
             faster = symbol1 if growth1 > growth2 else symbol2
             parts.append(f"{faster} shows faster growth")
 
-        return (
-            ". ".join(parts) + ". This comparison is for informational purposes only."
-        )
+        return ". ".join(parts) + ". This comparison is for informational purposes only."

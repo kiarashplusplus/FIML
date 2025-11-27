@@ -71,8 +71,7 @@ class FMPProvider(BaseProvider):
 
         # Remove timestamps older than 1 minute
         self._request_timestamps = [
-            ts for ts in self._request_timestamps
-            if (now - ts).total_seconds() < 60
+            ts for ts in self._request_timestamps if (now - ts).total_seconds() < 60
         ]
 
         # Check if we've exceeded the rate limit
@@ -81,8 +80,7 @@ class FMPProvider(BaseProvider):
             if wait_time > 0:
                 logger.warning(f"Rate limit reached, waiting {wait_time:.1f}s")
                 raise ProviderRateLimitError(
-                    f"Rate limit exceeded. Wait {wait_time:.1f}s",
-                    retry_after=int(wait_time) + 1
+                    f"Rate limit exceeded. Wait {wait_time:.1f}s", retry_after=int(wait_time) + 1
                 )
 
     async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Any:
@@ -102,9 +100,7 @@ class FMPProvider(BaseProvider):
 
         try:
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._request_timestamps.append(datetime.now(timezone.utc))
                 self._record_request()
@@ -118,10 +114,7 @@ class FMPProvider(BaseProvider):
 
                     return data
                 elif response.status == 429:
-                    raise ProviderRateLimitError(
-                        "FMP rate limit exceeded",
-                        retry_after=60
-                    )
+                    raise ProviderRateLimitError("FMP rate limit exceeded", retry_after=60)
                 else:
                     raise ProviderError(f"HTTP {response.status}: {await response.text()}")
 
@@ -150,7 +143,9 @@ class FMPProvider(BaseProvider):
             data = {
                 "price": float(quote.get("price", 0.0)),
                 "change": float(quote.get("change", 0.0)),
-                "change_percent": float(quote.get("changesPercentage", 0.0) or quote.get("changePercentage", 0.0)),
+                "change_percent": float(
+                    quote.get("changesPercentage", 0.0) or quote.get("changePercentage", 0.0)
+                ),
                 "volume": int(quote.get("volume", 0)),
                 "previous_close": float(quote.get("previousClose", 0.0)),
                 "open": float(quote.get("open", 0.0)),
@@ -222,14 +217,16 @@ class FMPProvider(BaseProvider):
             # Convert to standard format
             ohlcv_data = []
             for candle in historical:
-                ohlcv_data.append({
-                    "timestamp": candle.get("date", ""),
-                    "open": float(candle.get("open", 0.0)),
-                    "high": float(candle.get("high", 0.0)),
-                    "low": float(candle.get("low", 0.0)),
-                    "close": float(candle.get("close", 0.0)),
-                    "volume": int(candle.get("volume", 0)),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": candle.get("date", ""),
+                        "open": float(candle.get("open", 0.0)),
+                        "high": float(candle.get("high", 0.0)),
+                        "low": float(candle.get("low", 0.0)),
+                        "close": float(candle.get("close", 0.0)),
+                        "volume": int(candle.get("volume", 0)),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -276,7 +273,7 @@ class FMPProvider(BaseProvider):
 
             # Key metrics might not be available on stable or require different endpoint
             # For now, just use profile data which has many metrics
-            metrics = {}
+            metrics: Dict[str, Any] = {}
 
             # Combine data
             data = {
@@ -298,7 +295,9 @@ class FMPProvider(BaseProvider):
                 "last_div": float(profile.get("lastDiv", 0.0) or 0.0),
                 "changes": float(profile.get("changes", 0.0) or 0.0),
                 # Key metrics from profile
-                "pe_ratio": float(metrics.get("peRatio", 0.0) or 0.0), # Profile doesn't have PE usually? Actually test output showed it might not.
+                "pe_ratio": float(
+                    metrics.get("peRatio", 0.0) or 0.0
+                ),  # Profile doesn't have PE usually? Actually test output showed it might not.
                 # Let's fill what we can from profile
             }
 
@@ -338,10 +337,7 @@ class FMPProvider(BaseProvider):
             is_valid=False,
             is_fresh=False,
             confidence=0.0,
-            metadata={
-                "source": "fmp",
-                "error": "News not supported on stable API plan"
-            },
+            metadata={"source": "fmp", "error": "News not supported on stable API plan"},
         )
 
     async def supports_asset(self, asset: Asset) -> bool:

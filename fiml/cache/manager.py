@@ -97,16 +97,12 @@ class CacheManager:
                 is_hit=True,
                 latency_ms=0.0,  # TODO: Track actual latency
                 cache_level="l1",
-                key=l1_key
+                key=l1_key,
             )
             return dict(l1_result) if isinstance(l1_result, dict) else l1_result
 
         self.analytics.record_cache_access(
-            data_type=DataType.PRICE,
-            is_hit=False,
-            latency_ms=0.0,
-            cache_level="l1",
-            key=l1_key
+            data_type=DataType.PRICE, is_hit=False, latency_ms=0.0, cache_level="l1", key=l1_key
         )
 
         # Try L2
@@ -147,13 +143,7 @@ class CacheManager:
         # In production, would insert into PostgreSQL
         # l2_success = await self.l2.set_price(asset_id, provider, ...)
 
-        logger.debug(
-            "Price cached",
-            asset=asset.symbol,
-            provider=provider,
-            l1=l1_success,
-            ttl=ttl
-        )
+        logger.debug("Price cached", asset=asset.symbol, provider=provider, l1=l1_success, ttl=ttl)
         return bool(l1_success)
 
     async def get_fundamentals(
@@ -171,7 +161,7 @@ class CacheManager:
                 is_hit=True,
                 latency_ms=0.0,
                 cache_level="l1",
-                key=l1_key
+                key=l1_key,
             )
             return dict(l1_result) if isinstance(l1_result, dict) else l1_result
 
@@ -180,7 +170,7 @@ class CacheManager:
             is_hit=False,
             latency_ms=0.0,
             cache_level="l1",
-            key=l1_key
+            key=l1_key,
         )
 
         # Try L2
@@ -205,12 +195,7 @@ class CacheManager:
         # Set in L2
         # In production: await self.l2.set_fundamentals(asset_id, provider, data, ttl)
 
-        logger.debug(
-            "Fundamentals cached",
-            asset=asset.symbol,
-            provider=provider,
-            ttl=ttl
-        )
+        logger.debug("Fundamentals cached", asset=asset.symbol, provider=provider, ttl=ttl)
         return bool(l1_success)
 
     async def invalidate_asset(self, asset: Asset) -> int:
@@ -237,8 +222,12 @@ class CacheManager:
         l2_hit_rate = (self._l2_hits / total_l2_ops * 100) if total_l2_ops > 0 else 0.0
 
         # Calculate average latencies
-        avg_l1_latency = sum(self._l1_latencies) / len(self._l1_latencies) if self._l1_latencies else 0.0
-        avg_l2_latency = sum(self._l2_latencies) / len(self._l2_latencies) if self._l2_latencies else 0.0
+        avg_l1_latency = (
+            sum(self._l1_latencies) / len(self._l1_latencies) if self._l1_latencies else 0.0
+        )
+        avg_l2_latency = (
+            sum(self._l2_latencies) / len(self._l2_latencies) if self._l2_latencies else 0.0
+        )
 
         # Calculate percentiles for L1 latency
         l1_p50 = calculate_percentile(self._l1_latencies, 50)
@@ -267,7 +256,7 @@ class CacheManager:
                 "total_requests": total_l1_ops,
                 "l1_hit_rate": round(l1_hit_rate, 2),
                 "l2_hit_rate": round(l2_hit_rate, 2),
-            }
+            },
         }
 
     def _track_l1_latency(self, latency_ms: float) -> None:
@@ -411,7 +400,7 @@ class CacheManager:
         key: str,
         data_type: DataType,
         fetch_fn: Callable[[], Any],
-        asset: Optional[Asset] = None
+        asset: Optional[Asset] = None,
     ) -> Optional[Any]:
         """
         Read-through cache pattern: fetch from source if not in cache
@@ -440,7 +429,7 @@ class CacheManager:
                 is_hit=True,
                 latency_ms=l1_latency_ms,
                 cache_level="l1",
-                key=key
+                key=key,
             )
 
             return value
@@ -449,11 +438,7 @@ class CacheManager:
 
         # Record analytics for miss
         self.analytics.record_cache_access(
-            data_type=data_type,
-            is_hit=False,
-            latency_ms=l1_latency_ms,
-            cache_level="l1",
-            key=key
+            data_type=data_type, is_hit=False, latency_ms=l1_latency_ms, cache_level="l1", key=key
         )
 
         # Fetch from source
@@ -466,10 +451,7 @@ class CacheManager:
                 await self.l1.set(key, fetched_value, ttl)
 
                 logger.debug(
-                    "Read-through cache populated",
-                    key=key,
-                    data_type=data_type.value,
-                    ttl=ttl
+                    "Read-through cache populated", key=key, data_type=data_type.value, ttl=ttl
                 )
 
             return fetched_value
@@ -503,7 +485,7 @@ class CacheManager:
 
         hits = sum(1 for r in results if r is not None)
         self._l1_hits += hits
-        self._l1_misses += (len(results) - hits)
+        self._l1_misses += len(results) - hits
 
         # Record analytics for batch
         # This is an approximation - we record one "hit" or "miss" for the batch?
@@ -512,15 +494,19 @@ class CacheManager:
             self.analytics.record_cache_access(
                 data_type=DataType.PRICE,
                 is_hit=result is not None,
-                latency_ms=l1_latency_ms / len(results) if results else 0, # Distribute latency
+                latency_ms=l1_latency_ms / len(results) if results else 0,  # Distribute latency
                 cache_level="l1",
-                key=l1_keys[i]
+                key=l1_keys[i],
             )
 
-        logger.debug("Batch price lookup", total=len(assets), l1_hits=hits, latency_ms=f"{l1_latency_ms:.2f}")
+        logger.debug(
+            "Batch price lookup", total=len(assets), l1_hits=hits, latency_ms=f"{l1_latency_ms:.2f}"
+        )
 
         # Ensure proper typing for return value
-        typed_results: List[Optional[Dict[str, Any]]] = [dict(r) if isinstance(r, dict) else r for r in results]
+        typed_results: List[Optional[Dict[str, Any]]] = [
+            dict(r) if isinstance(r, dict) else r for r in results
+        ]
         return typed_results
 
     async def set_prices_batch(

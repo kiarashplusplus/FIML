@@ -48,7 +48,7 @@ def sample_assets():
             asset_type=AssetType.EQUITY,
             market=Market.US,
             exchange="NASDAQ",
-            currency="USD"
+            currency="USD",
         ),
         Asset(
             symbol="TSLA",
@@ -56,7 +56,7 @@ def sample_assets():
             asset_type=AssetType.EQUITY,
             market=Market.US,
             exchange="NASDAQ",
-            currency="USD"
+            currency="USD",
         ),
         Asset(
             symbol="BTC",
@@ -64,7 +64,7 @@ def sample_assets():
             asset_type=AssetType.CRYPTO,
             market=Market.CRYPTO,
             exchange="binance",
-            currency="USDT"
+            currency="USDT",
         ),
     ]
 
@@ -117,7 +117,7 @@ class TestCacheWarmer:
         warmer = CacheWarmer()
 
         # Mock cache manager
-        with patch('fiml.cache.warmer.cache_manager') as mock_manager:
+        with patch("fiml.cache.warmer.cache_manager") as mock_manager:
             mock_manager.initialize = AsyncMock()
             mock_manager.set_price = AsyncMock(return_value=True)
 
@@ -238,11 +238,8 @@ class TestCacheManagerMetrics:
         manager.l2._initialized = True
 
         # Mock l1.get_stats
-        with patch.object(manager.l1, 'get_stats', new_callable=AsyncMock) as mock_stats:
-            mock_stats.return_value = {
-                "keyspace_hits": 100,
-                "keyspace_misses": 50
-            }
+        with patch.object(manager.l1, "get_stats", new_callable=AsyncMock) as mock_stats:
+            mock_stats.return_value = {"keyspace_hits": 100, "keyspace_misses": 50}
 
             stats = await manager.get_stats()
 

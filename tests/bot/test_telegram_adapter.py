@@ -317,6 +317,7 @@ class TestTelegramBotAdapter:
 
         # Should return PROVIDER_SELECT state
         from fiml.bot.adapters.telegram_adapter import PROVIDER_SELECT
+
         assert result == PROVIDER_SELECT
 
     async def test_select_provider(self, adapter, mock_context):
@@ -341,6 +342,7 @@ class TestTelegramBotAdapter:
 
         # Should return KEY_ENTRY state
         from fiml.bot.adapters.telegram_adapter import KEY_ENTRY
+
         assert result == KEY_ENTRY
 
     async def test_cmd_status_no_providers(self, adapter, mock_update, mock_context):
@@ -438,16 +440,8 @@ class TestTelegramBotAdapter:
         adapter.lesson_engine.lessons_path = lessons_dir
 
         # Create test lesson files
-        lesson1 = {
-            "id": "test_lesson_001",
-            "title": "Test Lesson 1",
-            "difficulty": "beginner"
-        }
-        lesson2 = {
-            "id": "test_lesson_002",
-            "title": "Test Lesson 2",
-            "difficulty": "intermediate"
-        }
+        lesson1 = {"id": "test_lesson_001", "title": "Test Lesson 1", "difficulty": "beginner"}
+        lesson2 = {"id": "test_lesson_002", "title": "Test Lesson 2", "difficulty": "intermediate"}
 
         with open(lessons_dir / "01_test_lesson.yaml", "w") as f:
             yaml.dump(lesson1, f)
@@ -480,11 +474,7 @@ class TestTelegramBotAdapter:
         adapter.lesson_engine.lessons_path = lessons_dir
 
         # Create test lesson file
-        lesson = {
-            "id": "mapped_lesson_001",
-            "title": "Mapped Lesson",
-            "difficulty": "beginner"
-        }
+        lesson = {"id": "mapped_lesson_001", "title": "Mapped Lesson", "difficulty": "beginner"}
         lesson_file = lessons_dir / "01_mapped_lesson.yaml"
         with open(lesson_file, "w") as f:
             yaml.dump(lesson, f)
@@ -509,9 +499,7 @@ class TestTelegramBotAdapter:
             "title": "Understanding Stock Prices",
             "difficulty": "beginner",
             "duration_minutes": 5,
-            "sections": [
-                {"type": "introduction", "content": "Learn about stock prices!"}
-            ]
+            "sections": [{"type": "introduction", "content": "Learn about stock prices!"}],
         }
         with open(lessons_dir / "01_stock_prices.yaml", "w") as f:
             yaml.dump(lesson, f)

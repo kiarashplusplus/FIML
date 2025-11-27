@@ -55,17 +55,21 @@ class TaskRegistry:
             "type": task_info.type,
             "status": task_info.status.value if task_info.status else "unknown",
             "resource_url": task_info.resource_url,
-            "estimated_completion": task_info.estimated_completion.isoformat() if task_info.estimated_completion else None,
+            "estimated_completion": (
+                task_info.estimated_completion.isoformat()
+                if task_info.estimated_completion
+                else None
+            ),
             "progress": task_info.progress,
             "created_at": task_info.created_at.isoformat() if task_info.created_at else None,
             "updated_at": task_info.updated_at.isoformat() if task_info.updated_at else None,
-            "query": getattr(task_info, 'query', None),
+            "query": getattr(task_info, "query", None),
             "completed_steps": task_info.completed_steps,
             "total_steps": task_info.total_steps,
             "started_at": task_info.started_at.isoformat() if task_info.started_at else None,
             "completed_at": task_info.completed_at.isoformat() if task_info.completed_at else None,
-            "result": getattr(task_info, 'result', None),
-            "error": getattr(task_info, 'error', None),
+            "result": getattr(task_info, "result", None),
+            "error": getattr(task_info, "error", None),
         }
         return json.dumps(data)
 
@@ -74,13 +78,19 @@ class TaskRegistry:
         data = json.loads(data_str)
 
         # Parse dates
-        for date_field in ['estimated_completion', 'created_at', 'updated_at', 'started_at', 'completed_at']:
+        for date_field in [
+            "estimated_completion",
+            "created_at",
+            "updated_at",
+            "started_at",
+            "completed_at",
+        ]:
             if data.get(date_field):
                 data[date_field] = datetime.fromisoformat(data[date_field])
 
         # Parse status enum
-        if data.get('status'):
-            data['status'] = TaskStatus(data['status'])
+        if data.get("status"):
+            data["status"] = TaskStatus(data["status"])
 
         return TaskInfo(**data)
 

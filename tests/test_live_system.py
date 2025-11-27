@@ -41,7 +41,11 @@ class TestLiveProviders:
         except Exception as e:
             # Skip test if network is not available (DNS resolution failure)
             error_str = str(e).lower()
-            if "could not resolve host" in error_str or "dns" in error_str or "network" in error_str:
+            if (
+                "could not resolve host" in error_str
+                or "dns" in error_str
+                or "network" in error_str
+            ):
                 pytest.skip(f"Network not available: {e}")
             raise
 
@@ -79,18 +83,14 @@ class TestLiveArbitration:
             asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY, market=Market.US)
 
             plan = await arbitration_engine.arbitrate_request(
-                asset=asset,
-                data_type=DataType.PRICE,
-                user_region="US"
+                asset=asset, data_type=DataType.PRICE, user_region="US"
             )
 
             assert len(plan.providers) > 0
             assert plan.primary_provider is not None
 
             # Execute the plan
-            response = await arbitration_engine.execute_with_fallback(
-                plan, asset, DataType.PRICE
-            )
+            response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
 
             assert response is not None
             assert response.is_valid
@@ -109,9 +109,7 @@ class TestLiveArbitration:
             asset = Asset(symbol="TEST", asset_type=AssetType.EQUITY, market=Market.US)
 
             plan = await arbitration_engine.arbitrate_request(
-                asset=asset,
-                data_type=DataType.PRICE,
-                user_region="US"
+                asset=asset, data_type=DataType.PRICE, user_region="US"
             )
 
             # Plan should have fallback providers
@@ -122,10 +120,7 @@ class TestLiveArbitration:
 
 
 @pytest.mark.live
-@pytest.mark.skipif(
-    "not config.getoption('--run-cache-tests')",
-    reason="Requires Redis/PostgreSQL"
-)
+@pytest.mark.skipif("not config.getoption('--run-cache-tests')", reason="Requires Redis/PostgreSQL")
 class TestLiveCache:
     """Test live caching functionality"""
 
@@ -220,14 +215,10 @@ class TestLiveDataQuality:
             asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY, market=Market.US)
 
             plan = await arbitration_engine.arbitrate_request(
-                asset=asset,
-                data_type=DataType.PRICE,
-                user_region="US"
+                asset=asset, data_type=DataType.PRICE, user_region="US"
             )
 
-            response = await arbitration_engine.execute_with_fallback(
-                plan, asset, DataType.PRICE
-            )
+            response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
 
             # Check metadata contains lineage info
             assert "source" in response.metadata or response.provider
@@ -254,14 +245,10 @@ class TestLivePerformance:
             start = time.time()
 
             plan = await arbitration_engine.arbitrate_request(
-                asset=asset,
-                data_type=DataType.PRICE,
-                user_region="US"
+                asset=asset, data_type=DataType.PRICE, user_region="US"
             )
 
-            response = await arbitration_engine.execute_with_fallback(
-                plan, asset, DataType.PRICE
-            )
+            response = await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
 
             elapsed = time.time() - start
 
@@ -285,13 +272,9 @@ class TestLivePerformance:
             async def fetch_price(symbol):
                 asset = Asset(symbol=symbol, asset_type=AssetType.EQUITY, market=Market.US)
                 plan = await arbitration_engine.arbitrate_request(
-                    asset=asset,
-                    data_type=DataType.PRICE,
-                    user_region="US"
+                    asset=asset, data_type=DataType.PRICE, user_region="US"
                 )
-                return await arbitration_engine.execute_with_fallback(
-                    plan, asset, DataType.PRICE
-                )
+                return await arbitration_engine.execute_with_fallback(plan, asset, DataType.PRICE)
 
             start = time.time()
 
@@ -322,10 +305,7 @@ class TestLiveCompliance:
 
         # Test passing compliance check
         result = await compliance_router.check_compliance(
-            request_type="price_query",
-            asset_type="equity",
-            region=Region.US,
-            user_query=None
+            request_type="price_query", asset_type="equity", region=Region.US, user_query=None
         )
 
         assert result.passed is True
@@ -334,13 +314,12 @@ class TestLiveCompliance:
     @pytest.mark.asyncio
     async def test_disclaimer_generation(self):
         """Test disclaimer generation"""
-        from fiml.compliance.disclaimers import AssetClass, disclaimer_generator
+        from fiml.compliance.disclaimers import (AssetClass,
+                                                 disclaimer_generator)
         from fiml.compliance.router import Region
 
         disclaimer = disclaimer_generator.generate_disclaimer(
-            asset_class=AssetClass.EQUITY,
-            region=Region.US,
-            language="en"
+            asset_class=AssetClass.EQUITY, region=Region.US, language="en"
         )
 
         assert len(disclaimer) > 0
@@ -349,6 +328,4 @@ class TestLiveCompliance:
 
 def pytest_configure(config):
     """Configure pytest with custom markers"""
-    config.addinivalue_line(
-        "markers", "live: mark test as requiring live system"
-    )
+    config.addinivalue_line("markers", "live: mark test as requiring live system")

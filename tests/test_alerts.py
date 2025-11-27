@@ -11,16 +11,9 @@ Tests cover:
 import pytest
 from fastapi.testclient import TestClient
 
-from fiml.alerts.builder import (
-    AlertBuilder,
-    AlertConfig,
-    AlertTrigger,
-    DeliveryMethod,
-    EmailConfig,
-    TelegramConfig,
-    TriggerType,
-    WebhookConfig,
-)
+from fiml.alerts.builder import (AlertBuilder, AlertConfig, AlertTrigger,
+                                 DeliveryMethod, EmailConfig, TelegramConfig,
+                                 TriggerType, WebhookConfig)
 from fiml.server import app
 from fiml.watchdog.models import EventFilter, Severity
 
@@ -79,9 +72,7 @@ def sample_alert_config(sample_email_config):
         enabled=True,
         trigger=AlertTrigger(
             type=TriggerType.WATCHDOG_EVENT,
-            event_filter=EventFilter(
-                severities=[Severity.HIGH, Severity.CRITICAL]
-            ),
+            event_filter=EventFilter(severities=[Severity.HIGH, Severity.CRITICAL]),
         ),
         delivery_methods=[DeliveryMethod.EMAIL],
         email_config=sample_email_config,
@@ -161,10 +152,7 @@ class TestAlertBuilder:
         updated_config = sample_alert_config.model_copy(deep=True)
         updated_config.name = "Updated Alert Name"
 
-        updated = alert_builder.update_alert(
-            sample_alert_config.alert_id,
-            updated_config
-        )
+        updated = alert_builder.update_alert(sample_alert_config.alert_id, updated_config)
 
         assert updated.name == "Updated Alert Name"
 
@@ -195,10 +183,7 @@ class TestAlertAPI:
 
     def test_create_alert_via_api(self, client, sample_alert_config):
         """Test creating an alert via API"""
-        response = client.post(
-            "/api/alerts",
-            json=sample_alert_config.model_dump(mode="json")
-        )
+        response = client.post("/api/alerts", json=sample_alert_config.model_dump(mode="json"))
 
         assert response.status_code == 200
         data = response.json()
@@ -208,10 +193,7 @@ class TestAlertAPI:
     def test_list_alerts_via_api(self, client, sample_alert_config):
         """Test listing alerts via API"""
         # Create an alert first
-        client.post(
-            "/api/alerts",
-            json=sample_alert_config.model_dump(mode="json")
-        )
+        client.post("/api/alerts", json=sample_alert_config.model_dump(mode="json"))
 
         # List alerts
         response = client.get("/api/alerts")
@@ -224,10 +206,7 @@ class TestAlertAPI:
     def test_get_alert_via_api(self, client, sample_alert_config):
         """Test getting a specific alert via API"""
         # Create an alert first
-        client.post(
-            "/api/alerts",
-            json=sample_alert_config.model_dump(mode="json")
-        )
+        client.post("/api/alerts", json=sample_alert_config.model_dump(mode="json"))
 
         # Get the alert
         response = client.get(f"/api/alerts/{sample_alert_config.alert_id}")
@@ -244,10 +223,7 @@ class TestAlertAPI:
     def test_update_alert_via_api(self, client, sample_alert_config):
         """Test updating an alert via API"""
         # Create an alert first
-        client.post(
-            "/api/alerts",
-            json=sample_alert_config.model_dump(mode="json")
-        )
+        client.post("/api/alerts", json=sample_alert_config.model_dump(mode="json"))
 
         # Update the alert
         updated_config = sample_alert_config.model_copy(deep=True)
@@ -255,7 +231,7 @@ class TestAlertAPI:
 
         response = client.put(
             f"/api/alerts/{sample_alert_config.alert_id}",
-            json=updated_config.model_dump(mode="json")
+            json=updated_config.model_dump(mode="json"),
         )
 
         assert response.status_code == 200
@@ -265,10 +241,7 @@ class TestAlertAPI:
     def test_delete_alert_via_api(self, client, sample_alert_config):
         """Test deleting an alert via API"""
         # Create an alert first
-        client.post(
-            "/api/alerts",
-            json=sample_alert_config.model_dump(mode="json")
-        )
+        client.post("/api/alerts", json=sample_alert_config.model_dump(mode="json"))
 
         # Delete the alert
         response = client.delete(f"/api/alerts/{sample_alert_config.alert_id}")
@@ -281,15 +254,10 @@ class TestAlertAPI:
         """Test enabling an alert via API"""
         # Create a disabled alert
         sample_alert_config.enabled = False
-        client.post(
-            "/api/alerts",
-            json=sample_alert_config.model_dump(mode="json")
-        )
+        client.post("/api/alerts", json=sample_alert_config.model_dump(mode="json"))
 
         # Enable the alert
-        response = client.post(
-            f"/api/alerts/{sample_alert_config.alert_id}/enable"
-        )
+        response = client.post(f"/api/alerts/{sample_alert_config.alert_id}/enable")
 
         assert response.status_code == 200
         data = response.json()
@@ -298,15 +266,10 @@ class TestAlertAPI:
     def test_disable_alert_via_api(self, client, sample_alert_config):
         """Test disabling an alert via API"""
         # Create an enabled alert
-        client.post(
-            "/api/alerts",
-            json=sample_alert_config.model_dump(mode="json")
-        )
+        client.post("/api/alerts", json=sample_alert_config.model_dump(mode="json"))
 
         # Disable the alert
-        response = client.post(
-            f"/api/alerts/{sample_alert_config.alert_id}/disable"
-        )
+        response = client.post(f"/api/alerts/{sample_alert_config.alert_id}/disable")
 
         assert response.status_code == 200
         data = response.json()
@@ -333,11 +296,7 @@ class TestAlertDeliveryConfigs:
         assert sample_webhook_config.method == "POST"
 
     def test_multi_delivery_alert(
-        self,
-        alert_builder,
-        sample_alert_config,
-        sample_telegram_config,
-        sample_webhook_config
+        self, alert_builder, sample_alert_config, sample_telegram_config, sample_webhook_config
     ):
         """Test alert with multiple delivery methods"""
         # Configure multiple delivery methods

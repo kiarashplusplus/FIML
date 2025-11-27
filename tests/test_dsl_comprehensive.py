@@ -12,14 +12,10 @@ import pytest
 
 from fiml.core.models import TaskStatus
 from fiml.dsl.executor import ExecutionTaskInfo, TaskExecutor, fk_dsl_executor
-from fiml.dsl.parser import (
-    AssetSpec,
-    ConditionSpec,
-    MetricSpec,
-    TimeframeSpec,
-    fk_dsl_parser,
-)
-from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType, execution_planner
+from fiml.dsl.parser import (AssetSpec, ConditionSpec, MetricSpec,
+                             TimeframeSpec, fk_dsl_parser)
+from fiml.dsl.planner import (ExecutionPlan, ExecutionTask, TaskType,
+                              execution_planner)
 
 
 class TestTimeframeSpec:
@@ -511,16 +507,11 @@ class TestExecutionPlan:
         plan = ExecutionPlan(query="test")
 
         # Add tasks with dependencies
-        task1 = ExecutionTask(
-            type=TaskType.FETCH_PRICE,
-            estimated_duration_ms=500
-        )
+        task1 = ExecutionTask(type=TaskType.FETCH_PRICE, estimated_duration_ms=500)
         task1_id = plan.add_task(task1)
 
         task2 = ExecutionTask(
-            type=TaskType.COMPUTE_TECHNICAL,
-            dependencies=[task1_id],
-            estimated_duration_ms=300
+            type=TaskType.COMPUTE_TECHNICAL, dependencies=[task1_id], estimated_duration_ms=300
         )
         plan.add_task(task2)
 
@@ -555,10 +546,7 @@ class TestTaskExecutorNewTypes:
     @pytest.mark.asyncio
     async def test_fetch_macro(self):
         executor = TaskExecutor()
-        task = ExecutionTask(
-            type=TaskType.FETCH_MACRO,
-            params={"indicator": "US10Y"}
-        )
+        task = ExecutionTask(type=TaskType.FETCH_MACRO, params={"indicator": "US10Y"})
         result = await executor.execute(task, {})
         assert result is not None
         assert "value" in result
@@ -566,10 +554,7 @@ class TestTaskExecutorNewTypes:
     @pytest.mark.asyncio
     async def test_compute_volatility(self):
         executor = TaskExecutor()
-        task = ExecutionTask(
-            type=TaskType.COMPUTE_VOLATILITY,
-            params={"asset": {"symbol": "AAPL"}}
-        )
+        task = ExecutionTask(type=TaskType.COMPUTE_VOLATILITY, params={"asset": {"symbol": "AAPL"}})
         result = await executor.execute(task, {})
         assert result is not None
         assert "historical_volatility" in result
@@ -579,10 +564,7 @@ class TestTaskExecutorNewTypes:
         executor = TaskExecutor()
         task = ExecutionTask(
             type=TaskType.COMPUTE_CORRELATION,
-            params={
-                "primary_asset": {"symbol": "TSLA"},
-                "correlation_assets": [{"symbol": "SPY"}]
-            }
+            params={"primary_asset": {"symbol": "TSLA"}, "correlation_assets": [{"symbol": "SPY"}]},
         )
         result = await executor.execute(task, {})
         assert result is not None
@@ -596,8 +578,8 @@ class TestTaskExecutorNewTypes:
             params={
                 "indicators": ["US10Y", "VIX"],
                 "target": {"symbol": "SPY"},
-                "analysis_type": "regression"
-            }
+                "analysis_type": "regression",
+            },
         )
         result = await executor.execute(task, {})
         assert result is not None
@@ -607,8 +589,7 @@ class TestTaskExecutorNewTypes:
     async def test_scan_market(self):
         executor = TaskExecutor()
         task = ExecutionTask(
-            type=TaskType.SCAN_MARKET,
-            params={"market": "NASDAQ", "conditions": []}
+            type=TaskType.SCAN_MARKET, params={"market": "NASDAQ", "conditions": []}
         )
         result = await executor.execute(task, {})
         assert result is not None
@@ -620,7 +601,7 @@ class TestTaskExecutorNewTypes:
         task = ExecutionTask(
             type=TaskType.AGGREGATE,
             params={"query_type": "evaluate", "asset": {"symbol": "AAPL"}, "metrics": []},
-            dependencies=[]
+            dependencies=[],
         )
         result = await executor.execute(task, {})
         assert result is not None
@@ -629,10 +610,7 @@ class TestTaskExecutorNewTypes:
     @pytest.mark.asyncio
     async def test_generate_narrative(self):
         executor = TaskExecutor()
-        task = ExecutionTask(
-            type=TaskType.GENERATE_NARRATIVE,
-            params={}
-        )
+        task = ExecutionTask(type=TaskType.GENERATE_NARRATIVE, params={})
         result = await executor.execute(task, {})
         assert result is not None
         assert "summary" in result
@@ -687,6 +665,7 @@ class TestFKDSLExecutorIntegration:
 
         # Wait briefly for task to start
         import asyncio
+
         await asyncio.sleep(0.1)
 
         status = fk_dsl_executor.get_task_status(task_id)
@@ -703,6 +682,6 @@ class TestExecutionTaskInfo:
             status=TaskStatus.RUNNING,
             query="EVALUATE AAPL: PRICE",
             query_type="EVALUATE",
-            total_steps=5
+            total_steps=5,
         )
         assert info.query_type == "EVALUATE"

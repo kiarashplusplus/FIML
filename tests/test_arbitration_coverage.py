@@ -2,7 +2,6 @@
 Tests to fill missing coverage in arbitration engine
 """
 
-
 import pytest
 
 from fiml.arbitration.engine import DataArbitrationEngine
@@ -21,10 +20,7 @@ class TestArbitrationEngineCoverage:
         engine = DataArbitrationEngine()
 
         # Arbitrate without specifying region
-        plan = await engine.arbitrate_request(
-            asset=mock_asset,
-            data_type=DataType.PRICE
-        )
+        plan = await engine.arbitrate_request(asset=mock_asset, data_type=DataType.PRICE)
 
         assert plan is not None
         assert plan.primary_provider is not None
@@ -41,9 +37,7 @@ class TestArbitrationEngineCoverage:
         # Test with different regions
         for region in ["US", "EU", "CN"]:
             plan = await engine.arbitrate_request(
-                asset=mock_asset,
-                data_type=DataType.PRICE,
-                user_region=region
+                asset=mock_asset, data_type=DataType.PRICE, user_region=region
             )
 
             assert plan is not None
@@ -58,17 +52,12 @@ class TestArbitrationEngineCoverage:
         engine = DataArbitrationEngine()
 
         # Create a plan
-        plan = await engine.arbitrate_request(
-            asset=mock_asset,
-            data_type=DataType.PRICE
-        )
+        plan = await engine.arbitrate_request(asset=mock_asset, data_type=DataType.PRICE)
 
         # Try to execute - even if providers fail, should handle gracefully
         try:
             response = await engine.execute_with_fallback(
-                plan=plan,
-                asset=mock_asset,
-                data_type=DataType.PRICE
+                plan=plan, asset=mock_asset, data_type=DataType.PRICE
             )
             # If it succeeds, that's fine
             assert response is not None

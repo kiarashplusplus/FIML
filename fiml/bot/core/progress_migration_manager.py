@@ -41,7 +41,7 @@ class ProgressMigrationManager:
         logger.info(
             "ProgressMigrationManager initialized",
             current_version=self.CURRENT_SCHEMA_VERSION,
-            migrations=len(self._migrations)
+            migrations=len(self._migrations),
         )
 
     def migrate_user_data(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -64,7 +64,7 @@ class ProgressMigrationManager:
             "Migrating user data",
             user_id=user_data.get("user_id", "unknown"),
             from_version=current_version,
-            to_version=self.CURRENT_SCHEMA_VERSION
+            to_version=self.CURRENT_SCHEMA_VERSION,
         )
 
         # Apply migrations in sequence
@@ -76,7 +76,7 @@ class ProgressMigrationManager:
                 logger.error(
                     "No migration path available",
                     from_version=current_version,
-                    to_version=self.CURRENT_SCHEMA_VERSION
+                    to_version=self.CURRENT_SCHEMA_VERSION,
                 )
                 # Return original data rather than corrupt it
                 return user_data
@@ -88,23 +88,17 @@ class ProgressMigrationManager:
                 migration_count += 1
 
                 logger.debug(
-                    "Migration step completed",
-                    step=migration_count,
-                    new_version=current_version
+                    "Migration step completed", step=migration_count, new_version=current_version
                 )
             except Exception as e:
-                logger.error(
-                    "Migration failed",
-                    from_version=current_version,
-                    error=str(e)
-                )
+                logger.error("Migration failed", from_version=current_version, error=str(e))
                 # Return original data on migration failure
                 return user_data
 
         logger.info(
             "User data migration completed",
             user_id=migrated_data.get("user_id", "unknown"),
-            steps=migration_count
+            steps=migration_count,
         )
 
         return migrated_data
@@ -151,17 +145,13 @@ class ProgressMigrationManager:
             "Migrated user data from 0.9 to 1.0",
             user_id=migrated.get("user_id", "unknown"),
             lessons=len(migrated.get("lessons", {})),
-            completions=len(migrated.get("lesson_completions", {}))
+            completions=len(migrated.get("lesson_completions", {})),
         )
 
         return migrated
 
     def preserve_in_progress_lesson(
-        self,
-        user_id: str,
-        lesson_id: str,
-        old_version: str,
-        new_version: str
+        self, user_id: str, lesson_id: str, old_version: str, new_version: str
     ) -> Dict[str, Any]:
         """
         Handle in-progress lesson when version changes
@@ -182,11 +172,7 @@ class ProgressMigrationManager:
         from fiml.bot.core.lesson_version_manager import LessonVersionManager
 
         version_manager = LessonVersionManager()
-        compatibility = version_manager.check_compatibility(
-            old_version,
-            new_version,
-            lesson_id
-        )
+        compatibility = version_manager.check_compatibility(old_version, new_version, lesson_id)
 
         if compatibility.action in ["continue", "migrate"]:
             # Auto-migrate compatible changes
@@ -196,14 +182,14 @@ class ProgressMigrationManager:
                 lesson_id=lesson_id,
                 old_version=old_version,
                 new_version=new_version,
-                action=compatibility.action
+                action=compatibility.action,
             )
 
             return {
                 "action": "auto_migrate",
                 "new_version": new_version,
                 "notify_user": compatibility.notify_user,
-                "message": compatibility.message
+                "message": compatibility.message,
             }
 
         else:
@@ -213,7 +199,7 @@ class ProgressMigrationManager:
                 user_id=user_id,
                 lesson_id=lesson_id,
                 old_version=old_version,
-                new_version=new_version
+                new_version=new_version,
             )
 
             return {
@@ -222,21 +208,22 @@ class ProgressMigrationManager:
                     {
                         "id": "continue_old",
                         "label": "Continue with original",
-                        "description": "Finish with the version you started"
+                        "description": "Finish with the version you started",
                     },
                     {
                         "id": "restart_new",
                         "label": "Restart with new version",
-                        "description": "Start over with improvements (XP preserved)"
-                    }
+                        "description": "Start over with improvements (XP preserved)",
+                    },
                 ],
                 "notify_user": True,
-                "message": compatibility.message or (
+                "message": compatibility.message
+                or (
                     f"📚 This lesson has been significantly updated!\n\n"
                     f"You're currently on version {old_version}, "
                     f"but version {new_version} is now available.\n\n"
                     f"Choose how to proceed:"
-                )
+                ),
             }
 
     def validate_migrated_data(self, data: Dict[str, Any]) -> bool:
@@ -261,7 +248,7 @@ class ProgressMigrationManager:
             logger.error(
                 "Schema version mismatch after migration",
                 expected=self.CURRENT_SCHEMA_VERSION,
-                actual=data.get("schema_version")
+                actual=data.get("schema_version"),
             )
             return False
 
@@ -269,10 +256,7 @@ class ProgressMigrationManager:
         if "lessons" in data:
             for lesson_id, lesson_data in data["lessons"].items():
                 if "version" not in lesson_data:
-                    logger.error(
-                        "Lesson missing version after migration",
-                        lesson_id=lesson_id
-                    )
+                    logger.error("Lesson missing version after migration", lesson_id=lesson_id)
                     return False
 
         logger.debug("Migrated data validation passed")
@@ -291,20 +275,16 @@ class ProgressMigrationManager:
         snapshot = {
             "timestamp": datetime.now().isoformat(),
             "schema_version": user_data.get("schema_version", "unknown"),
-            "data": user_data.copy()
+            "data": user_data.copy(),
         }
 
-        logger.debug(
-            "Created migration snapshot",
-            user_id=user_data.get("user_id", "unknown")
-        )
+        logger.debug("Created migration snapshot", user_id=user_data.get("user_id", "unknown"))
         from typing import cast
+
         return cast(Dict[str, Any], snapshot)
 
     def rollback_migration(
-        self,
-        current_data: Dict[str, Any],
-        snapshot: Dict[str, Any]
+        self, current_data: Dict[str, Any], snapshot: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Rollback migration using snapshot
@@ -319,7 +299,7 @@ class ProgressMigrationManager:
         logger.warning(
             "Rolling back migration",
             user_id=current_data.get("user_id", "unknown"),
-            snapshot_version=snapshot.get("schema_version", "unknown")
+            snapshot_version=snapshot.get("schema_version", "unknown"),
         )
 
         # Restore from snapshot
@@ -338,7 +318,7 @@ class ProgressMigrationManager:
 
                 logger.info(
                     "Preserved XP earned during failed migration",
-                    xp_preserved=current_xp - snapshot_xp
+                    xp_preserved=current_xp - snapshot_xp,
                 )
 
         return cast(Dict[str, Any], restored)
@@ -357,18 +337,20 @@ class ProgressMigrationManager:
         logger.info(
             "Rolling back to snapshot",
             user_id=user_id,
-            snapshot_timestamp=snapshot.get('timestamp', 'unknown')
+            snapshot_timestamp=snapshot.get("timestamp", "unknown"),
         )
 
         # Extract the data from the snapshot
-        if 'data' in snapshot:
-            restored = snapshot['data'].copy()
+        if "data" in snapshot:
+            restored = snapshot["data"].copy()
         else:
             # If snapshot doesn't have 'data' wrapper, assume it's the data itself
-            restored = {k: v for k, v in snapshot.items() if k not in ['timestamp', 'schema_version']}
+            restored = {
+                k: v for k, v in snapshot.items() if k not in ["timestamp", "schema_version"]
+            }
 
         # Ensure user_id is set
-        restored['user_id'] = user_id
+        restored["user_id"] = user_id
 
         return cast(Dict[str, Any], restored)
 
@@ -386,8 +368,8 @@ class ProgressMigrationManager:
         """
         # Ensure user_id is in the data
         data_with_id = user_data.copy()
-        if 'user_id' not in data_with_id:
-            data_with_id['user_id'] = user_id
+        if "user_id" not in data_with_id:
+            data_with_id["user_id"] = user_id
 
         snapshot = self.create_migration_snapshot(data_with_id)
 
@@ -405,7 +387,7 @@ class ProgressMigrationManager:
         user_data: Dict[str, Any],
         from_version: str,
         to_version: str,
-        user_choice: Optional[str] = None
+        user_choice: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Migrate user progress data between versions
@@ -428,7 +410,7 @@ class ProgressMigrationManager:
         # Parse versions to determine migration type
         def parse_version(v: str) -> tuple:
             try:
-                parts = v.split('.')
+                parts = v.split(".")
                 return tuple(int(p) for p in parts)
             except (ValueError, AttributeError):
                 return (0, 0, 0)
@@ -437,26 +419,28 @@ class ProgressMigrationManager:
         to_parts = parse_version(to_version)
 
         # Check if this is a major version change
-        is_major_change = from_parts[0] < to_parts[0] if len(from_parts) > 0 and len(to_parts) > 0 else False
+        is_major_change = (
+            from_parts[0] < to_parts[0] if len(from_parts) > 0 and len(to_parts) > 0 else False
+        )
 
         # Handle user choice for major changes
-        if is_major_change and user_choice == 'restart':
+        if is_major_change and user_choice == "restart":
             # Preserve XP but reset lesson progress
-            xp = data_copy.get('xp', 0)
+            xp = data_copy.get("xp", 0)
             migrated = {
-                'user_id': user_id,
-                'schema_version': to_version,
-                'xp': xp,  # XP is always preserved
-                'lessons': {},  # Reset lessons
-                'migrated_at': datetime.now().isoformat(),
-                'migration_type': 'restart'
+                "user_id": user_id,
+                "schema_version": to_version,
+                "xp": xp,  # XP is always preserved
+                "lessons": {},  # Reset lessons
+                "migrated_at": datetime.now().isoformat(),
+                "migration_type": "restart",
             }
             logger.info(
                 "User chose to restart for major version",
                 user_id=user_id,
                 xp_preserved=xp,
                 from_version=from_version,
-                to_version=to_version
+                to_version=to_version,
             )
             return migrated
 
@@ -464,10 +448,7 @@ class ProgressMigrationManager:
         return self.migrate_user_data(data_copy)
 
     def migrate_schema(
-        self,
-        data: Dict[str, Any],
-        from_version: str,
-        to_version: str
+        self, data: Dict[str, Any], from_version: str, to_version: str
     ) -> Dict[str, Any]:
         """
         Migrate data schema to target version
@@ -500,14 +481,15 @@ class ProgressMigrationManager:
         Returns:
             True if backward compatible
         """
+
         # Parse versions with error handling
         def parse_version(v: str) -> tuple:
             try:
-                parts = v.split('.')
+                parts = v.split(".")
                 return (
                     int(parts[0]) if len(parts) > 0 else 0,
                     int(parts[1]) if len(parts) > 1 else 0,
-                    int(parts[2]) if len(parts) > 2 else 0
+                    int(parts[2]) if len(parts) > 2 else 0,
                 )
             except (ValueError, IndexError):
                 logger.warning("Invalid version format", version=v)

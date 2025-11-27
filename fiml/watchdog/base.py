@@ -63,10 +63,7 @@ class BaseWatchdog(ABC):
         self._shutdown_event = asyncio.Event()
 
         # Health tracking
-        self._health = WatchdogHealth(
-            name=self.name,
-            status="initialized"
-        )
+        self._health = WatchdogHealth(name=self.name, status="initialized")
         self._start_time: Optional[datetime] = None
         self._consecutive_errors = 0
 
@@ -165,10 +162,7 @@ class BaseWatchdog(ABC):
 
             # Wait for next check (with early exit on shutdown)
             try:
-                await asyncio.wait_for(
-                    self._shutdown_event.wait(),
-                    timeout=self.check_interval
-                )
+                await asyncio.wait_for(self._shutdown_event.wait(), timeout=self.check_interval)
                 # If we get here, shutdown was signaled
                 break
             except asyncio.TimeoutError:

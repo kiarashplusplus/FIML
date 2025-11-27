@@ -7,21 +7,17 @@ NOTE: These tests require a real Azure OpenAI endpoint and are skipped
 in standard test environments. They are meant for manual/integration testing.
 """
 
-
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from fiml.core.models import AnalysisDepth, Asset, AssetType, Market
-from fiml.mcp.tools import (
-    get_narrative,
-    search_by_coin,
-    search_by_symbol,
-)
+from fiml.mcp.tools import get_narrative, search_by_coin, search_by_symbol
 
 # Skip logic removed to enable tests with mocks
 # pytestmark = pytest.mark.skipif(...)
+
 
 @pytest.fixture(autouse=True)
 def mock_azure_openai_httpx(monkeypatch):
@@ -34,6 +30,7 @@ def mock_azure_openai_httpx(monkeypatch):
     monkeypatch.setenv("AZURE_OPENAI_API_KEY", "mock-key")
 
     from fiml.core.config import settings
+
     settings.azure_openai_endpoint = "https://mock-azure-openai.openai.azure.com/"
     settings.azure_openai_api_key = "mock-key"
 
@@ -46,16 +43,18 @@ def mock_azure_openai_httpx(monkeypatch):
 
     def side_effect(*args, **kwargs):
         # Use the captured payload
-        json_payload = request_payload.get('json', {})
-        messages = json_payload.get('messages', [])
-        user_content = next((m['content'] for m in messages if m['role'] == 'user'), "")
+        json_payload = request_payload.get("json", {})
+        messages = json_payload.get("messages", [])
+        user_content = next((m["content"] for m in messages if m["role"] == "user"), "")
 
         content = "Mock narrative content for testing. This is a longer sentence to ensure we meet the minimum length requirements for summaries and sections in the narrative generation tests. It needs to be at least 50 characters long."
 
         if "JSON array" in user_content or "extract insights" in user_content.lower():
             content = '["Insight 1: The market is showing strong bullish momentum based on recent price action.", "Insight 2: Technical indicators suggest overbought conditions in the short term.", "Insight 3: Fundamental metrics remain solid with healthy profit margins."]'
-        elif "sentiment" in user_content.lower() and "JSON object" in messages[0].get('content', ''):
-             content = '{"positive": 0.7, "negative": 0.1, "neutral": 0.2}'
+        elif "sentiment" in user_content.lower() and "JSON object" in messages[0].get(
+            "content", ""
+        ):
+            content = '{"positive": 0.7, "negative": 0.1, "neutral": 0.2}'
 
         return {
             "choices": [
@@ -82,11 +81,12 @@ def mock_azure_openai_httpx(monkeypatch):
 
     async def mock_post(self, url, *args, **kwargs):
         # Capture the payload
-        request_payload['json'] = kwargs.get('json', {})
+        request_payload["json"] = kwargs.get("json", {})
         return mock_response
 
     with patch.object(httpx.AsyncClient, "post", mock_post):
         yield
+
 
 @pytest.fixture(autouse=True)
 def mock_providers():
@@ -123,7 +123,7 @@ def mock_providers():
         )
 
     async def mock_execute_with_fallback(*args, **kwargs):
-       # Check which data type is being requested
+        # Check which data type is being requested
         data_type = args[2] if len(args) > 2 else kwargs.get("data_type", DataType.PRICE)
 
         if data_type == DataType.FUNDAMENTALS:
@@ -161,9 +161,18 @@ def mock_providers():
             # Return price data
             return mock_response
 
-    with patch("fiml.arbitration.engine.arbitration_engine.arbitrate_request", side_effect=mock_arbitrate_request), \
-         patch("fiml.arbitration.engine.arbitration_engine.execute_with_fallback", side_effect=mock_execute_with_fallback):
+    with (
+        patch(
+            "fiml.arbitration.engine.arbitration_engine.arbitrate_request",
+            side_effect=mock_arbitrate_request,
+        ),
+        patch(
+            "fiml.arbitration.engine.arbitration_engine.execute_with_fallback",
+            side_effect=mock_execute_with_fallback,
+        ),
+    ):
         yield
+
 
 @pytest.fixture(autouse=True)
 async def init_cache():
@@ -184,7 +193,6 @@ async def init_cache():
         await cache_manager.l1._redis.flushdb()
 
     await cache_manager.shutdown()
-
 
 
 class TestMCPNarrativeIntegration:
@@ -208,7 +216,9 @@ class TestMCPNarrativeIntegration:
         assert response.task is not None
         assert response.disclaimer is not None
         # Verify disclaimer includes LICENSE reference
-        assert "LICENSE" in response.disclaimer, "API response disclaimer should reference LICENSE file"
+        assert (
+            "LICENSE" in response.disclaimer
+        ), "API response disclaimer should reference LICENSE file"
 
         # Verify narrative is included
         assert response.narrative is not None
@@ -330,8 +340,7 @@ class TestMCPNarrativeIntegration:
         # Check for crypto-specific risks
         risk_text = " ".join(response.narrative.risk_factors).lower()
         assert any(
-            keyword in risk_text
-            for keyword in ["volatility", "24/7", "regulatory", "crypto"]
+            keyword in risk_text for keyword in ["volatility", "24/7", "regulatory", "crypto"]
         )
 
     @pytest.mark.asyncio
@@ -483,7 +492,8 @@ class TestMCPNarrativeIntegration:
     async def test_narrative_formatting_text(self):
         """Test narrative text formatting"""
         from fiml.mcp.tools import format_narrative_text
-        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
+        from fiml.narrative.models import (Narrative, NarrativeSection,
+                                           NarrativeType)
 
         # Create test narrative
         narrative = Narrative(
@@ -515,7 +525,8 @@ class TestMCPNarrativeIntegration:
     async def test_narrative_formatting_markdown(self):
         """Test narrative markdown formatting"""
         from fiml.mcp.tools import format_narrative_markdown
-        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
+        from fiml.narrative.models import (Narrative, NarrativeSection,
+                                           NarrativeType)
 
         # Create test narrative
         narrative = Narrative(

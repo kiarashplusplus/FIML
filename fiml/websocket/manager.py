@@ -336,9 +336,7 @@ class WebSocketManager:
                     await asyncio.sleep(interval_sec)
 
         except asyncio.CancelledError:
-            logger.debug(
-                "Price streaming cancelled", subscription_id=subscription.subscription_id
-            )
+            logger.debug("Price streaming cancelled", subscription_id=subscription.subscription_id)
         except Exception as e:
             logger.error(f"Fatal error in price streaming: {e}")
 
@@ -414,9 +412,7 @@ class WebSocketManager:
                     await asyncio.sleep(interval_sec)
 
         except asyncio.CancelledError:
-            logger.debug(
-                "OHLCV streaming cancelled", subscription_id=subscription.subscription_id
-            )
+            logger.debug("OHLCV streaming cancelled", subscription_id=subscription.subscription_id)
         except Exception as e:
             logger.error(f"Fatal error in OHLCV streaming: {e}")
 

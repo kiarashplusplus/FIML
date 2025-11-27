@@ -5,37 +5,17 @@ Tests for Core modules - models, config, exceptions, logging, sentry
 from unittest.mock import MagicMock, patch
 
 from fiml.core.config import Settings
-from fiml.core.exceptions import (
-    ArbitrationError,
-    CacheError,
-    ComplianceError,
-    DataQualityError,
-    FIMLException,
-    FKDSLExecutionError,
-    FKDSLParseError,
-    NoProviderAvailableError,
-    ProviderError,
-)
+from fiml.core.exceptions import (ArbitrationError, CacheError,
+                                  ComplianceError, DataQualityError,
+                                  FIMLException, FKDSLExecutionError,
+                                  FKDSLParseError, NoProviderAvailableError,
+                                  ProviderError)
 from fiml.core.logging import get_logger
-from fiml.core.models import (
-    ArbitrationPlan,
-    Asset,
-    AssetType,
-    DataLineage,
-    Market,
-    ProviderScore,
-    TaskInfo,
-    TaskStatus,
-)
-from fiml.core.sentry import (
-    add_breadcrumb,
-    capture_exception,
-    capture_message,
-    init_sentry,
-    set_context,
-    set_tag,
-    set_user,
-)
+from fiml.core.models import (ArbitrationPlan, Asset, AssetType, DataLineage,
+                              Market, ProviderScore, TaskInfo, TaskStatus)
+from fiml.core.sentry import (add_breadcrumb, capture_exception,
+                              capture_message, init_sentry, set_context,
+                              set_tag, set_user)
 
 
 class TestModels:
@@ -49,7 +29,7 @@ class TestModels:
             asset_type=AssetType.EQUITY,
             market=Market.US,
             exchange="NASDAQ",
-            currency="USD"
+            currency="USD",
         )
         assert asset.symbol == "AAPL"
         assert asset.asset_type == AssetType.EQUITY
@@ -57,11 +37,7 @@ class TestModels:
 
     def test_asset_symbol_validation(self):
         """Test asset symbol validation"""
-        asset = Asset(
-            symbol="  aapl  ",
-            asset_type=AssetType.EQUITY,
-            market=Market.US
-        )
+        asset = Asset(symbol="  aapl  ", asset_type=AssetType.EQUITY, market=Market.US)
         assert asset.symbol == "AAPL"  # Should be uppercase and trimmed
 
     def test_provider_score(self):
@@ -72,7 +48,7 @@ class TestModels:
             latency=80.0,
             uptime=95.0,
             completeness=85.0,
-            reliability=88.0
+            reliability=88.0,
         )
         assert score.total == 85.5
         assert score.freshness == 90.0
@@ -83,7 +59,7 @@ class TestModels:
             providers=["yahoo_finance", "mock_provider"],
             arbitration_score=0.95,
             conflict_resolved=True,
-            source_count=2
+            source_count=2,
         )
         assert len(lineage.providers) == 2
         assert lineage.conflict_resolved is True
@@ -95,7 +71,7 @@ class TestModels:
             type="fetch_price",
             status=TaskStatus.PENDING,
             resource_url="/api/tasks/task-123",
-            progress=0.0
+            progress=0.0,
         )
         assert task.id == "task-123"
         assert task.status == TaskStatus.PENDING
@@ -106,7 +82,7 @@ class TestModels:
             primary_provider="yahoo_finance",
             fallback_providers=["mock_provider"],
             estimated_latency_ms=100,
-            timeout_ms=5000
+            timeout_ms=5000,
         )
         assert plan.primary_provider == "yahoo_finance"
         assert len(plan.fallback_providers) == 1
@@ -118,9 +94,7 @@ class TestConfig:
     def test_settings_creation(self):
         """Test creating settings"""
         settings = Settings(
-            fiml_env="development",
-            redis_host="localhost",
-            postgres_host="localhost"
+            fiml_env="development", redis_host="localhost", postgres_host="localhost"
         )
         assert settings.fiml_env == "development"
         assert settings.redis_host == "localhost"
@@ -184,10 +158,10 @@ class TestLogging:
         assert logger is not None
 
         # Test logging methods exist
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'error')
-        assert hasattr(logger, 'warning')
-        assert hasattr(logger, 'debug')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "error")
+        assert hasattr(logger, "warning")
+        assert hasattr(logger, "debug")
 
 
 class TestSentry:

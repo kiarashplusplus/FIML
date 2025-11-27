@@ -85,8 +85,7 @@ class UserProviderKeyManager:
 
         # Initialize service with file storage
         self._service = UserKeyOnboardingService(
-            storage=file_storage,
-            encryption_key=self.encryption_key
+            storage=file_storage, encryption_key=self.encryption_key
         )
 
         # Provide direct access to cipher for backward compatibility
@@ -98,7 +97,10 @@ class UserProviderKeyManager:
         # Quota tracking - now delegated to service
         self._quota_usage: Dict[str, int] = self._service._quota_usage
 
-        logger.info("UserProviderKeyManager initialized (using new service layer)", storage_path=storage_path)
+        logger.info(
+            "UserProviderKeyManager initialized (using new service layer)",
+            storage_path=storage_path,
+        )
 
     def get_provider_info(self, provider: str) -> Optional[Dict[str, Any]]:
         """Get information about a provider for user guidance"""
@@ -138,11 +140,7 @@ class UserProviderKeyManager:
     # (Methods _test_alpha_vantage, _test_polygon, _test_finnhub, _test_fmp deleted)
 
     async def store_user_key(
-        self,
-        user_id: str,
-        provider: str,
-        api_key: str,
-        metadata: Optional[Dict[str, Any]] = None
+        self, user_id: str, provider: str, api_key: str, metadata: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
         Encrypt and store user API key (delegates to service)
@@ -156,7 +154,9 @@ class UserProviderKeyManager:
         Returns:
             True if stored successfully
         """
-        result = await self._service.add_key(user_id, provider, api_key, validate=False, metadata=metadata)
+        result = await self._service.add_key(
+            user_id, provider, api_key, validate=False, metadata=metadata
+        )
 
         # Update cache for backward compatibility
         if result["success"]:
@@ -164,7 +164,8 @@ class UserProviderKeyManager:
                 self._key_cache[user_id] = {}
             self._key_cache[user_id][provider] = api_key
 
-        return result["success"]
+        success: bool = result["success"]
+        return success
 
     async def get_user_keys(self, user_id: str) -> Dict[str, str]:
         """
@@ -221,6 +222,7 @@ class UserProviderKeyManager:
 
         try:
             import os
+
             if not os.path.exists(user_file):
                 return []
 
@@ -230,12 +232,14 @@ class UserProviderKeyManager:
             providers = []
             for provider, key_data in user_keys_data.items():
                 provider_info = self.PROVIDER_INFO.get(provider, {})
-                providers.append({
-                    "provider": provider,
-                    "name": provider_info.get("name", provider),
-                    "added_at": key_data.get("added_at"),
-                    "metadata": key_data.get("metadata", {}),
-                })
+                providers.append(
+                    {
+                        "provider": provider,
+                        "name": provider_info.get("name", provider),
+                        "added_at": key_data.get("added_at"),
+                        "metadata": key_data.get("metadata", {}),
+                    }
+                )
 
             return providers
 
@@ -275,11 +279,7 @@ class UserProviderKeyManager:
 
         if usage >= limit:
             logger.warning(
-                "Quota warning",
-                user_id=user_id,
-                provider=provider,
-                usage=usage,
-                limit=limit
+                "Quota warning", user_id=user_id, provider=provider, usage=usage, limit=limit
             )
             return {"warning": True, "usage": usage, "limit": limit}
 
@@ -303,7 +303,7 @@ class UserProviderKeyManager:
             "Key management audit",
             user_id=user_id,
             action=action,
-            timestamp=datetime.now(UTC).isoformat()
+            timestamp=datetime.now(UTC).isoformat(),
         )
 
         # In production, write to dedicated audit log storage
@@ -340,6 +340,7 @@ class UserProviderKeyManager:
 
         # Load from storage
         import os
+
         user_file = self.storage_path / f"{user_id}.json"
 
         if not os.path.exists(user_file):
@@ -354,7 +355,7 @@ class UserProviderKeyManager:
 
             # Decrypt key
             encrypted_key = user_keys[provider]["encrypted_key"].encode()
-            decrypted_key = self.cipher.decrypt(encrypted_key).decode()
+            decrypted_key: str = self.cipher.decrypt(encrypted_key).decode()
 
             # Cache it
             if user_id not in self._key_cache:
@@ -378,6 +379,7 @@ class UserProviderKeyManager:
             List of provider identifiers
         """
         import os
+
         user_file = self.storage_path / f"{user_id}.json"
 
         if not os.path.exists(user_file):
@@ -405,6 +407,7 @@ class UserProviderKeyManager:
             True if removed successfully
         """
         import os
+
         user_file = self.storage_path / f"{user_id}.json"
 
         if not os.path.exists(user_file):

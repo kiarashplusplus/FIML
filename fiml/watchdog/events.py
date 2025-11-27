@@ -158,9 +158,7 @@ class EventStream:
 
             # Add to Redis Stream
             await self._redis_client.xadd(
-                stream_name,
-                event_data,
-                maxlen=10000  # Keep last 10k events
+                stream_name, event_data, maxlen=10000  # Keep last 10k events
             )
 
             logger.debug(f"Event persisted to Redis stream: {stream_name}")
@@ -199,10 +197,7 @@ class EventStream:
                     else:
                         callback(event)
             except Exception as e:
-                logger.error(
-                    f"Error notifying subscriber {subscriber_id}: {e}",
-                    exc_info=True
-                )
+                logger.error(f"Error notifying subscriber {subscriber_id}: {e}", exc_info=True)
 
     def subscribe(
         self,
@@ -292,10 +287,7 @@ class EventStream:
             stream_name = "watchdog:events"
 
             # Read from Redis Stream
-            results = await self._redis_client.xread(
-                {stream_name: start_id},
-                count=count
-            )
+            results = await self._redis_client.xread({stream_name: start_id}, count=count)
 
             events = []
             for stream, messages in results:

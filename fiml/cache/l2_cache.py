@@ -98,7 +98,8 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT time, asset_id, provider, price, change, change_percent,
                            volume, confidence, metadata
                     FROM price_cache
@@ -107,7 +108,8 @@ class L2Cache:
                         AND (:provider IS NULL OR provider = :provider)
                     ORDER BY time DESC
                     LIMIT 1
-                """)
+                """
+                )
 
                 result = await session.execute(
                     query,
@@ -154,13 +156,15 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     INSERT INTO price_cache
                     (time, asset_id, provider, price, change, change_percent,
                      volume, confidence, metadata)
                     VALUES (NOW(), :asset_id, :provider, :price, :change,
                             :change_percent, :volume, :confidence, :metadata)
-                """)
+                """
+                )
 
                 await session.execute(
                     query,
@@ -197,7 +201,8 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT time, asset_id, provider, open, high, low, close,
                            volume, timeframe
                     FROM ohlcv_cache
@@ -206,7 +211,8 @@ class L2Cache:
                         AND (:provider IS NULL OR provider = :provider)
                     ORDER BY time DESC
                     LIMIT :limit
-                """)
+                """
+                )
 
                 result = await session.execute(
                     query,
@@ -247,7 +253,8 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT id, asset_id, provider, data, timestamp, ttl_seconds
                     FROM fundamentals_cache
                     WHERE asset_id = :asset_id
@@ -255,11 +262,10 @@ class L2Cache:
                         AND timestamp >= NOW() - INTERVAL '1 second' * ttl_seconds
                     ORDER BY timestamp DESC
                     LIMIT 1
-                """)
-
-                result = await session.execute(
-                    query, {"asset_id": asset_id, "provider": provider}
+                """
                 )
+
+                result = await session.execute(query, {"asset_id": asset_id, "provider": provider})
 
                 row = result.fetchone()
                 if row:
@@ -291,7 +297,8 @@ class L2Cache:
         try:
             async with self._session_maker() as session:
                 # Upsert using ON CONFLICT
-                query = text("""
+                query = text(
+                    """
                     INSERT INTO fundamentals_cache
                     (asset_id, provider, data, timestamp, ttl_seconds)
                     VALUES (:asset_id, :provider, :data, NOW(), :ttl_seconds)
@@ -300,7 +307,8 @@ class L2Cache:
                         data = EXCLUDED.data,
                         timestamp = EXCLUDED.timestamp,
                         ttl_seconds = EXCLUDED.ttl_seconds
-                """)
+                """
+                )
 
                 await session.execute(
                     query,
@@ -327,10 +335,12 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     DELETE FROM fundamentals_cache
                     WHERE timestamp < NOW() - INTERVAL '1 second' * ttl_seconds
-                """)
+                """
+                )
 
                 result = await session.execute(query)
                 await session.commit()
@@ -361,7 +371,8 @@ class L2Cache:
         try:
             async with self._session_maker() as session:
                 # Use generic cache table for key-value storage
-                query = text("""
+                query = text(
+                    """
                     INSERT INTO generic_cache
                     (key, value, timestamp, ttl_seconds)
                     VALUES (:key, :value, NOW(), :ttl_seconds)
@@ -370,7 +381,8 @@ class L2Cache:
                         value = EXCLUDED.value,
                         timestamp = EXCLUDED.timestamp,
                         ttl_seconds = EXCLUDED.ttl_seconds
-                """)
+                """
+                )
 
                 await session.execute(
                     query,
@@ -404,13 +416,15 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT value
                     FROM generic_cache
                     WHERE key = :key
                         AND timestamp >= NOW() - INTERVAL '1 second' * ttl_seconds
                     LIMIT 1
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"key": key})
                 row = result.fetchone()
@@ -439,10 +453,12 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     DELETE FROM generic_cache
                     WHERE key = :key
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"key": key})
                 await session.commit()
@@ -470,13 +486,15 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     SELECT 1
                     FROM generic_cache
                     WHERE key = :key
                         AND timestamp >= NOW() - INTERVAL '1 second' * ttl_seconds
                     LIMIT 1
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"key": key})
                 return result.fetchone() is not None
@@ -524,10 +542,12 @@ class L2Cache:
 
         try:
             async with self._session_maker() as session:
-                query = text("""
+                query = text(
+                    """
                     DELETE FROM generic_cache
                     WHERE key LIKE :pattern
-                """)
+                """
+                )
 
                 result = await session.execute(query, {"pattern": pattern})
                 await session.commit()
@@ -561,11 +581,13 @@ class L2Cache:
                 total_entries = count_result.scalar() or 0
 
                 # Count expired entries
-                expired_query = text("""
+                expired_query = text(
+                    """
                     SELECT COUNT(*)
                     FROM generic_cache
                     WHERE timestamp < NOW() - INTERVAL '1 second' * ttl_seconds
-                """)
+                """
+                )
                 expired_result = await session.execute(expired_query)
                 expired_entries = expired_result.scalar() or 0
 

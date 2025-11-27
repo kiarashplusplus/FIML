@@ -29,6 +29,7 @@ from fiml.core.models import Asset, AssetType, DataType, Market
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def sample_asset():
     """Create a sample equity asset"""
@@ -38,7 +39,7 @@ def sample_asset():
         asset_type=AssetType.EQUITY,
         market=Market.US,
         exchange="NASDAQ",
-        currency="USD"
+        currency="USD",
     )
 
 
@@ -51,7 +52,7 @@ def sample_crypto_asset():
         asset_type=AssetType.CRYPTO,
         market=Market.CRYPTO,
         exchange="binance",
-        currency="USDT"
+        currency="USDT",
     )
 
 
@@ -75,10 +76,9 @@ def mock_provider_registry():
     mock_provider = MagicMock()
     mock_provider.name = "test_provider"
     mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-    mock_provider.get_prices_batch = AsyncMock(return_value=[
-        {"symbol": "AAPL", "price": 150.0},
-        {"symbol": "GOOGL", "price": 2800.0}
-    ])
+    mock_provider.get_prices_batch = AsyncMock(
+        return_value=[{"symbol": "AAPL", "price": 150.0}, {"symbol": "GOOGL", "price": 2800.0}]
+    )
     mock_provider.get_fundamentals = AsyncMock(return_value={"pe_ratio": 25.0})
     mock_provider.supports_batch = True
 
@@ -92,6 +92,7 @@ def mock_provider_registry():
 # BatchUpdateScheduler Async Tests
 # ============================================================================
 
+
 class TestBatchUpdateSchedulerAsync:
     """Test async operations in BatchUpdateScheduler"""
 
@@ -103,12 +104,10 @@ class TestBatchUpdateSchedulerAsync:
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
-            batch_size=10
+            batch_size=10,
         )
 
-        batch = [
-            UpdateRequest(sample_asset, DataType.PRICE, "test_provider", priority=1)
-        ]
+        batch = [UpdateRequest(sample_asset, DataType.PRICE, "test_provider", priority=1)]
 
         stats = await scheduler._process_batch(batch)
 
@@ -126,7 +125,7 @@ class TestBatchUpdateSchedulerAsync:
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
             batch_size=5,
-            low_load_hours=list(range(24))  # Always in low-load period
+            low_load_hours=list(range(24)),  # Always in low-load period
         )
 
         # Schedule some updates
@@ -144,7 +143,7 @@ class TestBatchUpdateSchedulerAsync:
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
-            batch_interval_seconds=1
+            batch_interval_seconds=1,
         )
 
         # Start scheduler
@@ -167,7 +166,7 @@ class TestBatchUpdateSchedulerAsync:
         scheduler = BatchUpdateScheduler(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
-            batch_size=10
+            batch_size=10,
         )
 
         # Schedule multiple updates
@@ -180,12 +179,16 @@ class TestBatchUpdateSchedulerAsync:
         await scheduler.flush_pending()
 
         # All should be processed
-        assert len(scheduler.pending_requests) < initial_pending or len(scheduler.pending_requests) == 0
+        assert (
+            len(scheduler.pending_requests) < initial_pending
+            or len(scheduler.pending_requests) == 0
+        )
 
 
 # ============================================================================
 # PredictiveCacheWarmer Async Tests
 # ============================================================================
+
 
 class TestPredictiveCacheWarmerAsync:
     """Test async operations in PredictiveCacheWarmer"""
@@ -194,8 +197,7 @@ class TestPredictiveCacheWarmerAsync:
     async def test_warm_symbol_price_success(self, mock_cache_manager, mock_provider_registry):
         """Test successful symbol warming with price data"""
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_provider_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_provider_registry
         )
 
         success = await warmer.warm_symbol("AAPL", data_types=[DataType.PRICE])
@@ -210,8 +212,7 @@ class TestPredictiveCacheWarmerAsync:
     ):
         """Test successful symbol warming with fundamentals data"""
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_provider_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_provider_registry
         )
 
         success = await warmer.warm_symbol("AAPL", data_types=[DataType.FUNDAMENTALS])
@@ -220,16 +221,13 @@ class TestPredictiveCacheWarmerAsync:
         assert warmer.total_warmed >= 1
 
     @pytest.mark.asyncio
-    async def test_warm_symbol_provider_not_found(
-        self, mock_cache_manager
-    ):
+    async def test_warm_symbol_provider_not_found(self, mock_cache_manager):
         """Test warming when provider is not found"""
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=None)
 
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         success = await warmer.warm_symbol("AAPL", data_types=[DataType.PRICE])
@@ -238,16 +236,13 @@ class TestPredictiveCacheWarmerAsync:
         assert isinstance(success, bool)
 
     @pytest.mark.asyncio
-    async def test_warm_symbol_exception_handling(
-        self, mock_cache_manager, mock_provider_registry
-    ):
+    async def test_warm_symbol_exception_handling(self, mock_cache_manager, mock_provider_registry):
         """Test exception handling during warming"""
         # Make provider raise exception
         mock_provider_registry.get_provider_for_data_type.side_effect = Exception("Provider error")
 
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_provider_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_provider_registry
         )
 
         success = await warmer.warm_symbol("AAPL")
@@ -260,8 +255,7 @@ class TestPredictiveCacheWarmerAsync:
     async def test_warm_cache_batch(self, mock_cache_manager, mock_provider_registry):
         """Test batch cache warming"""
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_provider_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_provider_registry
         )
 
         symbols = ["AAPL", "GOOGL", "MSFT"]
@@ -278,7 +272,7 @@ class TestPredictiveCacheWarmerAsync:
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
-            warming_schedule=[current_hour]  # Current hour
+            warming_schedule=[current_hour],  # Current hour
         )
 
         # Add a pattern to trigger warming
@@ -301,7 +295,7 @@ class TestPredictiveCacheWarmerAsync:
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
-            warming_schedule=[off_hour]
+            warming_schedule=[off_hour],
         )
 
         initial_warmed = warmer.total_warmed
@@ -311,13 +305,10 @@ class TestPredictiveCacheWarmerAsync:
         assert warmer.total_warmed == initial_warmed
 
     @pytest.mark.asyncio
-    async def test_start_stop_background_warming(
-        self, mock_cache_manager, mock_provider_registry
-    ):
+    async def test_start_stop_background_warming(self, mock_cache_manager, mock_provider_registry):
         """Test starting and stopping background warming"""
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_provider_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_provider_registry
         )
 
         # Start background warming
@@ -335,6 +326,7 @@ class TestPredictiveCacheWarmerAsync:
 # ============================================================================
 # CacheWarmer Async Tests
 # ============================================================================
+
 
 class TestCacheWarmerAsync:
     """Test async operations in CacheWarmer"""
@@ -458,6 +450,7 @@ class TestCacheWarmerAsync:
 # Eviction Edge Cases
 # ============================================================================
 
+
 class TestEvictionTrackerEdgeCases:
     """Test edge cases in EvictionTracker"""
 
@@ -529,15 +522,18 @@ class TestEvictionTrackerEdgeCases:
 # Analytics Prometheus Tests
 # ============================================================================
 
+
 class TestCacheAnalyticsPrometheus:
     """Test Prometheus integration in CacheAnalytics"""
 
     def test_init_with_prometheus_when_available(self):
         """Test initialization when prometheus is available"""
-        with patch("fiml.cache.analytics.PROMETHEUS_AVAILABLE", True), \
-             patch("fiml.cache.analytics.Counter"), \
-             patch("fiml.cache.analytics.Gauge"), \
-             patch("fiml.cache.analytics.Histogram"):
+        with (
+            patch("fiml.cache.analytics.PROMETHEUS_AVAILABLE", True),
+            patch("fiml.cache.analytics.Counter"),
+            patch("fiml.cache.analytics.Gauge"),
+            patch("fiml.cache.analytics.Histogram"),
+        ):
             analytics = CacheAnalytics(enable_prometheus=True)
 
             assert analytics.enable_prometheus is True
@@ -548,10 +544,7 @@ class TestCacheAnalyticsPrometheus:
 
         # Should not raise error
         analytics.record_cache_access(
-            data_type=DataType.PRICE,
-            is_hit=True,
-            latency_ms=10.0,
-            key="test:key"
+            data_type=DataType.PRICE, is_hit=True, latency_ms=10.0, key="test:key"
         )
 
         assert analytics.total_hits == 1
@@ -591,6 +584,7 @@ class TestCacheAnalyticsPrometheus:
 # Integration Tests
 # ============================================================================
 
+
 class TestCacheOperationsIntegration:
     """Integration tests for cache operations"""
 
@@ -600,9 +594,7 @@ class TestCacheOperationsIntegration:
     ):
         """Test integration between scheduler and warmer"""
         scheduler = BatchUpdateScheduler(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_provider_registry,
-            batch_size=5
+            cache_manager=mock_cache_manager, provider_registry=mock_provider_registry, batch_size=5
         )
 
         # Schedule some updates
@@ -623,7 +615,7 @@ class TestCacheOperationsIntegration:
         warmer = PredictiveCacheWarmer(
             cache_manager=mock_cache_manager,
             provider_registry=mock_provider_registry,
-            min_request_threshold=5
+            min_request_threshold=5,
         )
 
         # Simulate query pattern using record_cache_access

@@ -22,12 +22,11 @@ logger = get_logger(__name__)
 # Try to import pandas-ta, fallback if not available
 try:
     import pandas_ta  # noqa: F401
+
     PANDAS_TA_AVAILABLE = True
 except ImportError:
     PANDAS_TA_AVAILABLE = False
     logger.warning("pandas-ta not available, using fallback calculations")
-
-
 
 
 @ray.remote
@@ -43,7 +42,9 @@ class FundamentalsWorker(BaseWorker):
     - Generates valuation assessment with confidence scores
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze fundamentals with real data"""
         self.logger.info("Analyzing fundamentals", asset=asset.symbol)
 
@@ -52,7 +53,9 @@ class FundamentalsWorker(BaseWorker):
             from fiml.providers.registry import provider_registry
 
             # Fetch fundamental data from providers
-            providers = await provider_registry.get_providers_for_asset(asset, DataType.FUNDAMENTALS)
+            providers = await provider_registry.get_providers_for_asset(
+                asset, DataType.FUNDAMENTALS
+            )
 
             fundamental_data = None
             for provider in providers:
@@ -135,14 +138,20 @@ Provide a JSON response with:
 """
 
                 messages = [
-                    {"role": "system", "content": "You are a financial analyst. Return only valid JSON."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are a financial analyst. Return only valid JSON.",
+                    },
+                    {"role": "user", "content": prompt},
                 ]
 
-                ai_response = await azure_client._make_request(messages, temperature=0.3, max_tokens=300)
+                ai_response = await azure_client._make_request(
+                    messages, temperature=0.3, max_tokens=300
+                )
 
                 # Parse AI response
                 import json
+
                 ai_content = ai_response["choices"][0]["message"]["content"]
                 # Extract JSON from response (might be wrapped in markdown)
                 if "```json" in ai_content:
@@ -223,9 +232,6 @@ Provide a JSON response with:
             }
 
 
-
-
-
 @ray.remote
 class TechnicalWorker(BaseWorker):
     """
@@ -239,7 +245,9 @@ class TechnicalWorker(BaseWorker):
     - Generates trading signals with confidence scores
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze technicals with real indicators"""
         self.logger.info("Analyzing technicals", asset=asset.symbol)
 
@@ -256,7 +264,11 @@ class TechnicalWorker(BaseWorker):
                     response = await provider.fetch_ohlcv(asset, timeframe="1d", limit=200)
                     if response.is_valid and response.data:
                         ohlcv_data = response.data
-                        self.logger.info("Fetched OHLCV", provider=provider.name, bars=len(ohlcv_data.get("close", [])))
+                        self.logger.info(
+                            "Fetched OHLCV",
+                            provider=provider.name,
+                            bars=len(ohlcv_data.get("close", [])),
+                        )
                         break
                 except Exception as e:
                     self.logger.warning("Provider failed", provider=provider.name, error=str(e))
@@ -265,7 +277,6 @@ class TechnicalWorker(BaseWorker):
             if not ohlcv_data or not ohlcv_data.get("close"):
                 self.logger.warning("No OHLCV data available")
                 raise ValueError("No OHLCV data available")
-
 
             # Convert to DataFrame
             df = pd.DataFrame(ohlcv_data)
@@ -306,7 +317,11 @@ class TechnicalWorker(BaseWorker):
                     }
                 else:
                     close = float(df["close"].iloc[-1])
-                    indicators["bollinger"] = {"upper": close * 1.05, "middle": close, "lower": close * 0.95}
+                    indicators["bollinger"] = {
+                        "upper": close * 1.05,
+                        "middle": close,
+                        "lower": close * 0.95,
+                    }
 
                 # Moving Averages
                 df.ta.sma(length=20, append=True)
@@ -315,11 +330,35 @@ class TechnicalWorker(BaseWorker):
                 df.ta.ema(length=12, append=True)
                 df.ta.ema(length=26, append=True)
 
-                indicators["sma_20"] = float(df["SMA_20"].iloc[-1]) if "SMA_20" in df.columns else float(df["close"].iloc[-20:].mean())
-                indicators["sma_50"] = float(df["SMA_50"].iloc[-1]) if "SMA_50" in df.columns else float(df["close"].iloc[-50:].mean())
-                indicators["sma_200"] = float(df["SMA_200"].iloc[-1]) if "SMA_200" in df.columns else float(df["close"].iloc[-200:].mean()) if len(df) >= 200 else float(df["close"].mean())
-                indicators["ema_12"] = float(df["EMA_12"].iloc[-1]) if "EMA_12" in df.columns else float(df["close"].iloc[-1])
-                indicators["ema_26"] = float(df["EMA_26"].iloc[-1]) if "EMA_26" in df.columns else float(df["close"].iloc[-1])
+                indicators["sma_20"] = (
+                    float(df["SMA_20"].iloc[-1])
+                    if "SMA_20" in df.columns
+                    else float(df["close"].iloc[-20:].mean())
+                )
+                indicators["sma_50"] = (
+                    float(df["SMA_50"].iloc[-1])
+                    if "SMA_50" in df.columns
+                    else float(df["close"].iloc[-50:].mean())
+                )
+                indicators["sma_200"] = (
+                    float(df["SMA_200"].iloc[-1])
+                    if "SMA_200" in df.columns
+                    else (
+                        float(df["close"].iloc[-200:].mean())
+                        if len(df) >= 200
+                        else float(df["close"].mean())
+                    )
+                )
+                indicators["ema_12"] = (
+                    float(df["EMA_12"].iloc[-1])
+                    if "EMA_12" in df.columns
+                    else float(df["close"].iloc[-1])
+                )
+                indicators["ema_26"] = (
+                    float(df["EMA_26"].iloc[-1])
+                    if "EMA_26" in df.columns
+                    else float(df["close"].iloc[-1])
+                )
 
             else:
                 # Fallback calculations without pandas-ta
@@ -357,8 +396,16 @@ class TechnicalWorker(BaseWorker):
 
                 # Moving averages
                 indicators["sma_20"] = float(pd.Series(close_prices).rolling(20).mean().iloc[-1])
-                indicators["sma_50"] = float(pd.Series(close_prices).rolling(50).mean().iloc[-1]) if len(close_prices) >= 50 else float(np.mean(close_prices))
-                indicators["sma_200"] = float(pd.Series(close_prices).rolling(200).mean().iloc[-1]) if len(close_prices) >= 200 else float(np.mean(close_prices))
+                indicators["sma_50"] = (
+                    float(pd.Series(close_prices).rolling(50).mean().iloc[-1])
+                    if len(close_prices) >= 50
+                    else float(np.mean(close_prices))
+                )
+                indicators["sma_200"] = (
+                    float(pd.Series(close_prices).rolling(200).mean().iloc[-1])
+                    if len(close_prices) >= 200
+                    else float(np.mean(close_prices))
+                )
                 indicators["ema_12"] = float(ema12.iloc[-1])
                 indicators["ema_26"] = float(ema26.iloc[-1])
 
@@ -377,9 +424,17 @@ class TechnicalWorker(BaseWorker):
             confidence = 0.6
 
             # Basic trend determination
-            if current_price > indicators["sma_50"] > indicators.get("sma_200", indicators["sma_50"]):
+            if (
+                current_price
+                > indicators["sma_50"]
+                > indicators.get("sma_200", indicators["sma_50"])
+            ):
                 trend = "bullish"
-            elif current_price < indicators["sma_50"] < indicators.get("sma_200", indicators["sma_50"]):
+            elif (
+                current_price
+                < indicators["sma_50"]
+                < indicators.get("sma_200", indicators["sma_50"])
+            ):
                 trend = "bearish"
 
             # Basic signal generation
@@ -434,13 +489,19 @@ Provide a JSON response with:
 """
 
                 messages = [
-                    {"role": "system", "content": "You are a technical analyst. Return only valid JSON."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are a technical analyst. Return only valid JSON.",
+                    },
+                    {"role": "user", "content": prompt},
                 ]
 
-                ai_response = await azure_client._make_request(messages, temperature=0.3, max_tokens=300)
+                ai_response = await azure_client._make_request(
+                    messages, temperature=0.3, max_tokens=300
+                )
 
                 import json
+
                 ai_content = ai_response["choices"][0]["message"]["content"]
                 if "```json" in ai_content:
                     ai_content = ai_content.split("```json")[1].split("```")[0].strip()
@@ -470,7 +531,10 @@ Provide a JSON response with:
             result: Dict[str, Any] = {
                 "asset": asset.symbol,
                 "analysis_type": "technical",
-                "indicators": {k: round(v, 2) if isinstance(v, (int, float)) else v for k, v in indicators.items()},
+                "indicators": {
+                    k: round(v, 2) if isinstance(v, (int, float)) else v
+                    for k, v in indicators.items()
+                },
                 "trend": trend,
                 "signal": signal,
                 "confidence": round(confidence, 2),
@@ -491,9 +555,6 @@ Provide a JSON response with:
             }
 
 
-
-
-
 @ray.remote
 class MacroWorker(BaseWorker):
     """
@@ -507,7 +568,9 @@ class MacroWorker(BaseWorker):
     - Returns impact assessment with confidence
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze macro conditions with real data"""
         self.logger.info("Analyzing macro", asset=asset.symbol)
 
@@ -518,7 +581,6 @@ class MacroWorker(BaseWorker):
             # Note: Most providers don't directly provide macro data
             # In production, this would integrate with FRED API or similar
             # For now, we'll use reasonable defaults and focus on the analysis structure
-
             # Fetch some macro proxies (treasury yields, VIX, etc.)
             macro_data = {}
 
@@ -526,7 +588,9 @@ class MacroWorker(BaseWorker):
             try:
                 # Fetch treasury yield as interest rate proxy
                 treasury = Asset(symbol="^TNX", asset_type=AssetType.INDEX, name="10-Year Treasury")
-                providers = await provider_registry.get_providers_for_asset(treasury, DataType.PRICE)
+                providers = await provider_registry.get_providers_for_asset(
+                    treasury, DataType.PRICE
+                )
 
                 for provider in providers:
                     try:
@@ -542,7 +606,9 @@ class MacroWorker(BaseWorker):
 
             # Set defaults for macro indicators
             factors = {
-                "interest_rate": macro_data.get("interest_rate", 5.25),  # Current fed funds rate proxy
+                "interest_rate": macro_data.get(
+                    "interest_rate", 5.25
+                ),  # Current fed funds rate proxy
                 "inflation": 3.2,  # CPI estimate
                 "gdp_growth": 2.1,  # Annual GDP growth estimate
                 "unemployment": 3.8,  # Unemployment rate estimate
@@ -606,13 +672,19 @@ Provide a JSON response with:
 """
 
                 messages = [
-                    {"role": "system", "content": "You are a macroeconomic analyst. Return only valid JSON."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are a macroeconomic analyst. Return only valid JSON.",
+                    },
+                    {"role": "user", "content": prompt},
                 ]
 
-                ai_response = await azure_client._make_request(messages, temperature=0.4, max_tokens=400)
+                ai_response = await azure_client._make_request(
+                    messages, temperature=0.4, max_tokens=400
+                )
 
                 import json
+
                 ai_content = ai_response["choices"][0]["message"]["content"]
                 if "```json" in ai_content:
                     ai_content = ai_content.split("```json")[1].split("```")[0].strip()
@@ -676,9 +748,6 @@ Provide a JSON response with:
             }
 
 
-
-
-
 @ray.remote
 class SentimentWorker(BaseWorker):
     """
@@ -693,7 +762,9 @@ class SentimentWorker(BaseWorker):
     - Returns sentiment score (-1 to 1) with supporting evidence
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze sentiment with news and AI"""
         self.logger.info("Analyzing sentiment", asset=asset.symbol)
 
@@ -710,7 +781,11 @@ class SentimentWorker(BaseWorker):
                     response = await provider.fetch_news(asset, limit=20)
                     if response.is_valid and response.data.get("articles"):
                         articles.extend(response.data["articles"])
-                        self.logger.info("Fetched news", provider=provider.name, count=len(response.data["articles"]))
+                        self.logger.info(
+                            "Fetched news",
+                            provider=provider.name,
+                            count=len(response.data["articles"]),
+                        )
                         if len(articles) >= 20:
                             break
                 except Exception as e:
@@ -755,11 +830,13 @@ class SentimentWorker(BaseWorker):
                         compound = sentiment.get("positive", 0) - sentiment.get("negative", 0)
 
                         sentiment_scores.append(compound)
-                        analyzed_articles.append({
-                            "title": title,
-                            "sentiment": round(compound, 2),
-                            "published_at": article.get("published_at", ""),
-                        })
+                        analyzed_articles.append(
+                            {
+                                "title": title,
+                                "sentiment": round(compound, 2),
+                                "published_at": article.get("published_at", ""),
+                            }
+                        )
 
                     except Exception as e:
                         self.logger.warning("Failed to analyze article", error=str(e))
@@ -787,8 +864,24 @@ class SentimentWorker(BaseWorker):
                     trend = "stable"
             else:
                 # Fallback to simple keyword analysis
-                positive_keywords = ["growth", "profit", "beat", "success", "gain", "rise", "bullish"]
-                negative_keywords = ["loss", "decline", "miss", "concern", "fall", "bearish", "risk"]
+                positive_keywords = [
+                    "growth",
+                    "profit",
+                    "beat",
+                    "success",
+                    "gain",
+                    "rise",
+                    "bullish",
+                ]
+                negative_keywords = [
+                    "loss",
+                    "decline",
+                    "miss",
+                    "concern",
+                    "fall",
+                    "bearish",
+                    "risk",
+                ]
 
                 pos_count = 0
                 neg_count = 0
@@ -809,11 +902,13 @@ class SentimentWorker(BaseWorker):
                 # Create basic analyzed articles
                 for article in articles[:5]:
                     article = cast(Dict[str, Any], article)
-                    analyzed_articles.append({
-                        "title": article.get("title", ""),
-                        "sentiment": 0.0,
-                        "published_at": article.get("published_at", ""),
-                    })
+                    analyzed_articles.append(
+                        {
+                            "title": article.get("title", ""),
+                            "sentiment": 0.0,
+                            "published_at": article.get("published_at", ""),
+                        }
+                    )
 
             # Determine overall sentiment
             if avg_sentiment > 0.3:
@@ -863,9 +958,6 @@ class SentimentWorker(BaseWorker):
             }
 
 
-
-
-
 @ray.remote
 class CorrelationWorker(BaseWorker):
     """
@@ -880,7 +972,9 @@ class CorrelationWorker(BaseWorker):
     - Returns correlation matrix with insights
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze correlations with market and peers"""
         self.logger.info("Analyzing correlations", asset=asset.symbol)
 
@@ -903,10 +997,16 @@ class CorrelationWorker(BaseWorker):
                     response = await provider.fetch_ohlcv(asset, timeframe="1d", limit=180)
                     if response.is_valid and response.data:
                         target_prices = np.array(response.data.get("close", []))
-                        self.logger.info("Fetched target prices", provider=provider.name, points=len(target_prices))
+                        self.logger.info(
+                            "Fetched target prices",
+                            provider=provider.name,
+                            points=len(target_prices),
+                        )
                         break
                 except Exception as e:
-                    self.logger.warning("Provider failed for target", provider=provider.name, error=str(e))
+                    self.logger.warning(
+                        "Provider failed for target", provider=provider.name, error=str(e)
+                    )
                     continue
 
             if target_prices is None or len(target_prices) < 30:
@@ -916,27 +1016,41 @@ class CorrelationWorker(BaseWorker):
             benchmark_prices = {}
             for bench_name, bench_asset in benchmarks.items():
                 try:
-                    providers = await provider_registry.get_providers_for_asset(bench_asset, DataType.OHLCV)
+                    providers = await provider_registry.get_providers_for_asset(
+                        bench_asset, DataType.OHLCV
+                    )
 
                     for provider in providers:
                         try:
-                            response = await provider.fetch_ohlcv(bench_asset, timeframe="1d", limit=180)
+                            response = await provider.fetch_ohlcv(
+                                bench_asset, timeframe="1d", limit=180
+                            )
                             if response.is_valid and response.data:
-                                benchmark_prices[bench_name] = np.array(response.data.get("close", []))
-                                self.logger.info("Fetched benchmark", benchmark=bench_name, points=len(benchmark_prices[bench_name]))
+                                benchmark_prices[bench_name] = np.array(
+                                    response.data.get("close", [])
+                                )
+                                self.logger.info(
+                                    "Fetched benchmark",
+                                    benchmark=bench_name,
+                                    points=len(benchmark_prices[bench_name]),
+                                )
                                 break
                         except Exception as e:
                             self.logger.debug(f"Provider failed for benchmark {bench_name}: {e}")
                             continue
                 except Exception as e:
-                    self.logger.warning("Failed to fetch benchmark", benchmark=bench_name, error=str(e))
+                    self.logger.warning(
+                        "Failed to fetch benchmark", benchmark=bench_name, error=str(e)
+                    )
 
             # Calculate correlations
             correlations = {}
             rolling_correlations = {}
 
             # Ensure all series are same length
-            min_length = min(len(target_prices), *[len(prices) for prices in benchmark_prices.values()])
+            min_length = min(
+                len(target_prices), *[len(prices) for prices in benchmark_prices.values()]
+            )
             target_returns = np.diff(target_prices[-min_length:]) / target_prices[-min_length:-1]
 
             for bench_name, bench_prices in benchmark_prices.items():
@@ -951,16 +1065,23 @@ class CorrelationWorker(BaseWorker):
                     if len(target_returns) >= 30:
                         rolling_30d = []
                         for i in range(30, len(target_returns)):
-                            corr = np.corrcoef(target_returns[i-30:i], bench_returns[i-30:i])[0, 1]
+                            corr = np.corrcoef(
+                                target_returns[i - 30 : i], bench_returns[i - 30 : i]
+                            )[0, 1]
                             rolling_30d.append(corr)
 
                         current_30d_corr = float(rolling_30d[-1]) if rolling_30d else correlation
-                        rolling_correlations[f"{bench_name.lower()}_30d"] = round(current_30d_corr, 3)
+                        rolling_correlations[f"{bench_name.lower()}_30d"] = round(
+                            current_30d_corr, 3
+                        )
 
             # Calculate beta vs SPY (market)
             beta = 1.0
             if "SPY" in benchmark_prices and len(target_returns) > 0:
-                spy_returns = np.diff(benchmark_prices["SPY"][-min_length:]) / benchmark_prices["SPY"][-min_length:-1]
+                spy_returns = (
+                    np.diff(benchmark_prices["SPY"][-min_length:])
+                    / benchmark_prices["SPY"][-min_length:-1]
+                )
 
                 if len(spy_returns) > 0:
                     covariance = np.cov(target_returns, spy_returns)[0, 1]
@@ -1031,9 +1152,6 @@ class CorrelationWorker(BaseWorker):
             }
 
 
-
-
-
 @ray.remote
 class RiskWorker(BaseWorker):
     """
@@ -1047,7 +1165,9 @@ class RiskWorker(BaseWorker):
     - Returns risk metrics with risk level classification
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze risk with comprehensive metrics"""
         self.logger.info("Analyzing risk", asset=asset.symbol)
 
@@ -1064,7 +1184,11 @@ class RiskWorker(BaseWorker):
                     response = await provider.fetch_ohlcv(asset, timeframe="1d", limit=365)
                     if response.is_valid and response.data:
                         ohlcv_data = response.data
-                        self.logger.info("Fetched price data", provider=provider.name, bars=len(ohlcv_data.get("close", [])))
+                        self.logger.info(
+                            "Fetched price data",
+                            provider=provider.name,
+                            bars=len(ohlcv_data.get("close", [])),
+                        )
                         break
                 except Exception as e:
                     self.logger.warning("Provider failed", provider=provider.name, error=str(e))
@@ -1090,7 +1214,9 @@ class RiskWorker(BaseWorker):
             # Sharpe Ratio (assuming risk-free rate of 4%)
             risk_free_rate = 0.04
             mean_return = np.mean(returns) * 252  # Annualized
-            sharpe_ratio = (mean_return - risk_free_rate) / annual_volatility if annual_volatility > 0 else 0
+            sharpe_ratio = (
+                (mean_return - risk_free_rate) / annual_volatility if annual_volatility > 0 else 0
+            )
 
             # Maximum Drawdown
             cumulative_returns = np.cumprod(1 + returns)
@@ -1100,10 +1226,14 @@ class RiskWorker(BaseWorker):
 
             # Downside Deviation (semi-deviation)
             negative_returns = returns[returns < 0]
-            downside_deviation = float(np.std(negative_returns) * np.sqrt(252)) if len(negative_returns) > 0 else 0
+            downside_deviation = (
+                float(np.std(negative_returns) * np.sqrt(252)) if len(negative_returns) > 0 else 0
+            )
 
             # Sortino Ratio
-            sortino_ratio = (mean_return - risk_free_rate) / downside_deviation if downside_deviation > 0 else 0
+            sortino_ratio = (
+                (mean_return - risk_free_rate) / downside_deviation if downside_deviation > 0 else 0
+            )
 
             # Implied Volatility (if options data available - placeholder)
             implied_volatility = None  # Would need options provider
@@ -1164,13 +1294,19 @@ Provide a JSON response with:
 """
 
                 messages = [
-                    {"role": "system", "content": "You are a risk management analyst. Return only valid JSON."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are a risk management analyst. Return only valid JSON.",
+                    },
+                    {"role": "user", "content": prompt},
                 ]
 
-                ai_response = await azure_client._make_request(messages, temperature=0.3, max_tokens=400)
+                ai_response = await azure_client._make_request(
+                    messages, temperature=0.3, max_tokens=400
+                )
 
                 import json
+
                 ai_content = ai_response["choices"][0]["message"]["content"]
                 if "```json" in ai_content:
                     ai_content = ai_content.split("```json")[1].split("```")[0].strip()
@@ -1245,9 +1381,6 @@ Provide a JSON response with:
             }
 
 
-
-
-
 @ray.remote
 class NewsWorker(BaseWorker):
     """
@@ -1263,7 +1396,9 @@ class NewsWorker(BaseWorker):
     - Returns top articles with impact scores
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Fetch and analyze news with event extraction"""
         self.logger.info("Analyzing news", asset=asset.symbol)
 
@@ -1280,7 +1415,11 @@ class NewsWorker(BaseWorker):
                     response = await provider.fetch_news(asset, limit=25)
                     if response.is_valid and response.data.get("articles"):
                         articles.extend(response.data["articles"])
-                        self.logger.info("Fetched news", provider=provider.name, count=len(response.data["articles"]))
+                        self.logger.info(
+                            "Fetched news",
+                            provider=provider.name,
+                            count=len(response.data["articles"]),
+                        )
                         if len(articles) >= 20:
                             break
                 except Exception as e:
@@ -1330,13 +1469,19 @@ Provide a JSON response with:
 """
 
                         messages = [
-                            {"role": "system", "content": "You are a financial news analyst. Return only valid JSON."},
-                            {"role": "user", "content": prompt}
+                            {
+                                "role": "system",
+                                "content": "You are a financial news analyst. Return only valid JSON.",
+                            },
+                            {"role": "user", "content": prompt},
                         ]
 
-                        ai_response = await azure_client._make_request(messages, temperature=0.3, max_tokens=200)
+                        ai_response = await azure_client._make_request(
+                            messages, temperature=0.3, max_tokens=200
+                        )
 
                         import json
+
                         ai_content = ai_response["choices"][0]["message"]["content"]
                         if "```json" in ai_content:
                             ai_content = ai_content.split("```json")[1].split("```")[0].strip()
@@ -1359,23 +1504,27 @@ Provide a JSON response with:
 
                         # Add to timeline if significant
                         if analyzed_article["impact"] in ["high", "medium"]:
-                            timeline_events.append({
-                                "timestamp": published_at,
-                                "event": analyzed_article["key_event"],
-                                "impact": analyzed_article["impact"],
-                                "sentiment": analyzed_article["sentiment"],
-                            })
+                            timeline_events.append(
+                                {
+                                    "timestamp": published_at,
+                                    "event": analyzed_article["key_event"],
+                                    "impact": analyzed_article["impact"],
+                                    "sentiment": analyzed_article["sentiment"],
+                                }
+                            )
 
                     except Exception as e:
                         self.logger.warning("Failed to analyze article", error=str(e))
                         # Add basic article without AI analysis
-                        analyzed_articles.append({
-                            "title": title,
-                            "sentiment": 0.0,
-                            "impact": "low",
-                            "published_at": published_at,
-                            "source": article.get("source", ""),
-                        })
+                        analyzed_articles.append(
+                            {
+                                "title": title,
+                                "sentiment": 0.0,
+                                "impact": "low",
+                                "published_at": published_at,
+                                "source": article.get("source", ""),
+                            }
+                        )
                         continue
 
             except Exception as e:
@@ -1386,7 +1535,15 @@ Provide a JSON response with:
 
                     # Simple keyword-based sentiment
                     positive_kw = ["beat", "surge", "rally", "gain", "profit", "growth", "success"]
-                    negative_kw = ["miss", "plunge", "fall", "loss", "concern", "warning", "decline"]
+                    negative_kw = [
+                        "miss",
+                        "plunge",
+                        "fall",
+                        "loss",
+                        "concern",
+                        "warning",
+                        "decline",
+                    ]
 
                     title_lower = title.lower()
                     pos_count = sum(1 for kw in positive_kw if kw in title_lower)
@@ -1399,16 +1556,25 @@ Provide a JSON response with:
                         sentiment = -0.5
 
                     # Detect high impact keywords
-                    high_impact_kw = ["earnings", "acquisition", "merger", "bankruptcy", "lawsuit", "fda"]
+                    high_impact_kw = [
+                        "earnings",
+                        "acquisition",
+                        "merger",
+                        "bankruptcy",
+                        "lawsuit",
+                        "fda",
+                    ]
                     impact = "high" if any(kw in title_lower for kw in high_impact_kw) else "low"
 
-                    analyzed_articles.append({
-                        "title": title,
-                        "sentiment": sentiment,
-                        "impact": impact,
-                        "published_at": article.get("published_at", ""),
-                        "source": article.get("source", ""),
-                    })
+                    analyzed_articles.append(
+                        {
+                            "title": title,
+                            "sentiment": sentiment,
+                            "impact": impact,
+                            "published_at": article.get("published_at", ""),
+                            "source": article.get("source", ""),
+                        }
+                    )
 
             # Calculate overall sentiment
             if analyzed_articles:
@@ -1418,7 +1584,11 @@ Provide a JSON response with:
                 # Weight high-impact articles more
                 weighted_sentiments = []
                 for a in analyzed_articles:
-                    weight = 3.0 if a.get("impact") == "high" else (1.5 if a.get("impact") == "medium" else 1.0)
+                    weight = (
+                        3.0
+                        if a.get("impact") == "high"
+                        else (1.5 if a.get("impact") == "medium" else 1.0)
+                    )
                     weighted_sentiments.extend([a.get("sentiment", 0.0)] * int(weight))
 
                 if weighted_sentiments:
@@ -1473,8 +1643,6 @@ Provide a JSON response with:
             }
 
 
-
-
 @ray.remote
 class OptionsWorker(BaseWorker):
     """
@@ -1489,7 +1657,9 @@ class OptionsWorker(BaseWorker):
     - Returns options insights with implied outlook
     """
 
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze options market with real data"""
         self.logger.info("Analyzing options", asset=asset.symbol)
 
@@ -1535,8 +1705,12 @@ class OptionsWorker(BaseWorker):
             put_call_oi_ratio = put_oi / call_oi if call_oi > 0 else 0
 
             # Extract implied volatilities
-            call_ivs = [opt.get("implied_volatility", 0) for opt in calls if opt.get("implied_volatility")]
-            put_ivs = [opt.get("implied_volatility", 0) for opt in puts if opt.get("implied_volatility")]
+            call_ivs = [
+                opt.get("implied_volatility", 0) for opt in calls if opt.get("implied_volatility")
+            ]
+            put_ivs = [
+                opt.get("implied_volatility", 0) for opt in puts if opt.get("implied_volatility")
+            ]
 
             # Calculate average implied volatility
             avg_call_iv = float(np.mean(call_ivs)) if call_ivs else 0.0
@@ -1548,12 +1722,14 @@ class OptionsWorker(BaseWorker):
 
             # Identify unusual activity (volume > 2x open interest)
             unusual_calls = [
-                opt for opt in calls
+                opt
+                for opt in calls
                 if opt.get("volume", 0) > 2 * opt.get("open_interest", 1)
                 and opt.get("volume", 0) > 100
             ]
             unusual_puts = [
-                opt for opt in puts
+                opt
+                for opt in puts
                 if opt.get("volume", 0) > 2 * opt.get("open_interest", 1)
                 and opt.get("volume", 0) > 100
             ]
@@ -1613,13 +1789,19 @@ Provide a JSON response with:
 """
 
                 messages = [
-                    {"role": "system", "content": "You are an options market analyst. Return only valid JSON."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are an options market analyst. Return only valid JSON.",
+                    },
+                    {"role": "user", "content": prompt},
                 ]
 
-                ai_response = await azure_client._make_request(messages, temperature=0.3, max_tokens=300)
+                ai_response = await azure_client._make_request(
+                    messages, temperature=0.3, max_tokens=300
+                )
 
                 import json
+
                 ai_content = ai_response["choices"][0]["message"]["content"]
                 if "```json" in ai_content:
                     ai_content = ai_content.split("```json")[1].split("```")[0].strip()
@@ -1686,7 +1868,7 @@ Provide a JSON response with:
                             "open_interest": opt.get("open_interest"),
                         }
                         for opt in unusual_puts[:5]
-                    ]
+                    ],
                 },
                 "score": round(score, 1),
                 "timestamp": datetime.now(UTC).isoformat(),
@@ -1756,4 +1938,3 @@ Provide a JSON response with:
             "score": 5.0,
             "timestamp": datetime.now(UTC).isoformat(),
         }
-

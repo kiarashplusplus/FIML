@@ -38,11 +38,7 @@ class TestProviderRegistry:
         """Test getting providers for an asset"""
         await provider_registry.initialize()
 
-        asset = Asset(
-            symbol="AAPL",
-            asset_type=AssetType.EQUITY,
-            market=Market.US
-        )
+        asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY, market=Market.US)
 
         providers = await provider_registry.get_providers_for_asset(asset, DataType.PRICE)
         assert len(providers) > 0
@@ -55,11 +51,7 @@ class TestProviderRegistry:
         await provider_registry.initialize()
 
         # Create an asset that might not be supported
-        asset = Asset(
-            symbol="INVALID_SYMBOL_XYZ",
-            asset_type=AssetType.FUTURE,
-            market=Market.CN
-        )
+        asset = Asset(symbol="INVALID_SYMBOL_XYZ", asset_type=AssetType.FUTURE, market=Market.CN)
 
         # Should raise NoProviderAvailableError if no providers support it
         try:

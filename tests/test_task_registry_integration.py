@@ -1,6 +1,7 @@
 """
 Integration tests for Redis-backed TaskRegistry using real Docker Redis on port 6380
 """
+
 from datetime import datetime, timezone
 
 import pytest
@@ -13,7 +14,7 @@ from fiml.monitoring.task_registry import TaskRegistry
 @pytest.fixture
 def redis_client():
     """Connect to the real Docker Redis on port 6380"""
-    client = redis.Redis(host='localhost', port=6380, db=0, decode_responses=False)
+    client = redis.Redis(host="localhost", port=6380, db=0, decode_responses=False)
     # Test connection
     try:
         client.ping()
@@ -50,7 +51,7 @@ def sample_task():
         created_at=datetime.now(timezone.utc),
         updated_at=None,
         result=None,
-        error=None
+        error=None,
     )
 
 
@@ -114,7 +115,7 @@ class TestTaskRegistryIntegration:
                 created_at=datetime.now(timezone.utc),
                 updated_at=None,
                 result=None,
-                error=None
+                error=None,
             )
             tasks.append(task)
             task_registry.register(task, ttl=60)
@@ -141,7 +142,7 @@ class TestTaskRegistryIntegration:
             created_at=datetime.now(timezone.utc),
             updated_at=None,
             result=None,
-            error=None
+            error=None,
         )
 
         running_task = TaskInfo(
@@ -154,7 +155,7 @@ class TestTaskRegistryIntegration:
             created_at=datetime.now(timezone.utc),
             updated_at=None,
             result=None,
-            error=None
+            error=None,
         )
 
         completed_task = TaskInfo(
@@ -167,7 +168,7 @@ class TestTaskRegistryIntegration:
             created_at=datetime.now(timezone.utc),
             updated_at=None,
             result={"price": 150.0},
-            error=None
+            error=None,
         )
 
         task_registry.register(pending_task, ttl=60)
@@ -178,20 +179,20 @@ class TestTaskRegistryIntegration:
         stats = task_registry.get_stats()
 
         # Verify stats structure
-        assert 'by_type' in stats
-        assert 'by_status' in stats
-        assert 'total_tasks' in stats
+        assert "by_type" in stats
+        assert "by_status" in stats
+        assert "total_tasks" in stats
 
         # Should have at least 3 tasks (might have more from other tests)
-        assert stats['total_tasks'] >= 3
+        assert stats["total_tasks"] >= 3
 
         # Check our specific tasks are counted
-        assert stats['by_status'].get(TaskStatus.PENDING.value, 0) >= 1
-        assert stats['by_status'].get(TaskStatus.RUNNING.value, 0) >= 1
-        assert stats['by_status'].get(TaskStatus.COMPLETED.value, 0) >= 1
+        assert stats["by_status"].get(TaskStatus.PENDING.value, 0) >= 1
+        assert stats["by_status"].get(TaskStatus.RUNNING.value, 0) >= 1
+        assert stats["by_status"].get(TaskStatus.COMPLETED.value, 0) >= 1
 
-        assert stats['by_type'].get('equity_analysis', 0) >= 2
-        assert stats['by_type'].get('crypto_analysis', 0) >= 1
+        assert stats["by_type"].get("equity_analysis", 0) >= 2
+        assert stats["by_type"].get("crypto_analysis", 0) >= 1
 
     def test_ttl_preservation_on_update(self, task_registry, sample_task, redis_client):
         """Test that update preserves remaining TTL"""
@@ -200,6 +201,7 @@ class TestTaskRegistryIntegration:
 
         # Wait a moment
         import time
+
         time.sleep(1)
 
         # Update the task
@@ -222,7 +224,7 @@ class TestTaskRegistryIntegration:
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
             result={"price": 200.0},
-            error=None
+            error=None,
         )
 
         task_registry.register(task, ttl=60)

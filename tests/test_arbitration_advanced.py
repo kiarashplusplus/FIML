@@ -20,9 +20,7 @@ class TestArbitrationEngineAdditional:
         engine = DataArbitrationEngine()
 
         plan = await engine.arbitrate_request(
-            asset=mock_asset,
-            data_type=DataType.PRICE,
-            max_staleness_seconds=60  # 1 minute
+            asset=mock_asset, data_type=DataType.PRICE, max_staleness_seconds=60  # 1 minute
         )
 
         assert plan is not None

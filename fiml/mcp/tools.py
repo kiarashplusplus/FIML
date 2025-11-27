@@ -164,37 +164,45 @@ def format_narrative_text(narrative: Narrative) -> str:
     parts = ["EXECUTIVE SUMMARY", "=" * 50, narrative.summary, ""]
 
     for section in narrative.sections:
-        parts.extend([
-            "",
-            section.title.upper(),
-            "=" * 50,
-            section.content,
-        ])
+        parts.extend(
+            [
+                "",
+                section.title.upper(),
+                "=" * 50,
+                section.content,
+            ]
+        )
 
     if narrative.key_insights:
-        parts.extend([
-            "",
-            "KEY INSIGHTS",
-            "=" * 50,
-        ])
+        parts.extend(
+            [
+                "",
+                "KEY INSIGHTS",
+                "=" * 50,
+            ]
+        )
         for i, insight in enumerate(narrative.key_insights, 1):
             parts.append(f"{i}. {insight}")
 
     if narrative.risk_factors:
-        parts.extend([
-            "",
-            "RISK FACTORS",
-            "=" * 50,
-        ])
+        parts.extend(
+            [
+                "",
+                "RISK FACTORS",
+                "=" * 50,
+            ]
+        )
         for i, risk in enumerate(narrative.risk_factors, 1):
             parts.append(f"{i}. {risk}")
 
-    parts.extend([
-        "",
-        "DISCLAIMER",
-        "=" * 50,
-        narrative.disclaimer,
-    ])
+    parts.extend(
+        [
+            "",
+            "DISCLAIMER",
+            "=" * 50,
+            narrative.disclaimer,
+        ]
+    )
 
     return "\n".join(parts)
 
@@ -212,12 +220,14 @@ def format_narrative_markdown(narrative: Narrative) -> str:
     parts = ["# Executive Summary", "", narrative.summary, ""]
 
     for section in narrative.sections:
-        parts.extend([
-            f"## {section.title}",
-            "",
-            section.content,
-            "",
-        ])
+        parts.extend(
+            [
+                f"## {section.title}",
+                "",
+                section.content,
+                "",
+            ]
+        )
 
     if narrative.key_insights:
         parts.extend(["## Key Insights", ""])
@@ -231,11 +241,13 @@ def format_narrative_markdown(narrative: Narrative) -> str:
             parts.append(f"- {risk}")
         parts.append("")
 
-    parts.extend([
-        "---",
-        "",
-        "*" + narrative.disclaimer + "*",
-    ])
+    parts.extend(
+        [
+            "---",
+            "",
+            "*" + narrative.disclaimer + "*",
+        ]
+    )
 
     return "\n".join(parts)
 
@@ -254,10 +266,7 @@ def truncate_narrative(text: str, max_length: int = 1000) -> str:
     if len(text) <= max_length:
         return text
 
-    return text[:max_length - 3] + "..."
-
-
-
+    return text[: max_length - 3] + "..."
 
 
 async def search_by_symbol(
@@ -369,10 +378,7 @@ async def search_by_symbol(
         cache_key = cache_manager.l1.build_key("price", asset.symbol, "any")
 
         data = await cache_manager.get_with_read_through(
-            key=cache_key,
-            data_type=DataType.PRICE,
-            fetch_fn=fetch_price_data,
-            asset=asset
+            key=cache_key, data_type=DataType.PRICE, fetch_fn=fetch_price_data, asset=asset
         )
 
         if not data:
@@ -482,6 +488,7 @@ async def search_by_symbol(
 
                 if cached_narrative:
                     from fiml.core.models import NarrativeSummary
+
                     narrative_summary = NarrativeSummary(**cached_narrative)
                     logger.debug("Using cached narrative", symbol=symbol)
                 else:
@@ -540,7 +547,9 @@ async def search_by_symbol(
                             # Fallback to basic calculated technicals if fetch failed
                             context.technical_data = {
                                 "trend": "bullish" if cached_data.change_percent > 0 else "bearish",
-                                "strength": "strong" if abs(cached_data.change_percent) > 2 else "moderate",
+                                "strength": (
+                                    "strong" if abs(cached_data.change_percent) > 2 else "moderate"
+                                ),
                             }
 
                     # Add sentiment for deep
@@ -555,6 +564,7 @@ async def search_by_symbol(
 
                     # Convert to summary format with section metadata
                     from fiml.core.models import NarrativeSectionMeta, NarrativeSummary
+
                     narrative_summary = NarrativeSummary(
                         summary=narrative.summary,
                         key_insights=narrative.key_insights,
@@ -571,9 +581,7 @@ async def search_by_symbol(
                     )
 
                     # Cache the narrative
-                    ttl = calculate_narrative_ttl(
-                        asset, abs(cached_data.change_percent)
-                    )
+                    ttl = calculate_narrative_ttl(asset, abs(cached_data.change_percent))
                     await cache_narrative(
                         symbol.upper(),
                         language,
@@ -597,7 +605,7 @@ async def search_by_symbol(
                 )
                 # DEBUG: Append error to disclaimer
                 error_msg = str(e)
-                if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                if hasattr(e, "response") and hasattr(e.response, "text"):
                     error_msg += f" | Response: {e.response.text}"
                 disclaimer += f" [DEBUG ERROR: {error_msg}]"
 
@@ -788,10 +796,7 @@ async def search_by_coin(
         cache_key = cache_manager.l1.build_key("price", asset.symbol, "any")
 
         data = await cache_manager.get_with_read_through(
-            key=cache_key,
-            data_type=DataType.PRICE,
-            fetch_fn=fetch_crypto_price,
-            asset=asset
+            key=cache_key, data_type=DataType.PRICE, fetch_fn=fetch_crypto_price, asset=asset
         )
 
         if not data:
@@ -862,6 +867,7 @@ async def search_by_coin(
 
                 if cached_narrative:
                     from fiml.core.models import NarrativeSummary
+
                     narrative_summary = NarrativeSummary(**cached_narrative)
                     logger.debug("Using cached crypto narrative", symbol=crypto_symbol)
                 else:
@@ -925,7 +931,11 @@ async def search_by_coin(
                         volatility = abs(cached_data.change_percent)
                         context.technical_data = {
                             "trend": "bullish" if cached_data.change_percent > 0 else "bearish",
-                            "volatility": "high" if volatility > 5 else "moderate" if volatility > 2 else "low",
+                            "volatility": (
+                                "high"
+                                if volatility > 5
+                                else "moderate" if volatility > 2 else "low"
+                            ),
                             "24h_range": {
                                 "high": crypto_metrics.get("high_24h", 0),
                                 "low": crypto_metrics.get("low_24h", 0),
@@ -942,7 +952,9 @@ async def search_by_coin(
 
                     # Add crypto risk warnings
                     context.risk_data = {
-                        "volatility_risk": "high" if abs(cached_data.change_percent) > 5 else "moderate",
+                        "volatility_risk": (
+                            "high" if abs(cached_data.change_percent) > 5 else "moderate"
+                        ),
                         "liquidity_risk": "moderate",
                         "regulatory_risk": "high",
                         "market_type": "24/7 trading",
@@ -955,13 +967,16 @@ async def search_by_coin(
 
                     # Convert to summary format with crypto context and section metadata
                     from fiml.core.models import NarrativeSectionMeta, NarrativeSummary
+
                     narrative_summary = NarrativeSummary(
                         summary=narrative.summary,
-                        key_insights=narrative.key_insights + [
+                        key_insights=narrative.key_insights
+                        + [
                             f"Trading on {exchange} exchange with {pair} pair",
                             "Cryptocurrency markets operate 24/7 with high volatility",
                         ],
-                        risk_factors=narrative.risk_factors + [
+                        risk_factors=narrative.risk_factors
+                        + [
                             "Extreme price volatility and 24/7 market exposure",
                             "Regulatory uncertainty and potential restrictions",
                             "Exchange-specific risks including security and liquidity",
@@ -978,9 +993,7 @@ async def search_by_coin(
                     )
 
                     # Cache the crypto narrative with shorter TTL
-                    ttl = calculate_narrative_ttl(
-                        asset, abs(cached_data.change_percent)
-                    )
+                    ttl = calculate_narrative_ttl(asset, abs(cached_data.change_percent))
                     await cache_narrative(
                         crypto_symbol,
                         language,
@@ -1114,15 +1127,15 @@ async def get_task_status(task_id: str, stream: bool = False) -> dict:
             "task_id": task_info.id,
             "status": task_info.status.value if task_info.status else "unknown",
             "type": task_info.type,
-            "query": getattr(task_info, 'query', None),
+            "query": getattr(task_info, "query", None),
             "progress": progress,
             "completed_steps": task_info.completed_steps,
             "total_steps": task_info.total_steps,
             "created_at": task_info.created_at.isoformat() if task_info.created_at else None,
             "started_at": task_info.started_at.isoformat() if task_info.started_at else None,
             "completed_at": task_info.completed_at.isoformat() if task_info.completed_at else None,
-            "result": getattr(task_info, 'result', None),
-            "error": getattr(task_info, 'error', None),
+            "result": getattr(task_info, "result", None),
+            "error": getattr(task_info, "error", None),
         }
 
     return {
@@ -1216,9 +1229,7 @@ async def get_narrative(
 
     try:
         # Check cache first
-        cached_narrative = await get_cached_narrative(
-            symbol.upper(), language, expertise_level
-        )
+        cached_narrative = await get_cached_narrative(symbol.upper(), language, expertise_level)
 
         if cached_narrative:
             logger.debug("Returning cached narrative", symbol=symbol)
@@ -1263,7 +1274,9 @@ async def get_narrative(
         # Build narrative context from analysis data
         context = NarrativeContext(
             asset_symbol=symbol.upper(),
-            asset_name=analysis_data.get("name", symbol.upper()) if analysis_data else symbol.upper(),
+            asset_name=(
+                analysis_data.get("name", symbol.upper()) if analysis_data else symbol.upper()
+            ),
             asset_type=asset_type,
             region=analysis_data.get("region", "US") if analysis_data else "US",
             preferences=preferences,
@@ -1402,9 +1415,7 @@ async def create_analysis_session(
         # Validate TTL
         if ttl_hours > settings.session_max_ttl_hours:
             ttl_hours = settings.session_max_ttl_hours
-            logger.warning(
-                f"TTL capped at maximum: {settings.session_max_ttl_hours} hours"
-            )
+            logger.warning(f"TTL capped at maximum: {settings.session_max_ttl_hours} hours")
 
         # Get session store
         session_store = await get_session_store()

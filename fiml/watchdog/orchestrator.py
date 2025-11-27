@@ -73,6 +73,7 @@ class WatchdogManager:
         """Get event stream, lazy-loading from global if needed"""
         if self._event_stream is None:
             from fiml.watchdog.events import event_stream
+
             self._event_stream = event_stream
         return self._event_stream
 
@@ -209,8 +210,9 @@ class WatchdogManager:
     def _camel_to_snake(name: str) -> str:
         """Convert CamelCase to snake_case"""
         import re
-        name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
+        name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
 
     def _setup_priority_handlers(self) -> None:
         """Setup handlers for high-priority events"""
@@ -324,10 +326,7 @@ class WatchdogManager:
 
     def get_health(self) -> Dict[str, WatchdogHealth]:
         """Get health status of all watchdogs"""
-        return {
-            name: watchdog.get_health()
-            for name, watchdog in self._watchdogs.items()
-        }
+        return {name: watchdog.get_health() for name, watchdog in self._watchdogs.items()}
 
     def get_watchdog(self, name: str) -> Optional[BaseWatchdog]:
         """Get watchdog by name"""
@@ -365,7 +364,7 @@ class WatchdogManager:
                 "total_events": 0,
                 "events_by_type": {},
                 "events_by_priority": {},
-                "recent_events": []
+                "recent_events": [],
             }
         return self._event_stream.get_stats()
 

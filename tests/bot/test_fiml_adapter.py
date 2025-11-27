@@ -22,19 +22,19 @@ class TestFIMLEducationalDataAdapter:
 
         # Minimal movement (< 0.5%)
         explanation = adapter.explain_price_movement(0.3)
-        assert 'minimal' in explanation.lower() or 'small' in explanation.lower()
+        assert "minimal" in explanation.lower() or "small" in explanation.lower()
 
         # Moderate movement (0.5-2%)
         explanation = adapter.explain_price_movement(1.5)
-        assert 'moderate' in explanation.lower() or 'notable' in explanation.lower()
+        assert "moderate" in explanation.lower() or "notable" in explanation.lower()
 
         # Significant movement (2-5%)
         explanation = adapter.explain_price_movement(3.5)
-        assert 'significant' in explanation.lower() or 'strong' in explanation.lower()
+        assert "significant" in explanation.lower() or "strong" in explanation.lower()
 
         # Exceptional movement (> 5%)
         explanation = adapter.explain_price_movement(7.0)
-        assert 'exceptional' in explanation.lower() or 'major' in explanation.lower()
+        assert "exceptional" in explanation.lower() or "major" in explanation.lower()
 
     async def test_format_volume_analysis(self):
         """Test volume analysis interpretation"""
@@ -42,15 +42,15 @@ class TestFIMLEducationalDataAdapter:
 
         # Low volume
         explanation = adapter.explain_volume(1000000, 2000000)
-        assert 'low' in explanation.lower()
+        assert "low" in explanation.lower()
 
         # Normal volume
         explanation = adapter.explain_volume(2000000, 2000000)
-        assert 'normal' in explanation.lower() or 'typical' in explanation.lower()
+        assert "normal" in explanation.lower() or "typical" in explanation.lower()
 
         # High volume
         explanation = adapter.explain_volume(4000000, 2000000)
-        assert 'high' in explanation.lower() or 'above' in explanation.lower()
+        assert "high" in explanation.lower() or "above" in explanation.lower()
 
     async def test_format_pe_ratio(self):
         """Test P/E ratio explanation"""
@@ -58,19 +58,19 @@ class TestFIMLEducationalDataAdapter:
 
         # Low P/E (< 15)
         explanation = adapter.explain_pe_ratio(12.5)
-        assert 'undervalued' in explanation.lower() or 'low' in explanation.lower()
+        assert "undervalued" in explanation.lower() or "low" in explanation.lower()
 
         # Fair P/E (15-25)
         explanation = adapter.explain_pe_ratio(20.0)
-        assert 'fair' in explanation.lower() or 'reasonable' in explanation.lower()
+        assert "fair" in explanation.lower() or "reasonable" in explanation.lower()
 
         # Growth P/E (25-40)
         explanation = adapter.explain_pe_ratio(32.0)
-        assert 'growth' in explanation.lower()
+        assert "growth" in explanation.lower()
 
         # High P/E (> 40)
         explanation = adapter.explain_pe_ratio(55.0)
-        assert 'high' in explanation.lower() or 'expensive' in explanation.lower()
+        assert "high" in explanation.lower() or "expensive" in explanation.lower()
 
     async def test_format_market_cap(self):
         """Test market cap classification"""
@@ -78,45 +78,41 @@ class TestFIMLEducationalDataAdapter:
 
         # Micro cap (< 300M)
         explanation = adapter.explain_market_cap(200_000_000)
-        assert 'micro' in explanation.lower() or 'small' in explanation.lower()
+        assert "micro" in explanation.lower() or "small" in explanation.lower()
 
         # Small cap (300M - 2B)
         explanation = adapter.explain_market_cap(1_000_000_000)
-        assert 'small' in explanation.lower()
+        assert "small" in explanation.lower()
 
         # Mid cap (2B - 10B)
         explanation = adapter.explain_market_cap(5_000_000_000)
-        assert 'mid' in explanation.lower()
+        assert "mid" in explanation.lower()
 
         # Large cap (10B - 200B)
         explanation = adapter.explain_market_cap(50_000_000_000)
-        assert 'large' in explanation.lower()
+        assert "large" in explanation.lower()
 
         # Mega cap (> 200B)
         explanation = adapter.explain_market_cap(500_000_000_000)
-        assert 'mega' in explanation.lower()
+        assert "mega" in explanation.lower()
 
     async def test_educational_snapshot_lesson_format(self):
         """Test educational snapshot for lesson context"""
         adapter = FIMLEducationalDataAdapter()
 
         snapshot = await adapter.get_educational_snapshot(
-            symbol="AAPL",
-            user_id="test_user",
-            context="lesson"
+            symbol="AAPL", user_id="test_user", context="lesson"
         )
 
         assert snapshot is not None
-        assert 'symbol' in snapshot or 'price' in str(snapshot).lower()
+        assert "symbol" in snapshot or "price" in str(snapshot).lower()
 
     async def test_educational_snapshot_quiz_format(self):
         """Test educational snapshot for quiz context"""
         adapter = FIMLEducationalDataAdapter()
 
         snapshot = await adapter.get_educational_snapshot(
-            symbol="TSLA",
-            user_id="test_user",
-            context="quiz"
+            symbol="TSLA", user_id="test_user", context="quiz"
         )
 
         assert snapshot is not None
@@ -128,9 +124,7 @@ class TestFIMLEducationalDataAdapter:
         adapter = FIMLEducationalDataAdapter()
 
         snapshot = await adapter.get_educational_snapshot(
-            symbol="GOOGL",
-            user_id="test_user",
-            context="mentor"
+            symbol="GOOGL", user_id="test_user", context="mentor"
         )
 
         assert snapshot is not None
@@ -153,9 +147,7 @@ class TestFIMLEducationalDataAdapter:
 
         # Should handle missing data gracefully
         snapshot = await adapter.get_educational_snapshot(
-            symbol="INVALID",
-            user_id="test_user",
-            context="lesson"
+            symbol="INVALID", user_id="test_user", context="lesson"
         )
 
         assert snapshot is not None

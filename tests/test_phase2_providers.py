@@ -7,7 +7,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from fiml.core.exceptions import ProviderError, ProviderRateLimitError, RegionalRestrictionError
+from fiml.core.exceptions import (ProviderError, ProviderRateLimitError,
+                                  RegionalRestrictionError)
 from fiml.core.models import Asset, AssetType
 
 
@@ -53,7 +54,7 @@ class TestAlphaVantageProvider:
             }
         }
 
-        with patch.object(provider, '_make_request', AsyncMock(return_value=mock_response)):
+        with patch.object(provider, "_make_request", AsyncMock(return_value=mock_response)):
             asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
             response = await provider.fetch_price(asset)
 
@@ -111,23 +112,25 @@ class TestFMPProvider:
         await provider.initialize()
 
         # Mock API response
-        mock_response = [{
-            "price": 245.67,
-            "change": -3.25,
-            "changesPercentage": -1.30,
-            "volume": 75000000,
-            "previousClose": 248.92,
-            "open": 247.50,
-            "dayHigh": 249.00,
-            "dayLow": 244.00,
-            "marketCap": 3800000000000,
-            "pe": 28.5,
-            "eps": 8.62,
-            "sharesOutstanding": 15500000000,
-            "timestamp": 1705334400,
-        }]
+        mock_response = [
+            {
+                "price": 245.67,
+                "change": -3.25,
+                "changesPercentage": -1.30,
+                "volume": 75000000,
+                "previousClose": 248.92,
+                "open": 247.50,
+                "dayHigh": 249.00,
+                "dayLow": 244.00,
+                "marketCap": 3800000000000,
+                "pe": 28.5,
+                "eps": 8.62,
+                "sharesOutstanding": 15500000000,
+                "timestamp": 1705334400,
+            }
+        ]
 
-        with patch.object(provider, '_make_request', AsyncMock(return_value=mock_response)):
+        with patch.object(provider, "_make_request", AsyncMock(return_value=mock_response)):
             asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
             response = await provider.fetch_price(asset)
 
@@ -149,22 +152,24 @@ class TestFMPProvider:
         await provider.initialize()
 
         # Mock profile response
-        mock_profile = [{
-            "symbol": "AAPL",
-            "companyName": "Apple Inc.",
-            "description": "Technology company",
-            "exchange": "NASDAQ",
-            "sector": "Technology",
-            "industry": "Consumer Electronics",
-            "mktCap": 3800000000000,
-            "beta": 1.2,
-        }]
+        mock_profile = [
+            {
+                "symbol": "AAPL",
+                "companyName": "Apple Inc.",
+                "description": "Technology company",
+                "exchange": "NASDAQ",
+                "sector": "Technology",
+                "industry": "Consumer Electronics",
+                "mktCap": 3800000000000,
+                "beta": 1.2,
+            }
+        ]
 
         # NOTE: The current FMP provider implementation doesn't fetch the metrics
         # endpoint separately - it just uses profile data. The metrics dict is
         # initialized as empty {}, so pe_ratio defaults to 0.0. This test validates
         # the actual behavior, not the ideal behavior.
-        with patch.object(provider, '_make_request', AsyncMock(return_value=mock_profile)):
+        with patch.object(provider, "_make_request", AsyncMock(return_value=mock_profile)):
             asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY)
             response = await provider.fetch_fundamentals(asset)
 
@@ -205,7 +210,7 @@ class TestCCXTProvider:
         """Test CCXT provider initialization"""
         from fiml.providers.ccxt_provider import CCXTProvider
 
-        with patch('ccxt.async_support.binance') as mock_exchange_class:
+        with patch("ccxt.async_support.binance") as mock_exchange_class:
             mock_exchange = AsyncMock()
             mock_exchange.load_markets = AsyncMock()
             mock_exchange.markets = {"BTC/USDT": {}, "ETH/USDT": {}}
@@ -225,27 +230,29 @@ class TestCCXTProvider:
         """Test fetching crypto price from CCXT"""
         from fiml.providers.ccxt_provider import CCXTProvider
 
-        with patch('ccxt.async_support.binance') as mock_exchange_class:
+        with patch("ccxt.async_support.binance") as mock_exchange_class:
             mock_exchange = AsyncMock()
             mock_exchange.load_markets = AsyncMock()
             mock_exchange.markets = {"BTC/USDT": {}}
 
             # Mock ticker response
-            mock_exchange.fetch_ticker = AsyncMock(return_value={
-                "last": 43250.50,
-                "bid": 43248.00,
-                "ask": 43252.00,
-                "high": 44000.00,
-                "low": 42500.00,
-                "open": 43000.00,
-                "close": 43250.50,
-                "baseVolume": 15000.5,
-                "quoteVolume": 650000000,
-                "change": 250.50,
-                "percentage": 0.58,
-                "timestamp": 1705334400000,
-                "datetime": "2024-01-15T12:00:00.000Z",
-            })
+            mock_exchange.fetch_ticker = AsyncMock(
+                return_value={
+                    "last": 43250.50,
+                    "bid": 43248.00,
+                    "ask": 43252.00,
+                    "high": 44000.00,
+                    "low": 42500.00,
+                    "open": 43000.00,
+                    "close": 43250.50,
+                    "baseVolume": 15000.5,
+                    "quoteVolume": 650000000,
+                    "change": 250.50,
+                    "percentage": 0.58,
+                    "timestamp": 1705334400000,
+                    "datetime": "2024-01-15T12:00:00.000Z",
+                }
+            )
 
             mock_exchange_class.return_value = mock_exchange
 
@@ -284,9 +291,11 @@ class TestCCXTProvider:
         """Test multi-exchange manager"""
         from fiml.providers.ccxt_provider import CCXTMultiExchangeProvider
 
-        with patch('ccxt.async_support.binance'), \
-             patch('ccxt.async_support.coinbase'), \
-             patch('ccxt.async_support.kraken'):
+        with (
+            patch("ccxt.async_support.binance"),
+            patch("ccxt.async_support.coinbase"),
+            patch("ccxt.async_support.kraken"),
+        ):
 
             manager = CCXTMultiExchangeProvider(["binance", "coinbase", "kraken"])
             assert len(manager.exchanges) == 3
@@ -301,7 +310,7 @@ class TestCCXTProvider:
 
         from fiml.providers.ccxt_provider import CCXTProvider
 
-        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+        with patch("fiml.providers.ccxt_provider.ccxt") as mock_ccxt:
             mock_exchange = AsyncMock()
             # Simulate CloudFront geo-blocking error (as seen in bybit sentry error)
             mock_exchange.load_markets = AsyncMock(
@@ -325,15 +334,13 @@ class TestCCXTProvider:
 
         from fiml.providers.ccxt_provider import CCXTProvider
 
-        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+        with patch("fiml.providers.ccxt_provider.ccxt") as mock_ccxt:
             mock_exchange = AsyncMock()
             mock_exchange.load_markets = AsyncMock()
             mock_exchange.markets = {"BTC/USDT": {}}
             # Simulate rate limit during fetch_price
             mock_exchange.fetch_ticker = AsyncMock(
-                side_effect=ccxt_module.RateLimitExceeded(
-                    "Rate limit exceeded: too many requests"
-                )
+                side_effect=ccxt_module.RateLimitExceeded("Rate limit exceeded: too many requests")
             )
             _setup_mock_ccxt_exceptions(mock_ccxt, ccxt_module, mock_exchange)
 
@@ -351,7 +358,7 @@ class TestCCXTProvider:
 
         from fiml.providers.ccxt_provider import CCXTProvider
 
-        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+        with patch("fiml.providers.ccxt_provider.ccxt") as mock_ccxt:
             mock_exchange = AsyncMock()
             # Simulate DDoS protection during initialization
             mock_exchange.load_markets = AsyncMock(
@@ -370,7 +377,7 @@ class TestCCXTProvider:
 
         from fiml.providers.ccxt_provider import CCXTProvider
 
-        with patch('fiml.providers.ccxt_provider.ccxt') as mock_ccxt:
+        with patch("fiml.providers.ccxt_provider.ccxt") as mock_ccxt:
             mock_exchange = AsyncMock()
             mock_exchange.load_markets = AsyncMock(
                 side_effect=ccxt_module.OnMaintenance("Exchange under maintenance")
@@ -452,7 +459,9 @@ class TestComplianceFramework:
 
         # Test crypto disclaimer
         crypto_disclaimer = generator.generate(AssetClass.CRYPTO, Region.US)
-        assert "cryptocurrency" in crypto_disclaimer.lower() or "crypto" in crypto_disclaimer.lower()
+        assert (
+            "cryptocurrency" in crypto_disclaimer.lower() or "crypto" in crypto_disclaimer.lower()
+        )
         assert "risk" in crypto_disclaimer.lower()
 
         # Test different region

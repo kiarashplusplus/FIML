@@ -271,9 +271,7 @@ class TemplateLibrary:
             )
             return self._emergency_fallback(context)
 
-    def _enrich_context(
-        self, template_type: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _enrich_context(self, template_type: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Enrich context with computed values"""
         enriched = context.copy()
 
@@ -325,7 +323,9 @@ class TemplateLibrary:
             if ratio > 2:
                 enriched["volume_status"] = "exceptionally high"
                 enriched["above_below"] = "above"
-                enriched["volume_interpretation"] = "This spike in volume suggests significant market interest."
+                enriched["volume_interpretation"] = (
+                    "This spike in volume suggests significant market interest."
+                )
                 enriched["market_interest"] = "heightened market activity"
             elif ratio > 1.5:
                 enriched["volume_status"] = "elevated"
@@ -399,7 +399,9 @@ class TemplateLibrary:
             volatility = context.get("volatility", 0)
             if volatility > 0.4:
                 enriched["risk_level"] = "high"
-                enriched["risk_warnings"] = "This asset shows high volatility and may not be suitable for risk-averse investors."
+                enriched["risk_warnings"] = (
+                    "This asset shows high volatility and may not be suitable for risk-averse investors."
+                )
             elif volatility > 0.25:
                 enriched["risk_level"] = "moderate to high"
                 enriched["risk_warnings"] = "Moderate price swings can be expected."

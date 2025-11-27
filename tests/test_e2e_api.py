@@ -45,7 +45,9 @@ class TestHealthEndpoints:
     @pytest.mark.asyncio
     async def test_metrics_endpoint(self):
         """Test Prometheus metrics endpoint"""
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True) as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True
+        ) as client:
             response = await client.get("/metrics")
             assert response.status_code == 200
             # Metrics should be in Prometheus format
@@ -99,11 +101,7 @@ class TestStockQueries:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             payload = {
                 "name": "search-by-symbol",
-                "arguments": {
-                    "symbol": "AAPL",
-                    "market": "US",
-                    "depth": "quick"
-                }
+                "arguments": {"symbol": "AAPL", "market": "US", "depth": "quick"},
             }
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
@@ -130,11 +128,7 @@ class TestStockQueries:
             for symbol in symbols:
                 payload = {
                     "name": "search-by-symbol",
-                    "arguments": {
-                        "symbol": symbol,
-                        "market": "US",
-                        "depth": "quick"
-                    }
+                    "arguments": {"symbol": symbol, "market": "US", "depth": "quick"},
                 }
                 response = await client.post("/mcp/tools/call", json=payload)
                 assert response.status_code == 200
@@ -150,11 +144,7 @@ class TestStockQueries:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             payload = {
                 "name": "search-by-symbol",
-                "arguments": {
-                    "symbol": "INVALID_SYMBOL_XYZ",
-                    "market": "US",
-                    "depth": "quick"
-                }
+                "arguments": {"symbol": "INVALID_SYMBOL_XYZ", "market": "US", "depth": "quick"},
             }
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
@@ -170,11 +160,7 @@ class TestCryptoQueries:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             payload = {
                 "name": "search-by-coin",
-                "arguments": {
-                    "symbol": "BTC",
-                    "exchange": "binance",
-                    "depth": "quick"
-                }
+                "arguments": {"symbol": "BTC", "exchange": "binance", "depth": "quick"},
             }
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
@@ -196,11 +182,7 @@ class TestCryptoQueries:
             for symbol in symbols:
                 payload = {
                     "name": "search-by-coin",
-                    "arguments": {
-                        "symbol": symbol,
-                        "exchange": "binance",
-                        "depth": "quick"
-                    }
+                    "arguments": {"symbol": symbol, "exchange": "binance", "depth": "quick"},
                 }
                 response = await client.post("/mcp/tools/call", json=payload)
                 assert response.status_code == 200
@@ -213,10 +195,7 @@ class TestErrorHandling:
     async def test_invalid_tool_name(self):
         """Test calling non-existent tool"""
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-            payload = {
-                "name": "non-existent-tool",
-                "arguments": {}
-            }
+            payload = {"name": "non-existent-tool", "arguments": {}}
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
             data = response.json()
@@ -226,10 +205,7 @@ class TestErrorHandling:
     async def test_missing_required_arguments(self):
         """Test calling tool without required arguments"""
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-            payload = {
-                "name": "search-by-symbol",
-                "arguments": {}  # Missing required 'symbol'
-            }
+            payload = {"name": "search-by-symbol", "arguments": {}}  # Missing required 'symbol'
             response = await client.post("/mcp/tools/call", json=payload)
             assert response.status_code == 200
             response.json()
@@ -242,7 +218,7 @@ class TestErrorHandling:
             response = await client.post(
                 "/mcp/tools/call",
                 content=b"{invalid json}",
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
             assert response.status_code == 422  # Validation error
 
@@ -256,11 +232,7 @@ class TestDataQuality:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             payload = {
                 "name": "search-by-symbol",
-                "arguments": {
-                    "symbol": "AAPL",
-                    "market": "US",
-                    "depth": "quick"
-                }
+                "arguments": {"symbol": "AAPL", "market": "US", "depth": "quick"},
             }
             response = await client.post("/mcp/tools/call", json=payload)
             data = response.json()
@@ -295,11 +267,7 @@ class TestDataQuality:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             payload = {
                 "name": "search-by-symbol",
-                "arguments": {
-                    "symbol": "AAPL",
-                    "market": "US",
-                    "depth": "quick"
-                }
+                "arguments": {"symbol": "AAPL", "market": "US", "depth": "quick"},
             }
             response = await client.post("/mcp/tools/call", json=payload)
             data = response.json()
@@ -326,14 +294,11 @@ class TestConcurrency:
         symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
 
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+
             async def query_symbol(symbol):
                 payload = {
                     "name": "search-by-symbol",
-                    "arguments": {
-                        "symbol": symbol,
-                        "market": "US",
-                        "depth": "quick"
-                    }
+                    "arguments": {"symbol": symbol, "market": "US", "depth": "quick"},
                 }
                 response = await client.post("/mcp/tools/call", json=payload)
                 return response

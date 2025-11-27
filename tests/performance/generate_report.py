@@ -67,27 +67,35 @@ class PerformanceReportGenerator:
         self.add_section("Executive Summary")
 
         metrics = performance_monitor.get_metrics_summary()
-        cache_metrics = metrics.get('cache', {})
-        task_metrics = metrics.get('tasks', {})
+        cache_metrics = metrics.get("cache", {})
+        task_metrics = metrics.get("tasks", {})
 
         # Overall status
-        l1_hit_rate = cache_metrics.get('L1', {}).get('hit_rate', 0)
-        l2_hit_rate = cache_metrics.get('L2', {}).get('hit_rate', 0)
-        completion_rate = task_metrics.get('completion_rate', 0)
+        l1_hit_rate = cache_metrics.get("L1", {}).get("hit_rate", 0)
+        l2_hit_rate = cache_metrics.get("L2", {}).get("hit_rate", 0)
+        completion_rate = task_metrics.get("completion_rate", 0)
 
-        overall_status = "✅ PASS" if (
-            l1_hit_rate >= self.TARGETS['cache_hit_rate'] and
-            completion_rate >= self.TARGETS['task_completion_rate']
-        ) else "⚠️ NEEDS IMPROVEMENT"
+        overall_status = (
+            "✅ PASS"
+            if (
+                l1_hit_rate >= self.TARGETS["cache_hit_rate"]
+                and completion_rate >= self.TARGETS["task_completion_rate"]
+            )
+            else "⚠️ NEEDS IMPROVEMENT"
+        )
 
         self.add_text(f"**Overall Status:** {overall_status}")
         self.add_text("")
 
         # Key metrics
         self.add_text("**Key Metrics:**")
-        self.add_text(f"- L1 Cache Hit Rate: {l1_hit_rate:.2%} (Target: {self.TARGETS['cache_hit_rate']:.0%})")
+        self.add_text(
+            f"- L1 Cache Hit Rate: {l1_hit_rate:.2%} (Target: {self.TARGETS['cache_hit_rate']:.0%})"
+        )
         self.add_text(f"- L2 Cache Hit Rate: {l2_hit_rate:.2%}")
-        self.add_text(f"- Task Completion Rate: {completion_rate:.2%} (Target: {self.TARGETS['task_completion_rate']:.0%})")
+        self.add_text(
+            f"- Task Completion Rate: {completion_rate:.2%} (Target: {self.TARGETS['task_completion_rate']:.0%})"
+        )
         self.add_text(f"- Slow Queries: {metrics.get('slow_queries', 0)}")
         self.add_text("")
 
@@ -96,75 +104,47 @@ class PerformanceReportGenerator:
         self.add_section("BLUEPRINT Targets Comparison")
 
         metrics = performance_monitor.get_metrics_summary()
-        cache_metrics = metrics.get('cache', {})
+        cache_metrics = metrics.get("cache", {})
 
         rows = []
 
         # Cache hit rate
-        l1_hit_rate = cache_metrics.get('L1', {}).get('hit_rate', 0)
-        target = self.TARGETS['cache_hit_rate']
+        l1_hit_rate = cache_metrics.get("L1", {}).get("hit_rate", 0)
+        target = self.TARGETS["cache_hit_rate"]
         status = "✅" if l1_hit_rate >= target else "❌"
-        rows.append([
-            "Cache Hit Rate",
-            f"{target:.0%}",
-            f"{l1_hit_rate:.2%}",
-            status
-        ])
+        rows.append(["Cache Hit Rate", f"{target:.0%}", f"{l1_hit_rate:.2%}", status])
 
         # Task completion rate
-        completion_rate = metrics.get('tasks', {}).get('completion_rate', 0)
-        target = self.TARGETS['task_completion_rate']
+        completion_rate = metrics.get("tasks", {}).get("completion_rate", 0)
+        target = self.TARGETS["task_completion_rate"]
         status = "✅" if completion_rate >= target else "❌"
-        rows.append([
-            "Task Completion Rate",
-            f"{target:.0%}",
-            f"{completion_rate:.2%}",
-            status
-        ])
+        rows.append(["Task Completion Rate", f"{target:.0%}", f"{completion_rate:.2%}", status])
 
         # Add example metrics for other targets
-        rows.append([
-            "P95 Latency",
-            f"< {self.TARGETS['response_time_avg']}ms",
-            "N/A",
-            "⚠️"
-        ])
+        rows.append(["P95 Latency", f"< {self.TARGETS['response_time_avg']}ms", "N/A", "⚠️"])
 
-        rows.append([
-            "P99 Latency",
-            f"< {self.TARGETS['response_time_p99']}ms",
-            "N/A",
-            "⚠️"
-        ])
+        rows.append(["P99 Latency", f"< {self.TARGETS['response_time_p99']}ms", "N/A", "⚠️"])
 
-        rows.append([
-            "System Uptime",
-            f"> {self.TARGETS['uptime']:.1%}",
-            "N/A",
-            "⚠️"
-        ])
+        rows.append(["System Uptime", f"> {self.TARGETS['uptime']:.1%}", "N/A", "⚠️"])
 
-        self.add_table(
-            ["Metric", "Target", "Actual", "Status"],
-            rows
-        )
+        self.add_table(["Metric", "Target", "Actual", "Status"], rows)
 
     def generate_cache_analysis(self):
         """Analyze cache performance"""
         self.add_section("Cache Performance Analysis")
 
         metrics = performance_monitor.get_metrics_summary()
-        cache_metrics = metrics.get('cache', {})
+        cache_metrics = metrics.get("cache", {})
 
         for layer in ["L1", "L2"]:
             layer_metrics = cache_metrics.get(layer, {})
 
             self.add_section(f"{layer} Cache", level=3)
 
-            hits = layer_metrics.get('hits', 0)
-            misses = layer_metrics.get('misses', 0)
-            total = layer_metrics.get('total', 0)
-            hit_rate = layer_metrics.get('hit_rate', 0)
+            hits = layer_metrics.get("hits", 0)
+            misses = layer_metrics.get("misses", 0)
+            total = layer_metrics.get("total", 0)
+            hit_rate = layer_metrics.get("hit_rate", 0)
 
             self.add_text(f"- **Total Operations:** {total}")
             self.add_text(f"- **Hits:** {hits}")
@@ -172,8 +152,10 @@ class PerformanceReportGenerator:
             self.add_text(f"- **Hit Rate:** {hit_rate:.2%}")
             self.add_text("")
 
-            if hit_rate < self.TARGETS['cache_hit_rate']:
-                self.add_text(f"⚠️ **Warning:** Hit rate below target ({self.TARGETS['cache_hit_rate']:.0%})")
+            if hit_rate < self.TARGETS["cache_hit_rate"]:
+                self.add_text(
+                    f"⚠️ **Warning:** Hit rate below target ({self.TARGETS['cache_hit_rate']:.0%})"
+                )
                 self.add_text("")
 
     def generate_slow_queries_analysis(self):
@@ -192,14 +174,14 @@ class PerformanceReportGenerator:
         # Group by operation
         by_operation: Dict[str, List] = {}
         for query in slow_queries:
-            op = query['operation']
+            op = query["operation"]
             if op not in by_operation:
                 by_operation[op] = []
             by_operation[op].append(query)
 
         self.add_text("**By Operation:**")
         for op, queries in sorted(by_operation.items(), key=lambda x: len(x[1]), reverse=True):
-            avg_duration = sum(q['duration_seconds'] for q in queries) / len(queries)
+            avg_duration = sum(q["duration_seconds"] for q in queries) / len(queries)
             self.add_text(f"- `{op}`: {len(queries)} queries, avg {avg_duration:.2f}s")
 
         self.add_text("")
@@ -207,20 +189,15 @@ class PerformanceReportGenerator:
         # Top 10 slowest
         self.add_section("Top 10 Slowest Queries", level=3)
 
-        sorted_queries = sorted(slow_queries, key=lambda x: x['duration_seconds'], reverse=True)[:10]
+        sorted_queries = sorted(slow_queries, key=lambda x: x["duration_seconds"], reverse=True)[
+            :10
+        ]
 
         rows = []
         for q in sorted_queries:
-            rows.append([
-                q['operation'],
-                f"{q['duration_seconds']:.2f}s",
-                q['timestamp']
-            ])
+            rows.append([q["operation"], f"{q['duration_seconds']:.2f}s", q["timestamp"]])
 
-        self.add_table(
-            ["Operation", "Duration", "Timestamp"],
-            rows
-        )
+        self.add_table(["Operation", "Duration", "Timestamp"], rows)
 
     def generate_bottleneck_analysis(self):
         """Analyze performance bottlenecks"""
@@ -240,11 +217,13 @@ class PerformanceReportGenerator:
 
         # Check cache hit rate
         metrics = performance_monitor.get_metrics_summary()
-        cache_metrics = metrics.get('cache', {})
-        l1_hit_rate = cache_metrics.get('L1', {}).get('hit_rate', 0)
+        cache_metrics = metrics.get("cache", {})
+        l1_hit_rate = cache_metrics.get("L1", {}).get("hit_rate", 0)
 
-        if l1_hit_rate < self.TARGETS['cache_hit_rate']:
-            self.add_text(f"2. **Low Cache Hit Rate:** {l1_hit_rate:.2%} < {self.TARGETS['cache_hit_rate']:.0%}")
+        if l1_hit_rate < self.TARGETS["cache_hit_rate"]:
+            self.add_text(
+                f"2. **Low Cache Hit Rate:** {l1_hit_rate:.2%} < {self.TARGETS['cache_hit_rate']:.0%}"
+            )
             self.add_text("   - Review cache key strategy")
             self.add_text("   - Increase cache TTL for stable data")
             self.add_text("   - Implement cache warming")
@@ -262,15 +241,15 @@ class PerformanceReportGenerator:
         self.add_section("Optimization Recommendations")
 
         metrics = performance_monitor.get_metrics_summary()
-        cache_metrics = metrics.get('cache', {})
-        l1_hit_rate = cache_metrics.get('L1', {}).get('hit_rate', 0)
+        cache_metrics = metrics.get("cache", {})
+        l1_hit_rate = cache_metrics.get("L1", {}).get("hit_rate", 0)
 
         self.add_section("High Priority", level=3)
 
-        if l1_hit_rate < self.TARGETS['cache_hit_rate']:
+        if l1_hit_rate < self.TARGETS["cache_hit_rate"]:
             self.add_text("1. **Improve Cache Hit Rate**")
             self.add_text("   - Current: {:.2%}".format(l1_hit_rate))
-            self.add_text("   - Target: {:.0%}".format(self.TARGETS['cache_hit_rate']))
+            self.add_text("   - Target: {:.0%}".format(self.TARGETS["cache_hit_rate"]))
             self.add_text("   - Actions:")
             self.add_text("     - Implement cache warming on startup")
             self.add_text("     - Increase TTL for rarely-changing data")
@@ -348,7 +327,7 @@ class PerformanceReportGenerator:
     def save_report(self, filepath: str):
         """Save report to file"""
         report = self.generate_report()
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             f.write(report)
         print(f"Report saved to: {filepath}")
 
@@ -356,10 +335,7 @@ class PerformanceReportGenerator:
 def main():
     parser = argparse.ArgumentParser(description="Generate performance report")
     parser.add_argument(
-        '--output',
-        type=str,
-        default='PERFORMANCE_REPORT.md',
-        help='Output file path'
+        "--output", type=str, default="PERFORMANCE_REPORT.md", help="Output file path"
     )
 
     args = parser.parse_args()

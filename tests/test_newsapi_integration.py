@@ -15,7 +15,7 @@ from fiml.providers.registry import provider_registry
 @pytest.mark.asyncio
 @pytest.mark.skipif(
     not os.getenv("NEWSAPI_KEY") and not os.getenv("NEWSAPI_API_KEY"),
-    reason="NewsAPI key not configured - test will use mocks instead"
+    reason="NewsAPI key not configured - test will use mocks instead",
 )
 async def test_newsapi_integration_with_real_api():
     """
@@ -110,10 +110,7 @@ async def test_newsapi_arbitration_selection():
         asset = Asset(symbol="TSLA", asset_type=AssetType.EQUITY, market=Market.US)
 
         plan = await engine.arbitrate_request(
-            asset=asset,
-            data_type=DataType.NEWS,
-            user_region="US",
-            max_staleness_seconds=600
+            asset=asset, data_type=DataType.NEWS, user_region="US", max_staleness_seconds=600
         )
 
         # Verify NewsAPI is selected as primary provider

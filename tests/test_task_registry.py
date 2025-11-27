@@ -66,7 +66,7 @@ class TestTaskRegistry:
         registry = TaskRegistry()
         assert registry._redis_client is None
 
-        with patch('redis.Redis') as mock_redis:
+        with patch("redis.Redis") as mock_redis:
             client = registry._get_redis()
             assert client is not None
             mock_redis.assert_called_once()
@@ -539,7 +539,7 @@ class TestTaskRegistryEdgeCases:
         expected_key = "fiml:task:123"
 
         # Verify prefix is used in key construction
-        with patch.object(registry, '_get_redis') as mock_redis:
+        with patch.object(registry, "_get_redis") as mock_redis:
             mock_client = MagicMock()
             mock_redis.return_value = mock_client
 

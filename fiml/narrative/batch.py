@@ -12,12 +12,7 @@ from fiml.core.logging import get_logger
 from fiml.core.models import AssetType
 from fiml.narrative.cache import narrative_cache
 from fiml.narrative.generator import NarrativeGenerator
-from fiml.narrative.models import (
-    ExpertiseLevel,
-    Language,
-    NarrativeContext,
-    NarrativePreferences,
-)
+from fiml.narrative.models import ExpertiseLevel, Language, NarrativeContext, NarrativePreferences
 
 logger = get_logger(__name__)
 
@@ -33,27 +28,82 @@ class BatchNarrativeGenerator:
     # Top 100 most popular symbols (extend as needed)
     POPULAR_SYMBOLS = [
         # Tech giants
-        "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA", "NFLX",
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA",
+        "NFLX",
         # Major indexes
-        "SPY", "QQQ", "DIA", "IWM", "VTI",
+        "SPY",
+        "QQQ",
+        "DIA",
+        "IWM",
+        "VTI",
         # Crypto
-        "BTC/USD", "ETH/USD", "BNB/USD", "SOL/USD", "ADA/USD", "XRP/USD",
+        "BTC/USD",
+        "ETH/USD",
+        "BNB/USD",
+        "SOL/USD",
+        "ADA/USD",
+        "XRP/USD",
         # Financial
-        "JPM", "BAC", "WFC", "GS", "MS", "C", "V", "MA",
+        "JPM",
+        "BAC",
+        "WFC",
+        "GS",
+        "MS",
+        "C",
+        "V",
+        "MA",
         # Healthcare
-        "JNJ", "UNH", "PFE", "ABBV", "TMO", "MRK", "LLY",
+        "JNJ",
+        "UNH",
+        "PFE",
+        "ABBV",
+        "TMO",
+        "MRK",
+        "LLY",
         # Consumer
-        "WMT", "HD", "NKE", "COST", "MCD", "SBUX", "DIS",
+        "WMT",
+        "HD",
+        "NKE",
+        "COST",
+        "MCD",
+        "SBUX",
+        "DIS",
         # Energy
-        "XOM", "CVX", "COP", "SLB", "EOG",
+        "XOM",
+        "CVX",
+        "COP",
+        "SLB",
+        "EOG",
         # Industrial
-        "BA", "CAT", "GE", "UPS", "HON",
+        "BA",
+        "CAT",
+        "GE",
+        "UPS",
+        "HON",
         # Semiconductor
-        "AMD", "INTC", "QCOM", "AVGO", "MU", "TXN",
+        "AMD",
+        "INTC",
+        "QCOM",
+        "AVGO",
+        "MU",
+        "TXN",
         # Communications
-        "T", "VZ", "CMCSA", "TMUS",
+        "T",
+        "VZ",
+        "CMCSA",
+        "TMUS",
         # Retail
-        "AMZN", "TGT", "LOW", "TJX", "BABA",
+        "AMZN",
+        "TGT",
+        "LOW",
+        "TJX",
+        "BABA",
     ]
 
     # Languages to pre-generate (focus on most common)
@@ -119,9 +169,7 @@ class BatchNarrativeGenerator:
 
         # Check if it's appropriate market time
         if not self._is_market_open_soon():
-            logger.warning(
-                "Batch generation running outside of pre-market hours"
-            )
+            logger.warning("Batch generation running outside of pre-market hours")
 
         for symbol in symbols:
             # Determine asset type
@@ -219,7 +267,8 @@ class BatchNarrativeGenerator:
                 expertise_level=expertise_level,
                 include_technical=True,
                 include_fundamental=expertise_level != ExpertiseLevel.BEGINNER,
-                include_sentiment=expertise_level in [
+                include_sentiment=expertise_level
+                in [
                     ExpertiseLevel.ADVANCED,
                     ExpertiseLevel.QUANT,
                 ],
@@ -312,7 +361,9 @@ class BatchNarrativeGenerator:
         pre_market_start = time(12, 30)
         market_open = time(14, 30)
 
-        is_weekday = now.weekday() < 5  # Monday=0, Tuesday=1, Wednesday=2, Thursday=3, Friday=4 (Saturday=5, Sunday=6 are excluded)
+        is_weekday = (
+            now.weekday() < 5
+        )  # Monday=0, Tuesday=1, Wednesday=2, Thursday=3, Friday=4 (Saturday=5, Sunday=6 are excluded)
 
         return is_weekday and pre_market_start <= current_time <= market_open
 
@@ -327,8 +378,7 @@ class BatchNarrativeGenerator:
             "total_generated": self._generation_count,
             "total_errors": self._error_count,
             "success_rate": (
-                (self._generation_count / (self._generation_count + self._error_count))
-                * 100
+                (self._generation_count / (self._generation_count + self._error_count)) * 100
                 if (self._generation_count + self._error_count) > 0
                 else 0.0
             ),

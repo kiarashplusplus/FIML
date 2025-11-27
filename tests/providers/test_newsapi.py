@@ -24,6 +24,7 @@ from fiml.providers.newsapi import NewsAPIProvider, NewsArticle
 
 # Fixtures
 
+
 @pytest.fixture
 def mock_api_key():
     """Provide a mock API key"""
@@ -90,7 +91,10 @@ async def test_newsapi_provider_initialization(mock_api_key):
 @pytest.mark.asyncio
 async def test_newsapi_provider_initialization_no_key():
     """Test NewsAPI provider fails without API key"""
-    with patch.dict(os.environ, {}, clear=True), pytest.raises(ValueError, match="API key is required"):
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        pytest.raises(ValueError, match="API key is required"),
+    ):
         NewsAPIProvider()
 
 
@@ -122,7 +126,7 @@ def test_sentiment_extraction_positive(newsapi_provider):
     """Test positive sentiment extraction"""
     sentiment = newsapi_provider._extract_sentiment(
         "Stock soars on strong earnings beat",
-        "Company reports profit growth and optimistic outlook"
+        "Company reports profit growth and optimistic outlook",
     )
     assert sentiment > 0
 
@@ -130,8 +134,7 @@ def test_sentiment_extraction_positive(newsapi_provider):
 def test_sentiment_extraction_negative(newsapi_provider):
     """Test negative sentiment extraction"""
     sentiment = newsapi_provider._extract_sentiment(
-        "Stock plunges on earnings miss",
-        "Company reports losses and pessimistic outlook"
+        "Stock plunges on earnings miss", "Company reports losses and pessimistic outlook"
     )
     assert sentiment < 0
 
@@ -139,8 +142,7 @@ def test_sentiment_extraction_negative(newsapi_provider):
 def test_sentiment_extraction_neutral(newsapi_provider):
     """Test neutral sentiment extraction"""
     sentiment = newsapi_provider._extract_sentiment(
-        "Company releases quarterly report",
-        "The financial results are available"
+        "Company releases quarterly report", "The financial results are available"
     )
     assert abs(sentiment) < 0.3
 
@@ -157,9 +159,7 @@ async def test_get_news_success(newsapi_provider, sample_api_response):
         mock_request.return_value = sample_api_response
 
         articles = await newsapi_provider.get_news(
-            query="Tesla",
-            from_date="2025-11-16",
-            to_date="2025-11-23"
+            query="Tesla", from_date="2025-11-16", to_date="2025-11-23"
         )
 
         assert len(articles) == 1
@@ -177,10 +177,7 @@ async def test_get_top_headlines_success(newsapi_provider, sample_api_response):
     with patch.object(newsapi_provider, "_make_request", new_callable=AsyncMock) as mock_request:
         mock_request.return_value = sample_api_response
 
-        articles = await newsapi_provider.get_top_headlines(
-            category="business",
-            country="us"
-        )
+        articles = await newsapi_provider.get_top_headlines(category="business", country="us")
 
         assert len(articles) == 1
         mock_request.assert_called_once()
@@ -344,10 +341,7 @@ async def test_newsapi_arbitration_priority(mock_api_key, test_asset):
 
     # Create arbitration plan for NEWS data
     plan = await engine.arbitrate_request(
-        asset=test_asset,
-        data_type=DataType.NEWS,
-        user_region="US",
-        max_staleness_seconds=600
+        asset=test_asset, data_type=DataType.NEWS, user_region="US", max_staleness_seconds=600
     )
 
     # NewsAPI should be prioritized for NEWS data if available
@@ -476,7 +470,7 @@ async def test_aggregate_sentiment(newsapi_provider, test_asset):
                 "source": {"name": "Source2"},
                 "publishedAt": "2025-11-23T11:00:00Z",
             },
-        ]
+        ],
     }
 
     with patch.object(newsapi_provider, "_make_request", new_callable=AsyncMock) as mock_request:

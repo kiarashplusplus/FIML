@@ -65,7 +65,9 @@ class IntrinioProvider(BaseProvider):
             await self._session.close()
         self._is_initialized = False
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to Intrinio"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -76,9 +78,7 @@ class IntrinioProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -172,19 +172,21 @@ class IntrinioProvider(BaseProvider):
 
             ohlcv_data = []
             for bar in stock_prices[:limit]:
-                ohlcv_data.append({
-                    "timestamp": bar.get("date"),
-                    "open": float(bar.get("open", 0.0)),
-                    "high": float(bar.get("high", 0.0)),
-                    "low": float(bar.get("low", 0.0)),
-                    "close": float(bar.get("close", 0.0)),
-                    "volume": int(bar.get("volume", 0)),
-                    "adjusted_close": float(bar.get("adj_close", 0.0)),
-                    "adjusted_high": float(bar.get("adj_high", 0.0)),
-                    "adjusted_low": float(bar.get("adj_low", 0.0)),
-                    "adjusted_open": float(bar.get("adj_open", 0.0)),
-                    "adjusted_volume": int(bar.get("adj_volume", 0)),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": bar.get("date"),
+                        "open": float(bar.get("open", 0.0)),
+                        "high": float(bar.get("high", 0.0)),
+                        "low": float(bar.get("low", 0.0)),
+                        "close": float(bar.get("close", 0.0)),
+                        "volume": int(bar.get("volume", 0)),
+                        "adjusted_close": float(bar.get("adj_close", 0.0)),
+                        "adjusted_high": float(bar.get("adj_high", 0.0)),
+                        "adjusted_low": float(bar.get("adj_low", 0.0)),
+                        "adjusted_open": float(bar.get("adj_open", 0.0)),
+                        "adjusted_volume": int(bar.get("adj_volume", 0)),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -278,13 +280,15 @@ class IntrinioProvider(BaseProvider):
 
             articles = []
             for article in news_items[:limit]:
-                articles.append({
-                    "title": article.get("title", ""),
-                    "url": article.get("url", ""),
-                    "summary": article.get("summary", ""),
-                    "published_at": article.get("publication_date", ""),
-                    "company": article.get("company", {}).get("name", ""),
-                })
+                articles.append(
+                    {
+                        "title": article.get("title", ""),
+                        "url": article.get("url", ""),
+                        "summary": article.get("summary", ""),
+                        "published_at": article.get("publication_date", ""),
+                        "company": article.get("company", {}).get("name", ""),
+                    }
+                )
 
             return ProviderResponse(
                 provider=self.name,

@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 # Import new providers conditionally
 try:
     from fiml.providers.alpha_vantage import AlphaVantageProvider
+
     ALPHA_VANTAGE_AVAILABLE = True
 except ImportError:
     ALPHA_VANTAGE_AVAILABLE = False
@@ -25,6 +26,7 @@ except ImportError:
 
 try:
     from fiml.providers.fmp import FMPProvider
+
     FMP_AVAILABLE = True
 except ImportError:
     FMP_AVAILABLE = False
@@ -32,6 +34,7 @@ except ImportError:
 
 try:
     from fiml.providers.ccxt_provider import CCXTProvider
+
     CCXT_AVAILABLE = True
 except ImportError:
     CCXT_AVAILABLE = False
@@ -39,6 +42,7 @@ except ImportError:
 
 try:
     from fiml.providers.newsapi import NewsAPIProvider
+
     NEWSAPI_AVAILABLE = True
 except ImportError:
     NEWSAPI_AVAILABLE = False
@@ -46,6 +50,7 @@ except ImportError:
 
 try:
     from fiml.providers.polygon import PolygonProvider
+
     POLYGON_AVAILABLE = True
 except ImportError:
     POLYGON_AVAILABLE = False
@@ -53,6 +58,7 @@ except ImportError:
 
 try:
     from fiml.providers.finnhub import FinnhubProvider
+
     FINNHUB_AVAILABLE = True
 except ImportError:
     FINNHUB_AVAILABLE = False
@@ -60,6 +66,7 @@ except ImportError:
 
 try:
     from fiml.providers.twelvedata import TwelvedataProvider
+
     TWELVEDATA_AVAILABLE = True
 except ImportError:
     TWELVEDATA_AVAILABLE = False
@@ -67,6 +74,7 @@ except ImportError:
 
 try:
     from fiml.providers.tiingo import TiingoProvider
+
     TIINGO_AVAILABLE = True
 except ImportError:
     TIINGO_AVAILABLE = False
@@ -74,6 +82,7 @@ except ImportError:
 
 try:
     from fiml.providers.intrinio import IntrinioProvider
+
     INTRINIO_AVAILABLE = True
 except ImportError:
     INTRINIO_AVAILABLE = False
@@ -81,6 +90,7 @@ except ImportError:
 
 try:
     from fiml.providers.marketstack import MarketstackProvider
+
     MARKETSTACK_AVAILABLE = True
 except ImportError:
     MARKETSTACK_AVAILABLE = False
@@ -88,6 +98,7 @@ except ImportError:
 
 try:
     from fiml.providers.coingecko import CoinGeckoProvider
+
     COINGECKO_AVAILABLE = True
 except ImportError:
     COINGECKO_AVAILABLE = False
@@ -95,6 +106,7 @@ except ImportError:
 
 try:
     from fiml.providers.coinmarketcap import CoinMarketCapProvider
+
     COINMARKETCAP_AVAILABLE = True
 except ImportError:
     COINMARKETCAP_AVAILABLE = False
@@ -102,6 +114,7 @@ except ImportError:
 
 try:
     from fiml.providers.quandl import QuandlProvider
+
     QUANDL_AVAILABLE = True
 except ImportError:
     QUANDL_AVAILABLE = False
@@ -109,6 +122,7 @@ except ImportError:
 
 try:
     from fiml.providers.defillama import DefiLlamaProvider
+
     DEFILLAMA_AVAILABLE = True
 except ImportError:
     DEFILLAMA_AVAILABLE = False
@@ -166,12 +180,12 @@ class ProviderRegistry:
         if CCXT_AVAILABLE:
             # List of exchanges with good public API support for price/OHLCV data
             public_exchanges = [
-                "kraken",      # Well-established, reliable public API
-                "kucoin",      # Good public data access
-                "okx",         # Major exchange with public data
-                "bybit",       # Derivatives focused, good public API
-                "gateio",      # Wide token coverage
-                "bitget",      # Growing exchange with public data
+                "kraken",  # Well-established, reliable public API
+                "kucoin",  # Good public data access
+                "okx",  # Major exchange with public data
+                "bybit",  # Derivatives focused, good public API
+                "gateio",  # Wide token coverage
+                "bitget",  # Growing exchange with public data
             ]
             for exchange_id in public_exchanges:
                 try:
@@ -277,7 +291,9 @@ class ProviderRegistry:
                     self.providers[provider.name] = provider
                     logger.info(f"Registered provider: {provider.name}")
                 else:
-                    logger.warning(f"Provider {provider.name} not initialized - skipping registration")
+                    logger.warning(
+                        f"Provider {provider.name} not initialized - skipping registration"
+                    )
             except Exception as e:
                 logger.error(f"Failed to initialize provider {provider.name}: {e}")
 

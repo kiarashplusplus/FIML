@@ -287,7 +287,9 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 language=request.arguments.get("language", "en"),
                 session_id=request.arguments.get("sessionId"),
             )
-            return MCPToolResponse(content=[{"type": "text", "text": symbol_result.model_dump_json()}])
+            return MCPToolResponse(
+                content=[{"type": "text", "text": symbol_result.model_dump_json()}]
+            )
 
         elif request.name == "search-by-coin":
             coin_result = await search_by_coin(
@@ -298,7 +300,9 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 language=request.arguments.get("language", "en"),
                 session_id=request.arguments.get("sessionId"),
             )
-            return MCPToolResponse(content=[{"type": "text", "text": coin_result.model_dump_json()}])
+            return MCPToolResponse(
+                content=[{"type": "text", "text": coin_result.model_dump_json()}]
+            )
 
         elif request.name == "get-task-status":
             task_result = await get_task_status(
@@ -306,6 +310,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 stream=request.arguments.get("stream", False),
             )
             import json
+
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(task_result)}])
 
         elif request.name == "execute-fk-dsl":
@@ -314,6 +319,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 async_execution=request.arguments.get("async", True),
             )
             import json
+
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(dsl_result)}])
 
         elif request.name == "create-analysis-session":
@@ -325,6 +331,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 tags=request.arguments.get("tags"),
             )
             import json
+
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(session_result)}])
 
         elif request.name == "get-session-info":
@@ -332,6 +339,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 session_id=request.arguments["sessionId"],
             )
             import json
+
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(session_info)}])
 
         elif request.name == "list-sessions":
@@ -341,6 +349,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 limit=request.arguments.get("limit", 50),
             )
             import json
+
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(sessions_list)}])
 
         elif request.name == "extend-session":
@@ -349,6 +358,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 hours=request.arguments.get("hours", 24),
             )
             import json
+
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(extend_result)}])
 
         elif request.name == "get-session-analytics":
@@ -358,6 +368,7 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
                 days=request.arguments.get("days", 30),
             )
             import json
+
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(analytics_result)}])
 
         else:
@@ -365,6 +376,4 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
 
     except Exception as e:
         logger.exception("Error executing MCP tool", tool=request.name, error=str(e))
-        return MCPToolResponse(
-            content=[{"type": "text", "text": f"Error: {str(e)}"}], isError=True
-        )
+        return MCPToolResponse(content=[{"type": "text", "text": f"Error: {str(e)}"}], isError=True)

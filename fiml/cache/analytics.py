@@ -115,8 +115,7 @@ class CacheAnalytics:
 
         # Per-data-type metrics
         self.data_type_metrics: Dict[DataType, DataTypeMetrics] = {
-            data_type: DataTypeMetrics(data_type)
-            for data_type in DataType
+            data_type: DataTypeMetrics(data_type) for data_type in DataType
         }
 
         # Overall metrics
@@ -148,15 +147,11 @@ class CacheAnalytics:
 
         # Cache hits/misses
         self.prom_cache_hits = Counter(
-            "fiml_cache_hits_total",
-            "Total cache hits",
-            ["data_type", "cache_level"]
+            "fiml_cache_hits_total", "Total cache hits", ["data_type", "cache_level"]
         )
 
         self.prom_cache_misses = Counter(
-            "fiml_cache_misses_total",
-            "Total cache misses",
-            ["data_type", "cache_level"]
+            "fiml_cache_misses_total", "Total cache misses", ["data_type", "cache_level"]
         )
 
         # Cache latency
@@ -164,28 +159,22 @@ class CacheAnalytics:
             "fiml_cache_latency_seconds",
             "Cache operation latency",
             ["data_type", "cache_level", "operation"],
-            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0]
+            buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
         )
 
         # Hit rate gauge
         self.prom_hit_rate = Gauge(
-            "fiml_cache_hit_rate",
-            "Cache hit rate percentage",
-            ["data_type"]
+            "fiml_cache_hit_rate", "Cache hit rate percentage", ["data_type"]
         )
 
         # Cache size
         self.prom_cache_size = Gauge(
-            "fiml_cache_size_bytes",
-            "Cache size in bytes",
-            ["cache_level"]
+            "fiml_cache_size_bytes", "Cache size in bytes", ["cache_level"]
         )
 
         # Evictions
         self.prom_evictions = Counter(
-            "fiml_cache_evictions_total",
-            "Total cache evictions",
-            ["cache_level", "reason"]
+            "fiml_cache_evictions_total", "Total cache evictions", ["cache_level", "reason"]
         )
 
         logger.info("Prometheus metrics initialized")
@@ -196,7 +185,7 @@ class CacheAnalytics:
         is_hit: bool,
         latency_ms: float,
         cache_level: str = "l1",
-        key: Optional[str] = None
+        key: Optional[str] = None,
     ) -> None:
         """
         Record a cache access
@@ -245,32 +234,25 @@ class CacheAnalytics:
         if self.enable_prometheus:
             if is_hit:
                 self.prom_cache_hits.labels(
-                    data_type=data_type.value,
-                    cache_level=cache_level
+                    data_type=data_type.value, cache_level=cache_level
                 ).inc()
             else:
                 self.prom_cache_misses.labels(
-                    data_type=data_type.value,
-                    cache_level=cache_level
+                    data_type=data_type.value, cache_level=cache_level
                 ).inc()
 
             self.prom_cache_latency.labels(
-                data_type=data_type.value,
-                cache_level=cache_level,
-                operation="get"
-            ).observe(latency_ms / 1000)  # Convert to seconds
+                data_type=data_type.value, cache_level=cache_level, operation="get"
+            ).observe(
+                latency_ms / 1000
+            )  # Convert to seconds
 
     def record_error(self, data_type: DataType) -> None:
         """Record a cache error"""
         self.data_type_metrics[data_type].record_error()
         self.total_errors += 1
 
-    def record_eviction(
-        self,
-        key: str,
-        reason: str = "lru",
-        cache_level: str = "l1"
-    ) -> None:
+    def record_eviction(self, key: str, reason: str = "lru", cache_level: str = "l1") -> None:
         """
         Record a cache eviction
 
@@ -286,10 +268,7 @@ class CacheAnalytics:
 
         # Update Prometheus metrics
         if self.enable_prometheus:
-            self.prom_evictions.labels(
-                cache_level=cache_level,
-                reason=reason
-            ).inc()
+            self.prom_evictions.labels(cache_level=cache_level, reason=reason).inc()
 
     def get_overall_stats(self) -> Dict[str, Any]:
         """Get overall cache statistics"""
@@ -323,14 +302,12 @@ class CacheAnalytics:
                     "p99": round(latency_stats["p99"], 2),
                     "min": round(latency_stats["min"], 2),
                     "max": round(latency_stats["max"], 2),
-                }
+                },
             }
 
             # Update Prometheus hit rate gauge
             if self.enable_prometheus:
-                self.prom_hit_rate.labels(
-                    data_type=data_type.value
-                ).set(metrics.get_hit_rate())
+                self.prom_hit_rate.labels(data_type=data_type.value).set(metrics.get_hit_rate())
 
         return stats
 
@@ -343,10 +320,7 @@ class CacheAnalytics:
         """
         # Clean old single-access keys (>1 hour old)
         cutoff = datetime.now(UTC) - timedelta(hours=1)
-        old_keys = [
-            key for key, timestamp in self.single_access_keys.items()
-            if timestamp < cutoff
-        ]
+        old_keys = [key for key, timestamp in self.single_access_keys.items() if timestamp < cutoff]
 
         pollution_score = len(old_keys) / max(len(self.single_access_keys), 1) * 100
 
@@ -378,13 +352,15 @@ class CacheAnalytics:
             stats = self.hourly_stats.get(hour_key, {"hits": 0, "misses": 0, "requests": 0})
             hit_rate = (stats["hits"] / stats["requests"] * 100) if stats["requests"] > 0 else 0.0
 
-            trends.append({
-                "hour": hour_time.strftime("%Y-%m-%d %H:00"),
-                "requests": stats["requests"],
-                "hits": stats["hits"],
-                "misses": stats["misses"],
-                "hit_rate_percent": round(hit_rate, 2),
-            })
+            trends.append(
+                {
+                    "hour": hour_time.strftime("%Y-%m-%d %H:00"),
+                    "requests": stats["requests"],
+                    "hits": stats["hits"],
+                    "misses": stats["misses"],
+                    "hit_rate_percent": round(hit_rate, 2),
+                }
+            )
 
         return list(reversed(trends))
 
@@ -449,13 +425,21 @@ class CacheAnalytics:
             "l1_cache": {
                 "hits": self.l1_hits,
                 "misses": self.l1_misses,
-                "hit_rate": (self.l1_hits / (self.l1_hits + self.l1_misses)) if (self.l1_hits + self.l1_misses) > 0 else 0.0,
+                "hit_rate": (
+                    (self.l1_hits / (self.l1_hits + self.l1_misses))
+                    if (self.l1_hits + self.l1_misses) > 0
+                    else 0.0
+                ),
                 "avg_latency_ms": 0.0,  # TODO: Track per-level latency
             },
             "l2_cache": {
                 "hits": self.l2_hits,
                 "misses": self.l2_misses,
-                "hit_rate": (self.l2_hits / (self.l2_hits + self.l2_misses)) if (self.l2_hits + self.l2_misses) > 0 else 0.0,
+                "hit_rate": (
+                    (self.l2_hits / (self.l2_hits + self.l2_misses))
+                    if (self.l2_hits + self.l2_misses) > 0
+                    else 0.0
+                ),
                 "avg_latency_ms": 0.0,
             },
             "by_data_type": self.get_data_type_stats(),

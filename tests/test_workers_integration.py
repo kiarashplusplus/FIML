@@ -24,6 +24,7 @@ def sample_asset():
 @pytest.fixture
 def mock_provider_response():
     """Create a mock provider response factory"""
+
     def _create_response(data_type: DataType, data: dict):
         return ProviderResponse(
             provider="mock",
@@ -35,6 +36,7 @@ def mock_provider_response():
             is_fresh=True,
             confidence=1.0,
         )
+
     return _create_response
 
 
@@ -229,8 +231,6 @@ class TestSentimentWorkerLogic:
         assert weighted_avg != unweighted_avg
 
 
-
-
 class TestWorkerScoring:
     """Test scoring logic produces valid ranges"""
 
@@ -240,8 +240,8 @@ class TestWorkerScoring:
         # Test various scoring scenarios
         test_cases = [
             (5.0, 2.0, -1.0),  # Base + adjustments
-            (0.0, -5.0, 3.0),   # Negative adjustments
-            (10.0, 5.0, 2.0),   # Over-limit
+            (0.0, -5.0, 3.0),  # Negative adjustments
+            (10.0, 5.0, 2.0),  # Over-limit
         ]
 
         for base, adj1, adj2 in test_cases:
@@ -269,6 +269,7 @@ class TestErrorHandling:
         """Test handling of insufficient data"""
 
         import numpy as np
+
         # Not enough data points for calculation
         prices = np.array([100, 101, 102])
 
@@ -288,6 +289,7 @@ class TestDataStructures:
         """Verify result dictionaries have required fields"""
 
         from datetime import datetime, timezone
+
         required_fields = ["asset", "analysis_type", "score", "timestamp"]
 
         # Mock result from any worker

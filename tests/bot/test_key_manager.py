@@ -59,7 +59,7 @@ class TestUserProviderKeyManager:
         """Test adding and retrieving encrypted keys"""
         user_id = "test_user_123"
         provider = "alpha_vantage"
-        api_key = "TEST_KEY_123456789"
+        api_key = "ABC123XYZ4567890"
 
         # Add key
         success = await key_manager.add_key(user_id, provider, api_key)
@@ -74,8 +74,8 @@ class TestUserProviderKeyManager:
         user_id = "test_user_456"
 
         # Add multiple keys
-        await key_manager.add_key(user_id, "alpha_vantage", "KEY1")
-        await key_manager.add_key(user_id, "polygon", "KEY2")
+        await key_manager.add_key(user_id, "alpha_vantage", "ABC123XYZ4567890")
+        await key_manager.add_key(user_id, "polygon", "abcd1234EFGH5678ijkl9012MNOP3456")
 
         # List keys
         keys = await key_manager.list_user_keys(user_id)
@@ -89,7 +89,7 @@ class TestUserProviderKeyManager:
         provider = "finnhub"
 
         # Add then remove
-        await key_manager.add_key(user_id, provider, "TEST_KEY")
+        await key_manager.add_key(user_id, provider, "abcdefgh12345678ijkl")
         assert await key_manager.get_key(user_id, provider) is not None
 
         await key_manager.remove_key(user_id, provider)
@@ -99,13 +99,13 @@ class TestUserProviderKeyManager:
         """Test that keys are encrypted at rest"""
         user_id = "test_user_encrypt"
         provider = "alpha_vantage"
-        api_key = "SENSITIVE_KEY_123"
+        api_key = "ABC123XYZ4567890"
 
         await key_manager.add_key(user_id, provider, api_key)
 
         # Read raw storage (should be encrypted)
         storage_file = key_manager.storage_path / f"{user_id}.json"
-        with open(storage_file, 'r') as f:
+        with open(storage_file, "r") as f:
             data = json.load(f)
 
         # Encrypted key should not match plaintext
@@ -141,7 +141,7 @@ class TestUserProviderKeyManager:
         """Test storing key with metadata"""
         user_id = "test_user_meta"
         provider = "alpha_vantage"
-        api_key = "META_TEST_KEY_123"
+        api_key = "ABC123XYZ4567890"
         metadata = {"tier": "free", "limit": "500/day"}
 
         success = await key_manager.store_user_key(user_id, provider, api_key, metadata)
@@ -156,12 +156,8 @@ class TestUserProviderKeyManager:
         """Test listing user providers with full info"""
         user_id = "test_user_providers"
 
-        await key_manager.store_user_key(
-            user_id, "alpha_vantage", "KEY1", {"tier": "free"}
-        )
-        await key_manager.store_user_key(
-            user_id, "polygon", "KEY2", {"tier": "paid"}
-        )
+        await key_manager.store_user_key(user_id, "alpha_vantage", "ABC123XYZ4567890", {"tier": "free"})
+        await key_manager.store_user_key(user_id, "polygon", "abcd1234EFGH5678ijkl9012MNOP3456", {"tier": "paid"})
 
         providers = await key_manager.list_user_providers(user_id)
 
@@ -178,14 +174,14 @@ class TestUserProviderKeyManager:
         """Test getting all user keys as dict"""
         user_id = "test_user_getkeys"
 
-        await key_manager.add_key(user_id, "alpha_vantage", "KEY_AV")
-        await key_manager.add_key(user_id, "finnhub", "KEY_FH")
+        await key_manager.add_key(user_id, "alpha_vantage", "ABC123XYZ4567890")
+        await key_manager.add_key(user_id, "finnhub", "abcdefgh12345678ijkl")
 
         keys = await key_manager.get_user_keys(user_id)
 
         assert len(keys) == 2
-        assert keys["alpha_vantage"] == "KEY_AV"
-        assert keys["finnhub"] == "KEY_FH"
+        assert keys["alpha_vantage"] == "ABC123XYZ4567890"
+        assert keys["finnhub"] == "abcdefgh12345678ijkl"
 
     async def test_get_user_keys_empty(self, key_manager):
         """Test getting keys for user with no stored keys"""
@@ -197,7 +193,7 @@ class TestUserProviderKeyManager:
         user_id = "test_remove_key"
         provider = "alpha_vantage"
 
-        await key_manager.add_key(user_id, provider, "TEST_KEY")
+        await key_manager.add_key(user_id, provider, "ABC123XYZ4567890")
 
         success = await key_manager.remove_user_key(user_id, provider)
         assert success
@@ -241,7 +237,7 @@ class TestUserProviderKeyManager:
         """Test that keys are cached in memory"""
         user_id = "test_cache"
         provider = "alpha_vantage"
-        api_key = "CACHED_KEY_123"
+        api_key = "ABC123XYZ4567890"
 
         await key_manager.add_key(user_id, provider, api_key)
 
@@ -256,13 +252,10 @@ class TestUserProviderKeyManager:
         custom_key = Fernet.generate_key()
         storage_path = tmp_path / "custom_keys"
 
-        km = UserProviderKeyManager(
-            encryption_key=custom_key,
-            storage_path=str(storage_path)
-        )
+        km = UserProviderKeyManager(encryption_key=custom_key, storage_path=str(storage_path))
 
         user_id = "custom_key_user"
-        api_key = "MY_SECRET_KEY"
+        api_key = "ABC123XYZ4567890"
 
         await km.add_key(user_id, "alpha_vantage", api_key)
         retrieved = await km.get_key(user_id, "alpha_vantage")
@@ -272,4 +265,3 @@ class TestUserProviderKeyManager:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

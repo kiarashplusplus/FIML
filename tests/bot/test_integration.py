@@ -2,7 +2,6 @@
 Integration tests for bot components working together
 """
 
-
 import pytest
 import yaml
 

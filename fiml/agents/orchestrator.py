@@ -56,7 +56,7 @@ class AgentOrchestrator:
                         address=settings.ray_address,
                         ignore_reinit_error=True,
                         _node_ip_address="0.0.0.0",
-                    )
+                    ),
                 )
 
                 # Wait up to 10 seconds for Ray to connect

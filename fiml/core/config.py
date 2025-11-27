@@ -109,9 +109,7 @@ class Settings(BaseSettings):
     enable_compliance_checks: bool = True
     enable_rate_limiting: bool = True
     max_requests_per_minute: int = 60
-    allowed_regions: List[str] = Field(
-        default_factory=lambda: ["US", "EU", "UK", "JP", "CA", "AU"]
-    )
+    allowed_regions: List[str] = Field(default_factory=lambda: ["US", "EU", "UK", "JP", "CA", "AU"])
 
     # Feature Flags
     enable_crypto: bool = True

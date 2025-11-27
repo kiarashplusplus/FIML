@@ -61,7 +61,9 @@ class PolygonProvider(BaseProvider):
             await self._session.close()
         self._is_initialized = False
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to Polygon"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -75,9 +77,7 @@ class PolygonProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -164,12 +164,13 @@ class PolygonProvider(BaseProvider):
 
             # Calculate date range
             from datetime import timedelta
+
             to_date = datetime.now(timezone.utc)
             from_date = to_date - timedelta(days=limit if timespan == "day" else 30)
 
             # Format endpoint with dates
-            from_date_str = from_date.strftime('%Y-%m-%d')
-            to_date_str = to_date.strftime('%Y-%m-%d')
+            from_date_str = from_date.strftime("%Y-%m-%d")
+            to_date_str = to_date.strftime("%Y-%m-%d")
             endpoint = (
                 f"/v2/aggs/ticker/{asset.symbol}/range/{multiplier}/{timespan}/"
                 f"{from_date_str}/{to_date_str}"
@@ -184,15 +185,17 @@ class PolygonProvider(BaseProvider):
 
             ohlcv_data = []
             for bar in results[:limit]:
-                ohlcv_data.append({
-                    "timestamp": bar.get("t"),
-                    "open": float(bar.get("o", 0.0)),
-                    "high": float(bar.get("h", 0.0)),
-                    "low": float(bar.get("l", 0.0)),
-                    "close": float(bar.get("c", 0.0)),
-                    "volume": int(bar.get("v", 0)),
-                    "vwap": float(bar.get("vw", 0.0)),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": bar.get("t"),
+                        "open": float(bar.get("o", 0.0)),
+                        "high": float(bar.get("h", 0.0)),
+                        "low": float(bar.get("l", 0.0)),
+                        "close": float(bar.get("c", 0.0)),
+                        "volume": int(bar.get("v", 0)),
+                        "vwap": float(bar.get("vw", 0.0)),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -287,15 +290,17 @@ class PolygonProvider(BaseProvider):
 
             articles = []
             for article in results[:limit]:
-                articles.append({
-                    "title": article.get("title", ""),
-                    "url": article.get("article_url", ""),
-                    "publisher": article.get("publisher", {}).get("name", ""),
-                    "published_at": article.get("published_utc", ""),
-                    "author": article.get("author", ""),
-                    "description": article.get("description", ""),
-                    "amp_url": article.get("amp_url", ""),
-                })
+                articles.append(
+                    {
+                        "title": article.get("title", ""),
+                        "url": article.get("article_url", ""),
+                        "publisher": article.get("publisher", {}).get("name", ""),
+                        "published_at": article.get("published_utc", ""),
+                        "author": article.get("author", ""),
+                        "description": article.get("description", ""),
+                        "amp_url": article.get("amp_url", ""),
+                    }
+                )
 
             return ProviderResponse(
                 provider=self.name,
@@ -319,7 +324,12 @@ class PolygonProvider(BaseProvider):
     async def supports_asset(self, asset: Asset) -> bool:
         """Check if provider supports this asset type"""
         # Polygon supports US stocks, options, crypto, and forex
-        return asset.asset_type in [AssetType.EQUITY, AssetType.CRYPTO, AssetType.FOREX, AssetType.OPTION]
+        return asset.asset_type in [
+            AssetType.EQUITY,
+            AssetType.CRYPTO,
+            AssetType.FOREX,
+            AssetType.OPTION,
+        ]
 
     async def get_health(self) -> ProviderHealth:
         """Get provider health metrics"""

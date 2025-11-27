@@ -113,15 +113,11 @@ class NewsAPIProvider(BaseProvider):
 
         # Check daily limit
         if self._daily_request_count >= self._daily_limit:
-            raise RateLimitError(
-                f"Daily limit of {self._daily_limit} requests reached for NewsAPI"
-            )
+            raise RateLimitError(f"Daily limit of {self._daily_limit} requests reached for NewsAPI")
 
         # Check per-minute limit
         one_minute_ago = now.timestamp() - 60
-        self._request_times = [
-            t for t in self._request_times if t.timestamp() > one_minute_ago
-        ]
+        self._request_times = [t for t in self._request_times if t.timestamp() > one_minute_ago]
 
         if len(self._request_times) >= self.config.rate_limit_per_minute:
             wait_time = 60 - (now.timestamp() - self._request_times[0].timestamp())
@@ -147,9 +143,7 @@ class NewsAPIProvider(BaseProvider):
         for attempt in range(max_retries):
             try:
                 timeout = aiohttp.ClientTimeout(total=self.config.timeout_seconds)
-                async with self._session.get(
-                    url, params=params, timeout=timeout
-                ) as response:
+                async with self._session.get(url, params=params, timeout=timeout) as response:
                     if response.status == 429:
                         # Rate limited
                         retry_after = int(response.headers.get("Retry-After", "60"))
@@ -203,9 +197,7 @@ class NewsAPIProvider(BaseProvider):
         published_at = None
         if published_at_str:
             try:
-                published_at = datetime.fromisoformat(
-                    published_at_str.replace("Z", "+00:00")
-                )
+                published_at = datetime.fromisoformat(published_at_str.replace("Z", "+00:00"))
             except Exception:
                 published_at = datetime.now(timezone.utc)
 
@@ -333,9 +325,7 @@ class NewsAPIProvider(BaseProvider):
             data = await self._make_request("top-headlines", params)
             articles = [self._parse_article(a) for a in data.get("articles", [])]
 
-            logger.info(
-                f"Fetched {len(articles)} top headlines for {category}/{country}"
-            )
+            logger.info(f"Fetched {len(articles)} top headlines for {category}/{country}")
             return articles
 
         except Exception as e:

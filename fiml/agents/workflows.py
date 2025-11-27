@@ -27,6 +27,7 @@ logger = get_logger(__name__)
 
 class WorkflowStatus(str, Enum):
     """Workflow execution status"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -36,6 +37,7 @@ class WorkflowStatus(str, Enum):
 
 class WorkflowResult(BaseModel):
     """Base workflow result"""
+
     workflow_name: str
     status: WorkflowStatus
     asset: Asset
@@ -202,8 +204,12 @@ class DeepEquityAnalysisWorkflow:
             if include_narrative:
                 self.logger.info("Step 6/7: Generating narrative", symbol=symbol)
                 result.narrative = await self._generate_narrative(
-                    asset, result.snapshot, result.fundamentals,
-                    result.technicals, result.sentiment, result.risk
+                    asset,
+                    result.snapshot,
+                    result.fundamentals,
+                    result.technicals,
+                    result.sentiment,
+                    result.risk,
                 )
                 result.steps_completed = 6
             else:
@@ -213,8 +219,7 @@ class DeepEquityAnalysisWorkflow:
             if include_recommendation:
                 self.logger.info("Step 7/7: Generating recommendation", symbol=symbol)
                 result.recommendation = await self._generate_recommendation(
-                    result.fundamentals, result.technicals,
-                    result.sentiment, result.risk
+                    result.fundamentals, result.technicals, result.sentiment, result.risk
                 )
                 result.steps_completed = 7
             else:
@@ -227,9 +232,7 @@ class DeepEquityAnalysisWorkflow:
             # Mark as completed
             result.status = WorkflowStatus.COMPLETED
             result.completed_at = datetime.now(timezone.utc)
-            result.execution_time_ms = (
-                result.completed_at - start_time
-            ).total_seconds() * 1000
+            result.execution_time_ms = (result.completed_at - start_time).total_seconds() * 1000
 
             self.logger.info(
                 "Deep equity analysis completed",
@@ -245,17 +248,13 @@ class DeepEquityAnalysisWorkflow:
             result.status = WorkflowStatus.FAILED
             result.error = str(e)
             result.completed_at = datetime.now(timezone.utc)
-            result.execution_time_ms = (
-                result.completed_at - start_time
-            ).total_seconds() * 1000
+            result.execution_time_ms = (result.completed_at - start_time).total_seconds() * 1000
             return result
 
     async def _fetch_snapshot(self, asset: Asset) -> Dict[str, Any]:
         """Fetch quick price snapshot"""
         try:
-            providers = await provider_registry.get_providers_for_asset(
-                asset, DataType.PRICE
-            )
+            providers = await provider_registry.get_providers_for_asset(asset, DataType.PRICE)
 
             for provider in providers:
                 try:
@@ -272,9 +271,7 @@ class DeepEquityAnalysisWorkflow:
                         }
                 except Exception as e:
                     self.logger.warning(
-                        "Provider failed for snapshot",
-                        provider=provider.name,
-                        error=str(e)
+                        "Provider failed for snapshot", provider=provider.name, error=str(e)
                     )
                     continue
 
@@ -296,9 +293,7 @@ class DeepEquityAnalysisWorkflow:
         """Analyze fundamental data using orchestrator"""
         try:
             # Use orchestrator to run fundamentals worker
-            analysis = await self.orchestrator.analyze_asset(
-                asset, agents=["fundamentals"]
-            )
+            analysis = await self.orchestrator.analyze_asset(asset, agents=["fundamentals"])
             return cast(Dict[str, Any], analysis.get("fundamentals", {}))
         except Exception as e:
             self.logger.warning("Fundamentals analysis failed", error=str(e))
@@ -307,9 +302,7 @@ class DeepEquityAnalysisWorkflow:
     async def _analyze_technicals(self, asset: Asset) -> Dict[str, Any]:
         """Analyze technical indicators using orchestrator"""
         try:
-            analysis = await self.orchestrator.analyze_asset(
-                asset, agents=["technical"]
-            )
+            analysis = await self.orchestrator.analyze_asset(asset, agents=["technical"])
             return cast(Dict[str, Any], analysis.get("technical", {}))
         except Exception as e:
             self.logger.warning("Technical analysis failed", error=str(e))
@@ -318,9 +311,7 @@ class DeepEquityAnalysisWorkflow:
     async def _analyze_sentiment(self, asset: Asset) -> Dict[str, Any]:
         """Analyze sentiment using orchestrator"""
         try:
-            analysis = await self.orchestrator.analyze_asset(
-                asset, agents=["sentiment", "news"]
-            )
+            analysis = await self.orchestrator.analyze_asset(asset, agents=["sentiment", "news"])
             return {
                 "sentiment": analysis.get("sentiment", {}),
                 "news": analysis.get("news", {}),
@@ -332,9 +323,7 @@ class DeepEquityAnalysisWorkflow:
     async def _assess_risk(self, asset: Asset) -> Dict[str, Any]:
         """Assess risk using orchestrator"""
         try:
-            analysis = await self.orchestrator.analyze_asset(
-                asset, agents=["risk", "correlation"]
-            )
+            analysis = await self.orchestrator.analyze_asset(asset, agents=["risk", "correlation"])
             return {
                 "risk": analysis.get("risk", {}),
                 "correlation": analysis.get("correlation", {}),
@@ -419,7 +408,9 @@ Be specific, data-driven, and actionable."""
 
         # Snapshot context
         if snapshot and snapshot.get("price"):
-            context["snapshot_text"] = f"""
+            context[
+                "snapshot_text"
+            ] = f"""
 Price: ${snapshot['price']:.2f}
 Change: {snapshot.get('change_percent', 0):+.2f}%
 Volume: {snapshot.get('volume', 0):,.0f}
@@ -429,7 +420,9 @@ Market Cap: ${snapshot.get('market_cap', 0):,.0f}
         # Fundamentals context
         if fundamentals and not fundamentals.get("error"):
             metrics = fundamentals.get("metrics", {})
-            context["fundamentals_text"] = f"""
+            context[
+                "fundamentals_text"
+            ] = f"""
 P/E Ratio: {metrics.get('pe_ratio', 'N/A')}
 EPS: ${metrics.get('eps', 'N/A')}
 ROE: {metrics.get('roe', 'N/A')}
@@ -440,7 +433,9 @@ Valuation: {fundamentals.get('valuation', {}).get('assessment', 'N/A')}
         # Technicals context
         if technicals and not technicals.get("error"):
             indicators = technicals.get("indicators", {})
-            context["technicals_text"] = f"""
+            context[
+                "technicals_text"
+            ] = f"""
 RSI: {indicators.get('rsi', 'N/A')}
 MACD: {indicators.get('macd', 'N/A')}
 Trend: {technicals.get('trend', {}).get('direction', 'N/A')}
@@ -451,7 +446,9 @@ Resistance: ${technicals.get('levels', {}).get('resistance', 'N/A')}
         # Sentiment context
         if sentiment and not sentiment.get("error"):
             sent_data = sentiment.get("sentiment", {})
-            context["sentiment_text"] = f"""
+            context[
+                "sentiment_text"
+            ] = f"""
 Overall Sentiment: {sent_data.get('score', 'N/A')}
 News Sentiment: {sent_data.get('news_sentiment', 'N/A')}
 Social Sentiment: {sent_data.get('social_sentiment', 'N/A')}
@@ -460,7 +457,9 @@ Social Sentiment: {sent_data.get('social_sentiment', 'N/A')}
         # Risk context
         if risk and not risk.get("error"):
             risk_data = risk.get("risk", {})
-            context["risk_text"] = f"""
+            context[
+                "risk_text"
+            ] = f"""
 Risk Level: {risk_data.get('level', 'N/A')}
 Volatility: {risk_data.get('volatility', 'N/A')}
 Beta: {risk_data.get('beta', 'N/A')}
@@ -685,8 +684,11 @@ class CryptoSentimentAnalysisWorkflow:
             if include_narrative:
                 self.logger.info("Step 5/6: Generating narrative", symbol=symbol)
                 result.narrative = await self._generate_narrative(
-                    asset, result.price_data, result.sentiment,
-                    result.technicals, result.correlations
+                    asset,
+                    result.price_data,
+                    result.sentiment,
+                    result.technicals,
+                    result.correlations,
                 )
                 result.steps_completed = 5
             else:
@@ -705,9 +707,7 @@ class CryptoSentimentAnalysisWorkflow:
             # Mark as completed
             result.status = WorkflowStatus.COMPLETED
             result.completed_at = datetime.now(timezone.utc)
-            result.execution_time_ms = (
-                result.completed_at - start_time
-            ).total_seconds() * 1000
+            result.execution_time_ms = (result.completed_at - start_time).total_seconds() * 1000
 
             self.logger.info(
                 "Crypto sentiment analysis completed",
@@ -722,17 +722,13 @@ class CryptoSentimentAnalysisWorkflow:
             result.status = WorkflowStatus.FAILED
             result.error = str(e)
             result.completed_at = datetime.now(timezone.utc)
-            result.execution_time_ms = (
-                result.completed_at - start_time
-            ).total_seconds() * 1000
+            result.execution_time_ms = (result.completed_at - start_time).total_seconds() * 1000
             return result
 
     async def _fetch_price_data(self, asset: Asset) -> Dict[str, Any]:
         """Fetch crypto price data"""
         try:
-            providers = await provider_registry.get_providers_for_asset(
-                asset, DataType.PRICE
-            )
+            providers = await provider_registry.get_providers_for_asset(asset, DataType.PRICE)
 
             for provider in providers:
                 try:
@@ -740,9 +736,7 @@ class CryptoSentimentAnalysisWorkflow:
                     if response.is_valid and response.data:
                         return response.data
                 except Exception as e:
-                    self.logger.warning(
-                        "Provider failed", provider=provider.name, error=str(e)
-                    )
+                    self.logger.warning("Provider failed", provider=provider.name, error=str(e))
                     continue
 
             return {"error": "No price data available"}
@@ -753,9 +747,7 @@ class CryptoSentimentAnalysisWorkflow:
     async def _analyze_sentiment(self, asset: Asset) -> Dict[str, Any]:
         """Analyze crypto sentiment"""
         try:
-            analysis = await self.orchestrator.analyze_asset(
-                asset, agents=["sentiment", "news"]
-            )
+            analysis = await self.orchestrator.analyze_asset(asset, agents=["sentiment", "news"])
             return {
                 "sentiment": analysis.get("sentiment", {}),
                 "news": analysis.get("news", {}),
@@ -767,9 +759,7 @@ class CryptoSentimentAnalysisWorkflow:
     async def _analyze_technicals(self, asset: Asset) -> Dict[str, Any]:
         """Analyze technical indicators"""
         try:
-            analysis = await self.orchestrator.analyze_asset(
-                asset, agents=["technical"]
-            )
+            analysis = await self.orchestrator.analyze_asset(asset, agents=["technical"])
             return cast(Dict[str, Any], analysis.get("technical", {}))
         except Exception as e:
             self.logger.warning("Technical analysis failed", error=str(e))
@@ -778,9 +768,7 @@ class CryptoSentimentAnalysisWorkflow:
     async def _analyze_correlations(self, asset: Asset) -> Dict[str, Any]:
         """Analyze correlations with BTC and ETH"""
         try:
-            analysis = await self.orchestrator.analyze_asset(
-                asset, agents=["correlation"]
-            )
+            analysis = await self.orchestrator.analyze_asset(asset, agents=["correlation"])
             return cast(Dict[str, Any], analysis.get("correlation", {}))
         except Exception as e:
             self.logger.warning("Correlation analysis failed", error=str(e))

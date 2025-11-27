@@ -75,9 +75,7 @@ class TiingoProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -153,6 +151,7 @@ class TiingoProvider(BaseProvider):
         try:
             # Calculate date range
             from datetime import timedelta
+
             end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=limit if timeframe == "1d" else 365)
 
@@ -169,19 +168,21 @@ class TiingoProvider(BaseProvider):
 
             ohlcv_data = []
             for bar in response_data[:limit]:
-                ohlcv_data.append({
-                    "timestamp": bar.get("date"),
-                    "open": float(bar.get("open", 0.0)),
-                    "high": float(bar.get("high", 0.0)),
-                    "low": float(bar.get("low", 0.0)),
-                    "close": float(bar.get("close", 0.0)),
-                    "volume": int(bar.get("volume", 0)),
-                    "adjusted_close": float(bar.get("adjClose", 0.0)),
-                    "adjusted_high": float(bar.get("adjHigh", 0.0)),
-                    "adjusted_low": float(bar.get("adjLow", 0.0)),
-                    "adjusted_open": float(bar.get("adjOpen", 0.0)),
-                    "adjusted_volume": int(bar.get("adjVolume", 0)),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": bar.get("date"),
+                        "open": float(bar.get("open", 0.0)),
+                        "high": float(bar.get("high", 0.0)),
+                        "low": float(bar.get("low", 0.0)),
+                        "close": float(bar.get("close", 0.0)),
+                        "volume": int(bar.get("volume", 0)),
+                        "adjusted_close": float(bar.get("adjClose", 0.0)),
+                        "adjusted_high": float(bar.get("adjHigh", 0.0)),
+                        "adjusted_low": float(bar.get("adjLow", 0.0)),
+                        "adjusted_open": float(bar.get("adjOpen", 0.0)),
+                        "adjusted_volume": int(bar.get("adjVolume", 0)),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -267,14 +268,16 @@ class TiingoProvider(BaseProvider):
 
             articles = []
             for article in response_data[:limit]:
-                articles.append({
-                    "title": article.get("title", ""),
-                    "url": article.get("url", ""),
-                    "source": article.get("source", ""),
-                    "published_at": article.get("publishedDate", ""),
-                    "description": article.get("description", ""),
-                    "tags": article.get("tags", []),
-                })
+                articles.append(
+                    {
+                        "title": article.get("title", ""),
+                        "url": article.get("url", ""),
+                        "source": article.get("source", ""),
+                        "published_at": article.get("publishedDate", ""),
+                        "description": article.get("description", ""),
+                        "tags": article.get("tags", []),
+                    }
+                )
 
             return ProviderResponse(
                 provider=self.name,

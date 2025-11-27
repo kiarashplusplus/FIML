@@ -23,6 +23,7 @@ DEFAULT_MEMORY_PRESSURE_THRESHOLD = 0.9  # 90%
 
 class EvictionPolicy(str, Enum):
     """Cache eviction policy types"""
+
     LRU = "lru"  # Least Recently Used
     LFU = "lfu"  # Least Frequently Used
     TTL = "ttl"  # Time To Live
@@ -89,7 +90,9 @@ class EvictionTracker:
                 del self._lfu_tracker[min_key]
                 self._evictions += 1
 
-    def should_evict(self, current_size: int, max_size: int, threshold: Optional[float] = None) -> bool:
+    def should_evict(
+        self, current_size: int, max_size: int, threshold: Optional[float] = None
+    ) -> bool:
         """
         Determine if eviction should occur based on memory pressure
 
@@ -151,7 +154,11 @@ class EvictionTracker:
         return {
             "policy": self.policy.value,
             "max_entries": self.max_entries,
-            "tracked_keys": len(self._lru_tracker) if self.policy == EvictionPolicy.LRU else len(self._lfu_tracker),
+            "tracked_keys": (
+                len(self._lru_tracker)
+                if self.policy == EvictionPolicy.LRU
+                else len(self._lfu_tracker)
+            ),
             "total_evictions": self._evictions,
             "total_accesses": self._total_accesses,
         }
@@ -170,14 +177,12 @@ class EvictionTracker:
             if key in self._lru_tracker:
                 return {
                     "last_access_time": self._lru_tracker[key],
-                    "age_seconds": time.time() - self._lru_tracker[key]
+                    "age_seconds": time.time() - self._lru_tracker[key],
                 }
 
         elif self.policy == EvictionPolicy.LFU:
             if key in self._lfu_tracker:
-                return {
-                    "access_count": self._lfu_tracker[key]
-                }
+                return {"access_count": self._lfu_tracker[key]}
 
         return None
 

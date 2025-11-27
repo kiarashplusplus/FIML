@@ -33,7 +33,7 @@ def sample_asset():
         asset_type=AssetType.EQUITY,
         market=Market.US,
         exchange="NASDAQ",
-        currency="USD"
+        currency="USD",
     )
 
 
@@ -46,7 +46,7 @@ def sample_crypto_asset():
         asset_type=AssetType.CRYPTO,
         market=Market.CRYPTO,
         exchange="binance",
-        currency="USDT"
+        currency="USDT",
     )
 
 
@@ -133,11 +133,7 @@ class TestCacheAnalyticsExtended:
         """Test recording a cache hit"""
         analytics = CacheAnalytics(enable_prometheus=False)
         analytics.record_cache_access(
-            data_type=DataType.PRICE,
-            is_hit=True,
-            latency_ms=10.0,
-            cache_level="l1",
-            key="test_key"
+            data_type=DataType.PRICE, is_hit=True, latency_ms=10.0, cache_level="l1", key="test_key"
         )
         assert analytics.total_hits == 1
         assert analytics.total_misses == 0
@@ -148,10 +144,7 @@ class TestCacheAnalyticsExtended:
         """Test recording a cache miss"""
         analytics = CacheAnalytics(enable_prometheus=False)
         analytics.record_cache_access(
-            data_type=DataType.PRICE,
-            is_hit=False,
-            latency_ms=15.0,
-            cache_level="l1"
+            data_type=DataType.PRICE, is_hit=False, latency_ms=15.0, cache_level="l1"
         )
         assert analytics.total_hits == 0
         assert analytics.total_misses == 1
@@ -161,21 +154,13 @@ class TestCacheAnalyticsExtended:
         analytics = CacheAnalytics(enable_prometheus=False)
         # First access
         analytics.record_cache_access(
-            data_type=DataType.PRICE,
-            is_hit=True,
-            latency_ms=10.0,
-            cache_level="l1",
-            key="test_key"
+            data_type=DataType.PRICE, is_hit=True, latency_ms=10.0, cache_level="l1", key="test_key"
         )
         assert "test_key" in analytics.single_access_keys
 
         # Second access
         analytics.record_cache_access(
-            data_type=DataType.PRICE,
-            is_hit=True,
-            latency_ms=10.0,
-            cache_level="l1",
-            key="test_key"
+            data_type=DataType.PRICE, is_hit=True, latency_ms=10.0, cache_level="l1", key="test_key"
         )
         # Should be removed after second access
         assert "test_key" not in analytics.single_access_keys
@@ -851,28 +836,21 @@ class TestPredictiveCacheWarmerExtended:
     def test_init(self):
         """Test initialization"""
         warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock(),
-            min_request_threshold=5
+            cache_manager=MagicMock(), provider_registry=MagicMock(), min_request_threshold=5
         )
         assert warmer.min_request_threshold == 5
         assert warmer.is_running is False
 
     def test_add_market_event(self):
         """Test adding market event"""
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=MagicMock())
         warmer.add_market_event("AAPL", "earnings")
         assert "AAPL" in warmer.market_events
 
     def test_get_symbols_to_warm_no_candidates(self):
         """Test getting symbols to warm when none qualify"""
         warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock(),
-            min_request_threshold=100
+            cache_manager=MagicMock(), provider_registry=MagicMock(), min_request_threshold=100
         )
         # Record some accesses but below threshold
         for _ in range(5):
@@ -884,9 +862,7 @@ class TestPredictiveCacheWarmerExtended:
     def test_get_symbols_to_warm_with_candidates(self):
         """Test getting symbols to warm with qualified candidates"""
         warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock(),
-            min_request_threshold=5
+            cache_manager=MagicMock(), provider_registry=MagicMock(), min_request_threshold=5
         )
         # Record enough accesses
         for _ in range(10):
@@ -901,10 +877,7 @@ class TestPredictiveCacheWarmerExtended:
 
     def test_get_warming_stats(self):
         """Test getting warming statistics"""
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=MagicMock())
         warmer.total_warmed = 100
         warmer.successful_warms = 90
         warmer.failed_warms = 10
@@ -917,10 +890,7 @@ class TestPredictiveCacheWarmerExtended:
 
     def test_clear_old_patterns(self):
         """Test clearing old patterns"""
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=MagicMock())
         # Create old pattern
         warmer.query_patterns["OLD"] = QueryPattern("OLD")
         warmer.query_patterns["OLD"].last_accessed = datetime.now(UTC) - timedelta(days=10)
@@ -941,10 +911,7 @@ class TestUpdateRequest:
     def test_init(self, sample_asset):
         """Test UpdateRequest initialization"""
         request = UpdateRequest(
-            asset=sample_asset,
-            data_type=DataType.PRICE,
-            provider="yfinance",
-            priority=5
+            asset=sample_asset, data_type=DataType.PRICE, provider="yfinance", priority=5
         )
         assert request.asset == sample_asset
         assert request.data_type == DataType.PRICE
@@ -954,20 +921,12 @@ class TestUpdateRequest:
 
     def test_get_batch_key(self, sample_asset):
         """Test batch key generation"""
-        request = UpdateRequest(
-            asset=sample_asset,
-            data_type=DataType.PRICE,
-            provider="yfinance"
-        )
+        request = UpdateRequest(asset=sample_asset, data_type=DataType.PRICE, provider="yfinance")
         assert request.get_batch_key() == "price:yfinance"
 
     def test_repr(self, sample_asset):
         """Test string representation"""
-        request = UpdateRequest(
-            asset=sample_asset,
-            data_type=DataType.PRICE,
-            provider="yfinance"
-        )
+        request = UpdateRequest(asset=sample_asset, data_type=DataType.PRICE, provider="yfinance")
         repr_str = repr(request)
         assert "AAPL" in repr_str
         assert "price" in repr_str
@@ -983,7 +942,7 @@ class TestBatchUpdateSchedulerExtended:
             cache_manager=MagicMock(),
             provider_registry=MagicMock(),
             batch_size=25,
-            batch_interval_seconds=30
+            batch_interval_seconds=30,
         )
         assert scheduler.batch_size == 25
         assert scheduler.batch_interval_seconds == 30
@@ -991,15 +950,9 @@ class TestBatchUpdateSchedulerExtended:
     @pytest.mark.asyncio
     async def test_schedule_update(self, sample_asset):
         """Test scheduling an update"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
         await scheduler.schedule_update(
-            asset=sample_asset,
-            data_type=DataType.PRICE,
-            provider="yfinance",
-            priority=5
+            asset=sample_asset, data_type=DataType.PRICE, provider="yfinance", priority=5
         )
         assert len(scheduler.pending_requests) == 1
         assert scheduler.total_requests == 1
@@ -1007,10 +960,7 @@ class TestBatchUpdateSchedulerExtended:
     @pytest.mark.asyncio
     async def test_schedule_updates_batch(self, sample_asset, sample_crypto_asset):
         """Test scheduling multiple updates"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
         updates = [
             (sample_asset, DataType.PRICE, "yfinance", 5),
             (sample_crypto_asset, DataType.PRICE, "ccxt", 3),
@@ -1022,10 +972,7 @@ class TestBatchUpdateSchedulerExtended:
 
     def test_group_requests_by_batch_key(self, sample_asset, sample_crypto_asset):
         """Test grouping requests by batch key"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
         requests = [
             UpdateRequest(sample_asset, DataType.PRICE, "yfinance"),
             UpdateRequest(sample_crypto_asset, DataType.PRICE, "yfinance"),
@@ -1041,19 +988,14 @@ class TestBatchUpdateSchedulerExtended:
 
     def test_get_next_batch_empty(self):
         """Test getting next batch when empty"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
         batch = scheduler._get_next_batch()
         assert batch == []
 
     def test_get_next_batch_prioritized(self, sample_asset, sample_crypto_asset):
         """Test that batch is prioritized correctly"""
         scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock(),
-            batch_size=2
+            cache_manager=MagicMock(), provider_registry=MagicMock(), batch_size=2
         )
         # Add requests with different priorities
         scheduler.pending_requests.append(
@@ -1072,13 +1014,9 @@ class TestBatchUpdateSchedulerExtended:
     def test_get_stats(self, sample_asset):
         """Test getting scheduler statistics"""
         scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock(),
-            batch_size=50
+            cache_manager=MagicMock(), provider_registry=MagicMock(), batch_size=50
         )
-        scheduler.pending_requests.append(
-            UpdateRequest(sample_asset, DataType.PRICE, "yfinance")
-        )
+        scheduler.pending_requests.append(UpdateRequest(sample_asset, DataType.PRICE, "yfinance"))
         scheduler.total_requests = 10
         scheduler.batches_processed = 5
         scheduler.successful_updates = 8
@@ -1095,13 +1033,8 @@ class TestBatchUpdateSchedulerExtended:
 
     def test_clear_pending(self, sample_asset):
         """Test clearing pending requests"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
-        scheduler.pending_requests.append(
-            UpdateRequest(sample_asset, DataType.PRICE, "yfinance")
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
+        scheduler.pending_requests.append(UpdateRequest(sample_asset, DataType.PRICE, "yfinance"))
         scheduler.pending_requests.append(
             UpdateRequest(sample_asset, DataType.FUNDAMENTALS, "yfinance")
         )
@@ -1133,19 +1066,21 @@ class TestCacheWarmerExtended:
         warmer._warming_in_progress = True
 
         # Mock the cache manager
-        with patch('fiml.cache.warmer.cache_manager') as mock_manager:
+        with patch("fiml.cache.warmer.cache_manager") as mock_manager:
             mock_manager.set_price = AsyncMock(return_value=True)
 
             result = await warmer.warm_cache(
-                assets=[Asset(
-                    symbol="TEST",
-                    name="Test",
-                    asset_type=AssetType.EQUITY,
-                    market=Market.US,
-                    exchange="NASDAQ",
-                    currency="USD"
-                )],
-                force=True
+                assets=[
+                    Asset(
+                        symbol="TEST",
+                        name="Test",
+                        asset_type=AssetType.EQUITY,
+                        market=Market.US,
+                        exchange="NASDAQ",
+                        currency="USD",
+                    )
+                ],
+                force=True,
             )
 
             assert result["status"] == "completed"
@@ -1155,7 +1090,7 @@ class TestCacheWarmerExtended:
         """Test warming on startup"""
         warmer = CacheWarmer()
 
-        with patch.object(warmer, 'warm_cache', new_callable=AsyncMock) as mock_warm:
+        with patch.object(warmer, "warm_cache", new_callable=AsyncMock) as mock_warm:
             mock_warm.return_value = {"status": "completed"}
             result = await warmer.warm_on_startup()
 
@@ -1181,13 +1116,10 @@ class TestCacheIntegration:
         mock_redis.delete = AsyncMock(return_value=1)
         mock_redis.exists = AsyncMock(return_value=True)
         mock_redis.ttl = AsyncMock(return_value=60)
-        mock_redis.info = AsyncMock(return_value={
-            "keyspace_hits": 100,
-            "keyspace_misses": 10
-        })
+        mock_redis.info = AsyncMock(return_value={"keyspace_hits": 100, "keyspace_misses": 10})
         mock_redis.aclose = AsyncMock()
 
-        with patch('redis.asyncio.Redis', return_value=mock_redis):
+        with patch("redis.asyncio.Redis", return_value=mock_redis):
             await cache.initialize()
             assert cache._initialized is True
 
@@ -1250,10 +1182,7 @@ class TestBatchSchedulerProcessing:
     @pytest.mark.asyncio
     async def test_run_batch_cycle_empty(self, sample_asset):
         """Test running batch cycle when empty"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
         # Should complete without error when empty
         await scheduler._run_batch_cycle()
         assert scheduler.batches_processed == 0
@@ -1265,12 +1194,10 @@ class TestBatchSchedulerProcessing:
             cache_manager=MagicMock(),
             provider_registry=MagicMock(),
             low_load_hours=[0, 1, 2, 3],  # Only low load at night
-            batch_size=100
+            batch_size=100,
         )
         # Add small number of requests (below threshold for high-load processing)
-        scheduler.pending_requests.append(
-            UpdateRequest(sample_asset, DataType.PRICE, "yfinance")
-        )
+        scheduler.pending_requests.append(UpdateRequest(sample_asset, DataType.PRICE, "yfinance"))
 
         # During high load with few requests, should skip
         await scheduler._run_batch_cycle()
@@ -1279,9 +1206,7 @@ class TestBatchSchedulerProcessing:
     async def test_start_and_stop(self):
         """Test starting and stopping the scheduler"""
         scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock(),
-            batch_interval_seconds=1
+            cache_manager=MagicMock(), provider_registry=MagicMock(), batch_interval_seconds=1
         )
 
         # Start scheduler
@@ -1298,10 +1223,7 @@ class TestBatchSchedulerProcessing:
     @pytest.mark.asyncio
     async def test_start_already_running(self, caplog):
         """Test starting when already running"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
         scheduler.is_running = True
 
         await scheduler.start()
@@ -1317,10 +1239,7 @@ class TestPredictiveCacheWarmerProcessing:
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=None)
 
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=mock_registry
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=mock_registry)
 
         # Should return True even if provider not found (graceful handling)
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
@@ -1333,7 +1252,7 @@ class TestPredictiveCacheWarmerProcessing:
         warmer = PredictiveCacheWarmer(
             cache_manager=MagicMock(),
             provider_registry=MagicMock(),
-            warming_schedule=[25]  # Hour that doesn't exist
+            warming_schedule=[25],  # Hour that doesn't exist
         )
 
         await warmer.run_warming_cycle()
@@ -1346,7 +1265,7 @@ class TestPredictiveCacheWarmerProcessing:
             cache_manager=MagicMock(),
             provider_registry=MagicMock(),
             warming_schedule=list(range(24)),  # All hours
-            min_request_threshold=1000
+            min_request_threshold=1000,
         )
 
         await warmer.run_warming_cycle()
@@ -1355,10 +1274,7 @@ class TestPredictiveCacheWarmerProcessing:
     @pytest.mark.asyncio
     async def test_start_background_warming_already_running(self, caplog):
         """Test starting background warming when already running"""
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=MagicMock())
         warmer.is_running = True
 
         await warmer.start_background_warming()
@@ -1367,10 +1283,7 @@ class TestPredictiveCacheWarmerProcessing:
     @pytest.mark.asyncio
     async def test_stop_background_warming(self):
         """Test stopping background warming"""
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=MagicMock())
 
         await warmer.start_background_warming(interval_minutes=1)
         await asyncio.sleep(0.1)
@@ -1411,7 +1324,9 @@ class TestL1CacheBatchAndEviction:
         # Create mock pipeline
         mock_pipe = MagicMock()
         mock_pipe.get = MagicMock()
-        mock_pipe.execute = AsyncMock(return_value=['{"key1": "value1"}', None, '{"key3": "value3"}'])
+        mock_pipe.execute = AsyncMock(
+            return_value=['{"key1": "value1"}', None, '{"key3": "value3"}']
+        )
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
 
@@ -1444,10 +1359,7 @@ class TestL1CacheBatchAndEviction:
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         cache._redis = mock_redis
 
-        count = await cache.set_many([
-            ("key1", {"value": 1}, 60),
-            ("key2", {"value": 2}, None)
-        ])
+        count = await cache.set_many([("key1", {"value": 1}, 60), ("key2", {"value": 2}, None)])
 
         assert count == 2
 
@@ -1482,7 +1394,7 @@ class TestL1CacheBatchAndEviction:
         cache._last_access = {
             "key1": datetime.now(UTC),
             "key2": datetime.now(UTC),
-            "key3": datetime.now(UTC)
+            "key3": datetime.now(UTC),
         }
 
         mock_redis = MagicMock()
@@ -1631,10 +1543,7 @@ class TestCacheManagerPricesAndReadThrough:
         # Create mock pipeline
         mock_pipe = MagicMock()
         mock_pipe.get = MagicMock()
-        mock_pipe.execute = AsyncMock(return_value=[
-            '{"price": 150.0}',
-            '{"price": 50000.0}'
-        ])
+        mock_pipe.execute = AsyncMock(return_value=['{"price": 150.0}', '{"price": 50000.0}'])
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
 
@@ -1667,7 +1576,7 @@ class TestCacheManagerPricesAndReadThrough:
 
         items = [
             (sample_asset, "yfinance", {"price": 150.0}),
-            (sample_crypto_asset, "ccxt", {"price": 50000.0})
+            (sample_crypto_asset, "ccxt", {"price": 50000.0}),
         ]
 
         count = await manager.set_prices_batch(items)
@@ -1764,10 +1673,7 @@ class TestBatchSchedulerProcessBatch:
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=None)
 
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=mock_registry
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=mock_registry)
 
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "unknown_provider")]
 
@@ -1780,10 +1686,9 @@ class TestBatchSchedulerProcessBatch:
     async def test_process_batch_price_with_batch_support(self, sample_asset, sample_crypto_asset):
         """Test processing batch with provider that supports batch operations"""
         mock_provider = MagicMock()
-        mock_provider.get_prices_batch = AsyncMock(return_value=[
-            {"price": 150.0},
-            {"price": 50000.0}
-        ])
+        mock_provider.get_prices_batch = AsyncMock(
+            return_value=[{"price": 150.0}, {"price": 50000.0}]
+        )
 
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_prices_batch = AsyncMock(return_value=2)
@@ -1792,8 +1697,7 @@ class TestBatchSchedulerProcessBatch:
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
 
         scheduler = BatchUpdateScheduler(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         batch = [
@@ -1813,8 +1717,8 @@ class TestBatchSchedulerProcessBatch:
         mock_provider = MagicMock()
         # No get_prices_batch method
         mock_provider.get_price = AsyncMock(return_value={"price": 150.0})
-        if hasattr(mock_provider, 'get_prices_batch'):
-            delattr(mock_provider, 'get_prices_batch')
+        if hasattr(mock_provider, "get_prices_batch"):
+            delattr(mock_provider, "get_prices_batch")
 
         mock_cache_manager = MagicMock()
         mock_cache_manager.set_price = AsyncMock(return_value=True)
@@ -1823,8 +1727,7 @@ class TestBatchSchedulerProcessBatch:
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
 
         scheduler = BatchUpdateScheduler(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "yfinance")]
@@ -1843,10 +1746,7 @@ class TestBatchSchedulerProcessBatch:
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
 
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=mock_registry
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=mock_registry)
 
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "yfinance")]
 
@@ -1867,8 +1767,7 @@ class TestBatchSchedulerProcessBatch:
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
 
         scheduler = BatchUpdateScheduler(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         batch = [UpdateRequest(sample_asset, DataType.FUNDAMENTALS, "yfinance")]
@@ -1886,10 +1785,7 @@ class TestBatchSchedulerProcessBatch:
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
 
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=mock_registry
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=mock_registry)
 
         batch = [UpdateRequest(sample_asset, DataType.FUNDAMENTALS, "yfinance")]
 
@@ -1903,10 +1799,7 @@ class TestBatchSchedulerProcessBatch:
         mock_registry = MagicMock()
         mock_registry.get_provider = MagicMock(side_effect=Exception("Registry error"))
 
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=mock_registry
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=mock_registry)
 
         batch = [UpdateRequest(sample_asset, DataType.PRICE, "yfinance")]
 
@@ -1934,7 +1827,7 @@ class TestBatchSchedulerRunCycle:
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry,
             low_load_hours=list(range(24)),  # All hours are low load
-            batch_size=10
+            batch_size=10,
         )
 
         # Add a request
@@ -1952,10 +1845,7 @@ class TestBatchSchedulerFlush:
     @pytest.mark.asyncio
     async def test_flush_pending_empty(self):
         """Test flushing when no pending requests"""
-        scheduler = BatchUpdateScheduler(
-            cache_manager=MagicMock(),
-            provider_registry=MagicMock()
-        )
+        scheduler = BatchUpdateScheduler(cache_manager=MagicMock(), provider_registry=MagicMock())
 
         stats = await scheduler.flush_pending()
 
@@ -1974,8 +1864,7 @@ class TestBatchSchedulerFlush:
         mock_registry.get_provider = MagicMock(return_value=mock_provider)
 
         scheduler = BatchUpdateScheduler(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         # Add requests
@@ -2004,8 +1893,7 @@ class TestPredictiveCacheWarmerWarmSymbol:
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
 
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
@@ -2027,8 +1915,7 @@ class TestPredictiveCacheWarmerWarmSymbol:
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
 
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         result = await warmer.warm_symbol("AAPL", [DataType.FUNDAMENTALS])
@@ -2044,10 +1931,7 @@ class TestPredictiveCacheWarmerWarmSymbol:
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
 
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=mock_registry
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=mock_registry)
 
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
 
@@ -2063,10 +1947,7 @@ class TestPredictiveCacheWarmerWarmSymbol:
         mock_registry = MagicMock()
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
 
-        warmer = PredictiveCacheWarmer(
-            cache_manager=MagicMock(),
-            provider_registry=mock_registry
-        )
+        warmer = PredictiveCacheWarmer(cache_manager=MagicMock(), provider_registry=mock_registry)
 
         result = await warmer.warm_symbol("AAPL", [DataType.PRICE])
 
@@ -2090,8 +1971,7 @@ class TestPredictiveCacheWarmerBatch:
         mock_registry.get_provider_for_data_type = MagicMock(return_value=mock_provider)
 
         warmer = PredictiveCacheWarmer(
-            cache_manager=mock_cache_manager,
-            provider_registry=mock_registry
+            cache_manager=mock_cache_manager, provider_registry=mock_registry
         )
 
         results = await warmer.warm_cache_batch(["AAPL", "MSFT"], concurrency=2)
@@ -2121,7 +2001,7 @@ class TestPredictiveCacheWarmerWarmingCycle:
             cache_manager=mock_cache_manager,
             provider_registry=mock_registry,
             warming_schedule=list(range(24)),  # All hours
-            min_request_threshold=1
+            min_request_threshold=1,
         )
 
         # Add enough accesses to qualify
@@ -2148,10 +2028,7 @@ class TestCacheManagerReadThrough:
         fetch_fn = AsyncMock(return_value={"price": 200.0})
 
         result = await manager.get_with_read_through(
-            key="test_key",
-            data_type=DataType.PRICE,
-            fetch_fn=fetch_fn,
-            asset=sample_asset
+            key="test_key", data_type=DataType.PRICE, fetch_fn=fetch_fn, asset=sample_asset
         )
 
         assert result == {"price": 150.0}
@@ -2173,10 +2050,7 @@ class TestCacheManagerReadThrough:
         fetch_fn = AsyncMock(return_value={"price": 200.0})
 
         result = await manager.get_with_read_through(
-            key="test_key",
-            data_type=DataType.PRICE,
-            fetch_fn=fetch_fn,
-            asset=sample_asset
+            key="test_key", data_type=DataType.PRICE, fetch_fn=fetch_fn, asset=sample_asset
         )
 
         assert result == {"price": 200.0}
@@ -2197,10 +2071,7 @@ class TestCacheManagerReadThrough:
         fetch_fn = AsyncMock(side_effect=Exception("Fetch error"))
 
         result = await manager.get_with_read_through(
-            key="test_key",
-            data_type=DataType.PRICE,
-            fetch_fn=fetch_fn,
-            asset=sample_asset
+            key="test_key", data_type=DataType.PRICE, fetch_fn=fetch_fn, asset=sample_asset
         )
 
         assert result is None
@@ -2232,7 +2103,9 @@ class TestL1CacheErrorHandling:
 
         mock_pipe = MagicMock()
         mock_pipe.get = MagicMock()
-        mock_pipe.execute = AsyncMock(return_value=['{"valid": 1}', 'invalid{', '{"also_valid": 2}'])
+        mock_pipe.execute = AsyncMock(
+            return_value=['{"valid": 1}', "invalid{", '{"also_valid": 2}']
+        )
         mock_pipe.__aenter__ = AsyncMock(return_value=mock_pipe)
         mock_pipe.__aexit__ = AsyncMock(return_value=None)
 
@@ -2356,11 +2229,7 @@ class TestL2CacheMockedOperations:
         cache._session_maker = mock_session_maker
 
         result = await cache.set_price(
-            asset_id=1,
-            provider="yfinance",
-            price=150.0,
-            change=2.5,
-            change_percent=1.7
+            asset_id=1, provider="yfinance", price=150.0, change=2.5, change_percent=1.7
         )
 
         assert result is True
@@ -2487,9 +2356,7 @@ class TestL2CacheMockedOperations:
         cache._session_maker = mock_session_maker
 
         result = await cache.set_fundamentals(
-            asset_id=1,
-            provider="yfinance",
-            data={"pe_ratio": 25.0}
+            asset_id=1, provider="yfinance", data={"pe_ratio": 25.0}
         )
 
         assert result is True

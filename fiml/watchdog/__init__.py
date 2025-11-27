@@ -36,23 +36,17 @@ Usage:
 
 from fiml.watchdog.base import BaseWatchdog
 from fiml.watchdog.detectors import (
-    CorrelationBreakdownWatchdog,
-    EarningsAnomalyWatchdog,
-    ExchangeOutageWatchdog,
-    FundingRateWatchdog,
-    LiquidityDropWatchdog,
-    PriceAnomalyWatchdog,
-    UnusualVolumeWatchdog,
-    WhaleMovementWatchdog,
+                                     CorrelationBreakdownWatchdog,
+                                     EarningsAnomalyWatchdog,
+                                     ExchangeOutageWatchdog,
+                                     FundingRateWatchdog,
+                                     LiquidityDropWatchdog,
+                                     PriceAnomalyWatchdog,
+                                     UnusualVolumeWatchdog,
+                                     WhaleMovementWatchdog,
 )
 from fiml.watchdog.events import EventStream, event_stream
-from fiml.watchdog.models import (
-    EventFilter,
-    EventType,
-    Severity,
-    WatchdogEvent,
-    WatchdogHealth,
-)
+from fiml.watchdog.models import EventFilter, EventType, Severity, WatchdogEvent, WatchdogHealth
 from fiml.watchdog.orchestrator import WatchdogManager, watchdog_manager
 
 __all__ = [

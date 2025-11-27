@@ -25,19 +25,13 @@ class TestMCPRouter:
 
     def test_mcp_tool_request_model(self):
         """Test MCP tool request model"""
-        request = MCPToolRequest(
-            name="search-by-symbol",
-            arguments={"symbol": "AAPL"}
-        )
+        request = MCPToolRequest(name="search-by-symbol", arguments={"symbol": "AAPL"})
         assert request.name == "search-by-symbol"
         assert request.arguments["symbol"] == "AAPL"
 
     def test_mcp_tool_response_model(self):
         """Test MCP tool response model"""
-        response = MCPToolResponse(
-            content=[{"type": "text", "text": "Result"}],
-            isError=False
-        )
+        response = MCPToolResponse(content=[{"type": "text", "text": "Result"}], isError=False)
         assert response.isError is False
         assert len(response.content) == 1
 
@@ -54,11 +48,7 @@ class TestMCPTools:
         await provider_registry.initialize()
 
         try:
-            result = await search_by_symbol(
-                symbol="AAPL",
-                market="US",
-                analysis_depth="quick"
-            )
+            result = await search_by_symbol(symbol="AAPL", market="US", analysis_depth="quick")
 
             # Result should be a dict
             assert isinstance(result, dict)
@@ -78,10 +68,7 @@ class TestMCPTools:
         await provider_registry.initialize()
 
         try:
-            result = await search_by_coin(
-                symbol="BTC",
-                pair="USD"
-            )
+            result = await search_by_coin(symbol="BTC", pair="USD")
 
             # Result should be a dict
             assert isinstance(result, dict)

@@ -46,13 +46,7 @@ class RegressionDetector:
         """Run pytest benchmarks and save results"""
         print("Running benchmarks...")
 
-        cmd = [
-            "pytest",
-            "benchmarks/",
-            "--benchmark-only",
-            "--benchmark-json=" + output_file,
-            "-v"
-        ]
+        cmd = ["pytest", "benchmarks/", "--benchmark-only", "--benchmark-json=" + output_file, "-v"]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -61,7 +55,7 @@ class RegressionDetector:
             return {}
 
         # Load results
-        with open(output_file, 'r') as f:
+        with open(output_file, "r") as f:
             return json.load(f)
 
     def load_results(self, filepath: str) -> Optional[Dict]:
@@ -71,14 +65,10 @@ class RegressionDetector:
             print(f"Results file not found: {filepath}")
             return None
 
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             return json.load(f)
 
-    def compare_benchmarks(
-        self,
-        current: Dict,
-        baseline: Dict
-    ) -> Tuple[List[Dict], List[Dict]]:
+    def compare_benchmarks(self, current: Dict, baseline: Dict) -> Tuple[List[Dict], List[Dict]]:
         """
         Compare current benchmarks with baseline
 
@@ -88,12 +78,8 @@ class RegressionDetector:
         regressions = []
         improvements = []
 
-        current_benchmarks = {
-            b['name']: b for b in current.get('benchmarks', [])
-        }
-        baseline_benchmarks = {
-            b['name']: b for b in baseline.get('benchmarks', [])
-        }
+        current_benchmarks = {b["name"]: b for b in current.get("benchmarks", [])}
+        baseline_benchmarks = {b["name"]: b for b in baseline.get("benchmarks", [])}
 
         for name, current_bench in current_benchmarks.items():
             if name not in baseline_benchmarks:
@@ -103,17 +89,17 @@ class RegressionDetector:
             baseline_bench = baseline_benchmarks[name]
 
             # Compare mean execution time
-            current_mean = current_bench['stats']['mean']
-            baseline_mean = baseline_bench['stats']['mean']
+            current_mean = current_bench["stats"]["mean"]
+            baseline_mean = baseline_bench["stats"]["mean"]
 
             change = (current_mean - baseline_mean) / baseline_mean
 
             comparison = {
-                'name': name,
-                'current_mean': current_mean,
-                'baseline_mean': baseline_mean,
-                'change_percent': change * 100,
-                'change_abs': current_mean - baseline_mean,
+                "name": name,
+                "current_mean": current_mean,
+                "baseline_mean": baseline_mean,
+                "change_percent": change * 100,
+                "change_abs": current_mean - baseline_mean,
             }
 
             if change > self.threshold:
@@ -145,7 +131,9 @@ class RegressionDetector:
                 report.append(f"\nBenchmark: {reg['name']}")
                 report.append(f"  Baseline: {reg['baseline_mean']*1000:.2f}ms")
                 report.append(f"  Current:  {reg['current_mean']*1000:.2f}ms")
-                report.append(f"  Change:   {reg['change_percent']:+.2f}% ({reg['change_abs']*1000:+.2f}ms)")
+                report.append(
+                    f"  Change:   {reg['change_percent']:+.2f}% ({reg['change_abs']*1000:+.2f}ms)"
+                )
             report.append("")
         else:
             report.append("✓ No regressions detected")
@@ -158,7 +146,9 @@ class RegressionDetector:
                 report.append(f"\nBenchmark: {imp['name']}")
                 report.append(f"  Baseline: {imp['baseline_mean']*1000:.2f}ms")
                 report.append(f"  Current:  {imp['current_mean']*1000:.2f}ms")
-                report.append(f"  Change:   {imp['change_percent']:+.2f}% ({imp['change_abs']*1000:+.2f}ms)")
+                report.append(
+                    f"  Change:   {imp['change_percent']:+.2f}% ({imp['change_abs']*1000:+.2f}ms)"
+                )
             report.append("")
 
         report.append("=" * 80)
@@ -168,45 +158,29 @@ class RegressionDetector:
     def save_report(self, filepath: str):
         """Save report to file"""
         report = self.generate_report()
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             f.write(report)
         print(f"Report saved to: {filepath}")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Performance regression detection")
+    parser.add_argument("--baseline", type=str, help="Path to baseline benchmark results (JSON)")
     parser.add_argument(
-        '--baseline',
+        "--current",
         type=str,
-        help='Path to baseline benchmark results (JSON)'
+        default="benchmark_results.json",
+        help="Path to current benchmark results (default: benchmark_results.json)",
     )
     parser.add_argument(
-        '--current',
-        type=str,
-        default='benchmark_results.json',
-        help='Path to current benchmark results (default: benchmark_results.json)'
+        "--save-baseline", action="store_true", help="Run benchmarks and save as baseline"
     )
     parser.add_argument(
-        '--save-baseline',
-        action='store_true',
-        help='Run benchmarks and save as baseline'
+        "--threshold", type=float, default=0.10, help="Regression threshold (default: 0.10 = 10%%)"
     )
+    parser.add_argument("--ci", action="store_true", help="CI mode: fail if regressions detected")
     parser.add_argument(
-        '--threshold',
-        type=float,
-        default=0.10,
-        help='Regression threshold (default: 0.10 = 10%%)'
-    )
-    parser.add_argument(
-        '--ci',
-        action='store_true',
-        help='CI mode: fail if regressions detected'
-    )
-    parser.add_argument(
-        '--report',
-        type=str,
-        default='regression_report.txt',
-        help='Output report file'
+        "--report", type=str, default="regression_report.txt", help="Output report file"
     )
 
     args = parser.parse_args()
@@ -247,10 +221,7 @@ def main():
 
     # Compare
     print("Comparing benchmarks...")
-    regressions, improvements = detector.compare_benchmarks(
-        current_results,
-        baseline_results
-    )
+    regressions, improvements = detector.compare_benchmarks(current_results, baseline_results)
 
     # Generate report
     report = detector.generate_report()

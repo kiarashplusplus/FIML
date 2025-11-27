@@ -92,6 +92,7 @@ class TestFKDSLParser:
     def test_invalid_query(self):
         """Test invalid query handling"""
         from fiml.core.exceptions import FKDSLParseError
+
         with pytest.raises(FKDSLParseError):
             fk_dsl_parser.parse("INVALID QUERY SYNTAX")
 

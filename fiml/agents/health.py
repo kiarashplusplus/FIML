@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 
 class WorkerStatus(str, Enum):
     """Worker health status"""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -28,6 +29,7 @@ class WorkerStatus(str, Enum):
 @dataclass
 class WorkerMetrics:
     """Metrics for a single worker"""
+
     worker_id: str
     worker_type: str
 
@@ -39,7 +41,7 @@ class WorkerMetrics:
 
     # Performance metrics
     total_execution_time: float = 0.0  # seconds
-    min_execution_time: float = float('inf')
+    min_execution_time: float = float("inf")
     max_execution_time: float = 0.0
 
     # Resource metrics
@@ -148,19 +150,30 @@ class WorkerHealthMonitor:
 
     def __init__(self) -> None:
         self._metrics: Dict[str, WorkerMetrics] = {}
-        self._circuit_breakers: Dict[str, Dict[str, Any]] = defaultdict(lambda: {
-            "failures": 0,
-            "last_failure": None,
-            "state": "closed",  # closed, open, half-open
-        })
+        self._circuit_breakers: Dict[str, Dict[str, Any]] = defaultdict(
+            lambda: {
+                "failures": 0,
+                "last_failure": None,
+                "state": "closed",  # closed, open, half-open
+            }
+        )
 
         # Configuration - try to load from settings, otherwise use defaults
         try:
             from fiml.core.config import settings
-            self._failure_threshold = getattr(settings, 'worker_circuit_breaker_threshold', self.DEFAULT_FAILURE_THRESHOLD)
-            self._recovery_timeout = getattr(settings, 'worker_circuit_breaker_timeout', self.DEFAULT_RECOVERY_TIMEOUT)
-            self._max_heartbeat_age = getattr(settings, 'worker_max_heartbeat_age', self.DEFAULT_MAX_HEARTBEAT_AGE)
-            self._error_rate_threshold = getattr(settings, 'worker_error_rate_threshold', self.DEFAULT_ERROR_RATE_THRESHOLD)
+
+            self._failure_threshold = getattr(
+                settings, "worker_circuit_breaker_threshold", self.DEFAULT_FAILURE_THRESHOLD
+            )
+            self._recovery_timeout = getattr(
+                settings, "worker_circuit_breaker_timeout", self.DEFAULT_RECOVERY_TIMEOUT
+            )
+            self._max_heartbeat_age = getattr(
+                settings, "worker_max_heartbeat_age", self.DEFAULT_MAX_HEARTBEAT_AGE
+            )
+            self._error_rate_threshold = getattr(
+                settings, "worker_error_rate_threshold", self.DEFAULT_ERROR_RATE_THRESHOLD
+            )
         except Exception:
             # Fallback to defaults if settings not available
             self._failure_threshold = self.DEFAULT_FAILURE_THRESHOLD
@@ -177,7 +190,9 @@ class WorkerHealthMonitor:
         metrics = WorkerMetrics(worker_id=worker_id, worker_type=worker_type)
         self._metrics[worker_id] = metrics
 
-        logger.info("Registered worker for monitoring", worker_id=worker_id, worker_type=worker_type)
+        logger.info(
+            "Registered worker for monitoring", worker_id=worker_id, worker_type=worker_type
+        )
         return metrics
 
     def get_metrics(self, worker_id: str) -> Optional[WorkerMetrics]:
@@ -195,7 +210,9 @@ class WorkerHealthMonitor:
             self._metrics[worker_id].update_heartbeat()
         return time.time()
 
-    def record_task_complete(self, worker_id: str, start_time: float, success: bool, error: Optional[str] = None) -> None:
+    def record_task_complete(
+        self, worker_id: str, start_time: float, success: bool, error: Optional[str] = None
+    ) -> None:
         """Record task completion"""
         if worker_id not in self._metrics:
             logger.warning(f"Unknown worker {worker_id}")
@@ -270,7 +287,9 @@ class WorkerHealthMonitor:
     def get_health_summary(self) -> Dict[str, Any]:
         """Get overall health summary for all workers"""
         total_workers = len(self._metrics)
-        healthy_workers = sum(1 for m in self._metrics.values() if m.is_healthy(self._max_heartbeat_age))
+        healthy_workers = sum(
+            1 for m in self._metrics.values() if m.is_healthy(self._max_heartbeat_age)
+        )
 
         total_tasks = sum(m.tasks_completed + m.tasks_failed for m in self._metrics.values())
         total_successes = sum(m.tasks_completed for m in self._metrics.values())
@@ -286,7 +305,11 @@ class WorkerHealthMonitor:
                 "healthy": sum(1 for m in metrics_list if m.is_healthy(self._max_heartbeat_age)),
                 "tasks_completed": sum(m.tasks_completed for m in metrics_list),
                 "tasks_failed": sum(m.tasks_failed for m in metrics_list),
-                "avg_execution_time": sum(m.avg_execution_time for m in metrics_list) / len(metrics_list) if metrics_list else 0,
+                "avg_execution_time": (
+                    sum(m.avg_execution_time for m in metrics_list) / len(metrics_list)
+                    if metrics_list
+                    else 0
+                ),
             }
 
         return {

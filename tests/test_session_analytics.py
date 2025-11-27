@@ -512,7 +512,9 @@ class TestSessionAnalytics:
             session_type=SessionType.COMPARATIVE,
             user_id=user_id,
         )
-        session.add_query(QueryRecord(query_type="comparative", parameters={"symbols": ["AAPL", "GOOGL"]}))
+        session.add_query(
+            QueryRecord(query_type="comparative", parameters={"symbols": ["AAPL", "GOOGL"]})
+        )
         await session_store.update_session(session.id, session)
         await analytics.record_session_metrics(session)
 
@@ -722,7 +724,9 @@ class TestAnalyticsIntegration:
                 )
             )
         await session_store.update_session(high_engagement.id, high_engagement)
-        print(f"Created high engagement session: {high_engagement.state.history.total_queries} queries")
+        print(
+            f"Created high engagement session: {high_engagement.state.history.total_queries} queries"
+        )
 
         # Low engagement session (will be abandoned)
         low_engagement = await session_store.create_session(
@@ -734,7 +738,9 @@ class TestAnalyticsIntegration:
         low_engagement.add_query(QueryRecord(query_type="price", parameters={"symbol": "TSLA"}))
         low_engagement.expires_at = datetime.now(UTC) - timedelta(hours=1)  # Mark as expired
         await session_store.update_session(low_engagement.id, low_engagement)
-        print(f"Created low engagement session: {low_engagement.state.history.total_queries} query (abandoned)")
+        print(
+            f"Created low engagement session: {low_engagement.state.history.total_queries} query (abandoned)"
+        )
 
         # Medium engagement session
         medium_engagement = await session_store.create_session(
@@ -752,7 +758,9 @@ class TestAnalyticsIntegration:
                 )
             )
         await session_store.update_session(medium_engagement.id, medium_engagement)
-        print(f"Created medium engagement session: {medium_engagement.state.history.total_queries} queries")
+        print(
+            f"Created medium engagement session: {medium_engagement.state.history.total_queries} queries"
+        )
 
         # Phase 2: Record metrics
         print("\n=== Phase 2: Recording Metrics ===")

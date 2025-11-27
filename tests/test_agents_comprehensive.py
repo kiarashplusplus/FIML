@@ -16,18 +16,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fiml.agents.health import (
-    WorkerHealthMonitor,
-    WorkerMetrics,
-    WorkerStatus,
-    worker_health_monitor,
-)
+from fiml.agents.health import (WorkerHealthMonitor, WorkerMetrics,
+                                WorkerStatus, worker_health_monitor)
 from fiml.agents.orchestrator import AgentOrchestrator, agent_orchestrator
 from fiml.core.models import Asset, AssetType, Market
 
 # ============================================================================
 # Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def sample_equity_asset():
@@ -38,7 +35,7 @@ def sample_equity_asset():
         asset_type=AssetType.EQUITY,
         market=Market.US,
         exchange="NASDAQ",
-        currency="USD"
+        currency="USD",
     )
 
 
@@ -51,7 +48,7 @@ def sample_crypto_asset():
         asset_type=AssetType.CRYPTO,
         market=Market.CRYPTO,
         exchange="binance",
-        currency="USDT"
+        currency="USDT",
     )
 
 
@@ -64,6 +61,7 @@ def health_monitor():
 # ============================================================================
 # WorkerMetrics Tests
 # ============================================================================
+
 
 class TestWorkerMetrics:
     """Test WorkerMetrics dataclass"""
@@ -232,6 +230,7 @@ class TestWorkerMetrics:
 # WorkerHealthMonitor Tests
 # ============================================================================
 
+
 class TestWorkerHealthMonitor:
     """Test WorkerHealthMonitor class"""
 
@@ -309,7 +308,9 @@ class TestWorkerHealthMonitor:
         health_monitor.register_worker("worker-1", "fundamentals")
 
         start_time = health_monitor.record_task_start("worker-1")
-        health_monitor.record_task_complete("worker-1", start_time, success=False, error="Test error")
+        health_monitor.record_task_complete(
+            "worker-1", start_time, success=False, error="Test error"
+        )
 
         metrics = health_monitor.get_metrics("worker-1")
         assert metrics.tasks_failed == 1
@@ -343,7 +344,9 @@ class TestWorkerHealthMonitor:
         # Record failures to exceed threshold
         for i in range(3):
             start_time = time.time()
-            health_monitor.record_task_complete("worker-1", start_time, success=False, error=f"Error {i}")
+            health_monitor.record_task_complete(
+                "worker-1", start_time, success=False, error=f"Error {i}"
+            )
 
         assert health_monitor.is_circuit_open("worker-1") is True
 
@@ -466,6 +469,7 @@ class TestWorkerHealthMonitor:
 # AgentOrchestrator Tests
 # ============================================================================
 
+
 class TestAgentOrchestrator:
     """Test AgentOrchestrator class"""
 
@@ -493,8 +497,10 @@ class TestAgentOrchestrator:
         """Test initialization timeout handling"""
         orchestrator = AgentOrchestrator()
 
-        with patch("fiml.agents.orchestrator.ray.is_initialized", return_value=False), \
-             patch("asyncio.wait_for", side_effect=asyncio.TimeoutError()):
+        with (
+            patch("fiml.agents.orchestrator.ray.is_initialized", return_value=False),
+            patch("asyncio.wait_for", side_effect=asyncio.TimeoutError()),
+        ):
             await orchestrator.initialize()
 
             assert orchestrator.initialized is False
@@ -504,7 +510,9 @@ class TestAgentOrchestrator:
         """Test initialization exception handling"""
         orchestrator = AgentOrchestrator()
 
-        with patch("fiml.agents.orchestrator.ray.is_initialized", side_effect=Exception("Test error")):
+        with patch(
+            "fiml.agents.orchestrator.ray.is_initialized", side_effect=Exception("Test error")
+        ):
             await orchestrator.initialize()
 
             # Should fail gracefully without raising
@@ -516,8 +524,10 @@ class TestAgentOrchestrator:
         orchestrator = AgentOrchestrator()
         orchestrator.initialized = True
 
-        with patch("fiml.agents.orchestrator.ray.is_initialized", return_value=True), \
-             patch("fiml.agents.orchestrator.ray.shutdown") as mock_shutdown:
+        with (
+            patch("fiml.agents.orchestrator.ray.is_initialized", return_value=True),
+            patch("fiml.agents.orchestrator.ray.shutdown") as mock_shutdown,
+        ):
             await orchestrator.shutdown()
 
             mock_shutdown.assert_called_once()
@@ -585,8 +595,7 @@ class TestAgentOrchestrator:
         orchestrator.workers = {"technical": [mock_worker]}
 
         results = await orchestrator.analyze_multiple(
-            [sample_equity_asset, sample_crypto_asset],
-            agents=["technical"]
+            [sample_equity_asset, sample_crypto_asset], agents=["technical"]
         )
 
         assert len(results) == 2
@@ -596,10 +605,7 @@ class TestAgentOrchestrator:
         """Test aggregation with no valid scores"""
         orchestrator = AgentOrchestrator()
 
-        results = {
-            "fundamentals": {"error": "failed"},
-            "technical": {"data": "no_score"}
-        }
+        results = {"fundamentals": {"error": "failed"}, "technical": {"data": "no_score"}}
 
         aggregate = orchestrator._aggregate_results(results)
 
@@ -614,7 +620,7 @@ class TestAgentOrchestrator:
         results = {
             "fundamentals": {"score": 8.0},
             "technical": {"score": 7.0},
-            "sentiment": {"score": 6.5}
+            "sentiment": {"score": 6.5},
         }
 
         aggregate = orchestrator._aggregate_results(results)
@@ -690,6 +696,7 @@ class TestAgentOrchestrator:
 # Worker Status Enum Tests
 # ============================================================================
 
+
 class TestWorkerStatus:
     """Test WorkerStatus enum"""
 
@@ -711,6 +718,7 @@ class TestWorkerStatus:
 # Global Instances Tests
 # ============================================================================
 
+
 class TestGlobalInstances:
     """Test global singleton instances"""
 
@@ -728,6 +736,7 @@ class TestGlobalInstances:
 # ============================================================================
 # Integration Tests
 # ============================================================================
+
 
 class TestIntegration:
     """Integration tests for agents module"""

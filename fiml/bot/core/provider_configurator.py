@@ -39,7 +39,7 @@ class FIMLProviderConfigurator:
         "fmp": ["alpha_vantage", "yahoo_finance"],
     }
 
-    def __init__(self, key_manager: Optional['UserProviderKeyManager'] = None):
+    def __init__(self, key_manager: Optional["UserProviderKeyManager"] = None):
         """
         Initialize configurator
 
@@ -48,6 +48,7 @@ class FIMLProviderConfigurator:
         """
         if key_manager is None:
             from fiml.bot.core.key_manager import UserProviderKeyManager
+
             key_manager = UserProviderKeyManager()
         self.key_manager = key_manager
         logger.info("FIMLProviderConfigurator initialized")
@@ -76,7 +77,7 @@ class FIMLProviderConfigurator:
             "providers": [],
             "fallback_enabled": True,
             "fallback_provider": "yahoo_finance",
-            "free_tier": len(user_keys) == 0
+            "free_tier": len(user_keys) == 0,
         }
 
         # Add user's providers (Priority 1-2)
@@ -89,20 +90,24 @@ class FIMLProviderConfigurator:
                 api_key = key_data
                 tier = "free"
 
-            config["providers"].append({
-                "name": provider,
-                "api_key": api_key,
-                "priority": 1 if tier == "paid" else 2,
-                "user_provided": True,
-            })
+            config["providers"].append(
+                {
+                    "name": provider,
+                    "api_key": api_key,
+                    "priority": 1 if tier == "paid" else 2,
+                    "user_provided": True,
+                }
+            )
 
         # Always add free providers as fallback (Priority 3)
-        config["providers"].append({
-            "name": "yahoo_finance",
-            "api_key": None,  # No key required
-            "priority": 3,
-            "user_provided": False,
-        })
+        config["providers"].append(
+            {
+                "name": "yahoo_finance",
+                "api_key": None,  # No key required
+                "priority": 3,
+                "user_provided": False,
+            }
+        )
 
         # Sort by priority
         config["providers"].sort(key=lambda p: p["priority"])
@@ -111,12 +116,12 @@ class FIMLProviderConfigurator:
             "User provider config built",
             user_id=user_id,
             num_providers=len(config["providers"]),
-            has_user_keys=len(user_keys) > 0
+            has_user_keys=len(user_keys) > 0,
         )
 
         return config
 
-    async def get_fiml_client_for_user(self, user_id: str) -> 'DataArbitrationEngine':
+    async def get_fiml_client_for_user(self, user_id: str) -> "DataArbitrationEngine":
         """
         Get FIML client configured for user's providers
 
@@ -144,51 +149,46 @@ class FIMLProviderConfigurator:
                 # Get provider instance
                 if provider_name == "yahoo_finance":
                     from fiml.providers.yahoo_finance import YahooFinanceProvider
+
                     provider: Any = YahooFinanceProvider()
                 elif provider_name == "alpha_vantage" and api_key:
                     from fiml.providers.alpha_vantage import AlphaVantageProvider
+
                     provider = AlphaVantageProvider(api_key=api_key)
                 elif provider_name == "polygon" and api_key:
                     from fiml.providers.polygon_provider import PolygonProvider
+
                     provider = PolygonProvider(api_key=api_key)
                 elif provider_name == "finnhub" and api_key:
                     from fiml.providers.finnhub import FinnhubProvider
+
                     provider = FinnhubProvider(api_key=api_key)
                 elif provider_name == "fmp" and api_key:
                     from fiml.providers.fmp import FMPProvider
+
                     provider = FMPProvider(api_key=api_key)
                 else:
-                    logger.warning(
-                        "Skipping unsupported provider",
-                        provider=provider_name
-                    )
+                    logger.warning("Skipping unsupported provider", provider=provider_name)
                     continue
 
                 providers.append(provider)
 
             except Exception as e:
                 logger.error(
-                    "Failed to initialize provider",
-                    provider=provider_config["name"],
-                    error=str(e)
+                    "Failed to initialize provider", provider=provider_config["name"], error=str(e)
                 )
 
         # Initialize arbitration engine with user's providers
         engine = DataArbitrationEngine(providers=providers)
 
         logger.info(
-            "FIML client configured for user",
-            user_id=user_id,
-            num_providers=len(providers)
+            "FIML client configured for user", user_id=user_id, num_providers=len(providers)
         )
 
         return engine
 
     async def track_provider_usage(
-        self,
-        user_id: str,
-        provider: str,
-        query_type: str
+        self, user_id: str, provider: str, query_type: str
     ) -> Dict[str, Any]:
         """
         Track API usage for quota management
@@ -208,24 +208,19 @@ class FIMLProviderConfigurator:
                 user_id=user_id,
                 provider=provider,
                 usage=usage_info["usage"],
-                limit=usage_info["limit"]
+                limit=usage_info["limit"],
             )
             return {
                 "warning": True,
                 "message": f"You've used {usage_info['usage']}/{usage_info['limit']} "
-                          f"requests for {provider} today",
+                f"requests for {provider} today",
                 "usage": usage_info["usage"],
-                "limit": usage_info["limit"]
+                "limit": usage_info["limit"],
             }
 
         return {"warning": False}
 
-    async def handle_provider_error(
-        self,
-        user_id: str,
-        provider: str,
-        error: Exception
-    ) -> Dict:
+    async def handle_provider_error(self, user_id: str, provider: str, error: Exception) -> Dict:
         """
         Handle provider errors and determine fallback strategy
 
@@ -245,7 +240,7 @@ class FIMLProviderConfigurator:
             user_id=user_id,
             provider=provider,
             error_type=error_type,
-            error_msg=error_msg
+            error_msg=error_msg,
         )
 
         # Determine error category
@@ -253,27 +248,26 @@ class FIMLProviderConfigurator:
             return {
                 "error_type": "invalid_key",
                 "message": f"Your {provider} API key appears to be invalid. "
-                          "Please update it with /addkey",
+                "Please update it with /addkey",
                 "fallback": "yahoo_finance",
-                "action": "update_key"
+                "action": "update_key",
             }
 
         elif "429" in error_msg or "quota" in error_msg.lower():
             return {
                 "error_type": "quota_exceeded",
                 "message": f"You've exceeded your {provider} quota. "
-                          "Falling back to free providers.",
+                "Falling back to free providers.",
                 "fallback": "yahoo_finance",
-                "action": "wait_or_upgrade"
+                "action": "wait_or_upgrade",
             }
 
         else:
             return {
                 "error_type": "api_error",
-                "message": f"{provider} is experiencing issues. "
-                          "Using alternative providers.",
+                "message": f"{provider} is experiencing issues. " "Using alternative providers.",
                 "fallback": "yahoo_finance",
-                "action": "retry_later"
+                "action": "retry_later",
             }
 
     def get_fallback_suggestions(self, failed_provider: str) -> List[str]:
@@ -292,7 +286,7 @@ class FIMLProviderConfigurator:
         logger.info(
             "Generated fallback suggestions",
             failed_provider=failed_provider,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
         return suggestions
@@ -314,11 +308,7 @@ class FIMLProviderConfigurator:
         # For other providers, check if they're in our known list
         is_healthy = provider in self.KNOWN_PROVIDERS
 
-        logger.info(
-            "Provider health check",
-            provider=provider,
-            is_healthy=is_healthy
-        )
+        logger.info("Provider health check", provider=provider, is_healthy=is_healthy)
 
         return is_healthy
 
@@ -344,13 +334,15 @@ class FIMLProviderConfigurator:
             # Get provider info
             info = self.key_manager.get_provider_info(provider)
 
-            status_list.append({
-                "provider": provider,
-                "name": info.get("name", provider) if info else provider,
-                "added_at": provider_info.get("added_at"),
-                "usage_today": usage,
-                "tier": provider_info.get("metadata", {}).get("tier", "unknown"),
-                "status": "active"  # Could add health checks here
-            })
+            status_list.append(
+                {
+                    "provider": provider,
+                    "name": info.get("name", provider) if info else provider,
+                    "added_at": provider_info.get("added_at"),
+                    "usage_today": usage,
+                    "tier": provider_info.get("metadata", {}).get("tier", "unknown"),
+                    "status": "active",  # Could add health checks here
+                }
+            )
 
         return status_list

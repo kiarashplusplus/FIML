@@ -2,6 +2,7 @@
 Tests for versioning systems (LessonVersionManager & ProgressMigrationManager)
 Tests version compatibility and data migration
 """
+
 from fiml.bot.core.lesson_version_manager import LessonVersionManager
 from fiml.bot.core.progress_migration_manager import ProgressMigrationManager
 
@@ -115,74 +116,64 @@ class TestProgressMigrationManager:
         mm = ProgressMigrationManager()
 
         user_data = {
-            'user_id': 'user_123',
-            'lessons': {'stock_basics_001': {'completed': True}},
-            'xp': 100
+            "user_id": "user_123",
+            "lessons": {"stock_basics_001": {"completed": True}},
+            "xp": 100,
         }
 
-        snapshot = mm.create_snapshot('user_123', user_data)
+        snapshot = mm.create_snapshot("user_123", user_data)
         assert snapshot is not None
-        assert snapshot['user_id'] == 'user_123'
-        assert snapshot['xp'] == 100
+        assert snapshot["user_id"] == "user_123"
+        assert snapshot["xp"] == 100
 
     def test_migrate_user_progress_patch(self):
         """Test migrating user progress for patch update"""
         mm = ProgressMigrationManager()
 
-        old_data = {
-            'lessons': {'lesson_001': {'version': '1.0.0', 'completed': True}},
-            'xp': 50
-        }
+        old_data = {"lessons": {"lesson_001": {"version": "1.0.0", "completed": True}}, "xp": 50}
 
         # Migrate to 1.0.1 (patch)
-        migrated = mm.migrate_user_progress('user_123', old_data, '1.0.0', '1.0.1')
+        migrated = mm.migrate_user_progress("user_123", old_data, "1.0.0", "1.0.1")
 
         assert migrated is not None
-        assert migrated['xp'] == 50  # XP preserved
+        assert migrated["xp"] == 50  # XP preserved
 
     def test_migrate_user_progress_minor(self):
         """Test migrating user progress for minor update"""
         mm = ProgressMigrationManager()
 
-        old_data = {
-            'lessons': {'lesson_001': {'version': '1.0.0', 'in_progress': True}},
-            'xp': 75
-        }
+        old_data = {"lessons": {"lesson_001": {"version": "1.0.0", "in_progress": True}}, "xp": 75}
 
         # Migrate to 1.1.0 (minor)
-        migrated = mm.migrate_user_progress('user_123', old_data, '1.0.0', '1.1.0')
+        migrated = mm.migrate_user_progress("user_123", old_data, "1.0.0", "1.1.0")
 
         assert migrated is not None
-        assert migrated['xp'] == 75  # XP always preserved
+        assert migrated["xp"] == 75  # XP always preserved
 
     def test_migrate_user_progress_major(self):
         """Test migrating user progress for major update with user choice"""
         mm = ProgressMigrationManager()
 
-        old_data = {
-            'lessons': {'lesson_001': {'version': '1.0.0', 'in_progress': True}},
-            'xp': 100
-        }
+        old_data = {"lessons": {"lesson_001": {"version": "1.0.0", "in_progress": True}}, "xp": 100}
 
         # User chooses to restart with new version
         migrated = mm.migrate_user_progress(
-            'user_123', old_data, '1.0.0', '2.0.0',
-            user_choice='restart'
+            "user_123", old_data, "1.0.0", "2.0.0", user_choice="restart"
         )
 
         assert migrated is not None
-        assert migrated['xp'] >= 100  # XP never lost, even on restart
+        assert migrated["xp"] >= 100  # XP never lost, even on restart
 
     def test_xp_protection(self):
         """Test that XP is never lost during migration"""
         mm = ProgressMigrationManager()
 
-        old_data = {'xp': 500, 'lessons': {}}
+        old_data = {"xp": 500, "lessons": {}}
 
         # Even failed migration should preserve XP
         try:
-            migrated = mm.migrate_user_progress('user_123', old_data, '1.0.0', '3.0.0')
-            assert migrated['xp'] >= 500
+            migrated = mm.migrate_user_progress("user_123", old_data, "1.0.0", "3.0.0")
+            assert migrated["xp"] >= 500
         except Exception:
             # If migration fails, XP should still be preserved in snapshot
             pass
@@ -191,69 +182,65 @@ class TestProgressMigrationManager:
         """Test automatic rollback on migration error"""
         mm = ProgressMigrationManager()
 
-        old_data = {'xp': 200, 'lessons': {'lesson_001': {'completed': True}}}
-        snapshot = mm.create_snapshot('user_123', old_data)
+        old_data = {"xp": 200, "lessons": {"lesson_001": {"completed": True}}}
+        snapshot = mm.create_snapshot("user_123", old_data)
 
         # Simulate failed migration
-        restored = mm.rollback_to_snapshot('user_123', snapshot)
+        restored = mm.rollback_to_snapshot("user_123", snapshot)
 
         assert restored is not None
-        assert restored['xp'] == 200
-        assert 'lesson_001' in restored['lessons']
+        assert restored["xp"] == 200
+        assert "lesson_001" in restored["lessons"]
 
     def test_in_progress_lesson_handling(self):
         """Test handling of in-progress lessons during migration"""
         mm = ProgressMigrationManager()
 
         old_data = {
-            'lessons': {
-                'lesson_001': {
-                    'version': '1.0.0',
-                    'status': 'in_progress',
-                    'sections_completed': ['intro', 'example']
+            "lessons": {
+                "lesson_001": {
+                    "version": "1.0.0",
+                    "status": "in_progress",
+                    "sections_completed": ["intro", "example"],
                 }
             },
-            'xp': 50
+            "xp": 50,
         }
 
         # Minor update - should preserve progress
-        migrated = mm.migrate_user_progress('user_123', old_data, '1.0.0', '1.1.0')
+        migrated = mm.migrate_user_progress("user_123", old_data, "1.0.0", "1.1.0")
 
         assert migrated is not None
-        lesson = migrated['lessons']['lesson_001']
-        assert lesson['sections_completed'] == ['intro', 'example']
+        lesson = migrated["lessons"]["lesson_001"]
+        assert lesson["sections_completed"] == ["intro", "example"]
 
     def test_schema_migration(self):
         """Test database schema migration"""
         mm = ProgressMigrationManager()
 
-        old_schema_data = {
-            'user_id': 'user_123',
-            'lessons': {},  # Old schema
-            'xp': 100
-        }
+        old_schema_data = {"user_id": "user_123", "lessons": {}, "xp": 100}  # Old schema
 
         # Migrate to new schema with additional fields
-        migrated = mm.migrate_schema(old_schema_data, from_version='0.9', to_version='1.0')
+        migrated = mm.migrate_schema(old_schema_data, from_version="0.9", to_version="1.0")
 
         assert migrated is not None
-        assert 'user_id' in migrated
-        assert migrated['xp'] == 100
+        assert "user_id" in migrated
+        assert migrated["xp"] == 100
 
     def test_backward_compatibility(self):
         """Test backward compatibility checks"""
         mm = ProgressMigrationManager()
 
         # Check if new version can read old data
-        is_compatible = mm.is_backward_compatible('1.0', '1.1')
+        is_compatible = mm.is_backward_compatible("1.0", "1.1")
         assert isinstance(is_compatible, bool)
 
     def test_validate_migration(self):
         """Test migration validation"""
         mm = ProgressMigrationManager()
 
-        old_data = {'xp': 100, 'lessons': {'lesson_001': {'completed': True}}}
-        new_data = {'xp': 100, 'lessons': {'lesson_001': {'completed': True, 'version': '1.1.0'}}}
+        old_data = {"xp": 100, "lessons": {"lesson_001": {"completed": True}}}
+        new_data = {"xp": 100, "lessons": {"lesson_001": {"completed": True, "version": "1.1.0"}}}
 
         # Validate that migration preserved critical data
         is_valid = mm.validate_migration(old_data, new_data)

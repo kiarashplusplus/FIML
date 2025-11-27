@@ -8,10 +8,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, Query
 
-from fiml.alerts.builder import (
-    AlertConfig,
-    alert_builder,
-)
+from fiml.alerts.builder import AlertConfig, alert_builder
 from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)

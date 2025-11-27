@@ -54,9 +54,7 @@ class NarrativeCache:
         Returns:
             Cached narrative data or None if not found
         """
-        cache_key = self._generate_cache_key(
-            symbol, language, expertise_level, narrative_params
-        )
+        cache_key = self._generate_cache_key(symbol, language, expertise_level, narrative_params)
 
         try:
             cached_data = await self.cache_manager.l1.get(cache_key)
@@ -105,9 +103,7 @@ class NarrativeCache:
         Returns:
             True if cached successfully
         """
-        cache_key = self._generate_cache_key(
-            symbol, language, expertise_level, narrative_params
-        )
+        cache_key = self._generate_cache_key(symbol, language, expertise_level, narrative_params)
 
         # Calculate dynamic TTL if not provided
         if ttl is None:
@@ -214,9 +210,7 @@ class NarrativeCache:
             impact = event_data.get("impact", "low")
             if impact in ["high", "critical"]:
                 should_invalidate = True
-                logger.info(
-                    f"Invalidating cache due to {impact} impact news", symbol=symbol
-                )
+                logger.info(f"Invalidating cache due to {impact} impact news", symbol=symbol)
 
         elif event_type == "watchdog":
             # Watchdog alerts always invalidate
@@ -386,5 +380,5 @@ async def cache_narrative(
         narrative_data=narrative_data,
         language=language,
         expertise_level=expertise_level,
-        ttl=ttl
+        ttl=ttl,
     )

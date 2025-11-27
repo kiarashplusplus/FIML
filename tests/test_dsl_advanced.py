@@ -85,10 +85,7 @@ class TestExecutionPlannerAdvanced:
 
         plan = ExecutionPlan(query="test")
 
-        task = ExecutionTask(
-            type=TaskType.FETCH_PRICE,
-            params={"symbol": "AAPL"}
-        )
+        task = ExecutionTask(type=TaskType.FETCH_PRICE, params={"symbol": "AAPL"})
 
         task_id = plan.add_task(task)
         assert task_id is not None
@@ -101,10 +98,7 @@ class TestExecutionPlannerAdvanced:
 
         plan = ExecutionPlan(query="test")
 
-        task = ExecutionTask(
-            type=TaskType.FETCH_PRICE,
-            params={"symbol": "AAPL"}
-        )
+        task = ExecutionTask(type=TaskType.FETCH_PRICE, params={"symbol": "AAPL"})
 
         task_id = plan.add_task(task)
         retrieved = plan.get_task(task_id)
@@ -122,10 +116,7 @@ class TestExecutionPlannerAdvanced:
         task1 = ExecutionTask(type=TaskType.FETCH_PRICE)
         task1_id = plan.add_task(task1)
 
-        task2 = ExecutionTask(
-            type=TaskType.COMPUTE_TECHNICAL,
-            dependencies=[task1_id]
-        )
+        task2 = ExecutionTask(type=TaskType.COMPUTE_TECHNICAL, dependencies=[task1_id])
         plan.add_task(task2)
 
         # Initially, only task1 is executable

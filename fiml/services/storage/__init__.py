@@ -29,7 +29,7 @@ class KeyStorageInterface(ABC):
         user_id: str,
         provider: str,
         encrypted_key: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Store an encrypted API key for a user
@@ -87,12 +87,7 @@ class KeyStorageInterface(ABC):
         pass
 
     @abstractmethod
-    async def update_metadata(
-        self,
-        user_id: str,
-        provider: str,
-        metadata: Dict[str, Any]
-    ) -> bool:
+    async def update_metadata(self, user_id: str, provider: str, metadata: Dict[str, Any]) -> bool:
         """
         Update metadata for an existing key
 

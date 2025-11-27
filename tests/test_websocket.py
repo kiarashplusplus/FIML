@@ -4,17 +4,13 @@ WebSocket Streaming Tests
 Tests for real-time WebSocket data streaming functionality
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 
 from fiml.core.models import Asset, AssetType, DataType, Market
 from fiml.server import app
 from fiml.websocket.manager import websocket_manager
-from fiml.websocket.models import (
-    MessageType,
-    StreamType,
-)
+from fiml.websocket.models import MessageType, StreamType
 
 
 @pytest.fixture
@@ -103,8 +99,12 @@ class TestSubscriptionManagement:
             assert set(response["symbols"]) == {"AAPL", "GOOGL"}
             assert "subscription_id" in response
             # Verify disclaimer is present in subscription response
-            assert "disclaimer" in response, "WebSocket subscription response should include disclaimer"
-            assert "LICENSE" in response["disclaimer"], "WebSocket disclaimer should reference LICENSE file"
+            assert (
+                "disclaimer" in response
+            ), "WebSocket subscription response should include disclaimer"
+            assert (
+                "LICENSE" in response["disclaimer"]
+            ), "WebSocket disclaimer should reference LICENSE file"
 
     def test_subscribe_to_ohlcv_stream(self, client):
         """Test subscribing to OHLCV stream"""

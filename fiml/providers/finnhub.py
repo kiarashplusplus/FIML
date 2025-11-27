@@ -62,7 +62,9 @@ class FinnhubProvider(BaseProvider):
             await self._session.close()
         self._is_initialized = False
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to Finnhub"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -76,9 +78,7 @@ class FinnhubProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -162,13 +162,18 @@ class FinnhubProvider(BaseProvider):
 
             # Calculate time range
             from datetime import timedelta
+
             to_timestamp = int(datetime.now(timezone.utc).timestamp())
 
             # Adjust lookback based on timeframe
             if timeframe == "1d":
-                from_timestamp = int((datetime.now(timezone.utc) - timedelta(days=limit)).timestamp())
+                from_timestamp = int(
+                    (datetime.now(timezone.utc) - timedelta(days=limit)).timestamp()
+                )
             elif timeframe == "1h":
-                from_timestamp = int((datetime.now(timezone.utc) - timedelta(hours=limit)).timestamp())
+                from_timestamp = int(
+                    (datetime.now(timezone.utc) - timedelta(hours=limit)).timestamp()
+                )
             else:
                 from_timestamp = int((datetime.now(timezone.utc) - timedelta(days=7)).timestamp())
 
@@ -194,14 +199,16 @@ class FinnhubProvider(BaseProvider):
             volumes = response_data.get("v", [])
 
             for i in range(min(len(timestamps), limit)):
-                ohlcv_data.append({
-                    "timestamp": timestamps[i],
-                    "open": float(opens[i]),
-                    "high": float(highs[i]),
-                    "low": float(lows[i]),
-                    "close": float(closes[i]),
-                    "volume": int(volumes[i]),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": timestamps[i],
+                        "open": float(opens[i]),
+                        "high": float(highs[i]),
+                        "low": float(lows[i]),
+                        "close": float(closes[i]),
+                        "volume": int(volumes[i]),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -256,7 +263,8 @@ class FinnhubProvider(BaseProvider):
                 "currency": response_data.get("currency", ""),
                 "exchange": response_data.get("exchange", ""),
                 "ipo": response_data.get("ipo", ""),
-                "market_cap": float(response_data.get("marketCapitalization", 0.0)) * 1_000_000,  # Convert to actual value
+                "market_cap": float(response_data.get("marketCapitalization", 0.0))
+                * 1_000_000,  # Convert to actual value
                 "phone": response_data.get("phone", ""),
                 "share_outstanding": float(response_data.get("shareOutstanding", 0.0)) * 1_000_000,
                 "website": response_data.get("weburl", ""),
@@ -299,6 +307,7 @@ class FinnhubProvider(BaseProvider):
         try:
             # Get current and previous dates for news range
             from datetime import timedelta
+
             to_date = datetime.now(timezone.utc)
             from_date = to_date - timedelta(days=7)
 
@@ -316,15 +325,19 @@ class FinnhubProvider(BaseProvider):
 
             articles = []
             for article in response_data[:limit]:
-                articles.append({
-                    "title": article.get("headline", ""),
-                    "url": article.get("url", ""),
-                    "source": article.get("source", ""),
-                    "published_at": datetime.fromtimestamp(article.get("datetime", 0), tz=timezone.utc).isoformat(),
-                    "summary": article.get("summary", ""),
-                    "category": article.get("category", ""),
-                    "image": article.get("image", ""),
-                })
+                articles.append(
+                    {
+                        "title": article.get("headline", ""),
+                        "url": article.get("url", ""),
+                        "source": article.get("source", ""),
+                        "published_at": datetime.fromtimestamp(
+                            article.get("datetime", 0), tz=timezone.utc
+                        ).isoformat(),
+                        "summary": article.get("summary", ""),
+                        "category": article.get("category", ""),
+                        "image": article.get("image", ""),
+                    }
+                )
 
             return ProviderResponse(
                 provider=self.name,

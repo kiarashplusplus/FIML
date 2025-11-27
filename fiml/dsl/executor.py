@@ -114,7 +114,9 @@ class TaskExecutor:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-    async def _fetch_ohlcv(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _fetch_ohlcv(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Fetch OHLCV (candlestick) data"""
         await asyncio.sleep(0.2)
 
@@ -126,18 +128,22 @@ class TaskExecutor:
         data = []
         base_price = 150.0
         for i in range(min(limit, 10)):  # Mock data limited for testing
-            data.append({
-                "time": f"2024-01-{i + 1:02d}",
-                "open": base_price + i,
-                "high": base_price + i + 5,
-                "low": base_price + i - 3,
-                "close": base_price + i + 2,
-                "volume": 1000000 + i * 100000,
-            })
+            data.append(
+                {
+                    "time": f"2024-01-{i + 1:02d}",
+                    "open": base_price + i,
+                    "high": base_price + i + 5,
+                    "low": base_price + i - 3,
+                    "close": base_price + i + 2,
+                    "volume": 1000000 + i * 100000,
+                }
+            )
 
         return data
 
-    async def _fetch_fundamentals(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _fetch_fundamentals(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Fetch fundamental data (PE, EPS, etc.)"""
         await asyncio.sleep(0.3)
 
@@ -152,7 +158,9 @@ class TaskExecutor:
             "dividend_yield": 0.005,
         }
 
-    async def _fetch_news(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _fetch_news(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Fetch news articles"""
         await asyncio.sleep(0.15)
 
@@ -192,7 +200,9 @@ class TaskExecutor:
 
     # ================== Computation Tasks ==================
 
-    async def _compute_technical(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _compute_technical(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Compute technical indicators (RSI, MACD, etc.)"""
         await asyncio.sleep(0.1)
 
@@ -241,7 +251,9 @@ class TaskExecutor:
 
         return result
 
-    async def _compute_sentiment(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _compute_sentiment(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Compute sentiment analysis from news/social data"""
         await asyncio.sleep(0.15)
 
@@ -253,7 +265,9 @@ class TaskExecutor:
             "sample_size": 150,
         }
 
-    async def _compute_volatility(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _compute_volatility(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Compute volatility metrics"""
         await asyncio.sleep(0.1)
 
@@ -264,7 +278,9 @@ class TaskExecutor:
             "beta": 1.15,
         }
 
-    async def _compute_correlation(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _compute_correlation(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Compute correlation between assets"""
         await asyncio.sleep(0.2)
 
@@ -288,7 +304,9 @@ class TaskExecutor:
             "window": window,
         }
 
-    async def _compute_regression(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _compute_regression(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Compute regression analysis"""
         await asyncio.sleep(0.3)
 
@@ -313,7 +331,9 @@ class TaskExecutor:
 
     # ================== Analysis Tasks ==================
 
-    async def _filter_assets(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _filter_assets(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Filter assets by conditions"""
         await asyncio.sleep(0.05)
 
@@ -326,7 +346,9 @@ class TaskExecutor:
             {"symbol": "MSFT", "matches": True, "conditions_met": len(conditions)},
         ]
 
-    async def _compare_metrics(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _compare_metrics(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Compare metrics across multiple assets"""
         await asyncio.sleep(0.05)
 
@@ -336,15 +358,19 @@ class TaskExecutor:
         comparison = []
         for asset in assets:
             symbol = asset.get("symbol", str(asset)) if isinstance(asset, dict) else str(asset)
-            comparison.append({
-                "asset": symbol,
-                "pe": 25.5 if symbol == "AAPL" else 30.2,
-                "eps": 6.12 if symbol == "AAPL" else 8.45,
-            })
+            comparison.append(
+                {
+                    "asset": symbol,
+                    "pe": 25.5 if symbol == "AAPL" else 30.2,
+                    "eps": 6.12 if symbol == "AAPL" else 8.45,
+                }
+            )
 
         return {"comparison": comparison, "metrics": metrics}
 
-    async def _scan_market(self, task: ExecutionTask, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _scan_market(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Scan market for assets matching conditions"""
         await asyncio.sleep(0.5)
 
@@ -382,7 +408,9 @@ class TaskExecutor:
 
         return aggregated
 
-    async def _generate_narrative(self, task: ExecutionTask, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _generate_narrative(
+        self, task: ExecutionTask, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate narrative summary from analysis results"""
         await asyncio.sleep(0.1)
 
@@ -470,9 +498,7 @@ class FKDSLExecutor:
                     break
 
                 # Execute in parallel
-                tasks = [
-                    self.task_executor.execute(task, context) for task in executable
-                ]
+                tasks = [self.task_executor.execute(task, context) for task in executable]
 
                 task_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -513,7 +539,11 @@ class FKDSLExecutor:
         # Convert internal info to TaskInfo
         return TaskInfo(
             id=internal_info.task_id,
-            type=f"dsl_{internal_info.query_type.lower()}" if internal_info.query_type else "dsl_execution",
+            type=(
+                f"dsl_{internal_info.query_type.lower()}"
+                if internal_info.query_type
+                else "dsl_execution"
+            ),
             status=internal_info.status,
             resource_url=f"/api/tasks/{task_id}",
             progress=(

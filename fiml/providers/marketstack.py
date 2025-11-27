@@ -61,7 +61,9 @@ class MarketstackProvider(BaseProvider):
             await self._session.close()
         self._is_initialized = False
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to Marketstack"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -75,9 +77,7 @@ class MarketstackProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -86,7 +86,9 @@ class MarketstackProvider(BaseProvider):
 
                     # Check for API errors
                     if "error" in data:
-                        raise ProviderError(f"Marketstack error: {data['error'].get('message', 'Unknown error')}")
+                        raise ProviderError(
+                            f"Marketstack error: {data['error'].get('message', 'Unknown error')}"
+                        )
 
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
@@ -168,16 +170,18 @@ class MarketstackProvider(BaseProvider):
 
             ohlcv_data = []
             for bar in data_list[:limit]:
-                ohlcv_data.append({
-                    "timestamp": bar.get("date"),
-                    "open": float(bar.get("open", 0.0)),
-                    "high": float(bar.get("high", 0.0)),
-                    "low": float(bar.get("low", 0.0)),
-                    "close": float(bar.get("close", 0.0)),
-                    "volume": float(bar.get("volume", 0.0)),
-                    "adjusted_close": float(bar.get("adj_close", 0.0)),
-                    "split_factor": float(bar.get("split_factor", 1.0)),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": bar.get("date"),
+                        "open": float(bar.get("open", 0.0)),
+                        "high": float(bar.get("high", 0.0)),
+                        "low": float(bar.get("low", 0.0)),
+                        "close": float(bar.get("close", 0.0)),
+                        "volume": float(bar.get("volume", 0.0)),
+                        "adjusted_close": float(bar.get("adj_close", 0.0)),
+                        "split_factor": float(bar.get("split_factor", 1.0)),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,

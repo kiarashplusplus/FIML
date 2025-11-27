@@ -50,12 +50,6 @@ def perf_metrics():
 
 # Configure pytest markers
 def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "performance: mark test as a performance test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow (deselect with '-m \"not slow\"')"
-    )
-    config.addinivalue_line(
-        "markers", "load: mark test as a load test"
-    )
+    config.addinivalue_line("markers", "performance: mark test as a performance test")
+    config.addinivalue_line("markers", "slow: mark test as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line("markers", "load: mark test as a load test")

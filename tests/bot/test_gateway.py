@@ -2,13 +2,9 @@
 Tests for UnifiedBotGateway (Component 3)
 Tests message routing and intent classification
 """
-from fiml.bot.core.gateway import (
-    AbstractMessage,
-    AbstractResponse,
-    IntentType,
-    SessionState,
-    UnifiedBotGateway,
-)
+
+from fiml.bot.core.gateway import (AbstractMessage, AbstractResponse,
+                                   IntentType, SessionState, UnifiedBotGateway)
 
 
 class TestUnifiedBotGateway:
@@ -73,7 +69,9 @@ class TestUnifiedBotGateway:
         intent = await gateway.classify(msg, session)
         assert intent.type in [IntentType.AI_QUESTION, IntentType.LESSON_REQUEST]
 
-        msg = AbstractMessage(text="Can you explain diversification?", user_id="test", platform="test")
+        msg = AbstractMessage(
+            text="Can you explain diversification?", user_id="test", platform="test"
+        )
         intent = await gateway.classify(msg, session)
         assert intent.type in [IntentType.AI_QUESTION, IntentType.LESSON_REQUEST]
 
@@ -121,12 +119,12 @@ class TestUnifiedBotGateway:
         gateway = UnifiedBotGateway()
 
         session = await gateway.session_manager.get_or_create("user_123")
-        session.metadata['in_lesson'] = True
-        session.metadata['lesson_id'] = 'stock_basics_001'
+        session.metadata["in_lesson"] = True
+        session.metadata["lesson_id"] = "stock_basics_001"
 
         retrieved_session = gateway.session_manager.get_session("user_123")
-        assert retrieved_session.metadata.get('in_lesson') is True
-        assert retrieved_session.metadata.get('lesson_id') == 'stock_basics_001'
+        assert retrieved_session.metadata.get("in_lesson") is True
+        assert retrieved_session.metadata.get("lesson_id") == "stock_basics_001"
 
     async def test_context_aware_classification(self):
         """Test that context affects intent classification"""
@@ -161,11 +159,7 @@ class TestUnifiedBotGateway:
 
     async def test_abstract_message_creation(self):
         """Test creating platform-agnostic messages"""
-        message = AbstractMessage(
-            text="Hello",
-            user_id="user_123",
-            platform="telegram"
-        )
+        message = AbstractMessage(text="Hello", user_id="user_123", platform="telegram")
 
         assert message.text == "Hello"
         assert message.user_id == "user_123"
@@ -174,8 +168,7 @@ class TestUnifiedBotGateway:
     async def test_abstract_response_creation(self):
         """Test creating platform-agnostic responses"""
         response = AbstractResponse(
-            text="Response text",
-            actions=[{"text": "Button 1", "data": "action_1"}]
+            text="Response text", actions=[{"text": "Button 1", "data": "action_1"}]
         )
 
         assert response.text == "Response text"
@@ -189,11 +182,11 @@ class TestUnifiedBotGateway:
         s1 = await gateway.session_manager.get_or_create("user_123")
         s2 = await gateway.session_manager.get_or_create("user_456")
 
-        s1.metadata['score'] = 100
-        s2.metadata['score'] = 200
+        s1.metadata["score"] = 100
+        s2.metadata["score"] = 200
 
-        assert s1.metadata['score'] == 100
-        assert s2.metadata['score'] == 200
+        assert s1.metadata["score"] == 100
+        assert s2.metadata["score"] == 200
 
     async def test_session_cleanup(self):
         """Test session cleanup"""

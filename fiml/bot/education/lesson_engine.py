@@ -199,7 +199,7 @@ class LessonContentEngine:
                     "type": s.type,
                     "content": s.content,
                     "fiml_query": s.fiml_query,
-                    "metadata": s.metadata
+                    "metadata": s.metadata,
                 }
                 for s in lesson.sections
             ],
@@ -211,13 +211,13 @@ class LessonContentEngine:
                         "text": q.text,
                         "options": q.options,
                         "correct_answer": q.correct_answer,
-                        "xp_reward": q.xp_reward
+                        "xp_reward": q.xp_reward,
                     }
                     for q in lesson.quiz_questions
                 ]
             },
             "xp_reward": lesson.xp_reward,
-            "next_lesson": lesson.next_lesson
+            "next_lesson": lesson.next_lesson,
         }
 
     async def render_lesson(
@@ -345,11 +345,7 @@ class LessonContentEngine:
             "include_fiml_data": include_fiml_data,
         }
 
-        return RenderedLesson(
-            title=lesson_title,
-            content=content,
-            metadata=metadata
-        )
+        return RenderedLesson(title=lesson_title, content=content, metadata=metadata)
 
     async def check_prerequisites(self, user_id: str, lesson: Lesson) -> tuple[bool, List[str]]:
         """
@@ -595,6 +591,4 @@ class LessonContentEngine:
             return True
 
         # Check if all prerequisites are completed
-        return all(
-            self.is_lesson_completed(user_id, prereq_id) for prereq_id in prerequisites
-        )
+        return all(self.is_lesson_completed(user_id, prereq_id) for prereq_id in prerequisites)

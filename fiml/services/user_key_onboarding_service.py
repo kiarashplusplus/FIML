@@ -85,11 +85,7 @@ class UserKeyOnboardingService:
         },
     }
 
-    def __init__(
-        self,
-        storage: KeyStorageInterface,
-        encryption_key: Optional[bytes] = None
-    ):
+    def __init__(self, storage: KeyStorageInterface, encryption_key: Optional[bytes] = None):
         """
         Initialize user key onboarding service
 
@@ -116,7 +112,7 @@ class UserKeyOnboardingService:
         provider: str,
         api_key: str,
         validate: bool = True,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Add/update API key for a user
@@ -134,10 +130,7 @@ class UserKeyOnboardingService:
         try:
             # Format validation
             if not self.validate_key_format(provider, api_key):
-                return {
-                    "success": False,
-                    "error": f"Invalid key format for {provider}"
-                }
+                return {"success": False, "error": f"Invalid key format for {provider}"}
 
             # API validation (if requested and no metadata provided)
             if validate and not metadata:
@@ -145,11 +138,11 @@ class UserKeyOnboardingService:
                 if not test_result["valid"]:
                     return {
                         "success": False,
-                        "error": f"Key validation failed: {test_result['message']}"
+                        "error": f"Key validation failed: {test_result['message']}",
                     }
                 metadata = {
                     "tier": test_result.get("tier"),
-                    "validated_at": datetime.now(UTC).isoformat()
+                    "validated_at": datetime.now(UTC).isoformat(),
                 }
             elif not metadata:
                 metadata = {}
@@ -162,23 +155,13 @@ class UserKeyOnboardingService:
 
             if success:
                 logger.info("Key added", user_id=user_id, provider=provider)
-                return {
-                    "success": True,
-                    "provider": provider,
-                    "metadata": metadata
-                }
+                return {"success": True, "provider": provider, "metadata": metadata}
             else:
-                return {
-                    "success": False,
-                    "error": "Storage operation failed"
-                }
+                return {"success": False, "error": "Storage operation failed"}
 
         except Exception as e:
             logger.error("Failed to add key", user_id=user_id, provider=provider, error=str(e))
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def get_key(self, user_id: str, provider: str) -> Optional[str]:
         """
@@ -200,7 +183,7 @@ class UserKeyOnboardingService:
 
             # Decrypt
             encrypted_key = key_data["encrypted_key"].encode()
-            decrypted_key = self.cipher.decrypt(encrypted_key).decode()
+            decrypted_key: str = self.cipher.decrypt(encrypted_key).decode()
 
             return decrypted_key
 
@@ -249,12 +232,14 @@ class UserKeyOnboardingService:
                 key_data = await self.storage.retrieve(user_id, provider)
                 provider_info = self.PROVIDER_INFO.get(provider, {})
 
-                result.append({
-                    "provider": provider,
-                    "name": provider_info.get("name", provider),
-                    "added_at": key_data.get("added_at") if key_data else None,
-                    "metadata": key_data.get("metadata", {}) if key_data else {},
-                })
+                result.append(
+                    {
+                        "provider": provider,
+                        "name": provider_info.get("name", provider),
+                        "added_at": key_data.get("added_at") if key_data else None,
+                        "metadata": key_data.get("metadata", {}) if key_data else {},
+                    }
+                )
 
             return result
 
@@ -309,10 +294,7 @@ class UserKeyOnboardingService:
 
         is_valid = bool(re.match(pattern, api_key))
         logger.debug(
-            "Key format validation",
-            provider=provider,
-            valid=is_valid,
-            key_length=len(api_key)
+            "Key format validation", provider=provider, valid=is_valid, key_length=len(api_key)
         )
         return is_valid
 
@@ -342,15 +324,11 @@ class UserKeyOnboardingService:
                 return {
                     "valid": False,
                     "tier": "unknown",
-                    "message": f"Provider {provider} not yet supported for testing"
+                    "message": f"Provider {provider} not yet supported for testing",
                 }
         except Exception as e:
             logger.error("Key test failed", provider=provider, error=str(e))
-            return {
-                "valid": False,
-                "tier": "unknown",
-                "message": f"Test failed: {str(e)}"
-            }
+            return {"valid": False, "tier": "unknown", "message": f"Test failed: {str(e)}"}
 
     # ======================================================================
     # Provider-Specific API Tests (from UserProviderKeyManager)
@@ -363,19 +341,30 @@ class UserKeyOnboardingService:
             "function": "TIME_SERIES_INTRADAY",
             "symbol": "IBM",
             "interval": "5min",
-            "apikey": api_key
+            "apikey": api_key,
         }
 
         timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession() as session, session.get(url, params=params, timeout=timeout) as resp:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(url, params=params, timeout=timeout) as resp,
+        ):
             data = await resp.json()
 
             if "Error Message" in data:
                 return {"valid": False, "tier": "unknown", "message": "Invalid API key"}
             elif "Note" in data or "Time Series (5min)" in data:
-                return {"valid": True, "tier": "free", "message": "Free tier (5 requests/minute, 500/day)"}
+                return {
+                    "valid": True,
+                    "tier": "free",
+                    "message": "Free tier (5 requests/minute, 500/day)",
+                }
             else:
-                return {"valid": False, "tier": "unknown", "message": "Unexpected response from API"}
+                return {
+                    "valid": False,
+                    "tier": "unknown",
+                    "message": "Unexpected response from API",
+                }
 
     async def _test_polygon(self, api_key: str) -> Dict[str, Any]:
         """Test Polygon.io API key"""
@@ -383,13 +372,20 @@ class UserKeyOnboardingService:
         headers = {"Authorization": f"Bearer {api_key}"}
 
         timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession() as session, session.get(url, headers=headers, timeout=timeout) as resp:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(url, headers=headers, timeout=timeout) as resp,
+        ):
             if resp.status == 200:
                 return {"valid": True, "tier": "paid", "message": "Polygon.io key validated"}
             elif resp.status == 401:
                 return {"valid": False, "tier": "unknown", "message": "Invalid API key"}
             else:
-                return {"valid": False, "tier": "unknown", "message": f"API returned status {resp.status}"}
+                return {
+                    "valid": False,
+                    "tier": "unknown",
+                    "message": f"API returned status {resp.status}",
+                }
 
     async def _test_finnhub(self, api_key: str) -> Dict[str, Any]:
         """Test Finnhub API key"""
@@ -431,10 +427,7 @@ class UserKeyOnboardingService:
 
     def list_supported_providers(self) -> List[Dict[str, Any]]:
         """List all supported providers with their information"""
-        return [
-            {"id": key, **value}
-            for key, value in self.PROVIDER_INFO.items()
-        ]
+        return [{"id": key, **value} for key, value in self.PROVIDER_INFO.items()]
 
     # ======================================================================
     # Quota Tracking (simplified - should use Redis in production)
@@ -462,11 +455,7 @@ class UserKeyOnboardingService:
 
         if usage >= limit:
             logger.warning(
-                "Quota warning",
-                user_id=user_id,
-                provider=provider,
-                usage=usage,
-                limit=limit
+                "Quota warning", user_id=user_id, provider=provider, usage=usage, limit=limit
             )
             return {"warning": True, "usage": usage, "limit": limit}
 

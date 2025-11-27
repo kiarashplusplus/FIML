@@ -7,15 +7,12 @@ Focuses on:
 - Additional edge cases
 """
 
-
 import pytest
 
 from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
-from fiml.bot.education.compliance_filter import (
-    ComplianceFilterResult,
-    ComplianceLevel,
-    EducationalComplianceFilter,
-)
+from fiml.bot.education.compliance_filter import (ComplianceFilterResult,
+                                                  ComplianceLevel,
+                                                  EducationalComplianceFilter)
 
 
 @pytest.fixture
@@ -33,6 +30,7 @@ def ai_mentor():
 # ============================================================================
 # ComplianceFilter Tests
 # ============================================================================
+
 
 class TestComplianceFilter:
     """Test compliance and content filtering"""
@@ -70,6 +68,7 @@ class TestComplianceFilter:
 # ============================================================================
 # AIMentor Tests
 # ============================================================================
+
 
 class TestAIMentor:
     """Test AI mentor functionality"""

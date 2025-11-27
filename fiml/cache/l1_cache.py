@@ -35,7 +35,7 @@ class L1Cache:
     def __init__(
         self,
         eviction_policy: EvictionPolicy = EvictionPolicy.LRU,
-        protected_patterns: Optional[List[str]] = None
+        protected_patterns: Optional[List[str]] = None,
     ) -> None:
         self._redis: Optional[redis.Redis] = None
         self._initialized = False
@@ -85,7 +85,7 @@ class L1Cache:
                 host=settings.redis_host,
                 port=settings.redis_port,
                 eviction_policy=self.eviction_policy.value,
-                redis_policy=maxmemory_policy
+                redis_policy=maxmemory_policy,
             )
 
         except Exception as e:
@@ -129,12 +129,7 @@ class L1Cache:
             logger.error(f"L1 cache get error: {e}", key=key)
             return None
 
-    async def set(
-        self,
-        key: str,
-        value: Any,
-        ttl_seconds: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, ttl_seconds: Optional[int] = None) -> bool:
         """
         Set value in cache with optional TTL
 
@@ -242,8 +237,7 @@ class L1Cache:
                 "keyspace_hits": info.get("keyspace_hits", 0),
                 "keyspace_misses": info.get("keyspace_misses", 0),
                 "hit_rate": self._calculate_hit_rate(
-                    info.get("keyspace_hits", 0),
-                    info.get("keyspace_misses", 0)
+                    info.get("keyspace_hits", 0), info.get("keyspace_misses", 0)
                 ),
             }
         except Exception as e:
@@ -341,7 +335,6 @@ class L1Cache:
             logger.error(f"L1 cache set_many error: {e}")
             return 0
 
-
     def _get_redis_eviction_policy(self) -> str:
         """Map our eviction policy to Redis config"""
         if self.eviction_policy == EvictionPolicy.LRU:
@@ -413,10 +406,7 @@ class L1Cache:
             raise CacheError("L1 cache not initialized")
 
         # Sort keys by access count (ascending)
-        sorted_keys = sorted(
-            self._access_counts.items(),
-            key=lambda x: x[1]
-        )
+        sorted_keys = sorted(self._access_counts.items(), key=lambda x: x[1])
 
         evicted = 0
         for key, access_count in sorted_keys[:count]:
@@ -459,12 +449,7 @@ class L1Cache:
         if len(self._eviction_log) > 1000:
             self._eviction_log.pop(0)
 
-        logger.info(
-            "Cache key evicted",
-            key=key,
-            access_count=access_count,
-            reason=reason
-        )
+        logger.info("Cache key evicted", key=key, access_count=access_count, reason=reason)
 
     def get_eviction_stats(self) -> Dict[str, Any]:
         """Get eviction statistics"""
@@ -485,11 +470,7 @@ class L1Cache:
                 "least_accessed": [],
             }
 
-        sorted_by_access = sorted(
-            self._access_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_by_access = sorted(self._access_counts.items(), key=lambda x: x[1], reverse=True)
 
         return {
             "total_tracked": len(self._access_counts),

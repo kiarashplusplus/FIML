@@ -17,6 +17,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class LessonVersion:
     """Lesson version metadata"""
+
     version: str
     date: str
     changes: List[str]
@@ -25,6 +26,7 @@ class LessonVersion:
 @dataclass
 class VersionCompatibility:
     """Version compatibility result"""
+
     compatible: bool
     action: str  # "continue", "migrate", "user_choice", "force_restart"
     notify_user: bool
@@ -60,7 +62,9 @@ class LessonVersionManager:
 
         logger.info("LessonVersionManager initialized", path=str(self.lessons_path))
 
-    def get_lesson_version(self, lesson_id: str, version: str = "latest") -> Optional[LessonVersion]:
+    def get_lesson_version(
+        self, lesson_id: str, version: str = "latest"
+    ) -> Optional[LessonVersion]:
         """
         Get specific version metadata
 
@@ -93,27 +97,31 @@ class LessonVersionManager:
             return
 
         try:
-            with open(lesson_file, 'r') as f:
+            with open(lesson_file, "r") as f:
                 data = yaml.safe_load(f)
 
-            version = data.get('version', '1.0')
-            changelog = data.get('changelog', [])
+            version = data.get("version", "1.0")
+            changelog = data.get("changelog", [])
 
             versions = []
             for entry in changelog:
-                versions.append(LessonVersion(
-                    version=entry.get('version', version),
-                    date=entry.get('date', ''),
-                    changes=entry.get('changes', [])
-                ))
+                versions.append(
+                    LessonVersion(
+                        version=entry.get("version", version),
+                        date=entry.get("date", ""),
+                        changes=entry.get("changes", []),
+                    )
+                )
 
             # If no changelog, create entry for current version
             if not versions:
-                versions.append(LessonVersion(
-                    version=version,
-                    date=datetime.now().isoformat()[:10],
-                    changes=['Initial version']
-                ))
+                versions.append(
+                    LessonVersion(
+                        version=version,
+                        date=datetime.now().isoformat()[:10],
+                        changes=["Initial version"],
+                    )
+                )
 
             self._version_cache[lesson_id] = versions
             logger.debug("Loaded versions", lesson_id=lesson_id, count=len(versions))
@@ -122,10 +130,7 @@ class LessonVersionManager:
             logger.error("Failed to load lesson versions", lesson_id=lesson_id, error=str(e))
 
     def check_compatibility(
-        self,
-        user_version: str,
-        current_version: str,
-        lesson_id: str
+        self, user_version: str, current_version: str, lesson_id: str
     ) -> VersionCompatibility:
         """
         Check if user's lesson version is compatible with current version
@@ -140,11 +145,7 @@ class LessonVersionManager:
         """
         # Same version = always compatible
         if user_version == current_version:
-            return VersionCompatibility(
-                compatible=True,
-                action="continue",
-                notify_user=False
-            )
+            return VersionCompatibility(compatible=True, action="continue", notify_user=False)
 
         # Parse semantic versions
         user_parts = self._parse_version(user_version)
@@ -156,7 +157,7 @@ class LessonVersionManager:
                 "Major version mismatch",
                 lesson_id=lesson_id,
                 user_version=user_version,
-                current_version=current_version
+                current_version=current_version,
             )
             return VersionCompatibility(
                 compatible=False,
@@ -168,7 +169,7 @@ class LessonVersionManager:
                     "1️⃣ Continue with your current version\n"
                     "2️⃣ Restart with the new version\n\n"
                     "Your XP and progress are safe either way! 🎓"
-                )
+                ),
             )
 
         # Minor version change = new content
@@ -177,7 +178,7 @@ class LessonVersionManager:
                 "Minor version update",
                 lesson_id=lesson_id,
                 user_version=user_version,
-                current_version=current_version
+                current_version=current_version,
             )
             return VersionCompatibility(
                 compatible=True,
@@ -187,7 +188,7 @@ class LessonVersionManager:
                     "📖 Lesson Enhanced!\n\n"
                     "New content added to this lesson. "
                     "You'll continue from where you left off. ✨"
-                )
+                ),
             )
 
         # Patch version = small fixes (auto-migrate, no notification)
@@ -196,13 +197,9 @@ class LessonVersionManager:
                 "Patch version update",
                 lesson_id=lesson_id,
                 user_version=user_version,
-                current_version=current_version
+                current_version=current_version,
             )
-            return VersionCompatibility(
-                compatible=True,
-                action="migrate",
-                notify_user=False
-            )
+            return VersionCompatibility(compatible=True, action="migrate", notify_user=False)
 
     def _parse_version(self, version: str) -> Tuple[int, int, int]:
         """
@@ -215,7 +212,7 @@ class LessonVersionManager:
             Tuple of (major, minor, patch)
         """
         try:
-            parts = version.split('.')
+            parts = version.split(".")
             major = int(parts[0]) if len(parts) > 0 else 0
             minor = int(parts[1]) if len(parts) > 1 else 0
             patch = int(parts[2]) if len(parts) > 2 else 0
@@ -290,10 +287,7 @@ class LessonVersionManager:
         return [to_version]
 
     def should_notify_user(
-        self,
-        user_version: str,
-        current_version: str,
-        lesson_id: Optional[str] = None
+        self, user_version: str, current_version: str, lesson_id: Optional[str] = None
     ) -> bool:
         """
         Determine if user should be notified of changes
@@ -319,7 +313,9 @@ class LessonVersionManager:
         # Don't notify on patch changes
         return False
 
-    def get_changelog(self, from_version: str, to_version: str, lesson_id: Optional[str] = None) -> List[str]:
+    def get_changelog(
+        self, from_version: str, to_version: str, lesson_id: Optional[str] = None
+    ) -> List[str]:
         """
         Get list of changes between two versions
 
@@ -354,11 +350,7 @@ class LessonVersionManager:
         return changes
 
     def format_version_notification(
-        self,
-        lesson_id: str,
-        lesson_title: str,
-        from_version: str,
-        to_version: str
+        self, lesson_id: str, lesson_title: str, from_version: str, to_version: str
     ) -> str:
         """
         Format a user-friendly notification about version changes

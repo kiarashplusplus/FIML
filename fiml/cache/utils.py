@@ -38,6 +38,7 @@ def calculate_percentile(data: List[float], percentile: int) -> float:
 
     # Let me try: if percentile > 97, use ceil, else int
     import math
+
     position = (percentile / 100.0) * (n - 1)
 
     if percentile >= 97:

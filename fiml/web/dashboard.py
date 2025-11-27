@@ -33,6 +33,7 @@ dashboard_router = APIRouter()
 # Models for dashboard API
 class DashboardStats(BaseModel):
     """Dashboard statistics"""
+
     total_events: int
     events_by_severity: Dict[str, int]
     active_watchdogs: int
@@ -43,6 +44,7 @@ class DashboardStats(BaseModel):
 
 class WatchdogStatus(BaseModel):
     """Watchdog health status"""
+
     name: str
     enabled: bool
     running: bool
@@ -54,6 +56,7 @@ class WatchdogStatus(BaseModel):
 
 class MultiAssetData(BaseModel):
     """Multi-asset monitoring data"""
+
     symbol: str
     asset_type: str
     price: Optional[float]
@@ -136,10 +139,7 @@ async def get_recent_events(
             try:
                 event_types_list = [EventType(event_type)]
             except ValueError:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid event type: {event_type}"
-                )
+                raise HTTPException(status_code=400, detail=f"Invalid event type: {event_type}")
 
         event_filter = EventFilter(
             severities=[severity] if severity else None,
@@ -237,12 +237,15 @@ async def dashboard_websocket(websocket: WebSocket) -> None:
         # Subscribe to all watchdog events
         def event_callback(event: WatchdogEvent) -> None:
             """Callback for watchdog events - creates async task"""
+
             async def send_event() -> None:
                 try:
-                    await websocket.send_json({
-                        "type": "event",
-                        "data": event.to_dict(),
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "event",
+                            "data": event.to_dict(),
+                        }
+                    )
                 except Exception as e:
                     logger.error(f"Error sending event to dashboard: {e}")
 
@@ -255,10 +258,12 @@ async def dashboard_websocket(websocket: WebSocket) -> None:
 
         # Send initial stats
         stats = await get_dashboard_stats()
-        await websocket.send_json({
-            "type": "stats",
-            "data": stats.model_dump(mode="json"),
-        })
+        await websocket.send_json(
+            {
+                "type": "stats",
+                "data": stats.model_dump(mode="json"),
+            }
+        )
 
         # Keep connection alive and send periodic updates
         while True:
@@ -268,10 +273,12 @@ async def dashboard_websocket(websocket: WebSocket) -> None:
             except asyncio.TimeoutError:
                 # Send periodic stats update
                 stats = await get_dashboard_stats()
-                await websocket.send_json({
-                    "type": "stats",
-                    "data": stats.model_dump(mode="json"),
-                })
+                await websocket.send_json(
+                    {
+                        "type": "stats",
+                        "data": stats.model_dump(mode="json"),
+                    }
+                )
 
     except WebSocketDisconnect:
         logger.info("Dashboard WebSocket disconnected", connection_id=connection_id)

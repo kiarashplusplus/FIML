@@ -9,18 +9,14 @@ from typing import Dict, List, Optional
 import structlog
 
 from fiml.narrative.generator import NarrativeGenerator
-from fiml.narrative.models import (
-    ExpertiseLevel,
-    Language,
-    NarrativeContext,
-    NarrativePreferences,
-)
+from fiml.narrative.models import ExpertiseLevel, Language, NarrativeContext, NarrativePreferences
 
 logger = structlog.get_logger(__name__)
 
 
 class MentorPersona(Enum):
     """Available mentor personalities"""
+
     MAYA = "maya"  # Patient guide, uses analogies, fundamentals-focused
     THEO = "theo"  # Analytical, data-driven, technical analysis expert
     ZARA = "zara"  # Psychology-focused, trading discipline, risk mindset
@@ -47,7 +43,7 @@ class AIMentorService:
             "description": "Patient guide who explains concepts with analogies",
             "focus": "Fundamentals and conceptual understanding",
             "style": "patient, uses analogies, beginner-friendly",
-            "expertise_level": ExpertiseLevel.BEGINNER
+            "expertise_level": ExpertiseLevel.BEGINNER,
         },
         MentorPersona.THEO: {
             "name": "Theo",
@@ -55,7 +51,7 @@ class AIMentorService:
             "description": "Analytical expert focused on data and technical analysis",
             "focus": "Technical analysis and chart patterns",
             "style": "analytical, data-driven, precise",
-            "expertise_level": ExpertiseLevel.INTERMEDIATE
+            "expertise_level": ExpertiseLevel.INTERMEDIATE,
         },
         MentorPersona.ZARA: {
             "name": "Zara",
@@ -63,8 +59,8 @@ class AIMentorService:
             "description": "Psychology coach for trading discipline and mindset",
             "focus": "Trading psychology and risk management",
             "style": "empathetic, mindful, discipline-focused",
-            "expertise_level": ExpertiseLevel.BEGINNER
-        }
+            "expertise_level": ExpertiseLevel.BEGINNER,
+        },
     }
 
     def __init__(self, narrative_generator: Optional[NarrativeGenerator] = None):
@@ -93,10 +89,42 @@ class AIMentorService:
 
         # Common stock symbols to look for (expandable)
         common_symbols = [
-            "AAPL", "GOOGL", "GOOG", "MSFT", "AMZN", "TSLA", "META", "NVDA",
-            "JPM", "V", "WMT", "PG", "JNJ", "UNH", "DIS", "NFLX", "PYPL",
-            "INTC", "CSCO", "VZ", "PFE", "KO", "PEP", "NKE", "MCD", "BA",
-            "GE", "IBM", "GM", "F", "T", "XOM", "CVX", "ORCL", "CRM", "AMD"
+            "AAPL",
+            "GOOGL",
+            "GOOG",
+            "MSFT",
+            "AMZN",
+            "TSLA",
+            "META",
+            "NVDA",
+            "JPM",
+            "V",
+            "WMT",
+            "PG",
+            "JNJ",
+            "UNH",
+            "DIS",
+            "NFLX",
+            "PYPL",
+            "INTC",
+            "CSCO",
+            "VZ",
+            "PFE",
+            "KO",
+            "PEP",
+            "NKE",
+            "MCD",
+            "BA",
+            "GE",
+            "IBM",
+            "GM",
+            "F",
+            "T",
+            "XOM",
+            "CVX",
+            "ORCL",
+            "CRM",
+            "AMD",
         ]
 
         # Check for explicit mentions
@@ -131,7 +159,7 @@ class AIMentorService:
         user_id: str,
         question: str,
         persona: MentorPersona = MentorPersona.MAYA,
-        context: Optional[Dict] = None
+        context: Optional[Dict] = None,
     ) -> Dict:
         """
         Generate mentor response using FIML narrative generation
@@ -151,49 +179,47 @@ class AIMentorService:
         if user_id not in self._conversations:
             self._conversations[user_id] = []
 
-        self._conversations[user_id].append({
-            "role": "user",
-            "content": question,
-            "timestamp": "now"
-        })
+        self._conversations[user_id].append(
+            {"role": "user", "content": question, "timestamp": "now"}
+        )
 
         try:
             # Extract symbol from question or use provided context
-            symbol = context.get("symbol") if context and "symbol" in context else self._extract_symbol_from_question(question)
+            symbol = (
+                context.get("symbol")
+                if context and "symbol" in context
+                else self._extract_symbol_from_question(question)
+            )
 
             # Use FIML narrative generation for educational responses
             # Build narrative context from educational question
             narrative_context = NarrativeContext(
                 asset_symbol=symbol,
-                asset_name=context.get("asset_name", f"{symbol} Stock") if context else f"{symbol} Stock",
+                asset_name=(
+                    context.get("asset_name", f"{symbol} Stock") if context else f"{symbol} Stock"
+                ),
                 asset_type="stock",
                 market="US",
                 price_data=context.get("price_data", {}) if context else {},
                 preferences=NarrativePreferences(
                     expertise_level=mentor["expertise_level"],
                     language=Language.ENGLISH,
-                    include_disclaimers=True
+                    include_disclaimers=True,
                 ),
-                include_disclaimers=True
+                include_disclaimers=True,
             )
 
             # Generate narrative using FIML engine
-            narrative = await self.narrative_generator.generate_narrative(
-                context=narrative_context
-            )
+            narrative = await self.narrative_generator.generate_narrative(context=narrative_context)
 
             # Adapt narrative to mentor persona style
-            response_text = self._adapt_narrative_to_persona(
-                narrative.summary,
-                persona,
-                question
-            )
+            response_text = self._adapt_narrative_to_persona(narrative.summary, persona, question)
 
             logger.info(
                 "FIML narrative generated for mentor response",
                 user_id=user_id,
                 persona=persona.value,
-                question_length=len(question)
+                question_length=len(question),
             )
 
         except Exception as e:
@@ -202,19 +228,19 @@ class AIMentorService:
                 "Failed to generate FIML narrative, using template",
                 user_id=user_id,
                 persona=persona.value,
-                error=str(e)
+                error=str(e),
             )
-            response_text = self._generate_template_response(
-                question, persona, context
-            )
+            response_text = self._generate_template_response(question, persona, context)
 
         # Add to history
-        self._conversations[user_id].append({
-            "role": "assistant",
-            "persona": persona.value,
-            "content": response_text,
-            "timestamp": "now"
-        })
+        self._conversations[user_id].append(
+            {
+                "role": "assistant",
+                "persona": persona.value,
+                "content": response_text,
+                "timestamp": "now",
+            }
+        )
 
         # Keep last 10 messages
         self._conversations[user_id] = self._conversations[user_id][-10:]
@@ -223,7 +249,7 @@ class AIMentorService:
             "Mentor response generated",
             user_id=user_id,
             persona=persona.value,
-            question_length=len(question)
+            question_length=len(question),
         )
 
         return {
@@ -231,14 +257,11 @@ class AIMentorService:
             "mentor": mentor["name"],
             "icon": mentor["icon"],
             "related_lessons": self._suggest_lessons(question),
-            "disclaimer": "Educational purposes only - not financial advice"
+            "disclaimer": "Educational purposes only - not financial advice",
         }
 
     def _adapt_narrative_to_persona(
-        self,
-        narrative_text: str,
-        persona: MentorPersona,
-        question: str
+        self, narrative_text: str, persona: MentorPersona, question: str
     ) -> str:
         """
         Adapt FIML narrative to match mentor persona style
@@ -267,15 +290,14 @@ class AIMentorService:
 
         # Ensure educational disclaimer
         if "for educational purposes" not in adapted_text.lower():
-            adapted_text += "\n\n📚 Remember: This is for educational purposes only, not investment advice."
+            adapted_text += (
+                "\n\n📚 Remember: This is for educational purposes only, not investment advice."
+            )
 
         return adapted_text
 
     def _generate_template_response(
-        self,
-        question: str,
-        persona: MentorPersona,
-        context: Optional[Dict]
+        self, question: str, persona: MentorPersona, context: Optional[Dict]
     ) -> str:
         """Generate template-based response (placeholder for LLM integration)"""
 
@@ -342,11 +364,7 @@ class AIMentorService:
 
         return suggestions
 
-    async def get_conversation_history(
-        self,
-        user_id: str,
-        limit: int = 5
-    ) -> List[Dict]:
+    async def get_conversation_history(self, user_id: str, limit: int = 5) -> List[Dict]:
         """Get recent conversation history"""
         if user_id not in self._conversations:
             return []
@@ -359,10 +377,4 @@ class AIMentorService:
 
     def list_mentors(self) -> List[Dict]:
         """List all available mentors"""
-        return [
-            {
-                "persona": persona.value,
-                **info
-            }
-            for persona, info in self.MENTORS.items()
-        ]
+        return [{"persona": persona.value, **info} for persona, info in self.MENTORS.items()]

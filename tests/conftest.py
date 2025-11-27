@@ -45,7 +45,8 @@ def pytest_configure(config):
     """Pytest configuration hook - runs before test collection"""
     # Clear settings cache to ensure our environment variables are used
     from fiml.core import config as config_module
-    if hasattr(config_module, 'get_settings'):
+
+    if hasattr(config_module, "get_settings"):
         config_module.get_settings.cache_clear()
         # Reload global settings
         config_module.settings = config_module.get_settings()
@@ -57,13 +58,13 @@ def pytest_addoption(parser):
         "--run-cache-tests",
         action="store_true",
         default=False,
-        help="Run tests that require Redis/PostgreSQL cache backends"
+        help="Run tests that require Redis/PostgreSQL cache backends",
     )
     parser.addoption(
         "--no-docker",
         action="store_true",
         default=False,
-        help="Skip Docker container startup (assume services are already running)"
+        help="Skip Docker container startup (assume services are already running)",
     )
 
 
@@ -90,7 +91,7 @@ def is_postgres_ready(host="localhost", port=5432, max_retries=30):
                 database="fiml_test",
                 user="fiml_test",
                 password="fiml_test_password",
-                connect_timeout=1
+                connect_timeout=1,
             )
             conn.close()
             return True
@@ -110,7 +111,9 @@ def docker_services(request):
         if not is_redis_ready():
             pytest.exit("Redis is not available. Please start Redis or remove --no-docker flag.")
         if not is_postgres_ready():
-            pytest.exit("PostgreSQL is not available. Please start PostgreSQL or remove --no-docker flag.")
+            pytest.exit(
+                "PostgreSQL is not available. Please start PostgreSQL or remove --no-docker flag."
+            )
         yield
         return
 
@@ -133,19 +136,23 @@ def docker_services(request):
         ["sudo", "docker", "compose", "-f", compose_file, "up", "-d"],
         cwd=project_root,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Wait for services to be ready
     print("⏳ Waiting for Redis to be ready...")
     if not is_redis_ready():
-        subprocess.run(["sudo", "docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root)
+        subprocess.run(
+            ["sudo", "docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root
+        )
         pytest.exit("Redis failed to start within timeout period")
     print("✅ Redis is ready")
 
     print("⏳ Waiting for PostgreSQL to be ready...")
     if not is_postgres_ready():
-        subprocess.run(["sudo", "docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root)
+        subprocess.run(
+            ["sudo", "docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root
+        )
         pytest.exit("PostgreSQL failed to start within timeout period")
     print("✅ PostgreSQL is ready")
 
@@ -158,7 +165,7 @@ def docker_services(request):
     subprocess.run(
         ["sudo", "docker", "compose", "-f", compose_file, "down", "-v"],
         cwd=project_root,
-        capture_output=True
+        capture_output=True,
     )
     print("✅ Test containers cleaned up\n")
 
@@ -233,6 +240,7 @@ def mock_azure_openai_httpx():
             # to prevent URL substring attacks (e.g., evil.com?q=openai.azure.com)
             # Use proper URL parsing to check the hostname
             from urllib.parse import urlparse
+
             try:
                 parsed = urlparse(url_str)
                 hostname = parsed.hostname or ""
@@ -240,10 +248,9 @@ def mock_azure_openai_httpx():
                 # Must be exactly "openai.azure.com" or a subdomain like "x.openai.azure.com"
                 # The hostname must end with ".openai.azure.com" with a dot before it,
                 # OR be exactly "openai.azure.com"
-                is_azure_domain = (
-                    hostname == "openai.azure.com" or
-                    (len(hostname) > len(".openai.azure.com") and
-                     hostname[-(len(".openai.azure.com")):] == ".openai.azure.com")
+                is_azure_domain = hostname == "openai.azure.com" or (
+                    len(hostname) > len(".openai.azure.com")
+                    and hostname[-(len(".openai.azure.com")) :] == ".openai.azure.com"
                 )
                 is_azure_openai = is_azure_domain
             except Exception:
@@ -259,6 +266,7 @@ def mock_azure_openai_httpx():
 
         # Get the original method before patching
         import httpx
+
         original_post = httpx.AsyncClient.post
 
         # Patch with our selective mock
@@ -303,7 +311,7 @@ async def init_session_db():
             await conn.execute(text("DROP TABLE IF EXISTS sessions CASCADE"))
 
             # Then create tables with new schema
-            statements = CREATE_TABLES_SQL.strip().split(';')
+            statements = CREATE_TABLES_SQL.strip().split(";")
             for statement in statements:
                 statement = statement.strip()
                 if statement:
@@ -346,9 +354,8 @@ def reset_cache_singletons():
 
     # Restore state after test if it was corrupted by mocking
     # Check if _redis was changed to a different object (mock or otherwise)
-    redis_was_changed = (
-        (initial_l1_redis is None and l1_cache._redis is not None) or
-        (initial_l1_redis is not None and l1_cache._redis is not initial_l1_redis)
+    redis_was_changed = (initial_l1_redis is None and l1_cache._redis is not None) or (
+        initial_l1_redis is not None and l1_cache._redis is not initial_l1_redis
     )
 
     if l1_cache._initialized and redis_was_changed:
@@ -381,7 +388,7 @@ def mock_yfinance_network_calls(request):
     API calls should use the @pytest.mark.live marker.
     """
     # Skip mocking for live tests
-    if 'live' in request.keywords:
+    if "live" in request.keywords:
         yield
         return
     # Create mock data for yfinance
@@ -426,6 +433,7 @@ def mock_yfinance_network_calls(request):
 
     class MockTicker:
         """Mock yfinance Ticker class"""
+
         def __init__(self, symbol):
             self.symbol = symbol
             self._info = mock_info.copy()
@@ -444,6 +452,7 @@ def mock_yfinance_network_calls(request):
             # but since we're in a MockTicker class, we import locally
             # to avoid polluting the module namespace
             import pandas as pd
+
             index = pd.date_range(start="2024-01-01", periods=3, freq="D")
             return pd.DataFrame(mock_history_data, index=index)
 
@@ -480,9 +489,10 @@ def mock_ccxt_network_calls(request):
     Tests that need real API calls should use the @pytest.mark.live marker.
     """
     # Skip mocking for live tests
-    if 'live' in request.keywords:
+    if "live" in request.keywords:
         yield
         return
+
     # Create a factory function that creates mock exchange instances
     def create_mock_exchange():
         mock_exchange = AsyncMock()
@@ -491,21 +501,23 @@ def mock_ccxt_network_calls(request):
             "BTC/USDT": {"symbol": "BTC/USDT", "base": "BTC", "quote": "USDT"},
             "ETH/USDT": {"symbol": "ETH/USDT", "base": "ETH", "quote": "USDT"},
         }
-        mock_exchange.fetch_ticker = AsyncMock(return_value={
-            "last": 43250.50,
-            "bid": 43248.00,
-            "ask": 43252.00,
-            "high": 44000.00,
-            "low": 42500.00,
-            "open": 43000.00,
-            "close": 43250.50,
-            "baseVolume": 15000.5,
-            "quoteVolume": 650000000,
-            "change": 250.50,
-            "percentage": 0.58,
-            "timestamp": 1705334400000,
-            "datetime": "2024-01-15T12:00:00.000Z",
-        })
+        mock_exchange.fetch_ticker = AsyncMock(
+            return_value={
+                "last": 43250.50,
+                "bid": 43248.00,
+                "ask": 43252.00,
+                "high": 44000.00,
+                "low": 42500.00,
+                "open": 43000.00,
+                "close": 43250.50,
+                "baseVolume": 15000.5,
+                "quoteVolume": 650000000,
+                "change": 250.50,
+                "percentage": 0.58,
+                "timestamp": 1705334400000,
+                "datetime": "2024-01-15T12:00:00.000Z",
+            }
+        )
         mock_exchange.fetch_status = AsyncMock(return_value={"status": "ok"})
         mock_exchange.close = AsyncMock()
         return mock_exchange
@@ -521,8 +533,15 @@ def mock_ccxt_network_calls(request):
     # Patch at multiple levels to ensure coverage
     patches = []
     exchanges_to_patch = [
-        "binance", "coinbase", "kraken", "bybit", "okx", "huobi",
-        "kucoin", "gateio", "bitget",  # Additional public API exchanges
+        "binance",
+        "coinbase",
+        "kraken",
+        "bybit",
+        "okx",
+        "huobi",
+        "kucoin",
+        "gateio",
+        "bitget",  # Additional public API exchanges
     ]
 
     # Patch ccxt.async_support module to return mock classes
@@ -577,7 +596,7 @@ def mock_aiohttp_for_providers(request):
     Tests that need real API calls should use the @pytest.mark.live marker.
     """
     # Skip mocking for live tests
-    if 'live' in request.keywords:
+    if "live" in request.keywords:
         yield
         return
     # List of domains to mock (financial data providers and their dependencies)
@@ -645,6 +664,7 @@ def mock_aiohttp_for_providers(request):
         return mock_response
 
     import aiohttp
+
     original_get = aiohttp.ClientSession.get
 
     with patch.object(aiohttp.ClientSession, "get", selective_mock_get):
@@ -660,6 +680,6 @@ def configure_caplog(caplog):
     The 'function' scope ensures each test gets a fresh caplog instance.
     """
     import logging
+
     caplog.set_level(logging.DEBUG)
     yield
-

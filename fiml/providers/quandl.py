@@ -62,7 +62,9 @@ class QuandlProvider(BaseProvider):
             await self._session.close()
         self._is_initialized = False
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to Quandl"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -76,9 +78,7 @@ class QuandlProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -176,14 +176,16 @@ class QuandlProvider(BaseProvider):
 
             ohlcv_data = []
             for point in data_points:
-                ohlcv_data.append({
-                    "timestamp": point[0],
-                    "open": float(point[1]) if point[1] is not None else 0.0,
-                    "high": float(point[2]) if point[2] is not None else 0.0,
-                    "low": float(point[3]) if point[3] is not None else 0.0,
-                    "close": float(point[4]) if point[4] is not None else 0.0,
-                    "volume": float(point[5]) if point[5] is not None else 0.0,
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": point[0],
+                        "open": float(point[1]) if point[1] is not None else 0.0,
+                        "high": float(point[2]) if point[2] is not None else 0.0,
+                        "low": float(point[3]) if point[3] is not None else 0.0,
+                        "close": float(point[4]) if point[4] is not None else 0.0,
+                        "volume": float(point[5]) if point[5] is not None else 0.0,
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,

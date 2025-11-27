@@ -21,49 +21,37 @@ try:
 
     # Watchdog metrics
     WATCHDOG_CHECKS = Counter(
-        "fiml_watchdog_checks_total",
-        "Total watchdog checks performed",
-        ["watchdog_name"]
+        "fiml_watchdog_checks_total", "Total watchdog checks performed", ["watchdog_name"]
     )
 
     WATCHDOG_CHECK_FAILURES = Counter(
-        "fiml_watchdog_check_failures_total",
-        "Total watchdog check failures",
-        ["watchdog_name"]
+        "fiml_watchdog_check_failures_total", "Total watchdog check failures", ["watchdog_name"]
     )
 
     WATCHDOG_EVENTS_DETECTED = Counter(
         "fiml_watchdog_events_detected_total",
         "Total events detected by watchdogs",
-        ["watchdog_name", "severity"]
+        ["watchdog_name", "severity"],
     )
 
     WATCHDOG_CHECK_DURATION = Histogram(
         "fiml_watchdog_check_duration_seconds",
         "Watchdog check duration",
         ["watchdog_name"],
-        buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0]
+        buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0],
     )
 
     WATCHDOG_TOTAL_COUNT = Gauge(
-        "fiml_watchdog_total_count",
-        "Total number of registered watchdogs"
+        "fiml_watchdog_total_count", "Total number of registered watchdogs"
     )
 
-    WATCHDOG_HEALTHY_COUNT = Gauge(
-        "fiml_watchdog_healthy_count",
-        "Number of healthy watchdogs"
-    )
+    WATCHDOG_HEALTHY_COUNT = Gauge("fiml_watchdog_healthy_count", "Number of healthy watchdogs")
 
     WATCHDOG_UNHEALTHY_COUNT = Gauge(
-        "fiml_watchdog_unhealthy_count",
-        "Number of unhealthy watchdogs"
+        "fiml_watchdog_unhealthy_count", "Number of unhealthy watchdogs"
     )
 
-    WATCHDOG_SUCCESS_RATE = Gauge(
-        "fiml_watchdog_success_rate",
-        "Overall watchdog success rate"
-    )
+    WATCHDOG_SUCCESS_RATE = Gauge("fiml_watchdog_success_rate", "Overall watchdog success rate")
 
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -73,6 +61,7 @@ except ImportError:
 @dataclass
 class WatchdogMetrics:
     """Metrics for a single watchdog"""
+
     watchdog_name: str
 
     # Detection statistics
@@ -82,7 +71,7 @@ class WatchdogMetrics:
 
     # Performance metrics
     total_check_time: float = 0.0  # seconds
-    min_check_time: float = float('inf')
+    min_check_time: float = float("inf")
     max_check_time: float = 0.0
 
     # Health status
@@ -129,7 +118,9 @@ class WatchdogMetrics:
         """Calculate uptime in seconds"""
         return (datetime.now(UTC) - self.started_at).total_seconds()
 
-    def record_check_success(self, check_time: float, event_detected: bool = False, severity: Optional[str] = None) -> None:
+    def record_check_success(
+        self, check_time: float, event_detected: bool = False, severity: Optional[str] = None
+    ) -> None:
         """Record a successful check"""
         self.checks_performed += 1
         self.total_check_time += check_time
@@ -240,8 +231,7 @@ class WatchdogHealthMonitor:
 
                 if event_detected and severity:
                     WATCHDOG_EVENTS_DETECTED.labels(
-                        watchdog_name=watchdog_name,
-                        severity=severity
+                        watchdog_name=watchdog_name, severity=severity
                     ).inc()
         else:
             metrics.record_check_failure(error or "Unknown error")
@@ -285,7 +275,11 @@ class WatchdogHealthMonitor:
         total_low = sum(m.low_events for m in self._metrics.values())
 
         # Calculate success rate
-        overall_success_rate = (total_checks / (total_checks + total_failures)) if (total_checks + total_failures) > 0 else 1.0
+        overall_success_rate = (
+            (total_checks / (total_checks + total_failures))
+            if (total_checks + total_failures) > 0
+            else 1.0
+        )
 
         # Update Prometheus gauges
         if self.enable_prometheus:
@@ -330,7 +324,10 @@ class WatchdogHealthMonitor:
             if not metrics.is_enabled:
                 continue
 
-            if metrics.last_check_at is None or (now - metrics.last_check_at).total_seconds() > max_age_seconds:
+            if (
+                metrics.last_check_at is None
+                or (now - metrics.last_check_at).total_seconds() > max_age_seconds
+            ):
                 stale.append(name)
 
         return stale

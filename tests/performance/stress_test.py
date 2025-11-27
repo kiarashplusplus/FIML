@@ -57,11 +57,13 @@ class StressTestMetrics:
         else:
             self.requests_failed += 1
             if error:
-                self.errors.append({
-                    "timestamp": datetime.now().isoformat(),
-                    "error": error,
-                    "response_time": response_time
-                })
+                self.errors.append(
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "error": error,
+                        "response_time": response_time,
+                    }
+                )
 
     def get_summary(self) -> Dict:
         """Get metrics summary"""
@@ -75,7 +77,7 @@ class StressTestMetrics:
                 "requests_failed": self.requests_sent,
                 "error_rate": 1.0,
                 "throughput": 0,
-                "response_times": {}
+                "response_times": {},
             }
 
         sorted_times = sorted(self.response_times)
@@ -86,7 +88,9 @@ class StressTestMetrics:
             "requests_sent": self.requests_sent,
             "requests_succeeded": self.requests_succeeded,
             "requests_failed": self.requests_failed,
-            "error_rate": self.requests_failed / self.requests_sent if self.requests_sent > 0 else 0,
+            "error_rate": (
+                self.requests_failed / self.requests_sent if self.requests_sent > 0 else 0
+            ),
             "throughput": self.requests_succeeded / duration if duration > 0 else 0,
             "response_times": {
                 "min": min(sorted_times),
@@ -95,11 +99,13 @@ class StressTestMetrics:
                 "p50": sorted_times[n // 2],
                 "p95": sorted_times[int(n * 0.95)],
                 "p99": sorted_times[int(n * 0.99)],
-            }
+            },
         }
 
 
-async def make_request(client: httpx.AsyncClient, url: str, payload: dict, metrics: StressTestMetrics):
+async def make_request(
+    client: httpx.AsyncClient, url: str, payload: dict, metrics: StressTestMetrics
+):
     """Make a single request and record metrics"""
     start = time.perf_counter()
     try:
@@ -179,8 +185,10 @@ async def test_peak_load(base_url: str = "http://localhost:8000"):
     print(f"{'='*60}\n")
 
     # Assertions
-    assert summary['error_rate'] < 0.05, f"Error rate {summary['error_rate']:.2%} exceeds 5%"
-    assert summary['response_times']['p95'] < 1.0, f"P95 latency {summary['response_times']['p95']*1000:.2f}ms exceeds 1000ms"
+    assert summary["error_rate"] < 0.05, f"Error rate {summary['error_rate']:.2%} exceeds 5%"
+    assert (
+        summary["response_times"]["p95"] < 1.0
+    ), f"P95 latency {summary['response_times']['p95']*1000:.2f}ms exceeds 1000ms"
 
 
 @pytest.mark.asyncio
@@ -259,7 +267,7 @@ async def test_spike_load(base_url: str = "http://localhost:8000"):
     print(f"{'='*60}\n")
 
     # Assertions - more lenient for spike test
-    assert summary['error_rate'] < 0.10, f"Error rate {summary['error_rate']:.2%} exceeds 10%"
+    assert summary["error_rate"] < 0.10, f"Error rate {summary['error_rate']:.2%} exceeds 10%"
 
 
 @pytest.mark.asyncio
@@ -307,10 +315,16 @@ async def test_endurance(base_url: str = "http://localhost:8000"):
                 interval_summary = {
                     "elapsed_minutes": elapsed / 60,
                     "total_requests": metrics.requests_sent,
-                    "error_rate": metrics.requests_failed / metrics.requests_sent if metrics.requests_sent > 0 else 0,
+                    "error_rate": (
+                        metrics.requests_failed / metrics.requests_sent
+                        if metrics.requests_sent > 0
+                        else 0
+                    ),
                 }
                 interval_metrics.append(interval_summary)
-                print(f"[{elapsed/60:.0f}min] Requests: {metrics.requests_sent}, Error rate: {interval_summary['error_rate']:.2%}")
+                print(
+                    f"[{elapsed/60:.0f}min] Requests: {metrics.requests_sent}, Error rate: {interval_summary['error_rate']:.2%}"
+                )
                 interval_start = time.time()
 
     metrics.end_time = time.perf_counter()
@@ -325,17 +339,25 @@ async def test_endurance(base_url: str = "http://localhost:8000"):
     print(f"P95 latency: {summary['response_times']['p95']*1000:.2f}ms")
     print("\nPerformance over time:")
     for interval in interval_metrics:
-        print(f"  {interval['elapsed_minutes']:.0f}min: {interval['total_requests']} requests, {interval['error_rate']:.2%} error rate")
+        print(
+            f"  {interval['elapsed_minutes']:.0f}min: {interval['total_requests']} requests, {interval['error_rate']:.2%} error rate"
+        )
     print(f"{'='*60}\n")
 
     # Check for performance degradation
     if len(interval_metrics) >= 2:
-        first_half_errors = sum(m['error_rate'] for m in interval_metrics[:len(interval_metrics)//2])
-        second_half_errors = sum(m['error_rate'] for m in interval_metrics[len(interval_metrics)//2:])
+        first_half_errors = sum(
+            m["error_rate"] for m in interval_metrics[: len(interval_metrics) // 2]
+        )
+        second_half_errors = sum(
+            m["error_rate"] for m in interval_metrics[len(interval_metrics) // 2 :]
+        )
 
-        assert second_half_errors <= first_half_errors * 1.5, "Performance degraded significantly over time"
+        assert (
+            second_half_errors <= first_half_errors * 1.5
+        ), "Performance degraded significantly over time"
 
-    assert summary['error_rate'] < 0.05, f"Error rate {summary['error_rate']:.2%} exceeds 5%"
+    assert summary["error_rate"] < 0.05, f"Error rate {summary['error_rate']:.2%} exceeds 5%"
 
 
 @pytest.mark.asyncio
@@ -349,12 +371,7 @@ async def test_provider_failure():
     from fiml.core.models import Asset, AssetType, Market
     from fiml.providers.yahoo_finance import YahooFinanceProvider
 
-    asset = Asset(
-        symbol="AAPL",
-        name="Apple Inc.",
-        asset_type=AssetType.EQUITY,
-        market=Market.US
-    )
+    asset = Asset(symbol="AAPL", name="Apple Inc.", asset_type=AssetType.EQUITY, market=Market.US)
 
     print(f"\n{'='*60}")
     print("PROVIDER FAILURE TEST")
@@ -544,8 +561,12 @@ async def test_memory_leak_detection():
 
     # Check that memory stabilizes (last quarter vs first quarter)
     if len(memory_samples) >= 4:
-        first_quarter_avg = sum(memory_samples[:len(memory_samples)//4]) / (len(memory_samples)//4)
-        last_quarter_avg = sum(memory_samples[-len(memory_samples)//4:]) / (len(memory_samples)//4)
+        first_quarter_avg = sum(memory_samples[: len(memory_samples) // 4]) / (
+            len(memory_samples) // 4
+        )
+        last_quarter_avg = sum(memory_samples[-len(memory_samples) // 4 :]) / (
+            len(memory_samples) // 4
+        )
         growth_rate = (last_quarter_avg - first_quarter_avg) / first_quarter_avg
 
         print(f"First quarter avg: {first_quarter_avg:.2f} MB")

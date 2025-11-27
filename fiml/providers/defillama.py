@@ -169,7 +169,9 @@ class DefiLlamaProvider(BaseProvider):
                 "price": float(coin_data.get("price", 0.0)),
                 "confidence": float(coin_data.get("confidence", 0.9)),
                 "symbol": coin_data.get("symbol", asset.symbol),
-                "timestamp": coin_data.get("timestamp", int(datetime.now(timezone.utc).timestamp())),
+                "timestamp": coin_data.get(
+                    "timestamp", int(datetime.now(timezone.utc).timestamp())
+                ),
             }
 
             return ProviderResponse(
@@ -191,7 +193,9 @@ class DefiLlamaProvider(BaseProvider):
             logger.error("Error fetching price from DefiLlama for %s: %s", asset.symbol, e)
             raise ProviderError(f"DefiLlama fetch failed: {e}")
 
-    async def fetch_ohlcv(self, asset: Asset, timeframe: str = "1d", limit: int = 100) -> ProviderResponse:
+    async def fetch_ohlcv(
+        self, asset: Asset, timeframe: str = "1d", limit: int = 100
+    ) -> ProviderResponse:
         """
         Fetch historical price data from DefiLlama
 
@@ -394,7 +398,9 @@ class DefiLlamaProvider(BaseProvider):
                         "Unexpected TVL response format from DefiLlama: %s",
                         type(response_data).__name__,
                     )
-                    raise ProviderError(f"Unexpected TVL response format: {type(response_data).__name__}")
+                    raise ProviderError(
+                        f"Unexpected TVL response format: {type(response_data).__name__}"
+                    )
 
             # Create a dummy asset for TVL response
             dummy_asset = Asset(symbol="TVL", asset_type=AssetType.CRYPTO)

@@ -24,7 +24,9 @@ class BaseWorker(ABC):
         self.logger.info("Worker initialized")
 
     @abstractmethod
-    async def process(self, asset: Asset, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def process(
+        self, asset: Asset, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Process analysis for an asset
 

@@ -44,32 +44,32 @@ DSL_TEMPLATES = {
         "display": "📊 Analyze Stock",
         "query": "EVALUATE AAPL: PRICE, VOLUME, VOLATILITY(30d)",
         "description": "Get comprehensive analysis of a stock with price, volume, and 30-day volatility",
-        "example": "Try with: TSLA, MSFT, or NVDA"
+        "example": "Try with: TSLA, MSFT, or NVDA",
     },
     "compare_tech": {
         "display": "⚖️ Compare Tech Giants",
         "query": "COMPARE AAPL, MSFT, GOOGL BY PE, MARKETCAP, VOLUME",
         "description": "Side-by-side comparison of major tech stocks by key metrics",
-        "example": "Compare any 2-5 stocks"
+        "example": "Compare any 2-5 stocks",
     },
     "correlate_crypto": {
         "display": "🔗 Crypto Correlation",
         "query": "CORRELATE BTC WITH ETH, SPY WINDOW 30d",
         "description": "Analyze 30-day correlation between Bitcoin and other assets",
-        "example": "Useful for portfolio diversification"
+        "example": "Useful for portfolio diversification",
     },
     "scan_stocks": {
         "display": "🔍 Stock Scanner",
         "query": "SCAN US_TECH WHERE PE < 30 AND VOLUME > 1000000",
         "description": "Find tech stocks with P/E ratio under 30 and high volume",
-        "example": "Customize the criteria to find opportunities"
+        "example": "Customize the criteria to find opportunities",
     },
     "custom": {
         "display": "✏️ Custom Query",
         "query": "",
         "description": "Write your own FK-DSL query for advanced analysis",
-        "example": "Use EVALUATE, COMPARE, CORRELATE, or SCAN"
-    }
+        "example": "Use EVALUATE, COMPARE, CORRELATE, or SCAN",
+    },
 }
 
 
@@ -141,15 +141,9 @@ class TelegramBotAdapter:
         add_key_conv = ConversationHandler(
             entry_points=[CommandHandler("addkey", self.cmd_add_key)],
             states={
-                PROVIDER_SELECT: [
-                    CallbackQueryHandler(self.select_provider, pattern="^provider:")
-                ],
-                KEY_ENTRY: [
-                    MessageHandler(filters.TEXT & ~filters.COMMAND, self.receive_key)
-                ],
-                CONFIRMATION: [
-                    CallbackQueryHandler(self.confirm_key, pattern="^confirm:")
-                ],
+                PROVIDER_SELECT: [CallbackQueryHandler(self.select_provider, pattern="^provider:")],
+                KEY_ENTRY: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.receive_key)],
+                CONFIRMATION: [CallbackQueryHandler(self.confirm_key, pattern="^confirm:")],
             },
             fallbacks=[CommandHandler("cancel", self.cmd_cancel)],
         )
@@ -172,14 +166,10 @@ class TelegramBotAdapter:
         self.application.add_handler(CommandHandler("fkdsl", self.cmd_fkdsl))
 
         # Mentor persona selection
-        self.application.add_handler(
-            CallbackQueryHandler(self.select_mentor, pattern="^mentor:")
-        )
+        self.application.add_handler(CallbackQueryHandler(self.select_mentor, pattern="^mentor:"))
 
         # Lesson selection
-        self.application.add_handler(
-            CallbackQueryHandler(self.select_lesson, pattern="^lesson:")
-        )
+        self.application.add_handler(CallbackQueryHandler(self.select_lesson, pattern="^lesson:"))
 
         # Quiz answer handling
         self.application.add_handler(
@@ -268,12 +258,13 @@ Choose your path:
             provider_name = provider["name"]
             free_tier = "✓ Free tier" if provider.get("free_tier") else "Paid only"
 
-            keyboard.append([
-                InlineKeyboardButton(
-                    f"{provider_name} ({free_tier})",
-                    callback_data=f"provider:{provider_id}"
-                )
-            ])
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        f"{provider_name} ({free_tier})", callback_data=f"provider:{provider_id}"
+                    )
+                ]
+            )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -285,11 +276,7 @@ Choose which data provider you want to add:
 ℹ️ Providers with free tiers let you get started without costs.
 """
 
-        await update.message.reply_text(
-            text,
-            reply_markup=reply_markup,
-            parse_mode="Markdown"
-        )
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
         return PROVIDER_SELECT
 
@@ -321,7 +308,9 @@ Choose which data provider you want to add:
         if provider_info.get("free_tier"):
             instructions += f"✅ **Free tier available:** {provider_info['free_limit']}\n\n"
         else:
-            instructions += f"💳 **Pricing:** {provider_info.get('paid_tiers', 'Check website')}\n\n"
+            instructions += (
+                f"💳 **Pricing:** {provider_info.get('paid_tiers', 'Check website')}\n\n"
+            )
 
         instructions += """
 Once you have your API key, paste it here.
@@ -383,9 +372,7 @@ Save this key?
 """
 
         await update.message.reply_text(
-            confirm_text,
-            reply_markup=reply_markup,
-            parse_mode="Markdown"
+            confirm_text, reply_markup=reply_markup, parse_mode="Markdown"
         )
 
         return CONFIRMATION
@@ -412,9 +399,7 @@ Save this key?
             "message": test_result.get("message", ""),
         }
 
-        success = await self.key_manager.store_user_key(
-            user_id, provider_id, api_key, metadata
-        )
+        success = await self.key_manager.store_user_key(user_id, provider_id, api_key, metadata)
 
         if success:
             success_text = f"""
@@ -431,9 +416,7 @@ Your {provider_id} key is now connected.
 """
             await query.edit_message_text(success_text, parse_mode="Markdown")
         else:
-            await query.edit_message_text(
-                "❌ Failed to save key. Please try again with /addkey"
-            )
+            await query.edit_message_text("❌ Failed to save key. Please try again with /addkey")
 
         # Clear context
         context.user_data.clear()
@@ -497,23 +480,19 @@ Add one with /addkey to unlock premium data providers!
             provider_id = provider["provider"]
             provider_name = provider["name"]
 
-            keyboard.append([
-                InlineKeyboardButton(
-                    f"Remove {provider_name}",
-                    callback_data=f"remove:{provider_id}"
-                )
-            ])
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        f"Remove {provider_name}", callback_data=f"remove:{provider_id}"
+                    )
+                ]
+            )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await update.message.reply_text(
-            "Select provider to remove:",
-            reply_markup=reply_markup
-        )
+        await update.message.reply_text("Select provider to remove:", reply_markup=reply_markup)
 
-    async def handle_remove_key(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def handle_remove_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle key removal callback"""
         query = update.callback_query
         await query.answer()
@@ -622,11 +601,7 @@ No providers connected yet.
                         difficulty = lesson_data.get("difficulty", "beginner")
                         lessons.append((lesson_id, title, difficulty))
             except Exception as e:
-                logger.warning(
-                    "Failed to load lesson file",
-                    file=str(lesson_file),
-                    error=str(e)
-                )
+                logger.warning("Failed to load lesson file", file=str(lesson_file), error=str(e))
 
         return lessons
 
@@ -689,12 +664,9 @@ No providers connected yet.
             emoji = self._get_difficulty_emoji(difficulty)
             text += f"{status} {emoji} {title}\n"
 
-            keyboard.append([
-                InlineKeyboardButton(
-                    f"{status} {title}",
-                    callback_data=f"lesson:{lesson_id}"
-                )
-            ])
+            keyboard.append(
+                [InlineKeyboardButton(f"{status} {title}", callback_data=f"lesson:{lesson_id}")]
+            )
 
         total_lessons = len(lessons)
         text += f"\n💡 Tap a lesson to start! ({total_lessons} lessons available)"
@@ -747,7 +719,10 @@ No providers connected yet.
 
         if len(content) > max_length:
             # Truncate with ellipsis
-            content = content[:max_length] + "\n\n...[Content truncated - lesson too long]\n\nUse /quiz to test your knowledge!"
+            content = (
+                content[:max_length]
+                + "\n\n...[Content truncated - lesson too long]\n\nUse /quiz to test your knowledge!"
+            )
 
         # Send without Markdown parsing to avoid entity parsing errors
         await query.edit_message_text(content)
@@ -800,26 +775,27 @@ No providers connected yet.
         if question["type"] == "multiple_choice":
             for i, opt in enumerate(question["options"]):
                 # Use index instead of full text to avoid 64-byte callback limit
-                keyboard.append([
-                    InlineKeyboardButton(
-                        opt["text"],
-                        callback_data=f"quiz_answer:{session_id}:0:{i}"
-                    )
-                ])
+                keyboard.append(
+                    [
+                        InlineKeyboardButton(
+                            opt["text"], callback_data=f"quiz_answer:{session_id}:0:{i}"
+                        )
+                    ]
+                )
         elif question["type"] == "true_false":
             keyboard = [
                 [
                     InlineKeyboardButton("True", callback_data=f"quiz_answer:{session_id}:0:true"),
-                    InlineKeyboardButton("False", callback_data=f"quiz_answer:{session_id}:0:false"),
+                    InlineKeyboardButton(
+                        "False", callback_data=f"quiz_answer:{session_id}:0:false"
+                    ),
                 ]
             ]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
-    async def handle_quiz_answer(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def handle_quiz_answer(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle quiz answer submission"""
         query = update.callback_query
         await query.answer()
@@ -909,28 +885,31 @@ No providers connected yet.
                 if question["type"] == "multiple_choice":
                     for i, opt in enumerate(question["options"]):
                         # Use index instead of text to avoid 64-byte callback limit
-                        keyboard.append([
-                            InlineKeyboardButton(
-                                opt["text"],
-                                callback_data=f"quiz_answer:{session_id}:{current_idx}:{i}"
-                            )
-                        ])
+                        keyboard.append(
+                            [
+                                InlineKeyboardButton(
+                                    opt["text"],
+                                    callback_data=f"quiz_answer:{session_id}:{current_idx}:{i}",
+                                )
+                            ]
+                        )
                 elif question["type"] == "true_false":
                     keyboard = [
                         [
                             InlineKeyboardButton(
-                                "True",
-                                callback_data=f"quiz_answer:{session_id}:{current_idx}:true"
+                                "True", callback_data=f"quiz_answer:{session_id}:{current_idx}:true"
                             ),
                             InlineKeyboardButton(
                                 "False",
-                                callback_data=f"quiz_answer:{session_id}:{current_idx}:false"
+                                callback_data=f"quiz_answer:{session_id}:{current_idx}:false",
                             ),
                         ]
                     ]
 
                 reply_markup = InlineKeyboardMarkup(keyboard)
-                await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+                await query.edit_message_text(
+                    text, reply_markup=reply_markup, parse_mode="Markdown"
+                )
                 return
 
         await query.edit_message_text(text, parse_mode="Markdown")
@@ -949,19 +928,16 @@ No providers connected yet.
 
             try:
                 response = await self.mentor_service.respond(
-                    user_id=user_id,
-                    question=message,
-                    persona=mentor_persona,
-                    context={}
+                    user_id=user_id, question=message, persona=mentor_persona, context={}
                 )
 
                 response_text = f"{response['icon']} **{response['mentor']}**\n\n"
-                response_text += response['text']
+                response_text += response["text"]
 
                 # Add suggested lessons if any
-                if response.get('related_lessons'):
+                if response.get("related_lessons"):
                     response_text += "\n\n📚 **Related lessons:**\n"
-                    for lesson_id in response['related_lessons']:
+                    for lesson_id in response["related_lessons"]:
                         response_text += f"• {lesson_id}\n"
 
                 await update.message.reply_text(response_text, parse_mode="Markdown")
@@ -975,7 +951,15 @@ No providers connected yet.
             return
 
         # Only check for greetings if NOT in mentor mode
-        greetings = ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]
+        greetings = [
+            "hi",
+            "hello",
+            "hey",
+            "greetings",
+            "good morning",
+            "good afternoon",
+            "good evening",
+        ]
         if any(greeting in message.lower() for greeting in greetings):
             await update.message.reply_text(
                 "👋 Hello! I'm the FIML Educational Bot.\n\n"
@@ -985,7 +969,7 @@ No providers connected yet.
                 "• /lesson - Start learning\n"
                 "• /mentor - Chat with AI mentor\n"
                 "• /progress - View your progress",
-                parse_mode="Markdown"
+                parse_mode="Markdown",
             )
             return
 
@@ -996,7 +980,7 @@ No providers connected yet.
             "• /mentor - Chat with an AI trading mentor\n"
             "• /help - See what I can do\n\n"
             "Or ask me about specific topics using /lesson",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
         )
 
     async def cmd_mentor(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1085,16 +1069,16 @@ _Type your question below, or use /help for commands._
 
 **Badges:**
 """
-        if summary['badges']:
-            for badge in summary['badges']:
+        if summary["badges"]:
+            for badge in summary["badges"]:
                 text += f"{badge['icon']} {badge['name']}\n"
         else:
             text += "No badges yet - keep learning!\n"
 
         # Progress bar
-        progress = summary.get('progress_to_next_level', {})
-        if not progress.get('max_level'):
-            percent = progress.get('progress', 0)
+        progress = summary.get("progress_to_next_level", {})
+        if not progress.get("max_level"):
+            percent = progress.get("progress", 0)
             bar_filled = int(percent / 10)
             bar_empty = 10 - bar_filled
             progress_bar = "█" * bar_filled + "░" * bar_empty
@@ -1124,19 +1108,18 @@ A specialized query language for multi-asset financial analysis:
         # Create inline keyboard with templates
         keyboard = []
         for template_id, template_data in DSL_TEMPLATES.items():
-            keyboard.append([
-                InlineKeyboardButton(
-                    template_data["display"],
-                    callback_data=f"dsl_template:{template_id}"
-                )
-            ])
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        template_data["display"], callback_data=f"dsl_template:{template_id}"
+                    )
+                ]
+            )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
-    async def handle_dsl_template(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def handle_dsl_template(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle DSL template selection"""
         query = update.callback_query
         await query.answer()
@@ -1199,7 +1182,7 @@ Type your query below or /cancel to abort.
             context=context,
             user_id=user_id,
             query=template["query"],
-            from_callback=True
+            from_callback=True,
         )
 
     async def execute_user_dsl_query(
@@ -1208,7 +1191,7 @@ Type your query below or /cancel to abort.
         context: ContextTypes.DEFAULT_TYPE,
         user_id: str,
         query: str,
-        from_callback: bool = False
+        from_callback: bool = False,
     ) -> None:
         """Execute FK-DSL query and display results"""
 
@@ -1225,14 +1208,12 @@ Type your query below or /cancel to abort.
                 # Edit the existing message
                 try:
                     await update.callback_query.message.reply_text(
-                        formatted_message,
-                        parse_mode="Markdown"
+                        formatted_message, parse_mode="Markdown"
                     )
                 except Exception as e:
                     logger.warning("Failed to send as reply, sending new message", error=str(e))
                     await update.callback_query.message.chat.send_message(
-                        formatted_message,
-                        parse_mode="Markdown"
+                        formatted_message, parse_mode="Markdown"
                     )
             else:
                 # Send new message
@@ -1307,12 +1288,7 @@ Use /status to check progress (coming soon).
         result_data = result.get("result", {})
 
         # Start building formatted message
-        message_parts = [
-            "✅ **Query Completed**",
-            "",
-            f"**Query:** `{query_text}`",
-            ""
-        ]
+        message_parts = ["✅ **Query Completed**", "", f"**Query:** `{query_text}`", ""]
 
         # Format result data based on content
         if isinstance(result_data, dict):
@@ -1352,22 +1328,26 @@ Use /status to check progress (coming soon).
             message_parts.append("```")
 
         # Add metadata
-        message_parts.extend([
-            "",
-            "📊 **Data Quality:**",
-            f"• Status: {result.get('status', 'unknown').title()}",
-        ])
+        message_parts.extend(
+            [
+                "",
+                "📊 **Data Quality:**",
+                f"• Status: {result.get('status', 'unknown').title()}",
+            ]
+        )
 
         # Add educational note
-        message_parts.extend([
-            "",
-            "💡 **What's Next?**",
-            "• Try modifying the query with different assets",
-            "• Explore other DSL templates with /fkdsl",
-            "• Check your progress with /progress",
-            "",
-            "⚠️ Educational purposes only — not financial advice."
-        ])
+        message_parts.extend(
+            [
+                "",
+                "💡 **What's Next?**",
+                "• Try modifying the query with different assets",
+                "• Explore other DSL templates with /fkdsl",
+                "• Check your progress with /progress",
+                "",
+                "⚠️ Educational purposes only — not financial advice.",
+            ]
+        )
 
         # Join all parts
         full_message = "\n".join(message_parts)
@@ -1375,7 +1355,10 @@ Use /status to check progress (coming soon).
         # Check Telegram's 4096 character limit
         if len(full_message) > 4000:
             # Truncate and add notice
-            full_message = full_message[:3900] + "\n\n...\n\n[Results truncated due to length]\n\n⚠️ Educational purposes only — not financial advice."
+            full_message = (
+                full_message[:3900]
+                + "\n\n...\n\n[Results truncated due to length]\n\n⚠️ Educational purposes only — not financial advice."
+            )
 
         return full_message
 

@@ -25,34 +25,27 @@ try:
 
     # Session metrics
     SESSION_CREATED = Counter(
-        "fiml_sessions_created_total",
-        "Total sessions created",
-        ["session_type"]
+        "fiml_sessions_created_total", "Total sessions created", ["session_type"]
     )
 
-    SESSION_ACTIVE = Gauge(
-        "fiml_sessions_active_total",
-        "Number of active sessions"
-    )
+    SESSION_ACTIVE = Gauge("fiml_sessions_active_total", "Number of active sessions")
 
     SESSION_ABANDONED = Counter(
-        "fiml_sessions_abandoned_total",
-        "Total abandoned sessions",
-        ["session_type"]
+        "fiml_sessions_abandoned_total", "Total abandoned sessions", ["session_type"]
     )
 
     SESSION_DURATION = Histogram(
         "fiml_session_duration_seconds",
         "Session duration in seconds",
         ["session_type"],
-        buckets=[10, 30, 60, 120, 300, 600, 1800, 3600]
+        buckets=[10, 30, 60, 120, 300, 600, 1800, 3600],
     )
 
     SESSION_QUERIES = Histogram(
         "fiml_session_queries_total",
         "Number of queries per session",
         ["query_type"],
-        buckets=[1, 5, 10, 20, 50, 100, 200]
+        buckets=[1, 5, 10, 20, 50, 100, 200],
     )
 
 except ImportError:
@@ -176,6 +169,7 @@ class SessionAnalytics:
                 if self._session_store and self._session_store._redis:
                     try:
                         import json
+
                         pattern = "session:*"
                         cursor = 0
 
@@ -198,19 +192,25 @@ class SessionAnalytics:
                                         logger.debug(f"Skipping session {key}: user_id mismatch")
                                         continue
                                     if session_type and session_dict.get("type") != session_type:
-                                        logger.debug(f"Skipping session {key}: session_type mismatch")
+                                        logger.debug(
+                                            f"Skipping session {key}: session_type mismatch"
+                                        )
                                         continue
 
                                     # Check if session is within date range
                                     created_at_str = session_dict.get("created_at")
                                     if created_at_str:
-                                        created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                                        created_at = datetime.fromisoformat(
+                                            created_at_str.replace("Z", "+00:00")
+                                        )
                                         if created_at >= cutoff_date:
                                             active_sessions += 1
                                             active_sessions_data.append(session_dict)
                                             logger.debug(f"Found active session: {key}")
                                         else:
-                                            logger.debug(f"Skipping session {key}: outside date range")
+                                            logger.debug(
+                                                f"Skipping session {key}: outside date range"
+                                            )
 
                             if cursor == 0:
                                 break
@@ -220,7 +220,9 @@ class SessionAnalytics:
                     except Exception as e:
                         logger.warning(f"Failed to count active sessions from Redis: {e}")
                 else:
-                    logger.warning(f"Session store not available for Redis scan: store={self._session_store}, redis={self._session_store._redis if self._session_store else None}")
+                    logger.warning(
+                        f"Session store not available for Redis scan: store={self._session_store}, redis={self._session_store._redis if self._session_store else None}"
+                    )
 
                 # Get archived session count from SessionRecord
                 from fiml.sessions.db import SessionRecord
@@ -256,7 +258,9 @@ class SessionAnalytics:
                         "archived_sessions": 0,
                         "total_queries": total_queries,
                         "avg_duration_seconds": 0.0,
-                        "avg_queries_per_session": total_queries / active_sessions if active_sessions > 0 else 0.0,
+                        "avg_queries_per_session": (
+                            total_queries / active_sessions if active_sessions > 0 else 0.0
+                        ),
                         "abandonment_rate": 0.0,
                         "period_days": days,
                         "user_id": user_id,
@@ -296,9 +300,7 @@ class SessionAnalytics:
 
                 avg_duration = total_duration / total_sessions if total_sessions > 0 else 0
                 avg_queries = total_queries / total_sessions if total_sessions > 0 else 0
-                abandonment_rate = (
-                    abandoned_count / total_sessions if total_sessions > 0 else 0
-                )
+                abandonment_rate = abandoned_count / total_sessions if total_sessions > 0 else 0
 
                 # Most analyzed assets
                 all_assets: Dict[str, int] = {}
@@ -317,7 +319,9 @@ class SessionAnalytics:
                 # Session type breakdown
                 session_type_counts: Dict[str, int] = {}
                 for m in metrics:
-                    session_type_counts[m.session_type] = session_type_counts.get(m.session_type, 0) + 1
+                    session_type_counts[m.session_type] = (
+                        session_type_counts.get(m.session_type, 0) + 1
+                    )
 
                 # Get popular tags from archived sessions
                 tags_query = select(SessionRecord.tags).where(
@@ -337,7 +341,8 @@ class SessionAnalytics:
                 popular_tags = sorted(all_tags.items(), key=lambda x: x[1], reverse=True)[:10]
 
                 return {
-                    "total_sessions": total_sessions + active_sessions,  # Include active sessions from Redis
+                    "total_sessions": total_sessions
+                    + active_sessions,  # Include active sessions from Redis
                     "active_sessions": active_sessions,
                     "archived_sessions": archived_sessions,
                     "total_queries": total_queries,
@@ -347,7 +352,9 @@ class SessionAnalytics:
                     "period_days": days,
                     "user_id": user_id,
                     "session_type": session_type,
-                    "top_assets": [{"symbol": symbol, "count": count} for symbol, count in top_assets],
+                    "top_assets": [
+                        {"symbol": symbol, "count": count} for symbol, count in top_assets
+                    ],
                     "query_type_distribution": all_query_types,
                     "session_type_breakdown": session_type_counts,
                     "popular_tags": [{"tag": tag, "count": count} for tag, count in popular_tags],

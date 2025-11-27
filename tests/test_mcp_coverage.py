@@ -44,13 +44,7 @@ class TestMCPEndpoints:
         client = TestClient(app)
 
         # Try calling with invalid tool
-        response = client.post(
-            "/mcp/call",
-            json={
-                "name": "invalid-tool",
-                "arguments": {}
-            }
-        )
+        response = client.post("/mcp/call", json={"name": "invalid-tool", "arguments": {}})
 
         # Should return error or 404
         assert response.status_code in [400, 404, 422, 500]
@@ -64,12 +58,8 @@ class TestMCPEndpoints:
                 "/mcp/call",
                 json={
                     "name": "search-by-symbol",
-                    "arguments": {
-                        "symbol": "AAPL",
-                        "market": "US",
-                        "analysis_depth": "quick"
-                    }
-                }
+                    "arguments": {"symbol": "AAPL", "market": "US", "analysis_depth": "quick"},
+                },
             )
 
             # Might succeed or fail depending on providers
@@ -85,12 +75,7 @@ class TestMCPEndpoints:
         try:
             response = client.post(
                 "/mcp/call",
-                json={
-                    "name": "execute-fk-dsl",
-                    "arguments": {
-                        "query": "GET PRICE FOR AAPL"
-                    }
-                }
+                json={"name": "execute-fk-dsl", "arguments": {"query": "GET PRICE FOR AAPL"}},
             )
 
             # Might succeed or fail
@@ -111,11 +96,7 @@ class TestMCPToolsDirectly:
         await provider_registry.initialize()
 
         try:
-            result = await search_by_symbol(
-                symbol="AAPL",
-                market="US",
-                analysis_depth="standard"
-            )
+            result = await search_by_symbol(symbol="AAPL", market="US", analysis_depth="standard")
 
             assert isinstance(result, dict)
         except Exception:
@@ -133,11 +114,7 @@ class TestMCPToolsDirectly:
         await provider_registry.initialize()
 
         try:
-            result = await search_by_symbol(
-                symbol="AAPL",
-                market="US",
-                analysis_depth="deep"
-            )
+            result = await search_by_symbol(symbol="AAPL", market="US", analysis_depth="deep")
 
             assert isinstance(result, dict)
         except Exception:
@@ -154,11 +131,7 @@ class TestMCPToolsDirectly:
         await provider_registry.initialize()
 
         try:
-            result = await search_by_coin(
-                symbol="BTC",
-                pair="USD",
-                exchange="coinbase"
-            )
+            result = await search_by_coin(symbol="BTC", pair="USD", exchange="coinbase")
 
             assert isinstance(result, dict)
         except Exception:
@@ -174,7 +147,7 @@ class TestMCPToolsDirectly:
         queries = [
             "GET PRICE FOR AAPL",
             "FIND AAPL WITH PRICE > 100",
-            "ANALYZE AAPL FOR TECHNICALS"
+            "ANALYZE AAPL FOR TECHNICALS",
         ]
 
         for query in queries:

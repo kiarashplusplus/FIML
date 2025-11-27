@@ -15,19 +15,11 @@ from typing import List
 import pytest
 
 from fiml.core.models import Asset, AssetType
-from fiml.watchdog import (
-    BaseWatchdog,
-    EarningsAnomalyWatchdog,
-    EventFilter,
-    EventStream,
-    EventType,
-    ExchangeOutageWatchdog,
-    PriceAnomalyWatchdog,
-    Severity,
-    UnusualVolumeWatchdog,
-    WatchdogEvent,
-    WatchdogManager,
-)
+from fiml.watchdog import (BaseWatchdog, EarningsAnomalyWatchdog, EventFilter,
+                           EventStream, EventType, ExchangeOutageWatchdog,
+                           PriceAnomalyWatchdog, Severity,
+                           UnusualVolumeWatchdog, WatchdogEvent,
+                           WatchdogManager)
 
 # ============================================================================
 # Test Fixtures
@@ -300,7 +292,7 @@ async def test_event_stream_filtering(initialized_event_stream):
     # Subscribe with filter
     initialized_event_stream.subscribe(
         callback=high_handler,
-        event_filter=EventFilter(severities=[Severity.HIGH, Severity.CRITICAL])
+        event_filter=EventFilter(severities=[Severity.HIGH, Severity.CRITICAL]),
     )
 
     # Subscribe to all
@@ -368,9 +360,18 @@ async def test_event_stream_stats(initialized_event_stream):
     """Test event stream statistics"""
     # Emit various events
     events = [
-        WatchdogEvent(type=EventType.PRICE_ANOMALY, severity=Severity.HIGH, description="1", watchdog="test"),
-        WatchdogEvent(type=EventType.PRICE_ANOMALY, severity=Severity.LOW, description="2", watchdog="test"),
-        WatchdogEvent(type=EventType.UNUSUAL_VOLUME, severity=Severity.MEDIUM, description="3", watchdog="test"),
+        WatchdogEvent(
+            type=EventType.PRICE_ANOMALY, severity=Severity.HIGH, description="1", watchdog="test"
+        ),
+        WatchdogEvent(
+            type=EventType.PRICE_ANOMALY, severity=Severity.LOW, description="2", watchdog="test"
+        ),
+        WatchdogEvent(
+            type=EventType.UNUSUAL_VOLUME,
+            severity=Severity.MEDIUM,
+            description="3",
+            watchdog="test",
+        ),
     ]
 
     for event in events:
@@ -483,8 +484,7 @@ async def test_watchdog_manager_event_subscription():
 
     # Subscribe
     sub_id = manager.subscribe_to_events(
-        callback=handler,
-        event_filter=EventFilter(severities=[Severity.HIGH, Severity.CRITICAL])
+        callback=handler, event_filter=EventFilter(severities=[Severity.HIGH, Severity.CRITICAL])
     )
 
     # Manually emit an event for testing

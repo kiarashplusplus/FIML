@@ -34,11 +34,7 @@ class QueryPattern:
 
     def get_peak_hours(self, top_n: int = 3) -> List[int]:
         """Get the top N peak hours for this symbol"""
-        sorted_hours = sorted(
-            self.hourly_distribution.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_hours = sorted(self.hourly_distribution.items(), key=lambda x: x[1], reverse=True)
         return [hour for hour, _ in sorted_hours[:top_n]]
 
     def get_priority_score(self, now: datetime, market_events: Set[str]) -> float:
@@ -123,10 +119,7 @@ class PredictiveCacheWarmer:
         self._warming_task: Optional[asyncio.Task] = None
 
     def record_cache_access(
-        self,
-        symbol: str,
-        data_type: DataType,
-        timestamp: Optional[datetime] = None
+        self, symbol: str, data_type: DataType, timestamp: Optional[datetime] = None
     ) -> None:
         """
         Record a cache access for pattern analysis
@@ -144,12 +137,7 @@ class PredictiveCacheWarmer:
 
         self.query_patterns[symbol].record_access(data_type, hour)
 
-        logger.debug(
-            "Cache access recorded",
-            symbol=symbol,
-            data_type=data_type.value,
-            hour=hour
-        )
+        logger.debug("Cache access recorded", symbol=symbol, data_type=data_type.value, hour=hour)
 
     def add_market_event(self, symbol: str, event_type: str = "earnings") -> None:
         """
@@ -163,9 +151,7 @@ class PredictiveCacheWarmer:
         logger.info("Market event added", symbol=symbol, event_type=event_type)
 
     def get_symbols_to_warm(
-        self,
-        now: Optional[datetime] = None,
-        limit: Optional[int] = None
+        self, now: Optional[datetime] = None, limit: Optional[int] = None
     ) -> List[Tuple[str, float]]:
         """
         Get prioritized list of symbols to warm
@@ -199,11 +185,7 @@ class PredictiveCacheWarmer:
         # Return top symbols
         return scored_symbols[:limit]
 
-    async def warm_symbol(
-        self,
-        symbol: str,
-        data_types: Optional[List[DataType]] = None
-    ) -> bool:
+    async def warm_symbol(self, symbol: str, data_types: Optional[List[DataType]] = None) -> bool:
         """
         Warm cache for a specific symbol
 
@@ -224,9 +206,7 @@ class PredictiveCacheWarmer:
                 # Fetch fresh data from provider
                 if data_type == DataType.PRICE:
                     # Get price from primary provider
-                    provider = self.provider_registry.get_provider_for_data_type(
-                        data_type, asset
-                    )
+                    provider = self.provider_registry.get_provider_for_data_type(data_type, asset)
                     if provider:
                         price_data = await provider.get_price(asset)
                         if price_data:
@@ -236,9 +216,7 @@ class PredictiveCacheWarmer:
                             success = False
 
                 elif data_type == DataType.FUNDAMENTALS:
-                    provider = self.provider_registry.get_provider_for_data_type(
-                        data_type, asset
-                    )
+                    provider = self.provider_registry.get_provider_for_data_type(data_type, asset)
                     if provider:
                         fundamentals = await provider.get_fundamentals(asset)
                         if fundamentals:
@@ -262,11 +240,7 @@ class PredictiveCacheWarmer:
 
         return success
 
-    async def warm_cache_batch(
-        self,
-        symbols: List[str],
-        concurrency: int = 10
-    ) -> Dict[str, bool]:
+    async def warm_cache_batch(self, symbols: List[str], concurrency: int = 10) -> Dict[str, bool]:
         """
         Warm cache for multiple symbols concurrently
 
@@ -301,7 +275,7 @@ class PredictiveCacheWarmer:
             "Cache warming batch complete",
             total=len(symbols),
             successful=sum(result_dict.values()),
-            failed=len(symbols) - sum(result_dict.values())
+            failed=len(symbols) - sum(result_dict.values()),
         )
 
         return result_dict
@@ -328,11 +302,7 @@ class PredictiveCacheWarmer:
         symbols = [symbol for symbol, _ in symbols_to_warm]
 
         # Log top symbols
-        logger.info(
-            "Top symbols for warming",
-            symbols=symbols[:10],
-            total=len(symbols)
-        )
+        logger.info("Top symbols for warming", symbols=symbols[:10], total=len(symbols))
 
         # Warm cache
         await self.warm_cache_batch(symbols)
@@ -341,7 +311,7 @@ class PredictiveCacheWarmer:
             "Cache warming cycle complete",
             total_warmed=self.total_warmed,
             successful=self.successful_warms,
-            failed=self.failed_warms
+            failed=self.failed_warms,
         )
 
     async def start_background_warming(self, interval_minutes: int = 60) -> None:
@@ -384,9 +354,7 @@ class PredictiveCacheWarmer:
     def get_warming_stats(self) -> Dict[str, Any]:
         """Get warming statistics"""
         success_rate = (
-            (self.successful_warms / self.total_warmed * 100)
-            if self.total_warmed > 0
-            else 0.0
+            (self.successful_warms / self.total_warmed * 100) if self.total_warmed > 0 else 0.0
         )
 
         return {

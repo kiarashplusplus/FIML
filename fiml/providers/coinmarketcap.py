@@ -51,9 +51,7 @@ class CoinMarketCapProvider(BaseProvider):
         if not self.config.api_key:
             raise ProviderError("CoinMarketCap API key not configured")
 
-        self._session = aiohttp.ClientSession(
-            headers={"X-CMC_PRO_API_KEY": self.config.api_key}
-        )
+        self._session = aiohttp.ClientSession(headers={"X-CMC_PRO_API_KEY": self.config.api_key})
         self._is_initialized = True
         logger.info("CoinMarketCap provider initialized successfully")
 
@@ -64,7 +62,9 @@ class CoinMarketCapProvider(BaseProvider):
             await self._session.close()
         self._is_initialized = False
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to CoinMarketCap"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -75,9 +75,7 @@ class CoinMarketCapProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -91,7 +89,9 @@ class CoinMarketCapProvider(BaseProvider):
 
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
-                    raise ProviderRateLimitError("CoinMarketCap rate limit exceeded", retry_after=60)
+                    raise ProviderRateLimitError(
+                        "CoinMarketCap rate limit exceeded", retry_after=60
+                    )
                 elif response.status == 401:
                     raise ProviderError("CoinMarketCap authentication failed")
                 else:
@@ -118,7 +118,7 @@ class CoinMarketCapProvider(BaseProvider):
         clean_symbol = symbol.upper()
         for suffix in ["USDT", "USD", "BUSD", "EUR"]:
             if clean_symbol.endswith(suffix) and len(clean_symbol) > len(suffix):
-                clean_symbol = clean_symbol[:-len(suffix)]
+                clean_symbol = clean_symbol[: -len(suffix)]
                 break
         return clean_symbol
 

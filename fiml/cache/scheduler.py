@@ -18,13 +18,7 @@ logger = get_logger(__name__)
 class UpdateRequest:
     """Represents a cache update request"""
 
-    def __init__(
-        self,
-        asset: Asset,
-        data_type: DataType,
-        provider: str,
-        priority: int = 0
-    ):
+    def __init__(self, asset: Asset, data_type: DataType, provider: str, priority: int = 0):
         self.asset = asset
         self.data_type = data_type
         self.provider = provider
@@ -95,11 +89,7 @@ class BatchUpdateScheduler:
         self.api_calls_saved = 0
 
     async def schedule_update(
-        self,
-        asset: Asset,
-        data_type: DataType,
-        provider: str,
-        priority: int = 0
+        self, asset: Asset, data_type: DataType, provider: str, priority: int = 0
     ) -> None:
         """
         Schedule a cache update
@@ -121,13 +111,10 @@ class BatchUpdateScheduler:
             asset=asset.symbol,
             data_type=data_type.value,
             provider=provider,
-            pending=len(self.pending_requests)
+            pending=len(self.pending_requests),
         )
 
-    async def schedule_updates_batch(
-        self,
-        updates: List[Tuple[Asset, DataType, str, int]]
-    ) -> None:
+    async def schedule_updates_batch(self, updates: List[Tuple[Asset, DataType, str, int]]) -> None:
         """
         Schedule multiple updates at once
 
@@ -144,14 +131,11 @@ class BatchUpdateScheduler:
             self.total_requests += len(requests)
 
         logger.info(
-            "Batch updates scheduled",
-            count=len(requests),
-            pending=len(self.pending_requests)
+            "Batch updates scheduled", count=len(requests), pending=len(self.pending_requests)
         )
 
     def _group_requests_by_batch_key(
-        self,
-        requests: List[UpdateRequest]
+        self, requests: List[UpdateRequest]
     ) -> Dict[str, List[UpdateRequest]]:
         """Group requests by batch key (data_type:provider)"""
         batches: Dict[str, List[UpdateRequest]] = defaultdict(list)
@@ -175,13 +159,10 @@ class BatchUpdateScheduler:
             return []
 
         # Sort by priority (desc) then age (asc)
-        sorted_requests = sorted(
-            self.pending_requests,
-            key=lambda r: (-r.priority, r.created_at)
-        )
+        sorted_requests = sorted(self.pending_requests, key=lambda r: (-r.priority, r.created_at))
 
         # Take up to batch_size requests
-        batch = sorted_requests[:self.batch_size]
+        batch = sorted_requests[: self.batch_size]
 
         return batch
 
@@ -232,7 +213,7 @@ class BatchUpdateScheduler:
                         if cache_items:
                             success_count = await self.cache_manager.set_prices_batch(cache_items)
                             stats["success"] += success_count
-                            stats["failed"] += (len(requests) - success_count)
+                            stats["failed"] += len(requests) - success_count
 
                             # Calculate API calls saved
                             stats["api_calls_saved"] = len(requests) - 1
@@ -246,9 +227,7 @@ class BatchUpdateScheduler:
 
                                 if price:
                                     await self.cache_manager.set_price(
-                                        request.asset,
-                                        provider_name,
-                                        price
+                                        request.asset, provider_name, price
                                     )
                                     stats["success"] += 1
                                 else:
@@ -256,8 +235,7 @@ class BatchUpdateScheduler:
 
                             except Exception as e:
                                 logger.error(
-                                    f"Failed to update price: {e}",
-                                    asset=request.asset.symbol
+                                    f"Failed to update price: {e}", asset=request.asset.symbol
                                 )
                                 stats["failed"] += 1
 
@@ -270,9 +248,7 @@ class BatchUpdateScheduler:
 
                             if fundamentals:
                                 await self.cache_manager.set_fundamentals(
-                                    request.asset,
-                                    provider_name,
-                                    fundamentals
+                                    request.asset, provider_name, fundamentals
                                 )
                                 stats["success"] += 1
                             else:
@@ -280,8 +256,7 @@ class BatchUpdateScheduler:
 
                         except Exception as e:
                             logger.error(
-                                f"Failed to update fundamentals: {e}",
-                                asset=request.asset.symbol
+                                f"Failed to update fundamentals: {e}", asset=request.asset.symbol
                             )
                             stats["failed"] += 1
 
@@ -320,7 +295,7 @@ class BatchUpdateScheduler:
             "Processing batch",
             size=len(batch),
             remaining=len(self.pending_requests),
-            is_low_load=is_low_load
+            is_low_load=is_low_load,
         )
 
         # Process batch
@@ -337,7 +312,7 @@ class BatchUpdateScheduler:
             success=stats["success"],
             failed=stats["failed"],
             api_calls=stats["api_calls"],
-            api_calls_saved=stats.get("api_calls_saved", 0)
+            api_calls_saved=stats.get("api_calls_saved", 0),
         )
 
     async def start(self) -> None:
@@ -363,7 +338,7 @@ class BatchUpdateScheduler:
             "Batch scheduler started",
             batch_size=self.batch_size,
             interval_seconds=self.batch_interval_seconds,
-            low_load_hours=self.low_load_hours
+            low_load_hours=self.low_load_hours,
         )
 
     async def stop(self) -> None:
@@ -407,7 +382,7 @@ class BatchUpdateScheduler:
             "Pending requests flushed",
             batches=total_stats["batches"],
             success=total_stats["success"],
-            failed=total_stats["failed"]
+            failed=total_stats["failed"],
         )
 
         return total_stats

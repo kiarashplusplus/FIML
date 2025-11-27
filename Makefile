@@ -100,7 +100,7 @@ perf-report:
 
 lint:
 	ruff check fiml/
-	mypy fiml/
+	mypy fiml/ --no-site-packages
 
 format:
 	black fiml/ tests/

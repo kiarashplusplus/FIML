@@ -15,6 +15,7 @@ logger = structlog.get_logger(__name__)
 
 class IntentType(Enum):
     """Types of user intents"""
+
     COMMAND = "command"
     LESSON_REQUEST = "lesson_request"
     LESSON_NAVIGATION = "lesson_navigation"
@@ -29,6 +30,7 @@ class IntentType(Enum):
 @dataclass
 class AbstractMessage:
     """Platform-agnostic message representation"""
+
     user_id: str
     platform: str
     text: str
@@ -48,6 +50,7 @@ class AbstractMessage:
 @dataclass
 class AbstractResponse:
     """Platform-agnostic response representation"""
+
     text: str
     media: Optional[List[str]] = None
     actions: Optional[List[Dict[str, Any]]] = None  # Buttons, keyboards
@@ -65,6 +68,7 @@ class AbstractResponse:
 @dataclass
 class Intent:
     """Parsed user intent"""
+
     type: IntentType
     data: Dict[str, Any]
     confidence: float = 1.0
@@ -72,6 +76,7 @@ class Intent:
 
 class SessionState(Enum):
     """User session states"""
+
     NEW_USER = "new_user"
     ONBOARDING = "onboarding"
     IN_LESSON = "in_lesson"
@@ -83,6 +88,7 @@ class SessionState(Enum):
 @dataclass
 class UserSession:
     """User session data"""
+
     user_id: str
     platform: str
     state: SessionState
@@ -127,11 +133,7 @@ class SessionManager:
             return session
 
         # Create new session
-        session = UserSession(
-            user_id=user_id,
-            platform=platform,
-            state=SessionState.NEW_USER
-        )
+        session = UserSession(user_id=user_id, platform=platform, state=SessionState.NEW_USER)
         self._sessions[user_id] = session
 
         logger.info("New session created", user_id=user_id, platform=platform)
@@ -159,17 +161,35 @@ class IntentClassifier:
 
     # Command keywords
     COMMANDS = {
-        "/start", "/help", "/lesson", "/quiz", "/mentor", "/market",
-        "/addkey", "/listkeys", "/removekey", "/testkey", "/status",
-        "/progress", "/cancel"
+        "/start",
+        "/help",
+        "/lesson",
+        "/quiz",
+        "/mentor",
+        "/market",
+        "/addkey",
+        "/listkeys",
+        "/removekey",
+        "/testkey",
+        "/status",
+        "/progress",
+        "/cancel",
     }
 
     # Lesson keywords
     LESSON_KEYWORDS = ["lesson", "learn", "teach", "explain", "course", "module"]
 
     # Educational question patterns (high priority)
-    EDUCATIONAL_PATTERNS = ["what is", "how do", "can you explain", "what's the difference",
-                          "how does", "why does", "tell me about", "what are"]
+    EDUCATIONAL_PATTERNS = [
+        "what is",
+        "how do",
+        "can you explain",
+        "what's the difference",
+        "how does",
+        "why does",
+        "tell me about",
+        "what are",
+    ]
 
     # Market keywords
     MARKET_KEYWORDS = ["price", "stock", "chart", "quote", "$", "market", "ticker"]
@@ -191,66 +211,44 @@ class IntentClassifier:
         text = message.text.lower().strip()
 
         # Check for commands
-        if text.startswith('/'):
+        if text.startswith("/"):
             command = text.split()[0]
-            return Intent(
-                type=IntentType.COMMAND,
-                data={"command": command},
-                confidence=1.0
-            )
+            return Intent(type=IntentType.COMMAND, data={"command": command}, confidence=1.0)
 
         # Context-based classification
         if session.state == SessionState.IN_QUIZ:
             return Intent(
-                type=IntentType.QUIZ_ANSWER,
-                data={"answer": message.text},
-                confidence=0.9
+                type=IntentType.QUIZ_ANSWER, data={"answer": message.text}, confidence=0.9
             )
 
         if session.state == SessionState.IN_LESSON:
             if any(kw in text for kw in self.NAVIGATION_KEYWORDS):
                 return Intent(
-                    type=IntentType.LESSON_NAVIGATION,
-                    data={"action": text},
-                    confidence=0.8
+                    type=IntentType.LESSON_NAVIGATION, data={"action": text}, confidence=0.8
                 )
 
         # Check for educational questions first (higher priority than market keywords)
         if any(pattern in text for pattern in self.EDUCATIONAL_PATTERNS):
             return Intent(
-                type=IntentType.AI_QUESTION,
-                data={"question": message.text},
-                confidence=0.8
+                type=IntentType.AI_QUESTION, data={"question": message.text}, confidence=0.8
             )
 
         # Keyword-based classification
         if any(kw in text for kw in self.LESSON_KEYWORDS):
             return Intent(
-                type=IntentType.LESSON_REQUEST,
-                data={"query": message.text},
-                confidence=0.7
+                type=IntentType.LESSON_REQUEST, data={"query": message.text}, confidence=0.7
             )
 
         if any(kw in text for kw in self.MARKET_KEYWORDS):
             return Intent(
-                type=IntentType.MARKET_QUERY,
-                data={"query": message.text},
-                confidence=0.7
+                type=IntentType.MARKET_QUERY, data={"query": message.text}, confidence=0.7
             )
 
         if any(kw in text for kw in self.NAVIGATION_KEYWORDS):
-            return Intent(
-                type=IntentType.NAVIGATION,
-                data={"action": text},
-                confidence=0.6
-            )
+            return Intent(type=IntentType.NAVIGATION, data={"action": text}, confidence=0.6)
 
         # Default to AI question
-        return Intent(
-            type=IntentType.AI_QUESTION,
-            data={"question": message.text},
-            confidence=0.5
-        )
+        return Intent(type=IntentType.AI_QUESTION, data={"question": message.text}, confidence=0.5)
 
 
 class UnifiedBotGateway:
@@ -297,11 +295,7 @@ class UnifiedBotGateway:
         return await self.intent_classifier.classify(message, session)
 
     async def handle_message(
-        self,
-        platform: str,
-        user_id: str,
-        text: str,
-        context: Optional[Dict] = None
+        self, platform: str, user_id: str, text: str, context: Optional[Dict] = None
     ) -> AbstractResponse:
         """
         Main message processing pipeline
@@ -317,10 +311,7 @@ class UnifiedBotGateway:
         """
         # 1. Create abstract message
         message = AbstractMessage(
-            user_id=user_id,
-            platform=platform,
-            text=text,
-            context=context or {}
+            user_id=user_id, platform=platform, text=text, context=context or {}
         )
 
         # 2. Load user session
@@ -333,7 +324,7 @@ class UnifiedBotGateway:
             "Message classified",
             user_id=user_id,
             intent_type=intent.type.value,
-            confidence=intent.confidence
+            confidence=intent.confidence,
         )
 
         # 4. Route to handler
@@ -350,10 +341,7 @@ class UnifiedBotGateway:
         return cast(AbstractResponse, response)
 
     async def handle_command(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle bot commands"""
         command = intent.data.get("command", "")
@@ -362,61 +350,48 @@ class UnifiedBotGateway:
         # This is a fallback for when gateway receives commands
         return AbstractResponse(
             text=f"Command {command} should be handled by platform adapter",
-            metadata={"handled_by": "gateway_fallback"}
+            metadata={"handled_by": "gateway_fallback"},
         )
 
     async def handle_lesson_request(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle lesson requests"""
         # Placeholder - will be implemented by LessonContentEngine
         return AbstractResponse(
             text="📚 **Lessons Coming Soon!**\n\n"
-                 "The lesson system is being built. Soon you'll be able to:\n"
-                 "- Learn trading fundamentals\n"
-                 "- Practice with real market data\n"
-                 "- Take interactive quizzes\n\n"
-                 "For now, try:\n"
-                 "/help - See available commands\n"
-                 "/addkey - Add API keys for market data"
+            "The lesson system is being built. Soon you'll be able to:\n"
+            "- Learn trading fundamentals\n"
+            "- Practice with real market data\n"
+            "- Take interactive quizzes\n\n"
+            "For now, try:\n"
+            "/help - See available commands\n"
+            "/addkey - Add API keys for market data"
         )
 
     async def handle_lesson_navigation(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle lesson navigation"""
         action = intent.data.get("action", "")
 
         # Placeholder
         return AbstractResponse(
-            text=f"Lesson navigation: {action}\n\n"
-                 "(Lesson system coming soon)"
+            text=f"Lesson navigation: {action}\n\n" "(Lesson system coming soon)"
         )
 
     async def handle_quiz_answer(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle quiz answers"""
         # Placeholder - will be implemented by QuizSystem
         return AbstractResponse(
             text="Quiz system coming soon!\n\n"
-                 "You'll be able to test your knowledge with interactive quizzes."
+            "You'll be able to test your knowledge with interactive quizzes."
         )
 
     async def handle_ai_question(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle AI mentor questions"""
         # Placeholder - will be implemented by AIMentorService
@@ -424,19 +399,16 @@ class UnifiedBotGateway:
 
         return AbstractResponse(
             text="🤖 **AI Mentor Coming Soon!**\n\n"
-                 f"You asked: _{question}_\n\n"
-                 "Soon you'll chat with AI mentors (Maya, Theo, Zara) who will:\n"
-                 "- Answer your trading questions\n"
-                 "- Explain concepts with real examples\n"
-                 "- Guide your learning journey\n\n"
-                 "For now, use /help to see what's available."
+            f"You asked: _{question}_\n\n"
+            "Soon you'll chat with AI mentors (Maya, Theo, Zara) who will:\n"
+            "- Answer your trading questions\n"
+            "- Explain concepts with real examples\n"
+            "- Guide your learning journey\n\n"
+            "For now, use /help to see what's available."
         )
 
     async def handle_market_query(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle market data queries"""
         # Placeholder - will be implemented by FIMLEducationalDataAdapter
@@ -444,40 +416,33 @@ class UnifiedBotGateway:
 
         return AbstractResponse(
             text="📊 **Market Data Coming Soon!**\n\n"
-                 f"You asked about: _{query}_\n\n"
-                 "Soon you'll get real-time market data with educational context!\n\n"
-                 "First, set up your API keys:\n"
-                 "/addkey - Add provider keys\n"
-                 "/listkeys - View connected providers"
+            f"You asked about: _{query}_\n\n"
+            "Soon you'll get real-time market data with educational context!\n\n"
+            "First, set up your API keys:\n"
+            "/addkey - Add provider keys\n"
+            "/listkeys - View connected providers"
         )
 
     async def handle_navigation(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle general navigation"""
         action = intent.data.get("action", "")
 
         return AbstractResponse(
-            text=f"Navigation: {action}\n\n"
-                 "Use /help to see available commands"
+            text=f"Navigation: {action}\n\n" "Use /help to see available commands"
         )
 
     async def handle_unknown(
-        self,
-        message: AbstractMessage,
-        session: UserSession,
-        intent: Intent
+        self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle unknown intents"""
         return AbstractResponse(
             text="I'm not sure what you mean. 🤔\n\n"
-                 "Try these commands:\n"
-                 "/help - See all commands\n"
-                 "/lesson - Start learning (coming soon)\n"
-                 "/addkey - Set up your API keys"
+            "Try these commands:\n"
+            "/help - See all commands\n"
+            "/lesson - Start learning (coming soon)\n"
+            "/addkey - Set up your API keys"
         )
 
     def register_handler(self, intent_type: IntentType, handler: Any) -> None:

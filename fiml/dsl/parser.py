@@ -83,9 +83,7 @@ class ConditionSpec:
 
     def to_dict(self) -> Dict[str, Any]:
         result = {
-            "metric": self.metric.to_dict()
-            if isinstance(self.metric, MetricSpec)
-            else self.metric,
+            "metric": self.metric.to_dict() if isinstance(self.metric, MetricSpec) else self.metric,
             "operator": self.operator,
             "value": self.value,
         }
@@ -300,11 +298,12 @@ class FKDSLTransformer(Transformer):
         # Last argument is the metric list, all preceding are assets
         # Filter out VS tokens (keyword separators)
         from lark import Token
+
         metrics = args[-1]
         assets = []
         for a in args[:-1]:
             # Skip VS tokens - check if it's a Token with type 'VS'
-            if isinstance(a, Token) and a.type == 'VS':
+            if isinstance(a, Token) and a.type == "VS":
                 continue
             assets.append(self._to_asset_dict(a))
         return {
@@ -313,9 +312,7 @@ class FKDSLTransformer(Transformer):
             "metrics": metrics if isinstance(metrics, list) else [metrics],
         }
 
-    def macro_stmt(
-        self, indicators: Any, analysis_type: Any, target_asset: Any
-    ) -> Dict[str, Any]:
+    def macro_stmt(self, indicators: Any, analysis_type: Any, target_asset: Any) -> Dict[str, Any]:
         """
         Handle MACRO query: MACRO: US10Y, CPI, VIX → REGRESSION ON SPY
 
@@ -527,9 +524,11 @@ class FKDSLTransformer(Transformer):
         return {
             "category": "analysis",
             "name": "correlate",
-            "assets": [self._to_asset_dict(a) for a in assets]
-            if isinstance(assets, list)
-            else [self._to_asset_dict(assets)],
+            "assets": (
+                [self._to_asset_dict(a) for a in assets]
+                if isinstance(assets, list)
+                else [self._to_asset_dict(assets)]
+            ),
         }
 
     def volatility_compound(self, timeframe: Any) -> Dict[str, Any]:

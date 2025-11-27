@@ -76,20 +76,14 @@ class TestAzureClientEnhancements:
     """Test enhanced Azure OpenAI client methods"""
 
     @pytest.mark.asyncio
-    async def test_generate_market_summary(
-        self, mock_azure_response, sample_market_data
-    ):
+    async def test_generate_market_summary(self, mock_azure_response, sample_market_data):
         """Test market summary generation"""
         client = AzureOpenAIClient()
 
-        with patch.object(
-            client, "_make_request", new_callable=AsyncMock
-        ) as mock_request:
+        with patch.object(client, "_make_request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_azure_response
 
-            summary = await client.generate_market_summary(
-                sample_market_data, style="professional"
-            )
+            summary = await client.generate_market_summary(sample_market_data, style="professional")
 
             assert isinstance(summary, str)
             assert len(summary) > 0
@@ -101,9 +95,7 @@ class TestAzureClientEnhancements:
         """Test fallback when API fails"""
         client = AzureOpenAIClient()
 
-        with patch.object(
-            client, "_make_request", side_effect=Exception("API Error")
-        ):
+        with patch.object(client, "_make_request", side_effect=Exception("API Error")):
             summary = await client.generate_market_summary(sample_market_data)
 
             # Should use fallback template
@@ -116,9 +108,7 @@ class TestAzureClientEnhancements:
         """Test price movement explanation"""
         client = AzureOpenAIClient()
 
-        with patch.object(
-            client, "_make_request", new_callable=AsyncMock
-        ) as mock_request:
+        with patch.object(client, "_make_request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_azure_response
 
             explanation = await client.explain_price_movement(
@@ -133,15 +123,11 @@ class TestAzureClientEnhancements:
             mock_request.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_interpret_technical_indicators(
-        self, mock_azure_response, sample_technical_data
-    ):
+    async def test_interpret_technical_indicators(self, mock_azure_response, sample_technical_data):
         """Test technical indicator interpretation"""
         client = AzureOpenAIClient()
 
-        with patch.object(
-            client, "_make_request", new_callable=AsyncMock
-        ) as mock_request:
+        with patch.object(client, "_make_request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_azure_response
 
             interpretation = await client.interpret_technical_indicators(
@@ -159,14 +145,10 @@ class TestAzureClientEnhancements:
         """Test risk profile assessment"""
         client = AzureOpenAIClient()
 
-        with patch.object(
-            client, "_make_request", new_callable=AsyncMock
-        ) as mock_request:
+        with patch.object(client, "_make_request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_azure_response
 
-            assessment = await client.assess_risk_profile(
-                volatility=0.25, beta=1.15, var=0.05
-            )
+            assessment = await client.assess_risk_profile(volatility=0.25, beta=1.15, var=0.05)
 
             assert isinstance(assessment, str)
             assert len(assessment) > 0
@@ -180,9 +162,7 @@ class TestAzureClientEnhancements:
         asset1 = {"symbol": "AAPL", "pe_ratio": 28.5, "growth": 15.8}
         asset2 = {"symbol": "MSFT", "pe_ratio": 32.1, "growth": 12.3}
 
-        with patch.object(
-            client, "_make_request", new_callable=AsyncMock
-        ) as mock_request:
+        with patch.object(client, "_make_request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_azure_response
 
             comparison = await client.compare_assets(asset1, asset2)
@@ -418,9 +398,7 @@ class TestNarrativeValidator:
         assert len(text_with) > len(text_without)
 
         # Should not double-inject
-        text_already = (
-            "AAPL is trading at $175.50. This is not financial advice."
-        )
+        text_already = "AAPL is trading at $175.50. This is not financial advice."
         text_checked = validator.auto_inject_disclaimer(text_already)
         assert text_checked == text_already
 
@@ -599,9 +577,7 @@ class TestNarrativeSystemIntegration:
         validator = NarrativeValidator()
         NarrativeCache()
 
-        with patch.object(
-            client, "_make_request", new_callable=AsyncMock
-        ) as mock_request:
+        with patch.object(client, "_make_request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_azure_response
 
             # Generate
@@ -623,9 +599,7 @@ class TestNarrativeSystemIntegration:
         library = TemplateLibrary()
 
         # Generate using template
-        narrative = library.render_template(
-            "price_movement", Language.ENGLISH, sample_market_data
-        )
+        narrative = library.render_template("price_movement", Language.ENGLISH, sample_market_data)
 
         # Validate generated text
         validator = NarrativeValidator()

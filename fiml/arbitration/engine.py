@@ -15,12 +15,7 @@ import numpy as np
 
 from fiml.core.exceptions import NoProviderAvailableError
 from fiml.core.logging import get_logger
-from fiml.core.models import (
-    ArbitrationPlan,
-    Asset,
-    DataType,
-    ProviderScore,
-)
+from fiml.core.models import ArbitrationPlan, Asset, DataType, ProviderScore
 from fiml.providers.base import BaseProvider, ProviderResponse
 from fiml.providers.registry import provider_registry
 
@@ -187,9 +182,7 @@ class DataArbitrationEngine:
                 continue
 
         # All providers failed
-        raise NoProviderAvailableError(
-            f"All providers failed for {asset.symbol} ({data_type})"
-        )
+        raise NoProviderAvailableError(f"All providers failed for {asset.symbol} ({data_type})")
 
     async def merge_multi_provider(
         self, responses: List[ProviderResponse], data_type: DataType

@@ -7,11 +7,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from fiml.core.exceptions import (
-    ArbitrationError,
-    DataQualityError,
-    ProviderError,
-)
+from fiml.core.exceptions import (ArbitrationError, DataQualityError,
+                                  ProviderError)
 
 
 class TestServerConfiguration:
@@ -52,6 +49,7 @@ class TestHealthEndpoints:
     def client(self):
         """Create test client"""
         from fiml.server import app
+
         return TestClient(app)
 
     def test_health_check_endpoint(self, client):
@@ -152,6 +150,7 @@ class TestExceptionHandlers:
     def client(self):
         """Create test client"""
         from fiml.server import app
+
         return TestClient(app)
 
     def test_fiml_exception_handler(self, client):
@@ -234,11 +233,13 @@ class TestLifespan:
         from fiml.server import app, lifespan
 
         # Mock the imports inside the lifespan function
-        with patch("fiml.cache.manager.cache_manager") as mock_cache, \
-             patch("fiml.agents.orchestrator.agent_orchestrator") as mock_orchestrator, \
-             patch.object(app.state, "provider_registry", create=True), \
-             patch("fiml.server.logger") as mock_logger, \
-             patch("fiml.server.provider_registry") as mock_provider_registry:
+        with (
+            patch("fiml.cache.manager.cache_manager") as mock_cache,
+            patch("fiml.agents.orchestrator.agent_orchestrator") as mock_orchestrator,
+            patch.object(app.state, "provider_registry", create=True),
+            patch("fiml.server.logger") as mock_logger,
+            patch("fiml.server.provider_registry") as mock_provider_registry,
+        ):
 
             mock_cache.initialize = AsyncMock()
             mock_orchestrator.initialize = AsyncMock()
@@ -256,9 +257,11 @@ class TestLifespan:
         """Test that cache initialization failure is handled gracefully"""
         from fiml.server import app, lifespan
 
-        with patch("fiml.cache.manager.cache_manager") as mock_cache, \
-             patch("fiml.server.provider_registry") as mock_registry, \
-             patch("fiml.server.logger") as mock_logger:
+        with (
+            patch("fiml.cache.manager.cache_manager") as mock_cache,
+            patch("fiml.server.provider_registry") as mock_registry,
+            patch("fiml.server.logger") as mock_logger,
+        ):
 
             # Make cache initialization fail
             mock_cache.initialize = AsyncMock(side_effect=Exception("Cache connection failed"))
@@ -279,11 +282,13 @@ class TestLifespan:
         """Test that orchestrator initialization failure is handled gracefully"""
         from fiml.server import app, lifespan
 
-        with patch("fiml.server.settings") as mock_settings, \
-             patch("fiml.cache.manager.cache_manager") as mock_cache, \
-             patch("fiml.server.provider_registry") as mock_registry, \
-             patch("fiml.agents.orchestrator.agent_orchestrator") as mock_orchestrator, \
-             patch("fiml.server.logger"):
+        with (
+            patch("fiml.server.settings") as mock_settings,
+            patch("fiml.cache.manager.cache_manager") as mock_cache,
+            patch("fiml.server.provider_registry") as mock_registry,
+            patch("fiml.agents.orchestrator.agent_orchestrator") as mock_orchestrator,
+            patch("fiml.server.logger"),
+        ):
 
             # Enable Ray address to trigger orchestrator initialization
             mock_settings.ray_address = "ray://localhost:10001"
@@ -307,10 +312,12 @@ class TestLifespan:
         """Test lifespan shutdown event"""
         from fiml.server import app, lifespan
 
-        with patch("fiml.cache.manager.cache_manager") as mock_cache, \
-             patch("fiml.server.provider_registry") as mock_registry, \
-             patch("fiml.agents.orchestrator.agent_orchestrator") as mock_orchestrator, \
-             patch("fiml.server.logger"):
+        with (
+            patch("fiml.cache.manager.cache_manager") as mock_cache,
+            patch("fiml.server.provider_registry") as mock_registry,
+            patch("fiml.agents.orchestrator.agent_orchestrator") as mock_orchestrator,
+            patch("fiml.server.logger"),
+        ):
 
             mock_cache.initialize = AsyncMock()
             mock_cache.shutdown = AsyncMock()
@@ -364,6 +371,7 @@ class TestPrometheusIntegration:
     def client(self):
         """Create test client"""
         from fiml.server import app
+
         return TestClient(app)
 
     def test_metrics_endpoint_exists(self, client):

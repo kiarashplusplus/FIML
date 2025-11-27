@@ -11,14 +11,14 @@ from fiml.core.config import settings
 
 # Watchdog event intelligence system
 from fiml.watchdog import (
-    EventFilter,
-    EventStream,
-    EventType,
-    Severity,
-    WatchdogEvent,
-    WatchdogManager,
-    event_stream,
-    watchdog_manager,
+                           EventFilter,
+                           EventStream,
+                           EventType,
+                           Severity,
+                           WatchdogEvent,
+                           WatchdogManager,
+                           event_stream,
+                           watchdog_manager,
 )
 
 __all__ = [

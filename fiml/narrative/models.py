@@ -62,9 +62,7 @@ class NarrativeSection(BaseModel):
     word_count: int = Field(default=0, ge=0)
     readability_score: Optional[float] = Field(default=None, ge=0.0, le=100.0)
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @field_validator("content")
     @classmethod
@@ -101,9 +99,7 @@ class Narrative(BaseModel):
     generation_time_ms: Optional[float] = Field(default=None, ge=0.0)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    generated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @field_validator("key_insights")
     @classmethod
@@ -178,18 +174,14 @@ class NarrativeContext(BaseModel):
     news_data: Optional[List[Dict[str, Any]]] = None
 
     # Generation preferences
-    preferences: NarrativePreferences = Field(
-        default_factory=lambda: NarrativePreferences()
-    )
+    preferences: NarrativePreferences = Field(default_factory=lambda: NarrativePreferences())
 
     # Compliance and regional settings
     region: str = "US"
     include_disclaimers: bool = True
 
     # Metadata
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     data_sources: List[str] = Field(default_factory=list)
 
     @field_validator("asset_symbol")

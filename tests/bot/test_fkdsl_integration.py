@@ -7,7 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fiml.bot.adapters.telegram_adapter import DSL_TEMPLATES, TelegramBotAdapter
+from fiml.bot.adapters.telegram_adapter import (DSL_TEMPLATES,
+                                                TelegramBotAdapter)
 from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
 from fiml.bot.education.gamification import GamificationEngine
@@ -37,7 +38,7 @@ def mock_context():
 @pytest.fixture
 def bot_adapter():
     """Create TelegramBotAdapter instance for testing"""
-    with patch('fiml.bot.adapters.telegram_adapter.Application'):
+    with patch("fiml.bot.adapters.telegram_adapter.Application"):
         key_manager = MagicMock(spec=UserProviderKeyManager)
         provider_configurator = MagicMock(spec=FIMLProviderConfigurator)
         gamification = MagicMock(spec=GamificationEngine)
@@ -47,7 +48,7 @@ def bot_adapter():
             token="test_token",
             key_manager=key_manager,
             provider_configurator=provider_configurator,
-            gamification=gamification
+            gamification=gamification,
         )
         return adapter
 
@@ -97,15 +98,12 @@ async def test_execute_dsl_query_success(bot_adapter, mock_telegram_update, mock
     mock_result = {
         "query": "EVALUATE AAPL: PRICE",
         "status": "completed",
-        "result": {
-            "AAPL": {
-                "price": 150.25,
-                "volume": 50000000
-            }
-        }
+        "result": {"AAPL": {"price": 150.25, "volume": 50000000}},
     }
 
-    with patch('fiml.bot.adapters.telegram_adapter.execute_fk_dsl', new_callable=AsyncMock) as mock_dsl:
+    with patch(
+        "fiml.bot.adapters.telegram_adapter.execute_fk_dsl", new_callable=AsyncMock
+    ) as mock_dsl:
         mock_dsl.return_value = mock_result
 
         await bot_adapter.execute_user_dsl_query(
@@ -113,12 +111,12 @@ async def test_execute_dsl_query_success(bot_adapter, mock_telegram_update, mock
             context=mock_context,
             user_id="test_user_123",
             query="EVALUATE AAPL: PRICE",
-            from_callback=False
+            from_callback=False,
         )
 
         # Verify execute_fk_dsl was called
         assert mock_dsl.called
-        assert mock_dsl.call_args[1]['query'] == "EVALUATE AAPL: PRICE"
+        assert mock_dsl.call_args[1]["query"] == "EVALUATE AAPL: PRICE"
 
         # Verify response was sent
         assert mock_telegram_update.message.reply_text.called
@@ -131,7 +129,9 @@ async def test_execute_dsl_query_success(bot_adapter, mock_telegram_update, mock
 async def test_execute_dsl_query_failure(bot_adapter, mock_telegram_update, mock_context):
     """Test DSL query execution with error handling"""
 
-    with patch('fiml.bot.adapters.telegram_adapter.execute_fk_dsl', new_callable=AsyncMock) as mock_dsl:
+    with patch(
+        "fiml.bot.adapters.telegram_adapter.execute_fk_dsl", new_callable=AsyncMock
+    ) as mock_dsl:
         mock_dsl.side_effect = Exception("Invalid DSL syntax")
 
         await bot_adapter.execute_user_dsl_query(
@@ -139,7 +139,7 @@ async def test_execute_dsl_query_failure(bot_adapter, mock_telegram_update, mock
             context=mock_context,
             user_id="test_user_123",
             query="INVALID QUERY",
-            from_callback=False
+            from_callback=False,
         )
 
         # Verify error message was sent
@@ -158,12 +158,7 @@ async def test_format_dsl_result_completed(bot_adapter):
     result = {
         "query": "EVALUATE AAPL: PRICE",
         "status": "completed",
-        "result": {
-            "AAPL": {
-                "price": 150.25,
-                "volume": 50000000
-            }
-        }
+        "result": {"AAPL": {"price": 150.25, "volume": 50000000}},
     }
 
     formatted = await bot_adapter.format_dsl_result(result, "EVALUATE AAPL: PRICE")
@@ -178,11 +173,7 @@ async def test_format_dsl_result_completed(bot_adapter):
 async def test_format_dsl_result_failed(bot_adapter):
     """Test formatting of failed DSL results"""
 
-    result = {
-        "query": "INVALID QUERY",
-        "status": "failed",
-        "error": "Syntax error at position 5"
-    }
+    result = {"query": "INVALID QUERY", "status": "failed", "error": "Syntax error at position 5"}
 
     formatted = await bot_adapter.format_dsl_result(result, "INVALID QUERY")
 
@@ -199,7 +190,7 @@ async def test_format_dsl_result_running(bot_adapter):
         "query": "EVALUATE AAPL: PRICE",
         "status": "running",
         "task_id": "task_12345",
-        "total_steps": 5
+        "total_steps": 5,
     }
 
     formatted = await bot_adapter.format_dsl_result(result, "EVALUATE AAPL: PRICE")
@@ -217,7 +208,7 @@ async def test_format_dsl_result_respects_telegram_limits(bot_adapter):
     large_result = {
         "query": "SCAN US_TECH",
         "status": "completed",
-        "result": {f"STOCK_{i}": {"price": 100.0 + i} for i in range(500)}
+        "result": {f"STOCK_{i}": {"price": 100.0 + i} for i in range(500)},
     }
 
     formatted = await bot_adapter.format_dsl_result(large_result, "SCAN US_TECH")
@@ -260,10 +251,12 @@ async def test_handle_dsl_template_predefined(bot_adapter, mock_telegram_update,
     mock_result = {
         "query": "EVALUATE AAPL: PRICE, VOLUME, VOLATILITY(30d)",
         "status": "completed",
-        "result": {"AAPL": {"price": 150.25}}
+        "result": {"AAPL": {"price": 150.25}},
     }
 
-    with patch('fiml.bot.adapters.telegram_adapter.execute_fk_dsl', new_callable=AsyncMock) as mock_dsl:
+    with patch(
+        "fiml.bot.adapters.telegram_adapter.execute_fk_dsl", new_callable=AsyncMock
+    ) as mock_dsl:
         mock_dsl.return_value = mock_result
 
         await bot_adapter.handle_dsl_template(mock_telegram_update, mock_context)

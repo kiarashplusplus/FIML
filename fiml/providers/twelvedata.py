@@ -62,7 +62,9 @@ class TwelvedataProvider(BaseProvider):
             await self._session.close()
         self._is_initialized = False
 
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, str]] = None
+    ) -> Dict[str, Any]:
         """Make API request to Twelvedata"""
         if not self._session:
             raise ProviderError("Provider not initialized")
@@ -76,9 +78,7 @@ class TwelvedataProvider(BaseProvider):
         try:
             url = f"{self.BASE_URL}{endpoint}"
             async with self._session.get(
-                url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                url, params=params, timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
             ) as response:
                 self._record_request()
 
@@ -87,7 +87,9 @@ class TwelvedataProvider(BaseProvider):
 
                     # Check for API errors
                     if isinstance(data, dict) and data.get("status") == "error":
-                        raise ProviderError(f"Twelvedata error: {data.get('message', 'Unknown error')}")
+                        raise ProviderError(
+                            f"Twelvedata error: {data.get('message', 'Unknown error')}"
+                        )
 
                     return data  # type: ignore[no-any-return]
                 elif response.status == 429:
@@ -181,14 +183,16 @@ class TwelvedataProvider(BaseProvider):
 
             ohlcv_data = []
             for bar in values[:limit]:
-                ohlcv_data.append({
-                    "timestamp": bar.get("datetime"),
-                    "open": float(bar.get("open", 0.0)),
-                    "high": float(bar.get("high", 0.0)),
-                    "low": float(bar.get("low", 0.0)),
-                    "close": float(bar.get("close", 0.0)),
-                    "volume": int(bar.get("volume", 0)),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": bar.get("datetime"),
+                        "open": float(bar.get("open", 0.0)),
+                        "high": float(bar.get("high", 0.0)),
+                        "low": float(bar.get("low", 0.0)),
+                        "close": float(bar.get("close", 0.0)),
+                        "volume": int(bar.get("volume", 0)),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -297,7 +301,12 @@ class TwelvedataProvider(BaseProvider):
     async def supports_asset(self, asset: Asset) -> bool:
         """Check if provider supports this asset type"""
         # Twelvedata supports stocks, forex, ETF, and crypto
-        return asset.asset_type in [AssetType.EQUITY, AssetType.FOREX, AssetType.ETF, AssetType.CRYPTO]
+        return asset.asset_type in [
+            AssetType.EQUITY,
+            AssetType.FOREX,
+            AssetType.ETF,
+            AssetType.CRYPTO,
+        ]
 
     async def get_health(self) -> ProviderHealth:
         """Get provider health metrics"""

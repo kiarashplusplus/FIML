@@ -43,16 +43,32 @@ class CacheWarmer:
         """
         return [
             # Major US Tech Stocks (FAANG+)
-            "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA",
-
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "NVDA",
+            "TSLA",
             # Major Indices
-            "SPY", "QQQ", "DIA", "IWM",
-
+            "SPY",
+            "QQQ",
+            "DIA",
+            "IWM",
             # Popular stocks
-            "AMD", "NFLX", "DIS", "INTC", "PYPL", "CRM", "ADBE",
-
+            "AMD",
+            "NFLX",
+            "DIS",
+            "INTC",
+            "PYPL",
+            "CRM",
+            "ADBE",
             # Major Cryptos
-            "BTC", "ETH", "BNB", "SOL", "ADA",
+            "BTC",
+            "ETH",
+            "BNB",
+            "SOL",
+            "ADA",
         ]
 
     def get_assets_to_warm(self) -> List[Asset]:
@@ -69,40 +85,53 @@ class CacheWarmer:
 
         # NASDAQ symbols
         nasdaq_symbols = {
-            "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA",
-            "TSLA", "AMD", "NFLX", "INTC", "PYPL", "CRM", "ADBE"
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "NVDA",
+            "TSLA",
+            "AMD",
+            "NFLX",
+            "INTC",
+            "PYPL",
+            "CRM",
+            "ADBE",
         }
 
         # Equity assets
         equity_symbols = [s for s in self.popular_symbols if s not in crypto_set]
         for symbol in equity_symbols:
-            assets.append(Asset(
-                symbol=symbol,
-                name=f"{symbol} Stock",
-                asset_type=AssetType.EQUITY,
-                market=Market.US,
-                exchange="NASDAQ" if symbol in nasdaq_symbols else "NYSE",
-                currency="USD"
-            ))
+            assets.append(
+                Asset(
+                    symbol=symbol,
+                    name=f"{symbol} Stock",
+                    asset_type=AssetType.EQUITY,
+                    market=Market.US,
+                    exchange="NASDAQ" if symbol in nasdaq_symbols else "NYSE",
+                    currency="USD",
+                )
+            )
 
         # Crypto assets
         for symbol in crypto_set:
             if symbol in self.popular_symbols:
-                assets.append(Asset(
-                    symbol=symbol,
-                    name=f"{symbol} Crypto",
-                    asset_type=AssetType.CRYPTO,
-                    market=Market.CRYPTO,
-                    exchange="binance",
-                    currency="USDT"
-                ))
+                assets.append(
+                    Asset(
+                        symbol=symbol,
+                        name=f"{symbol} Crypto",
+                        asset_type=AssetType.CRYPTO,
+                        market=Market.CRYPTO,
+                        exchange="binance",
+                        currency="USDT",
+                    )
+                )
 
         return assets
 
     async def warm_cache(
-        self,
-        assets: Optional[List[Asset]] = None,
-        force: bool = False
+        self, assets: Optional[List[Asset]] = None, force: bool = False
     ) -> Dict[str, Any]:
         """
         Warm cache with data for specified assets
@@ -116,10 +145,7 @@ class CacheWarmer:
         """
         if self._warming_in_progress and not force:
             logger.warning("Cache warming already in progress")
-            return {
-                "status": "skipped",
-                "reason": "warming_in_progress"
-            }
+            return {"status": "skipped", "reason": "warming_in_progress"}
 
         self._warming_in_progress = True
         start_time = datetime.now(timezone.utc)
@@ -144,14 +170,12 @@ class CacheWarmer:
                         "change": 0.0,
                         "change_percent": 0.0,
                         "timestamp": datetime.now(timezone.utc).isoformat(),
-                        "warmed": True
+                        "warmed": True,
                     }
 
                     # Set in cache with standard TTL
                     success = await cache_manager.set_price(
-                        asset=asset,
-                        provider="cache_warmer",
-                        price_data=price_data
+                        asset=asset, provider="cache_warmer", price_data=price_data
                     )
 
                     if success:
@@ -175,7 +199,7 @@ class CacheWarmer:
                 total=len(assets),
                 success=success_count,
                 errors=error_count,
-                duration_ms=f"{duration_ms:.2f}"
+                duration_ms=f"{duration_ms:.2f}",
             )
 
             return {
@@ -184,15 +208,12 @@ class CacheWarmer:
                 "success_count": success_count,
                 "error_count": error_count,
                 "duration_ms": duration_ms,
-                "timestamp": self._last_warm_time.isoformat()
+                "timestamp": self._last_warm_time.isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Cache warming failed: {e}")
-            return {
-                "status": "failed",
-                "error": str(e)
-            }
+            return {"status": "failed", "error": str(e)}
 
         finally:
             self._warming_in_progress = False
@@ -242,7 +263,7 @@ class CacheWarmer:
             "last_warm_time": self._last_warm_time.isoformat() if self._last_warm_time else None,
             "total_warmed": self._warm_count,
             "total_errors": self._warm_errors,
-            "popular_symbols_count": len(self.popular_symbols)
+            "popular_symbols_count": len(self.popular_symbols),
         }
 
 

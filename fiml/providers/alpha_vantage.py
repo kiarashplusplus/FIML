@@ -67,8 +67,7 @@ class AlphaVantageProvider(BaseProvider):
 
         # Remove timestamps older than 1 minute
         self._request_timestamps = [
-            ts for ts in self._request_timestamps
-            if (now - ts).total_seconds() < 60
+            ts for ts in self._request_timestamps if (now - ts).total_seconds() < 60
         ]
 
         # Check if we've exceeded the rate limit
@@ -77,8 +76,7 @@ class AlphaVantageProvider(BaseProvider):
             if wait_time > 0:
                 logger.warning(f"Rate limit reached, waiting {wait_time:.1f}s")
                 raise ProviderRateLimitError(
-                    f"Rate limit exceeded. Wait {wait_time:.1f}s",
-                    retry_after=int(wait_time) + 1
+                    f"Rate limit exceeded. Wait {wait_time:.1f}s", retry_after=int(wait_time) + 1
                 )
 
     async def _make_request(self, params: Dict[str, str]) -> Dict[str, Any]:
@@ -95,7 +93,7 @@ class AlphaVantageProvider(BaseProvider):
             async with self._session.get(
                 self.BASE_URL,
                 params=params,
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
             ) as response:
                 self._request_timestamps.append(datetime.now(timezone.utc))
                 self._record_request()
@@ -110,8 +108,7 @@ class AlphaVantageProvider(BaseProvider):
                     if "Note" in data:
                         # Rate limit message
                         raise ProviderRateLimitError(
-                            "Alpha Vantage rate limit exceeded",
-                            retry_after=60
+                            "Alpha Vantage rate limit exceeded", retry_after=60
                         )
 
                     return data  # type: ignore[no-any-return]
@@ -220,14 +217,16 @@ class AlphaVantageProvider(BaseProvider):
             # Convert to standard format
             ohlcv_data = []
             for timestamp, values in list(time_series.items())[:limit]:
-                ohlcv_data.append({
-                    "timestamp": timestamp,
-                    "open": float(values.get("1. open", 0.0)),
-                    "high": float(values.get("2. high", 0.0)),
-                    "low": float(values.get("3. low", 0.0)),
-                    "close": float(values.get("4. close", 0.0)),
-                    "volume": int(values.get("5. volume", 0)),
-                })
+                ohlcv_data.append(
+                    {
+                        "timestamp": timestamp,
+                        "open": float(values.get("1. open", 0.0)),
+                        "high": float(values.get("2. high", 0.0)),
+                        "low": float(values.get("3. low", 0.0)),
+                        "close": float(values.get("4. close", 0.0)),
+                        "volume": int(values.get("5. volume", 0)),
+                    }
+                )
 
             data = {
                 "ohlcv": ohlcv_data,
@@ -344,14 +343,16 @@ class AlphaVantageProvider(BaseProvider):
 
             articles = []
             for article in feed[:limit]:
-                articles.append({
-                    "title": article.get("title", ""),
-                    "url": article.get("url", ""),
-                    "published_at": article.get("time_published", ""),
-                    "source": article.get("source", ""),
-                    "summary": article.get("summary", ""),
-                    "sentiment": float(article.get("overall_sentiment_score", 0.0)),
-                })
+                articles.append(
+                    {
+                        "title": article.get("title", ""),
+                        "url": article.get("url", ""),
+                        "published_at": article.get("time_published", ""),
+                        "source": article.get("source", ""),
+                        "summary": article.get("summary", ""),
+                        "sentiment": float(article.get("overall_sentiment_score", 0.0)),
+                    }
+                )
 
             return ProviderResponse(
                 provider=self.name,

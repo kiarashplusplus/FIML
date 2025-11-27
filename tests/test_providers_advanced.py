@@ -21,7 +21,7 @@ class TestBaseProvider:
             enabled=True,
             priority=100,
             timeout_seconds=30,
-            rate_limit_per_minute=60
+            rate_limit_per_minute=60,
         )
 
         assert config.name == "test_provider"
@@ -38,11 +38,7 @@ class TestMockProviderAdvanced:
         provider = MockProvider()
         await provider.initialize()
 
-        asset = Asset(
-            symbol="AAPL",
-            asset_type=AssetType.EQUITY,
-            market=Market.US
-        )
+        asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY, market=Market.US)
 
         response = await provider.fetch_ohlcv(asset, timeframe="1d", limit=10)
 
@@ -58,11 +54,7 @@ class TestMockProviderAdvanced:
         provider = MockProvider()
         await provider.initialize()
 
-        asset = Asset(
-            symbol="AAPL",
-            asset_type=AssetType.EQUITY,
-            market=Market.US
-        )
+        asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY, market=Market.US)
 
         response = await provider.fetch_fundamentals(asset)
 
@@ -77,11 +69,7 @@ class TestMockProviderAdvanced:
         provider = MockProvider()
         await provider.initialize()
 
-        asset = Asset(
-            symbol="AAPL",
-            asset_type=AssetType.EQUITY,
-            market=Market.US
-        )
+        asset = Asset(symbol="AAPL", asset_type=AssetType.EQUITY, market=Market.US)
 
         response = await provider.fetch_news(asset)
 
@@ -97,11 +85,7 @@ class TestMockProviderAdvanced:
 
         # Test different asset types
         for asset_type in [AssetType.EQUITY, AssetType.CRYPTO, AssetType.FOREX]:
-            asset = Asset(
-                symbol="TEST",
-                asset_type=asset_type,
-                market=Market.US
-            )
+            asset = Asset(symbol="TEST", asset_type=asset_type, market=Market.US)
 
             supports = await provider.supports_asset(asset)
             assert supports is True
@@ -118,11 +102,7 @@ class TestYahooFinanceProviderAdvanced:
         provider = YahooFinanceProvider()
         await provider.initialize()
 
-        asset = Asset(
-            symbol="BTC-USD",
-            asset_type=AssetType.CRYPTO,
-            market=Market.CRYPTO
-        )
+        asset = Asset(symbol="BTC-USD", asset_type=AssetType.CRYPTO, market=Market.CRYPTO)
 
         supports = await provider.supports_asset(asset)
         # Yahoo might or might not support crypto - both are valid
@@ -136,11 +116,7 @@ class TestYahooFinanceProviderAdvanced:
         provider = YahooFinanceProvider()
         await provider.initialize()
 
-        asset = Asset(
-            symbol="ES",
-            asset_type=AssetType.FUTURE,
-            market=Market.US
-        )
+        asset = Asset(symbol="ES", asset_type=AssetType.FUTURE, market=Market.US)
 
         supports = await provider.supports_asset(asset)
         # Yahoo might not support all asset types

@@ -38,9 +38,24 @@ class PriceQueryTasks(TaskSet):
 
     # Popular symbols to query
     SYMBOLS = [
-        "AAPL", "TSLA", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "AMD",
-        "BTC", "ETH", "SOL", "AVAX", "LINK", "UNI",
-        "EURUSD", "GBPUSD", "USDJPY", "AUDUSD"
+        "AAPL",
+        "TSLA",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "META",
+        "NVDA",
+        "AMD",
+        "BTC",
+        "ETH",
+        "SOL",
+        "AVAX",
+        "LINK",
+        "UNI",
+        "EURUSD",
+        "GBPUSD",
+        "USDJPY",
+        "AUDUSD",
     ]
 
     @task(50)
@@ -51,7 +66,7 @@ class PriceQueryTasks(TaskSet):
             "/mcp/tools/get_price",
             json={"symbol": symbol},
             catch_response=True,
-            name="[Price] Simple Query"
+            name="[Price] Simple Query",
         ) as response:
             if response.status_code == 200:
                 data = response.json()
@@ -73,7 +88,7 @@ class PriceQueryTasks(TaskSet):
             "/mcp/tools/get_price",
             json={"symbol": symbol, "provider": provider},
             catch_response=True,
-            name="[Price] With Provider"
+            name="[Price] With Provider",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -90,7 +105,7 @@ class PriceQueryTasks(TaskSet):
                 "/mcp/tools/get_price",
                 json={"symbol": symbol},
                 catch_response=True,
-                name="[Price] Batch Query"
+                name="[Price] Batch Query",
             ) as response:
                 if response.status_code != 200:
                     response.failure(f"Status code: {response.status_code}")
@@ -103,13 +118,9 @@ class PriceQueryTasks(TaskSet):
 
         with self.client.get(
             "/mcp/tools/get_market_data",
-            json={
-                "symbol": symbol,
-                "include_history": True,
-                "days": 30
-            },
+            json={"symbol": symbol, "include_history": True, "days": 30},
             catch_response=True,
-            name="[Market] Data with History"
+            name="[Market] Data with History",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -120,9 +131,7 @@ class PriceQueryTasks(TaskSet):
     def health_check(self):
         """Health check endpoint"""
         with self.client.get(
-            "/health",
-            catch_response=True,
-            name="[System] Health Check"
+            "/health", catch_response=True, name="[System] Health Check"
         ) as response:
             if response.status_code == 200:
                 data = response.json()
@@ -147,13 +156,9 @@ class DeepAnalysisTasks(TaskSet):
 
         with self.client.get(
             "/mcp/tools/generate_narrative",
-            json={
-                "symbol": symbol,
-                "style": style,
-                "include_context": True
-            },
+            json={"symbol": symbol, "style": style, "include_context": True},
             catch_response=True,
-            name="[Narrative] Generate"
+            name="[Narrative] Generate",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -169,7 +174,7 @@ class DeepAnalysisTasks(TaskSet):
             "/mcp/tools/analyze_sentiment",
             json={"symbol": symbol},
             catch_response=True,
-            name="[Analysis] Sentiment"
+            name="[Analysis] Sentiment",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -185,7 +190,7 @@ class DeepAnalysisTasks(TaskSet):
             "/mcp/tools/get_fundamentals",
             json={"symbol": symbol},
             catch_response=True,
-            name="[Analysis] Fundamentals"
+            name="[Analysis] Fundamentals",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -199,12 +204,9 @@ class DeepAnalysisTasks(TaskSet):
 
         with self.client.get(
             "/mcp/tools/analyze_portfolio",
-            json={
-                "symbols": symbols,
-                "weights": [0.4, 0.35, 0.25]
-            },
+            json={"symbols": symbols, "weights": [0.4, 0.35, 0.25]},
             catch_response=True,
-            name="[Analysis] Portfolio"
+            name="[Analysis] Portfolio",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -234,7 +236,7 @@ class DSLQueryTasks(TaskSet):
             "/mcp/tools/execute_dsl",
             json={"query": query},
             catch_response=True,
-            name="[DSL] Execute Query"
+            name="[DSL] Execute Query",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -255,7 +257,7 @@ class DSLQueryTasks(TaskSet):
             "/mcp/tools/execute_dsl",
             json={"query": query, "include_metadata": True},
             catch_response=True,
-            name="[DSL] Complex Query"
+            name="[DSL] Complex Query",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -271,7 +273,7 @@ class DSLQueryTasks(TaskSet):
             "/mcp/tools/validate_dsl",
             json={"query": query},
             catch_response=True,
-            name="[DSL] Validate"
+            name="[DSL] Validate",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -286,21 +288,19 @@ class MetricsTask(TaskSet):
     def get_metrics(self):
         """Get Prometheus metrics"""
         with self.client.get(
-            "/metrics",
-            catch_response=True,
-            name="[Metrics] Prometheus"
+            "/metrics", catch_response=True, name="[Metrics] Prometheus"
         ) as response:
             if response.status_code == 200:
                 # Parse metrics and track cache hit rate
                 metrics_text = response.text
 
                 # Extract cache hit rate if available
-                for line in metrics_text.split('\n'):
-                    if 'cache_hit_rate' in line and not line.startswith('#'):
+                for line in metrics_text.split("\n"):
+                    if "cache_hit_rate" in line and not line.startswith("#"):
                         try:
                             rate = float(line.split()[-1])
                             # Store in user environment for reporting
-                            if hasattr(self.user, 'cache_hit_rates'):
+                            if hasattr(self.user, "cache_hit_rates"):
                                 self.user.cache_hit_rates.append(rate)
                         except:
                             pass
@@ -329,7 +329,7 @@ class FIMLUser(HttpUser):
     tasks = {
         PriceQueryTasks: 80,  # 80% of traffic
         DeepAnalysisTasks: 15,  # 15% of traffic
-        DSLQueryTasks: 5,       # 5% of traffic
+        DSLQueryTasks: 5,  # 5% of traffic
     }
 
     def on_start(self):
@@ -347,17 +347,20 @@ class FIMLUser(HttpUser):
 
 class HighLoadUser(FIMLUser):
     """User profile for high load testing (500-1000 users)"""
+
     wait_time = between(0.5, 2)  # Faster requests
 
 
 class SpikeLoadUser(FIMLUser):
     """User profile for spike testing (sudden load increase)"""
+
     wait_time = between(0.1, 1)  # Very fast requests
 
 
 # Additional user classes for different test scenarios
 class CachedQueryUser(HttpUser):
     """User that only queries cached data (to test cache performance)"""
+
     wait_time = between(0.5, 2)
 
     CACHED_SYMBOLS = ["AAPL", "TSLA", "MSFT"]  # Pre-warmed symbols
@@ -370,7 +373,7 @@ class CachedQueryUser(HttpUser):
             "/mcp/tools/get_price",
             json={"symbol": symbol},
             catch_response=True,
-            name="[Cache] Cached Price"
+            name="[Cache] Cached Price",
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -380,6 +383,7 @@ class CachedQueryUser(HttpUser):
 
 class UncachedQueryUser(HttpUser):
     """User that queries uncached data (cache miss scenarios)"""
+
     wait_time = between(1, 3)
 
     # Use random symbols to force cache misses
@@ -392,7 +396,7 @@ class UncachedQueryUser(HttpUser):
             "/mcp/tools/get_price",
             json={"symbol": symbol},
             catch_response=True,
-            name="[Cache] Uncached Price"
+            name="[Cache] Uncached Price",
         ) as response:
             # Accept 404 as success (symbol doesn't exist)
             if response.status_code in [200, 404]:

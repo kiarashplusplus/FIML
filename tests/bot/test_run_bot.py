@@ -20,8 +20,10 @@ class TestRunBot:
     def test_main_no_token(self, capsys):
         """Test main() when TELEGRAM_BOT_TOKEN is not set"""
         # Ensure token is not set but FERNET_KEY is valid
-        with patch.dict(os.environ, {"FERNET_KEY": self.fernet_key}, clear=True), \
-             patch("fiml.bot.run_bot.load_dotenv"):
+        with (
+            patch.dict(os.environ, {"FERNET_KEY": self.fernet_key}, clear=True),
+            patch("fiml.bot.run_bot.load_dotenv"),
+        ):
             # Remove the key if it exists
             os.environ.pop("TELEGRAM_BOT_TOKEN", None)
 
@@ -36,22 +38,27 @@ class TestRunBot:
         """Test main() when TELEGRAM_BOT_TOKEN is set"""
         test_token = "test-token-12345"
 
-        with patch.dict(
-            os.environ,
-            {
-                "TELEGRAM_BOT_TOKEN": test_token,
-                "KEY_STORAGE_PATH": str(tmp_path / "keys"),
-                "FERNET_KEY": self.fernet_key,
-                "ENCRYPTION_KEY": self.fernet_key,
-            },
-        ), patch("fiml.bot.run_bot.TelegramBotAdapter") as mock_adapter, \
-           patch("fiml.bot.run_bot.load_dotenv"):
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "TELEGRAM_BOT_TOKEN": test_token,
+                    "KEY_STORAGE_PATH": str(tmp_path / "keys"),
+                    "FERNET_KEY": self.fernet_key,
+                    "ENCRYPTION_KEY": self.fernet_key,
+                },
+            ),
+            patch("fiml.bot.run_bot.TelegramBotAdapter") as mock_adapter,
+            patch("fiml.bot.run_bot.load_dotenv"),
+        ):
             # Make the adapter's run() raise KeyboardInterrupt to exit
             # Use AsyncMock for run() since it's awaited
             mock_instance = MagicMock()
             mock_instance.application.initialize = AsyncMock()
             mock_instance.application.start = AsyncMock()
-            mock_instance.application.updater.start_polling = AsyncMock(side_effect=KeyboardInterrupt())
+            mock_instance.application.updater.start_polling = AsyncMock(
+                side_effect=KeyboardInterrupt()
+            )
             mock_instance.application.stop = AsyncMock()
             mock_instance.application.shutdown = AsyncMock()
             mock_instance.application.updater.stop = AsyncMock()
@@ -69,20 +76,25 @@ class TestRunBot:
         """Test main() when ENCRYPTION_KEY is provided"""
         test_token = "test-token-12345"
 
-        with patch.dict(
-            os.environ,
-            {
-                "TELEGRAM_BOT_TOKEN": test_token,
-                "ENCRYPTION_KEY": self.fernet_key,
-                "KEY_STORAGE_PATH": str(tmp_path / "keys"),
-                "FERNET_KEY": self.fernet_key,
-            },
-        ), patch("fiml.bot.run_bot.TelegramBotAdapter") as mock_adapter, \
-           patch("fiml.bot.run_bot.load_dotenv"):
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "TELEGRAM_BOT_TOKEN": test_token,
+                    "ENCRYPTION_KEY": self.fernet_key,
+                    "KEY_STORAGE_PATH": str(tmp_path / "keys"),
+                    "FERNET_KEY": self.fernet_key,
+                },
+            ),
+            patch("fiml.bot.run_bot.TelegramBotAdapter") as mock_adapter,
+            patch("fiml.bot.run_bot.load_dotenv"),
+        ):
             mock_instance = MagicMock()
             mock_instance.application.initialize = AsyncMock()
             mock_instance.application.start = AsyncMock()
-            mock_instance.application.updater.start_polling = AsyncMock(side_effect=KeyboardInterrupt())
+            mock_instance.application.updater.start_polling = AsyncMock(
+                side_effect=KeyboardInterrupt()
+            )
             mock_instance.application.stop = AsyncMock()
             mock_instance.application.shutdown = AsyncMock()
             mock_instance.application.updater.stop = AsyncMock()
@@ -104,20 +116,25 @@ class TestRunBot:
 
         assert not storage_path.exists()
 
-        with patch.dict(
-            os.environ,
-            {
-                "TELEGRAM_BOT_TOKEN": test_token,
-                "KEY_STORAGE_PATH": str(storage_path),
-                "FERNET_KEY": self.fernet_key,
-                "ENCRYPTION_KEY": self.fernet_key,
-            },
-        ), patch("fiml.bot.run_bot.TelegramBotAdapter") as mock_adapter, \
-           patch("fiml.bot.run_bot.load_dotenv"):
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "TELEGRAM_BOT_TOKEN": test_token,
+                    "KEY_STORAGE_PATH": str(storage_path),
+                    "FERNET_KEY": self.fernet_key,
+                    "ENCRYPTION_KEY": self.fernet_key,
+                },
+            ),
+            patch("fiml.bot.run_bot.TelegramBotAdapter") as mock_adapter,
+            patch("fiml.bot.run_bot.load_dotenv"),
+        ):
             mock_instance = MagicMock()
             mock_instance.application.initialize = AsyncMock()
             mock_instance.application.start = AsyncMock()
-            mock_instance.application.updater.start_polling = AsyncMock(side_effect=KeyboardInterrupt())
+            mock_instance.application.updater.start_polling = AsyncMock(
+                side_effect=KeyboardInterrupt()
+            )
             mock_instance.application.stop = AsyncMock()
             mock_instance.application.shutdown = AsyncMock()
             mock_instance.application.updater.stop = AsyncMock()

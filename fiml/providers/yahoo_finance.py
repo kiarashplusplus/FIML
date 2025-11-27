@@ -190,7 +190,9 @@ class YahooFinanceProvider(BaseProvider):
                         "title": article.get("title"),
                         "url": article.get("link"),
                         "publisher": article.get("publisher"),
-                        "published_at": datetime.fromtimestamp(article.get("providerPublishTime", 0)),
+                        "published_at": datetime.fromtimestamp(
+                            article.get("providerPublishTime", 0)
+                        ),
                         "type": article.get("type"),
                     }
                 )
