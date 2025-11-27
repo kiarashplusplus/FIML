@@ -13,7 +13,7 @@ A final processing layer that:
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from fiml.compliance.disclaimers import AssetClass, DisclaimerGenerator
 from fiml.compliance.router import Region
@@ -746,7 +746,7 @@ class ComplianceGuardrail:
         self.strict_mode_violation_limit = strict_mode_violation_limit
 
         # Cache for compiled patterns by language
-        self._compiled_patterns_cache: Dict[str, Dict[str, List]] = {}
+        self._compiled_patterns_cache: Dict[str, Dict[str, List[Any]]] = {}
 
         logger.info(
             "Compliance guardrail initialized",
@@ -755,7 +755,7 @@ class ComplianceGuardrail:
             default_language=default_language.value,
         )
 
-    def _get_compiled_patterns(self, lang_code: str) -> Dict[str, List]:
+    def _get_compiled_patterns(self, lang_code: str) -> Dict[str, List[Any]]:
         """
         Get compiled regex patterns for a specific language
 
@@ -780,7 +780,7 @@ class ComplianceGuardrail:
             lang_code, patterns.CERTAINTY_PATTERNS.get("en", [])
         )
 
-        compiled = {
+        compiled: Dict[str, List[Any]] = {
             "prescriptive": [
                 re.compile(pattern, re.IGNORECASE | re.UNICODE) for pattern in prescriptive
             ],
@@ -1212,7 +1212,8 @@ class ComplianceGuardrail:
         result = text
 
         # Fix common grammar issues from pattern replacement
-        grammar_fixes = [
+        # Type: List of tuples with pattern and replacement (str or callable)
+        grammar_fixes: List[Tuple[str, Union[str, Callable[[re.Match[str]], str]]]] = [
             # Fix double articles
             (r"\ba an\b", "an"),
             (r"\ban a\b", "a"),
@@ -1241,7 +1242,7 @@ class ComplianceGuardrail:
         return result.strip()
 
     @staticmethod
-    def _capitalize_first_letter(match: re.Match) -> str:
+    def _capitalize_first_letter(match: re.Match[str]) -> str:
         """
         Capitalize the first letter of a sentence while preserving leading whitespace.
 

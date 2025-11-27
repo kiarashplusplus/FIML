@@ -52,21 +52,19 @@ class NarrativeGenerator:
             enable_compliance_guardrail: Whether to apply compliance guardrail (default: True)
         """
         self.azure_client = azure_client or AzureOpenAIClient()
-        self.disclaimer_generator = (
-            disclaimer_generator or DisclaimerGenerator()
-        )
+        self.disclaimer_generator = disclaimer_generator or DisclaimerGenerator()
         self.prompt_library = prompt_library
         self.enable_compliance_guardrail = enable_compliance_guardrail
 
         # Initialize compliance guardrail
+        self._guardrail: Optional[Any] = None  # Type hint for Optional guardrail
         if enable_compliance_guardrail:
             from fiml.compliance.guardrail import ComplianceGuardrail
+
             self._guardrail = ComplianceGuardrail(
                 disclaimer_generator=self.disclaimer_generator,
                 auto_add_disclaimer=False,  # We handle disclaimers separately
             )
-        else:
-            self._guardrail = None
 
         logger.info(
             "Narrative generator initialized",
@@ -135,10 +133,7 @@ class NarrativeGenerator:
                 generation_errors.append(f"Technical: {str(e)}")
 
         # Generate fundamental analysis section
-        if (
-            context.fundamental_data
-            and context.preferences.include_fundamental
-        ):
+        if context.fundamental_data and context.preferences.include_fundamental:
             try:
                 fundamental_section = await self._generate_fundamental_narrative(
                     context.asset_symbol,
@@ -187,9 +182,7 @@ class NarrativeGenerator:
         risk_factors = self._extract_risk_factors(context, sections)
 
         # Generate executive summary
-        summary = await self._generate_executive_summary(
-            context, sections, key_insights
-        )
+        summary = await self._generate_executive_summary(context, sections, key_insights)
 
         # Generate disclaimer
         disclaimer = self._generate_disclaimer(context)
@@ -314,8 +307,7 @@ class NarrativeGenerator:
                 day_high=price_data.get("day_high", price_data.get("price", 0)),
                 day_low=price_data.get("day_low", price_data.get("price", 0)),
                 beta=price_data.get("beta", 1.0),
-                volume_ratio=price_data.get("volume", 1)
-                / max(price_data.get("avg_volume", 1), 1),
+                volume_ratio=price_data.get("volume", 1) / max(price_data.get("avg_volume", 1), 1),
                 mean_return=price_data.get("mean_return", 0),
                 std_dev=price_data.get("std_dev", 0),
                 volatility=price_data.get("volatility", 0),
@@ -394,9 +386,7 @@ class NarrativeGenerator:
                     rsi=technical_data.get("rsi", "N/A"),
                     macd_line=technical_data.get("macd", {}).get("macd", "N/A"),
                     macd_signal=technical_data.get("macd", {}).get("signal", "N/A"),
-                    macd_hist=technical_data.get("macd", {}).get(
-                        "histogram", "N/A"
-                    ),
+                    macd_hist=technical_data.get("macd", {}).get("histogram", "N/A"),
                     ma_50=technical_data.get("ma_50", "N/A"),
                     ma_200=technical_data.get("ma_200", "N/A"),
                     price=technical_data.get("current_price", "N/A"),
@@ -404,9 +394,7 @@ class NarrativeGenerator:
                     ma_50_position=technical_data.get("ma_50_position", "N/A"),
                     ma_200_position=technical_data.get("ma_200_position", "N/A"),
                     bb_upper=technical_data.get("bollinger", {}).get("upper", "N/A"),
-                    bb_middle=technical_data.get("bollinger", {}).get(
-                        "middle", "N/A"
-                    ),
+                    bb_middle=technical_data.get("bollinger", {}).get("middle", "N/A"),
                     bb_lower=technical_data.get("bollinger", {}).get("lower", "N/A"),
                     atr=technical_data.get("atr", "N/A"),
                 )
@@ -537,9 +525,7 @@ class NarrativeGenerator:
 
             # Format news headlines
             headlines = sentiment_data.get("headlines", [])
-            headlines_text = "\n".join(
-                [f"- {h}" for h in headlines[:5]]
-            )  # Top 5 headlines
+            headlines_text = "\n".join([f"- {h}" for h in headlines[:5]])  # Top 5 headlines
 
             # Format trending topics
             topics = sentiment_data.get("trending_topics", [])
@@ -665,9 +651,7 @@ class NarrativeGenerator:
 
         try:
             # Compile all section content
-            all_content = "\n\n".join(
-                [f"{s.title}:\n{s.content}" for s in sections]
-            )
+            all_content = "\n\n".join([f"{s.title}:\n{s.content}" for s in sections])
 
             # Use Azure OpenAI to extract insights
             system_prompt = (
@@ -722,18 +706,14 @@ class NarrativeGenerator:
         if context.risk_data:
             volatility = context.risk_data.get("volatility_30d", 0)
             if volatility > 40:
-                insights.append(
-                    f"High volatility ({volatility:.0f}%) indicates increased risk"
-                )
+                insights.append(f"High volatility ({volatility:.0f}%) indicates increased risk")
 
         # Price movement insight
         if context.price_data:
             change_pct = context.price_data.get("change_percent", 0)
             if abs(change_pct) > 3:
                 direction = "up" if change_pct > 0 else "down"
-                insights.append(
-                    f"Significant price movement: {direction} {abs(change_pct):.1f}%"
-                )
+                insights.append(f"Significant price movement: {direction} {abs(change_pct):.1f}%")
 
         # Sentiment insight
         if context.sentiment_data:
@@ -857,9 +837,7 @@ class NarrativeGenerator:
             "etf": AssetClass.ETF,
         }
 
-        asset_class = asset_class_map.get(
-            context.asset_type.lower(), AssetClass.EQUITY
-        )
+        asset_class = asset_class_map.get(context.asset_type.lower(), AssetClass.EQUITY)
 
         return self.disclaimer_generator.generate(
             asset_class=asset_class,
@@ -908,32 +886,22 @@ class NarrativeGenerator:
             ]
         )
         actual_sections = len(
-            [
-                s
-                for s in narrative.sections
-                if s.section_type != NarrativeType.MARKET_CONTEXT
-            ]
+            [s for s in narrative.sections if s.section_type != NarrativeType.MARKET_CONTEXT]
         )
         completeness = min(actual_sections / max(expected_sections, 1), 1.0)
 
         # Coherence score (based on section confidence)
-        coherence = sum(s.confidence for s in narrative.sections) / max(
-            len(narrative.sections), 1
-        )
+        coherence = sum(s.confidence for s in narrative.sections) / max(len(narrative.sections), 1)
 
         # Accuracy score (assume high if no data mismatches)
         accuracy = 0.95  # Would need fact-checking against source data
 
         # Average readability
         readability_scores = [
-            s.readability_score
-            for s in narrative.sections
-            if s.readability_score
+            s.readability_score for s in narrative.sections if s.readability_score
         ]
         readability = (
-            sum(readability_scores) / len(readability_scores)
-            if readability_scores
-            else 60.0
+            sum(readability_scores) / len(readability_scores) if readability_scores else 60.0
         )
 
         # Compliance score
@@ -964,7 +932,7 @@ class NarrativeGenerator:
             Readability score (0-100, higher is easier)
         """
         # Simple approximation of Flesch Reading Ease
-        sentences = len(re.split(r'[.!?]+', text))
+        sentences = len(re.split(r"[.!?]+", text))
         words = len(text.split())
         syllables = sum(self._count_syllables(word) for word in text.split())
 
@@ -975,11 +943,7 @@ class NarrativeGenerator:
         avg_syllables_per_word = syllables / words
 
         # Flesch Reading Ease formula
-        score = (
-            206.835
-            - 1.015 * avg_sentence_length
-            - 84.6 * avg_syllables_per_word
-        )
+        score = 206.835 - 1.015 * avg_sentence_length - 84.6 * avg_syllables_per_word
 
         # Clamp to 0-100
         return max(0, min(100, score))
