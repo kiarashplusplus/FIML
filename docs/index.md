@@ -125,6 +125,26 @@ For detailed installation instructions, see the [Installation Guide](getting-sta
 - **Issues**: [GitHub Issues](https://github.com/kiarashplusplus/FIML/issues)
 - **Discord**: [Join our community](https://discord.gg/fiml)
 
+## 🔴 Live System Demo Results
+
+<details>
+<summary>Click to expand live system demo output</summary>
+
+```text
+--8<-- "docs/assets/live_demo_output.txt"
+```
+</details>
+
+## 🔵 Blueprint Demo Results
+
+<details>
+<summary>Click to expand blueprint demo output</summary>
+
+```text
+--8<-- "docs/assets/live_demo_blueprint_output.txt"
+```
+</details>
+
 ---
 
 !!! warning "Disclaimer"

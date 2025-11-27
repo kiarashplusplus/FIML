@@ -1,0 +1,458 @@
+╔════════════════════════════════════════════════════════════════╗
+║          🚀 FIML LIVE SYSTEM DEMONSTRATION 🚀                  ║
+║                                                                ║
+║  Financial Intelligence Meta-Layer v0.3.0                     ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏥 SECTION 1: System & Provider Health
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💚 System Health Check
+────────────────────────────────────────────────────────────
+  Validates: API server status, version, and environment configuration
+  Status:      HEALTHY
+  Version:     0.3.0
+  Environment: development
+
+🗄️ Database Health
+────────────────────────────────────────────────────────────
+  Validates: PostgreSQL/TimescaleDB connection for L2 cache persistence
+  Status:   HEALTHY
+  Service:  postgresql
+  Host:     postgres:5432
+  Database: fiml
+
+📦 Cache Health (Redis)
+────────────────────────────────────────────────────────────
+  Validates: Redis connection for L1 cache (10-100ms target latency)
+  Status:  HEALTHY
+  Service: redis
+  Host:    redis:6379
+
+🔌 Provider Health Status
+────────────────────────────────────────────────────────────
+  Validates: All 17 data providers (Yahoo, FMP, Alpha Vantage, CCXT exchanges)
+  Overall Status: DEGRADED
+  Total Providers:   17
+  Healthy Providers: 15
+
+  Provider Details:
+    ● mock_provider   Latency:     10ms  Success: 100.0%
+    ● yahoo_finance   Latency:    150ms  Success: 100.0%
+    ● alpha_vantage   Latency:    100ms  Success: 100.0%
+    ● fmp             Latency:    387ms  Success: 100.0%
+    ● ccxt_kraken     Latency:     50ms  Success: 100.0%
+
+📊 Cache Analytics
+────────────────────────────────────────────────────────────
+  Validates: L1/L2 cache hit rates, latencies, and overall performance
+  L1 Cache (Redis):
+    Hit Rate:     0.0%
+    Avg Latency:  0.00ms
+    Total Hits:   0
+    Total Misses: 0
+
+  L2 Cache (PostgreSQL):
+    Hit Rate:     0.0%
+    Avg Latency:  0.00ms
+  ⏱  Completed in 2.78s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📈 SECTION 2: Basic Queries with Narratives
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🍎 Stock Query with Narrative (AAPL - Standard Depth)
+────────────────────────────────────────────────────────────
+  Validates: search-by-symbol MCP tool, US equity data fetch, AI narrative
+  Symbol:          AAPL
+  Market:          US
+  Price:           $277.55
+  Change:          +0.58 (+0.20941%)
+  Source:          fmp
+  Confidence:      97%
+  Analysis Depth:  N/A
+
+  Narrative Summary:
+    Apple (AAPL) at $277.55 reflects a steady, not breakout, advance amid average-to-slightly-elevated volume, suggesting ongoing institutional participation but no extreme risk-on or risk-off shift. Tech...
+
+₿ Cryptocurrency Query with Metrics (BTC)
+────────────────────────────────────────────────────────────
+  Validates: search-by-coin MCP tool, CCXT crypto exchange data fetch
+  Symbol:   BTC
+  Pair:     BTC/USDT
+  Exchange: binance
+  Price:    $91,370.00
+  Change:   +3.0486009999221806%
+  Source:   ccxt_okx
+
+📊 Multi-Depth Comparison Demo
+────────────────────────────────────────────────────────────
+  Validates: Analysis depth levels (quick/standard/deep) with varying detail
+  Comparing analysis depths for TSLA...
+
+  Quick Depth:
+    Price: $426.58
+    Fields: Basic price data only
+
+  Standard Depth:
+    Price:      $426.58
+    Market Cap: $1,418,727,940,259
+    PE Ratio:   N/A
+    Fields:     Price + Fundamentals + Technicals + Basic narrative
+    Narrative:  Yes
+
+  Deep Depth:
+    Price:      $426.58
+    Sector:     None
+    Beta:       1.834944
+    Fields:     Full analysis + Deep Fundamentals + Sentiment + Comprehensive narrative
+    Narrative:  Yes (1 sections)
+    Summary:    Tesla (TSLA), at $426.58 (+1.71%), is showing constructive buying interest with a solid single-day m...
+  ⏱  Completed in 103.18s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 SECTION 3: FK-DSL Query Language
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▶️ Simple EVALUATE Query
+────────────────────────────────────────────────────────────
+  Validates: Basic FK-DSL EVALUATE syntax for single asset metrics
+  Query: EVALUATE AAPL: PRICE, VOLUME
+  Status: completed
+
+  Execution Results:
+    7ae5b91b-dfe9-4866-85a8-59deda682874: {"symbol": "AAPL", "price": 150.25, "change": 2.5, "change_p...
+    e1669b71-c552-4223-956f-4fce9231a9fe: [{'time': '2024-01-01', 'open': 150.0, 'high': 155.0, 'low': 147.0, 'close': 152.0, 'volume': 1000000}, {'time': '2024-01-02', 'open': 151.0, 'high': 156.0, 'low': 148.0, 'close': 153.0, 'volume': 1100000}, {'time': '2024-01-03', 'open': 152.0, 'high': 157.0, 'low': 149.0, 'close': 154.0, 'volume': 1200000}, {'time': '2024-01-04', 'open': 153.0, 'high': 158.0, 'low': 150.0, 'close': 155.0, 'volume': 1300000}, {'time': '2024-01-05', 'open': 154.0, 'high': 159.0, 'low': 151.0, 'close': 156.0, 'volume': 1400000}, {'time': '2024-01-06', 'open': 155.0, 'high': 160.0, 'low': 152.0, 'close': 157.0, 'volume': 1500000}, {'time': '2024-01-07', 'open': 156.0, 'high': 161.0, 'low': 153.0, 'close': 158.0, 'volume': 1600000}, {'time': '2024-01-08', 'open': 157.0, 'high': 162.0, 'low': 154.0, 'close': 159.0, 'volume': 1700000}, {'time': '2024-01-09', 'open': 158.0, 'high': 163.0, 'low': 155.0, 'close': 160.0, 'volume': 1800000}, {'time': '2024-01-10', 'open': 159.0, 'high': 164.0, 'low': 156.0, 'close': 161.0, 'volume': 1900000}]
+
+📊 Multi-Asset COMPARE Query
+────────────────────────────────────────────────────────────
+  Validates: FK-DSL COMPARE syntax for multi-asset fundamental comparison
+  Query: COMPARE AAPL, MSFT, GOOGL BY PE, MARKETCAP
+  Status: completed
+
+  Comparison Results:
+    4c6d5560-a93e-434b-b097-b1e01b359b54: {'pe_ratio': 25.5, 'eps': 6.12, 'market_cap': 2500000000000, 'revenue': 380000000000, 'profit_margin': 0.24, 'roe': 0.45, 'debt_to_equity': 1.5, 'dividend_yield': 0.005}
+    82298643-86af-40a5-993d-6bd6e3c35464: {'pe_ratio': 25.5, 'eps': 6.12, 'market_cap': 2500000000000, 'revenue': 380000000000, 'profit_margin': 0.24, 'roe': 0.45, 'debt_to_equity': 1.5, 'dividend_yield': 0.005}
+    fdb1b7bc-2869-4fb0-a9b7-a23da94c07ad: {'pe_ratio': 25.5, 'eps': 6.12, 'market_cap': 2500000000000, 'revenue': 380000000000, 'profit_margin': 0.24, 'roe': 0.45, 'debt_to_equity': 1.5, 'dividend_yield': 0.005}
+    e27f3a4a-070f-4db2-b032-2870168a6fb0: {'comparison': [{'asset': "{'filter': {'type': 'symbol', 'value': 'AAPL'}, 'market': None}", 'pe': 30.2, 'eps': 8.45}, {'asset': "{'filter': {'type': 'symbol', 'value': 'MSFT'}, 'market': None}", 'pe': 30.2, 'eps': 8.45}, {'asset': "{'filter': {'type': 'symbol', 'value': 'GOOGL'}, 'market': None}", 'pe': 30.2, 'eps': 8.45}], 'metrics': [{'category': 'fundamental', 'name': 'pe'}, {'category': 'price', 'name': 'marketcap'}]}
+
+🔗 Correlation Analysis
+────────────────────────────────────────────────────────────
+  Validates: FK-DSL CORRELATE syntax for cross-asset correlation
+  Query: CORRELATE BTC WITH ETH, SPY WINDOW 30d
+  Status: completed
+
+  Correlation Analysis:
+
+🔍 Complex SCAN Query
+────────────────────────────────────────────────────────────
+  Validates: FK-DSL SCAN syntax for market screening with conditions
+  Query: SCAN US_TECH WHERE PE < 30 AND VOLUME > 1000000
+  Status: completed
+
+  Market Scan Results:
+    Matches Found: 0
+  ⏱  Completed in 1.98s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 SECTION 4: Session Management
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+➕ Create Analysis Session
+────────────────────────────────────────────────────────────
+  Validates: Session creation with portfolio assets, TTL, and tags
+  Status:     SUCCESS
+  Session ID: 599fcd7e-e2ed-4a02-90d1-69d7330fc13e
+  Type:       portfolio
+  Assets:     AAPL, TSLA, BTC
+  TTL:        24 hours
+  Tags:       demo, live-test
+  Expires:    2025-11-28T17:30:37.325394+00:00
+
+🔍 Query Within Session Context
+────────────────────────────────────────────────────────────
+  Querying AAPL within session context...
+  Session-aware query completed
+  Symbol: AAPL
+  Price:  $277.55
+
+📊 Session Analytics
+────────────────────────────────────────────────────────────
+  Total Sessions:      2
+  Active Sessions:     2
+  Archived Sessions:   0
+  Total Queries:       2
+  Avg Duration:        0s
+  Queries/Session:     1.0
+  ⏱  Completed in 0.32s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚖️ SECTION 5: Provider Arbitration
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 Data Lineage Example
+────────────────────────────────────────────────────────────
+  Validates: Data source tracking, confidence scoring, cache status
+  Showing data source tracking for AAPL query...
+  Data Lineage:
+    Source Provider:  finnhub
+    Confidence Score: 96%
+    Cache Status:     MISS
+    Timestamp:        N/A
+
+🎯 Provider Selection Demo
+────────────────────────────────────────────────────────────
+  Validates: Provider arbitration ranking using 5-factor scoring algorithm
+  Demonstrating intelligent provider selection...
+  Provider Selection Ranking:
+  -------------------------------------------------------
+  Provider                Score    Latency    Success
+  -------------------------------------------------------
+  → mock_provider         10.00       10ms     100.0%
+    ccxt_kraken           10.00       50ms     100.0%
+    ccxt_kucoin           10.00       50ms     100.0%
+    ccxt_okx              10.00       50ms     100.0%
+    polygon               10.00       80ms     100.0%
+  -------------------------------------------------------
+  → = Selected as primary provider
+  ⏱  Completed in 2.40s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ SECTION 6: Performance Metrics
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💾 Cache Performance
+────────────────────────────────────────────────────────────
+  Validates: L1 (Redis) and L2 (PostgreSQL) cache hit rates and latencies
+  Overall Cache Performance:
+    Combined Hit Rate:    0.0%
+    Total Requests:       7
+
+  L1 Cache (Redis - Fast):
+    Hit Rate:    42.9%
+    Avg Latency: 0.00ms
+    P95 Latency: 0.00ms
+
+  L2 Cache (PostgreSQL - Durable):
+    Hit Rate:    0.0%
+    Avg Latency: 0.00ms
+
+📶 Provider Latency Comparison
+────────────────────────────────────────────────────────────
+  Validates: Provider response times ranked by P95 latency
+  Provider Latency Ranking:
+    ccxt_gateio          0ms 
+    ccxt_bitget          0ms 
+    mock_provider       10ms █
+    ccxt_kraken         50ms ██████
+    ccxt_kucoin         50ms ██████
+    ccxt_okx            50ms ██████
+    polygon             80ms █████████
+    fmp                 83ms █████████
+
+🔬 Ray Cluster Status
+────────────────────────────────────────────────────────────
+  Validates: Ray multi-agent orchestration cluster health
+  ======== Autoscaler status: 2025-11-27 09:30:48.221072 ========
+  Node status
+  ---------------------------------------------------------------
+  Active:
+  1 node_a14f09ee76638070a1408eb981854ea836498065214224c84ee23546
+  1 node_0c01c817b5e8594ee70c48dd9780ec211eebcc910d9a4adaf2ed19a6
+  1 node_48113649747e6c1a7e866bafe86b10766a80b3fe9370f603f4d42381
+  Pending:
+  (no pending nodes)
+  Recent failures:
+  (no failures)
+  
+  Resources
+  ---------------------------------------------------------------
+  Total Usage:
+
+📝 Task Registry Status
+────────────────────────────────────────────────────────────
+  Validates: Async task execution, completion rates, and task types
+  Total Tasks:     7
+  Active Tasks:    0
+  Completed:       0
+  Failed:          0
+  ⏱  Completed in 9.62s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔭 SECTION 7: Monitoring & Observability
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👁️ Watchdog Health Monitor
+────────────────────────────────────────────────────────────
+  Validates: System-wide health monitoring and component status tracking
+  Overall Health: UNKNOWN
+
+📈 Performance Monitoring
+────────────────────────────────────────────────────────────
+  Validates: Request statistics, success rates, and endpoint metrics
+
+✍️ Narrative Generation Capability
+────────────────────────────────────────────────────────────
+  Validates: Azure OpenAI integration, AI narrative generation, compliance
+  Demonstrating AI-powered narrative generation...
+  ✓ Narrative Engine Active
+
+  Summary:
+    Microsoft (MSFT), currently around $485.50 and up 1.78% on
+    strong volume, continues to demonstrate robust institutional
+    demand at elevated valuations. Technically, the stock’s price
+    action confirms a durable uptrend, with buyers consistently
+    supporting pullbacks and momentum favoring further upside.
+    ...
+
+  Sections Generated: 1
+    • Market Context (market_context) - Confidence: 95%
+
+  Key Insights:
+    • MSFT is trading at $485.50, up 1.78% on the session, reflecting strong...
+    • Current trading volume of 25.66M shares is substantial and broadly con...
+    • The stock is trading near record territory based on recent market hist...
+
+🔧 MCP Tool Discovery
+────────────────────────────────────────────────────────────
+  Validates: MCP protocol tool registry and API integration points
+  Available MCP Tools (v0.3.0):
+  Total Available Tools: 9
+
+  ------------------------------------------------------------
+  Tool Name                      Description                 
+  ------------------------------------------------------------
+  search-by-symbol               Search for a stock by symbol with instant cac...
+  search-by-coin                 Search for cryptocurrency with instant cached...
+  get-task-status                Poll or stream updates for an async analysis ...
+  execute-fk-dsl                 Execute a Financial Knowledge DSL query for c...
+  create-analysis-session        Create a new analysis session for tracking mu...
+  get-session-info               Get information about an existing session...
+  list-sessions                  List sessions for a user...
+  extend-session                 Extend session expiration time...
+  get-session-analytics          Get session analytics and statistics...
+  ------------------------------------------------------------
+
+  Session Management Tools:
+    • create-analysis-session
+    • get-session-info
+    • list-sessions
+    • extend-session
+    • get-session-analytics
+  ⏱  Completed in 38.45s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛡️ SECTION 8: v0.3.0 Compliance Guardrail Layer
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌍 Multilingual Compliance Support
+────────────────────────────────────────────────────────────
+  Demonstrating compliance guardrail with multilingual support...
+
+  Supported Languages (9 total):
+    • English (en)    - Full support with comprehensive patterns
+    • Spanish (es)    - Prescriptive verbs, advice patterns, disclaimers
+    • French (fr)     - Prescriptive verbs, advice patterns, disclaimers
+    • German (de)     - Prescriptive verbs, advice patterns, disclaimers
+    • Italian (it)    - Prescriptive verbs, advice patterns, disclaimers
+    • Portuguese (pt) - Prescriptive verbs, advice patterns, disclaimers
+    • Japanese (ja)   - Script detection, advice patterns, disclaimers
+    • Chinese (zh)    - Script detection, advice patterns, disclaimers
+    • Farsi/Persian (fa) - Script detection, advice patterns, disclaimers
+
+⚡ Guardrail Capabilities
+────────────────────────────────────────────────────────────
+  Output Scanning Features:
+    • Prescriptive Verb Detection  - Detects 'should', 'must', 'recommend', etc.
+    • Advice Pattern Matching      - Context-aware pattern matching
+    • Opinion-as-Fact Detection    - Identifies subjective claims as facts
+    • Certainty Language Blocking  - Prevents absolute predictions
+
+  Compliance Actions:
+    PASSED   - Content is compliant without modifications
+    MODIFIED - Content was modified to be compliant
+    BLOCKED  - Content blocked due to severe violations (strict mode)
+
+  Automatic Features:
+    • Automatic language detection (script-based for CJK/Arabic)
+    • Region-appropriate disclaimer generation
+    • Asset-class specific compliance requirements
+    • Post-replacement grammar cleanup
+
+🔄 Guardrail Demo - English Advice Conversion
+────────────────────────────────────────────────────────────
+  Testing compliance processing with sample advice content...
+  ✓ Compliance-Filtered Narrative Generated
+
+  Compliance Confidence: 95%
+  Disclaimer Present: Verify in full output
+
+  Compliance-Filtered Summary (first 200 chars):
+    Nvidia (NVDA) continues to trade with strong momentum at
+    $180.26, supported by elevated volume that underscores
+    robust institutional participation rather than
+    speculative excess. Technically, the stoc
+    ...
+
+📋 Compliance Pattern Categories
+────────────────────────────────────────────────────────────
+  Prescriptive Verb Examples (converted to descriptive):
+    ✗ 'You should buy AAPL'     →  ✓ 'Purchasing options are available'
+    ✗ 'Must sell before drop'   →  ✓ 'Selling is possible for this asset'
+    ✗ 'I recommend investing'   →  ✓ 'Investment options exist'
+
+  Certainty Language Examples (converted to historical):
+    ✗ 'Will definitely rise'    →  ✓ 'Has historically shown rise patterns'
+    ✗ 'Guaranteed returns'      →  ✓ 'Potential returns (not guaranteed)'
+    ✗ 'Sure to succeed'         →  ✓ 'Has historical patterns of success'
+
+  Opinion-as-Fact Examples (converted to analytical):
+    ✗ 'This is undervalued'     →  ✓ 'Has metrics some analysts consider relevant'
+    ✗ 'Easy money opportunity'  →  ✓ 'A trading opportunity exists'
+    ✗ 'Risk-free investment'    →  ✓ 'An option with associated risks'
+
+✅ v0.3.0 Test Suite Summary
+────────────────────────────────────────────────────────────
+  Guardrail Test Coverage:
+    91  guardrail-specific tests
+    163 total compliance-related tests
+    0   CodeQL security alerts
+
+  Components Tested:
+    • ComplianceGuardrail class
+    • MultilingualPatterns for all 9 languages
+    • GuardrailResult with detected language field
+    • NarrativeValidator integration
+    • Grammar cleanup post-replacement
+  ⏱  Completed in 37.18s
+
+╔════════════════════════════════════════════════════════════════╗
+║                    ✅ DEMO COMPLETE ✅                          ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  Total Duration: 195.96s                                       ║
+║                                                                ║
+║  Core Endpoints:                                              ║
+║    API Server:    http://localhost:8000                         ║
+║    API Docs:       http://localhost:8000/docs                    ║
+║    Health:         http://localhost:8000/health                  ║
+║    MCP Tools:      http://localhost:8000/mcp/tools               ║
+║                                                                ║
+║  v0.3.0 Metrics & Monitoring:                                 ║
+║    Prometheus:     http://localhost:8000/metrics                 ║
+║    Cache:          http://localhost:8000/api/metrics/cache       ║
+║    Watchdog:       http://localhost:8000/api/metrics/watchdog    ║
+║    Performance:    http://localhost:8000/api/metrics/performance ║
+║    Tasks:          http://localhost:8000/api/metrics/tasks       ║
+║                                                                ║
+║  v0.3.0 Compliance Guardrail:                                 ║
+║    Languages:     9 supported (EN, ES, FR, DE, IT, PT, JA, ZH, FA) ║
+║    Features:      Advice removal, prescriptive verb blocking  ║
+║    Auto:          Language detection, disclaimers          ║
+║                                                                ║
+║  For comprehensive testing, run:                              ║
+║    ./scripts/test_live_system.sh                               ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
