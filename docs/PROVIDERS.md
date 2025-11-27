@@ -1,6 +1,6 @@
 # Data Provider Overview
 
-FIML supports 16 data providers across multiple asset classes and data types. This document provides an overview of each provider, their capabilities, and configuration requirements.
+FIML supports 17 data providers across multiple asset classes and data types. This document provides an overview of each provider, their capabilities, and configuration requirements.
 
 ## Provider Summary Table
 
@@ -21,6 +21,7 @@ FIML supports 16 data providers across multiple asset classes and data types. Th
 | **CoinMarketCap** | Crypto | ✅ | Limited | ✅ | ❌ | ✅ |
 | **Quandl** | Stocks, Commodities, Economics | ❌ | ✅ | Limited | ❌ | ✅ |
 | **Mock Provider** | All | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **DefiLlama** | Crypto, DeFi | ✅ | ✅ | ✅ | ❌ | ❌ |
 
 ## Provider Details
 
@@ -153,6 +154,15 @@ FIML supports 16 data providers across multiple asset classes and data types. Th
 - **Rate Limits**: None
 - **Data Quality**: Synthetic data
 - **Config**: None required
+
+### 16. DefiLlama ⭐ NEW
+- **Type**: Free (no API key required)
+- **Coverage**: DeFi protocols, TVL, yields, stablecoins
+- **Best for**: DeFi market analysis, protocol tracking
+- **Rate Limits**: Very permissive
+- **Data Quality**: Industry standard for DeFi data
+- **Config**: None required
+- **Priority**: 6
 
 ## Configuration
 

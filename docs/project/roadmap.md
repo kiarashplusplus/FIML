@@ -8,7 +8,7 @@ FIML development follows a phased approach with a 10-year vision.
 
 - ✅ Core MCP server
 - ✅ Data arbitration engine
-- ✅ Provider system (5 providers)
+- ✅ Provider system (17 providers)
 - ✅ L1/L2 caching
 - ✅ FK-DSL parser
 - ✅ WebSocket streaming
@@ -23,7 +23,7 @@ FIML development follows a phased approach with a 10-year vision.
 - [ ] Complete multi-agent workflows
 - [ ] Narrative generation engine
 - [ ] Cache optimization
-- [ ] Additional providers (Polygon.io, NewsAPI)
+- [ ] Additional providers (IEX Cloud)
 - [ ] Platform integrations (ChatGPT, Claude, Telegram)
 - [ ] Multi-language support
 - [ ] Performance optimization
