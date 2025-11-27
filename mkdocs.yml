@@ -1,5 +1,5 @@
 site_name: FIML Documentation
-site_description: Financial Intelligence Meta-Layer - AI-Native Multi-Market Financial Framework (v0.2.2)
+site_description: Financial Intelligence Meta-Layer - AI-Native Multi-Market Financial Framework (v0.3.0)
 site_author: Kiarash Adl
 site_url: https://kiarashplusplus.github.io/FIML/
 
@@ -109,10 +109,6 @@ extra:
       link: https://github.com/kiarashplusplus/FIML
     - icon: fontawesome/brands/discord
       link: https://discord.gg/fiml
-  # Uncomment and configure Google Analytics if needed
-  # analytics:
-  #   provider: google
-  #   property: G-XXXXXXXXXX
 
 extra_css:
   - stylesheets/extra.css
@@ -129,112 +125,25 @@ nav:
     - WebSocket Streaming: user-guide/websocket.md
     - FK-DSL Query Language: user-guide/fk-dsl.md
     - Agent Workflows: user-guide/agent-workflows.md
-    - Agent Workflows Quick Reference: user-guide/agent-workflows-quick-reference.md
+    - Session Management: user-guide/session-management.md
   - Architecture:
     - System Design: architecture/overview.md
-    - Extended Overview: architecture/overview-extended.md
     - Data Arbitration: architecture/arbitration.md
     - Caching Strategy: architecture/caching.md
     - Provider System: architecture/providers.md
     - Multi-Agent Framework: architecture/agents.md
-  - Features:
-    - Watchdog System: features/watchdog.md
-    - MCP Narrative: features/mcp-narrative.md
-    - Session Management: features/session-management.md
-    - Session Analytics: features/session-analytics.md
-    - Compliance Framework: features/compliance.md
-  - Use Cases:
-    - Trading Education Bot: use-cases/trading-education-bot.md
-  - Monitoring:
-    - Grafana Integration: monitoring/GRAFANA_INTEGRATION.md
-    - Implementation Summary: monitoring/IMPLEMENTATION_SUMMARY.md
-    - Metrics Quick Reference: monitoring/METRICS_QUICK_REFERENCE.md
-  - Roadmaps:
-    - Overview: roadmaps/README.md
-    - Educational Bot Quick Reference: roadmaps/EDUCATIONAL_BOT_QUICK_REFERENCE.md
-    - Educational Bot Roadmap: roadmaps/EDUCATIONAL_BOT_ROADMAP.md
-    - Unified Educational Bot Master Plan: roadmaps/UNIFIED_EDUCATIONAL_BOT_MASTER_PLAN.md
+  - Operations:
+    - Monitoring: operations/monitoring.md
+  - Examples:
+    - Trading Education Bot: examples/trading-bot.md
   - API Reference:
     - REST API: api/rest.md
     - WebSocket API: api/websocket.md
     - MCP Protocol: api/mcp.md
   - Development:
     - Contributing: development/contributing.md
-    - Contributing Extended: development/contributing-extended.md
     - Testing: development/testing.md
-    - Performance Testing: development/PERFORMANCE_TESTING.md
     - Deployment: development/deployment.md
-    - Deployment Extended: development/deployment-extended.md
-    - Deployment Guide: DEPLOYMENT_GUIDE.md
-    - Production Deployment: PRODUCTION_DEPLOYMENT.md
-    - Pre-Push Hook: PRE_PUSH_HOOK.md
-    - Update Migration Strategy: UPDATE_MIGRATION_STRATEGY.md
-    - Providers Overview: PROVIDERS.md
-    - Technical Debt: development/technical-debt.md
-    - Technical Debt Resolution: development/TECHNICAL_DEBT_RESOLUTION.md
-    - Technical & Strategic Evaluation: development/TECHNICAL_STRATEGIC_EVALUATION.md
-    - CI Workflow Structure: development/CI_WORKFLOW_STRUCTURE.md
-    - GitHub Pages Setup: development/github-pages-setup.md
-    - Documentation Consolidation: DOCUMENTATION_CONSOLIDATION.md
-    - Legal Compliance: LEGAL_COMPLIANCE_COMPLETE.md
-  - Testing:
-    - Overview: testing/index.md
-    - Test Documentation Index: testing/TEST_DOCUMENTATION_INDEX.md
-    - Test Report: testing/TEST_REPORT.md
-    - Test Status: testing/TEST_STATUS_REPORT.md
-    - Testing Quickstart: testing/TESTING_QUICKSTART.md
-    - Testing Index: testing/TESTING_INDEX.md
-    - Test Infrastructure: testing/TEST_INFRASTRUCTURE_IMPROVEMENT.md
-    - Quickstart Fixes: testing/QUICKSTART_TEST_FIXES.md
-    - Live Integration Results: testing/LIVE_INTEGRATION_TEST_RESULTS.md
-    - MCP Tools Test Results: testing/MCP_TOOLS_TEST_RESULTS.md
-    - Session Analytics Enhancements: testing/SESSION_ANALYTICS_ENHANCEMENTS.md
   - Project:
-    - Roadmap: project/roadmap.md
     - Blueprint: project/blueprint.md
-    - Status: project/status.md
-    - Detailed Status: project/status-detailed.md
-    - Project Status Report: project/PROJECT_STATUS.md
-    - Implementation Complete: project/IMPLEMENTATION_COMPLETE.md
-    - FIML vs Bloomberg: project/FIML-VS-BLOOMBERG.md
-    - Phase Reports: project/phase-reports.md
-    - Phase Evaluation: project/PHASE_EVALUATION_REPORT.md
-    - Phase 1 Complete: project/PHASE1_100_PERCENT_COMPLETE.md
-    - Phase 1 Verification: project/PHASE1_FINAL_VERIFICATION.md
-    - Phase 1 Production Ready: project/PHASE1_PRODUCTION_READY.md
-    - Phase 2 Setup: project/PHASE2_SETUP.md
-    - Phase 2 TODO: project/PHASE2_TODO.md
-    - Changelog: project/changelog.md
-  - Implementation Summaries:
-    - Overview: implementation-summaries/index.md
-    - Agent Workflows: implementation-summaries/AGENT_WORKFLOWS_SUMMARY.md
-    - Cache Enhancements: implementation-summaries/CACHE_ENHANCEMENTS_SUMMARY.md
-    - CI Fixes: implementation-summaries/CI_FIXES_SUMMARY.md
-    - CI Pipeline Breakup: implementation-summaries/CI_PIPELINE_BREAKUP_SUMMARY.md
-    - Dashboard & Alerts: implementation-summaries/DASHBOARD_ALERTS_IMPLEMENTATION_SUMMARY.md
-    - Documentation Refactor: implementation-summaries/DOCUMENTATION_REFACTOR_SUMMARY.md
-    - Live Testing: implementation-summaries/LIVE_TEST_SUMMARY.md
-    - MCP Narrative Integration: implementation-summaries/MCP_NARRATIVE_INTEGRATION_SUMMARY.md
-    - Narrative Generation: implementation-summaries/NARRATIVE_GENERATION_SUMMARY.md
-    - NewsAPI Integration: implementation-summaries/NEWSAPI_INTEGRATION_SUMMARY.md
-    - New Providers: implementation-summaries/NEW_PROVIDERS_SUMMARY.md
-    - Performance Suite: implementation-summaries/PERFORMANCE_SUITE_SUMMARY.md
-    - Phase 1 Complete: implementation-summaries/PHASE1_COMPLETE_SUMMARY.md
-    - Phase 1 Content: implementation-summaries/PHASE1_CONTENT_SUMMARY.md
-    - Phase 1 Sprint 1: implementation-summaries/PHASE1_SPRINT1_SUMMARY.md
-    - Phase 1 Test Coverage: implementation-summaries/PHASE1_TEST_COVERAGE_SUMMARY.md
-    - Phase 2 Review: implementation-summaries/PHASE2_REVIEW_SUMMARY.md
-    - Phase 2 Summary: implementation-summaries/PHASE2_SUMMARY.md
-    - Pre-Push Hook: implementation-summaries/PRE_PUSH_HOOK_SUMMARY.md
-    - Session Management: implementation-summaries/SESSION_IMPLEMENTATION_SUMMARY.md
-    - SQLAlchemy Metadata Fix: implementation-summaries/SQLALCHEMY_METADATA_FIX_SUMMARY.md
-    - Watchdog System: implementation-summaries/WATCHDOG_IMPLEMENTATION_SUMMARY.md
-    - Worker Enhancements: implementation-summaries/WORKER_ENHANCEMENT_SUMMARY.md
-    - Current State: implementation-summaries/CURRENT_STATE_SUMMARY.md
-  - Reference Guides:
-    - Overview: reference-guides/index.md
-    - Dashboard & Alerts: reference-guides/DASHBOARD_ALERTS_QUICK_REFERENCE.md
-    - MCP Narrative: reference-guides/MCP_NARRATIVE_QUICK_REFERENCE.md
-    - Performance: reference-guides/PERFORMANCE_QUICK_REFERENCE.md
-    - Session Management: reference-guides/SESSION_QUICK_REFERENCE.md
-    - Watchdog System: reference-guides/WATCHDOG_QUICK_REFERENCE.md
+  - 📦 Archived: archive/README.md

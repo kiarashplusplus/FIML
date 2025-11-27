@@ -39,3 +39,24 @@ Query cryptocurrency data.
 Execute Financial Knowledge DSL queries.
 
 See [FK-DSL Guide](fk-dsl.md) for query language documentation.
+
+### analyze-narrative
+
+Generate natural language financial narratives and insights using LLMs.
+
+**Parameters:**
+- `symbol` (string): Asset symbol
+- `context` (string): Analysis context (e.g., "earnings", "technical")
+- `style` (string): Narrative style (e.g., "brief", "detailed", "educational")
+
+**Example:**
+```json
+{
+  "name": "analyze-narrative",
+  "arguments": {
+    "symbol": "NVDA",
+    "context": "technical",
+    "style": "detailed"
+  }
+}
+```

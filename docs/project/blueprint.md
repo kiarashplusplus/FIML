@@ -19,7 +19,7 @@
   
 **Core Value Proposition**: Every AI agent gets the best possible financial answer through intelligent data arbitration, multi-source fusion, and context-aware analysis—without managing individual provider APIs.  
   
-**What's Working Today**: FIML is a production-ready MCP server with intelligent data arbitration, multi-provider support (Yahoo Finance, Alpha Vantage, FMP, CCXT), real-time WebSocket streaming, L1/L2 caching infrastructure, FK-DSL query language, and comprehensive test coverage (140/169 tests passing). See [README.md](../index.md) for quick start and usage examples.  
+**What's Working Today**: FIML is a production-ready MCP server with intelligent data arbitration, multi-provider support (Yahoo Finance, Alpha Vantage, FMP, CCXT), real-time WebSocket streaming, L1/L2 caching infrastructure, FK-DSL query language, comprehensive test coverage (140/169 tests passing), and a streamlined, user-friendly documentation site (v0.3.0). See [README.md](../index.md) for quick start and usage examples.  
   
 ---  
   
@@ -796,7 +796,41 @@ COMPARE BTC vs ETH ON: VOLUME(7d), LIQUIDITY, MOMENTUM, NETWORK_HEALTH
 MACRO: US10Y, CPI, VIX, DXY → REGRESSION ON S&P500  
 ```  
   
-#### **Tool 5: `get-watchdog-events`**  
+MACRO: US10Y, CPI, VIX, DXY → REGRESSION ON S&P500  
+```  
+
+#### **Tool 5: `analyze-narrative`**
+
+Generate natural language financial narratives and insights using LLMs.
+
+```typescript
+{
+  "name": "analyze-narrative",
+  "description": "Generate AI-powered financial narratives and insights",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "symbol": {
+        "type": "string",
+        "description": "Asset symbol (e.g., AAPL, BTC)"
+      },
+      "context": {
+        "type": "string",
+        "enum": ["technical", "fundamental", "sentiment", "macro", "comprehensive"],
+        "default": "comprehensive"
+      },
+      "style": {
+        "type": "string",
+        "enum": ["brief", "detailed", "educational", "executive"],
+        "default": "detailed"
+      }
+    },
+    "required": ["symbol"]
+  }
+}
+```
+
+#### **Tool 6: `get-watchdog-events`**  
   
 Subscribe to real-time market events (see Section 10).  
   
@@ -840,12 +874,12 @@ Subscribe to real-time market events (see Section 10).
 }  
 ```  
   
-#### **Tool 6: `create-analysis-session`**  
-  
-Create a persistent analysis session (see Section 6).  
-  
-```typescript  
-{  
+#### **Tool 7: `create-analysis-session`**
+
+Create a persistent analysis session (see Section 6).
+
+```typescript
+{
   "name": "create-analysis-session",  
   "description": "Create a stateful analysis session for multi-step investigations",  
   "inputSchema": {  
