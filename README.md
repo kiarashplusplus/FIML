@@ -12,7 +12,7 @@
 
 > 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Test Results](docs/testing/TEST_REPORT.md) | [Technical Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 In Development 🚧 | **Version**: 0.2.2 | **Tests**: 🎉 **100% PASSING** (439 passed, 25 skipped) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
+> **Current State**: Phase 1 Complete ✅ | Phase 2 In Development 🚧 | **Version**: 0.3.0 | **Tests**: 🎉 **100% PASSING** (439 passed, 25 skipped) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
 > 
 > ✅ **Verified**: Tests pass identically with and without .env file (GitHub runner compatible)
 > 

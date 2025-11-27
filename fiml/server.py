@@ -28,12 +28,13 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifecycle management for the application"""
     # Startup
-    logger.info("Starting FIML server", version="0.2.2", environment=settings.fiml_env)
+    logger.info("Starting FIML server", version="0.3.0", environment=settings.fiml_env)
 
     # Initialize cache layers
     logger.info("Initializing cache layers...")
     try:
         from fiml.cache.manager import cache_manager
+
         await cache_manager.initialize()
     except Exception as e:
         logger.warning(f"Cache initialization failed (non-critical): {e}")
@@ -47,6 +48,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.info("Initializing agent orchestrator...")
         try:
             from fiml.agents.orchestrator import agent_orchestrator
+
             await agent_orchestrator.initialize()
         except Exception as e:
             logger.warning(f"Agent orchestrator initialization failed (non-critical): {e}")
@@ -58,6 +60,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     try:
         from fiml.agents.orchestrator import agent_orchestrator
+
         if agent_orchestrator.initialized:
             await agent_orchestrator.shutdown()
     except (ImportError, Exception) as e:
@@ -67,6 +70,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     try:
         from fiml.cache.manager import cache_manager
+
         await cache_manager.shutdown()
     except (ImportError, Exception) as e:
         logger.debug(f"Cache manager shutdown skipped: {e}")
@@ -76,7 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="FIML - Financial Intelligence Meta-Layer",
     description="AI-Native Multi-Market Financial Intelligence Framework",
-    version="0.2.2",
+    version="0.3.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.is_development else None,
     redoc_url="/redoc" if settings.is_development else None,
@@ -117,7 +121,7 @@ async def health_check() -> Dict[str, Any]:
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "version": "0.2.2",
+        "version": "0.3.0",
         "environment": settings.fiml_env,
     }
 
@@ -127,13 +131,11 @@ async def get_cache_metrics() -> Dict[str, Any]:
     """Get cache analytics metrics"""
     try:
         from fiml.cache.analytics import cache_analytics
+
         return cache_analytics.get_comprehensive_report()
     except Exception as e:
         logger.error(f"Failed to get cache metrics: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve cache metrics: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve cache metrics: {str(e)}")
 
 
 @app.get("/api/metrics/watchdog")
@@ -141,12 +143,12 @@ async def get_watchdog_metrics() -> Dict[str, Any]:
     """Get watchdog health metrics"""
     try:
         from fiml.watchdog.health import watchdog_health_monitor
+
         return watchdog_health_monitor.get_health_summary()
     except Exception as e:
         logger.error(f"Failed to get watchdog metrics: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve watchdog metrics: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve watchdog metrics: {str(e)}"
         )
 
 
@@ -155,12 +157,12 @@ async def get_performance_metrics() -> Dict[str, Any]:
     """Get performance monitoring metrics"""
     try:
         from fiml.monitoring.performance import get_performance_metrics
+
         return get_performance_metrics()
     except Exception as e:
         logger.error(f"Failed to get performance metrics: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve performance metrics: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve performance metrics: {str(e)}"
         )
 
 
@@ -169,13 +171,11 @@ async def get_task_metrics() -> Dict[str, Any]:
     """Get task registry metrics"""
     try:
         from fiml.monitoring.task_registry import task_registry
+
         return task_registry.get_stats()
     except Exception as e:
         logger.error(f"Failed to get task metrics: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve task metrics: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve task metrics: {str(e)}")
 
 
 # Module-level database engine for health checks (created lazily)
@@ -217,10 +217,7 @@ async def health_check_db() -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Database health check failed: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Database health check failed: {str(e)}")
 
 
 # Module-level Redis client for health checks (created lazily)
@@ -270,10 +267,7 @@ async def health_check_cache() -> Dict[str, Any]:
             }
     except Exception as e:
         logger.error(f"Cache health check failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Cache health check failed: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Cache health check failed: {str(e)}")
 
 
 @app.get("/health/providers")
@@ -306,10 +300,7 @@ async def health_check_providers() -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Provider health check failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Provider health check failed: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Provider health check failed: {str(e)}")
 
 
 @app.get("/health/providers/{provider_name}")
@@ -319,10 +310,7 @@ async def health_check_provider(provider_name: str) -> Dict[str, Any]:
         health = await provider_registry.get_provider_health(provider_name)
 
         if not health:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Provider '{provider_name}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Provider '{provider_name}' not found")
 
         return {
             "status": "healthy" if health.is_healthy else "unhealthy",
@@ -338,10 +326,7 @@ async def health_check_provider(provider_name: str) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"Provider '{provider_name}' health check failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Provider health check failed: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Provider health check failed: {str(e)}")
 
 
 @app.get("/")
@@ -349,7 +334,7 @@ async def root() -> dict:
     """Root endpoint"""
     return {
         "service": "FIML - Financial Intelligence Meta-Layer",
-        "version": "0.2.2",
+        "version": "0.3.0",
         "docs": "/docs" if settings.is_development else None,
         "health": "/health",
         "health_endpoints": {
@@ -404,11 +389,14 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         path=request.url.path,
     )
     # Capture unexpected exceptions to Sentry with request context
-    set_context("request", {
-        "path": request.url.path,
-        "method": request.method,
-        "query_string": str(request.query_params),
-    })
+    set_context(
+        "request",
+        {
+            "path": request.url.path,
+            "method": request.method,
+            "query_string": str(request.query_params),
+        },
+    )
     capture_exception(exc)
     return JSONResponse(
         status_code=500,

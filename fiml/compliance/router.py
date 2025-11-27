@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 
 class Region(str, Enum):
     """Supported regions with different regulatory requirements"""
+
     US = "US"  # United States (SEC, FINRA)
     EU = "EU"  # European Union (MiFID II, ESMA)
     UK = "UK"  # United Kingdom (FCA)
@@ -29,6 +30,7 @@ class Region(str, Enum):
 
 class ComplianceLevel(str, Enum):
     """Compliance strictness levels"""
+
     STRICT = "strict"  # Full compliance enforcement
     MODERATE = "moderate"  # Balanced approach
     PERMISSIVE = "permissive"  # Minimal restrictions
@@ -36,6 +38,7 @@ class ComplianceLevel(str, Enum):
 
 class ComplianceRule(BaseModel):
     """Individual compliance rule"""
+
     rule_id: str
     region: Region
     rule_type: str  # "restriction", "warning", "disclosure"
@@ -46,6 +49,7 @@ class ComplianceRule(BaseModel):
 
 class ComplianceCheck(BaseModel):
     """Result of a compliance check"""
+
     passed: bool
     region: Region
     rules_applied: List[str]
@@ -75,21 +79,21 @@ class ComplianceRouter:
                     region=Region.US,
                     rule_type="restriction",
                     description="Prohibit direct investment advice (SEC/FINRA)",
-                    severity="critical"
+                    severity="critical",
                 ),
                 ComplianceRule(
                     rule_id="US-002",
                     region=Region.US,
                     rule_type="disclosure",
                     description="Require disclaimer for all financial information",
-                    severity="high"
+                    severity="high",
                 ),
                 ComplianceRule(
                     rule_id="US-003",
                     region=Region.US,
                     rule_type="warning",
                     description="Warn on high-risk assets (derivatives, crypto)",
-                    severity="medium"
+                    severity="medium",
                 ),
             ],
             Region.EU: [
@@ -98,21 +102,21 @@ class ComplianceRouter:
                     region=Region.EU,
                     rule_type="restriction",
                     description="Comply with MiFID II regulations",
-                    severity="critical"
+                    severity="critical",
                 ),
                 ComplianceRule(
                     rule_id="EU-002",
                     region=Region.EU,
                     rule_type="disclosure",
                     description="GDPR data protection disclosure",
-                    severity="high"
+                    severity="high",
                 ),
                 ComplianceRule(
                     rule_id="EU-003",
                     region=Region.EU,
                     rule_type="disclosure",
                     description="Risk warnings for retail investors",
-                    severity="high"
+                    severity="high",
                 ),
             ],
             Region.UK: [
@@ -121,14 +125,14 @@ class ComplianceRouter:
                     region=Region.UK,
                     rule_type="restriction",
                     description="FCA financial promotion rules",
-                    severity="critical"
+                    severity="critical",
                 ),
                 ComplianceRule(
                     rule_id="UK-002",
                     region=Region.UK,
                     rule_type="warning",
                     description="Crypto asset warnings (FCA)",
-                    severity="high"
+                    severity="high",
                 ),
             ],
             Region.JP: [
@@ -137,14 +141,14 @@ class ComplianceRouter:
                     region=Region.JP,
                     rule_type="restriction",
                     description="JFSA licensing requirements",
-                    severity="critical"
+                    severity="critical",
                 ),
                 ComplianceRule(
                     rule_id="JP-002",
                     region=Region.JP,
                     rule_type="disclosure",
                     description="Japanese language disclosures required",
-                    severity="medium"
+                    severity="medium",
                 ),
             ],
             Region.GLOBAL: [
@@ -153,7 +157,7 @@ class ComplianceRouter:
                     region=Region.GLOBAL,
                     rule_type="disclosure",
                     description="General financial information disclaimer",
-                    severity="medium"
+                    severity="medium",
                 ),
             ],
         }
@@ -233,7 +237,7 @@ class ComplianceRouter:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "request_type": request_type,
                 "asset_type": asset_type,
-            }
+            },
         )
 
     def _contains_advice_request(self, query: str) -> bool:
@@ -279,9 +283,7 @@ class ComplianceRouter:
         """Get all restrictions for a region"""
         rules = self.rules.get(region, [])
         return [
-            rule.description
-            for rule in rules
-            if rule.rule_type == "restriction" and rule.enabled
+            rule.description for rule in rules if rule.rule_type == "restriction" and rule.enabled
         ]
 
     def is_region_supported(self, region: str) -> bool:
@@ -294,6 +296,4 @@ class ComplianceRouter:
 
 
 # Global compliance router instance
-compliance_router = ComplianceRouter(
-    default_region=Region(settings.default_region)
-)
+compliance_router = ComplianceRouter(default_region=Region(settings.default_region))

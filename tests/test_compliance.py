@@ -53,7 +53,7 @@ class TestDisclaimerGenerator:
         disclaimer = gen.generate(AssetClass.DERIVATIVE, region=Region.US)
 
         assert disclaimer is not None
-        assert ("derivative" in disclaimer.lower() or "leveraged" in disclaimer.lower())
+        assert "derivative" in disclaimer.lower() or "leveraged" in disclaimer.lower()
 
     def test_generate_forex_disclaimer(self):
         """Test forex-specific disclaimer (uses default if not in templates)"""
@@ -71,7 +71,7 @@ class TestDisclaimerGenerator:
         disclaimer = gen.generate(AssetClass.EQUITY, region=Region.EU)
 
         assert disclaimer is not None
-        assert ("MiFID" in disclaimer or "EU" in disclaimer or "GDPR" in disclaimer)
+        assert "MiFID" in disclaimer or "EU" in disclaimer or "GDPR" in disclaimer
 
     def test_generate_uk_disclaimer(self):
         """Test UK-specific disclaimer"""
@@ -80,7 +80,9 @@ class TestDisclaimerGenerator:
         disclaimer = gen.generate(AssetClass.EQUITY, region=Region.UK)
 
         assert disclaimer is not None
-        assert "FCA" in disclaimer or "UK" in disclaimer or "Financial Conduct Authority" in disclaimer
+        assert (
+            "FCA" in disclaimer or "UK" in disclaimer or "Financial Conduct Authority" in disclaimer
+        )
 
     def test_generate_jp_disclaimer(self):
         """Test Japan-specific disclaimer"""
@@ -140,8 +142,11 @@ class TestDisclaimerGenerator:
         warning = gen.get_risk_warning(AssetClass.DERIVATIVE, region=Region.US)
 
         assert warning is not None
-        assert ("leverage" in warning.lower() or "derivative" in warning.lower() or
-                "risk" in warning.lower())
+        assert (
+            "leverage" in warning.lower()
+            or "derivative" in warning.lower()
+            or "risk" in warning.lower()
+        )
 
     def test_get_compliance_footer_us(self):
         """Test compliance footer for US"""
@@ -197,7 +202,9 @@ class TestDisclaimerGenerator:
 
         for region in regions:
             disclaimer = gen.generate(AssetClass.EQUITY, region=region)
-            assert "LICENSE" in disclaimer, f"{region.value} disclaimer should reference LICENSE file"
+            assert (
+                "LICENSE" in disclaimer
+            ), f"{region.value} disclaimer should reference LICENSE file"
 
 
 class TestComplianceRouter:
@@ -216,5 +223,90 @@ class TestComplianceRouter:
         # Verify router can be instantiated
         assert router is not None
         # Check that it has the expected methods/attributes
-        assert hasattr(router, '__init__')
+        assert hasattr(router, "__init__")
 
+
+class TestNarrativeValidatorGuardrailIntegration:
+    """Test integration between NarrativeValidator and ComplianceGuardrail"""
+
+    def test_process_with_guardrail(self):
+        """Test processing narrative through guardrail"""
+        from fiml.narrative.validator import NarrativeValidator
+
+        validator = NarrativeValidator()
+
+        text = "You should buy AAPL stock now!"
+
+        processed_text, is_compliant, violations = validator.process_with_guardrail(
+            text, asset_class="equity", region="US"
+        )
+
+        assert is_compliant
+        assert "should buy" not in processed_text.lower()
+        assert len(violations) > 0
+
+    def test_process_with_guardrail_crypto(self):
+        """Test processing crypto narrative through guardrail"""
+        from fiml.narrative.validator import NarrativeValidator
+
+        validator = NarrativeValidator()
+
+        text = "BTC will definitely increase to $100k!"
+
+        processed_text, is_compliant, violations = validator.process_with_guardrail(
+            text, asset_class="crypto", region="US"
+        )
+
+        assert is_compliant
+        assert "will definitely" not in processed_text.lower()
+        # Should have crypto disclaimer
+        assert "crypto" in processed_text.lower()
+
+    def test_process_with_guardrail_compliant_text(self):
+        """Test processing already compliant text"""
+        from fiml.narrative.validator import NarrativeValidator
+
+        validator = NarrativeValidator()
+
+        text = "AAPL is currently trading at $175.50 with above-average volume."
+
+        processed_text, is_compliant, violations = validator.process_with_guardrail(
+            text, asset_class="equity", region="US"
+        )
+
+        assert is_compliant
+        # Should add disclaimer
+        assert (
+            "not financial advice" in processed_text.lower()
+            or "informational purposes" in processed_text.lower()
+        )
+
+    def test_process_with_guardrail_invalid_asset_class(self):
+        """Test processing with invalid asset class falls back to equity"""
+        from fiml.narrative.validator import NarrativeValidator
+
+        validator = NarrativeValidator()
+
+        text = "Price is $100."
+
+        processed_text, is_compliant, violations = validator.process_with_guardrail(
+            text, asset_class="invalid_asset", region="US"
+        )
+
+        assert is_compliant
+        assert len(processed_text) > len(text)  # Disclaimer added
+
+    def test_process_with_guardrail_invalid_region(self):
+        """Test processing with invalid region falls back to US"""
+        from fiml.narrative.validator import NarrativeValidator
+
+        validator = NarrativeValidator()
+
+        text = "Price is $100."
+
+        processed_text, is_compliant, violations = validator.process_with_guardrail(
+            text, asset_class="equity", region="INVALID"
+        )
+
+        assert is_compliant
+        assert len(processed_text) > len(text)  # Disclaimer added
