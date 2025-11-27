@@ -858,8 +858,8 @@ class ComplianceGuardrail:
 
         # Get the highest scoring language
         max_score = max(scores.values())
-        # scores.get returns Optional[int] but we know all values exist since we just populated the dict
-        detected = max(scores, key=scores.get)  # type: ignore[arg-type]
+        # Find language with highest score - using lambda with default to avoid type issues
+        detected = max(scores, key=lambda k: scores.get(k, 0))
 
         # Require a minimum threshold to override English default
         # This prevents false detection from common words
@@ -1229,7 +1229,7 @@ class ComplianceGuardrail:
             (r"\s{2,}", " "),
             # Fix sentence-initial lowercase after replacement
             # Captures optional whitespace + first lowercase letter, uppercases just the letter
-            (r"^(\s*)([a-z])", lambda m: m.group(1) + m.group(2).upper()),
+            (r"^(\s*)([a-z])", self._capitalize_first_letter),
         ]
 
         for pattern, replacement in grammar_fixes:
@@ -1239,6 +1239,19 @@ class ComplianceGuardrail:
                 result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
 
         return result.strip()
+
+    @staticmethod
+    def _capitalize_first_letter(match: re.Match) -> str:
+        """
+        Capitalize the first letter of a sentence while preserving leading whitespace.
+
+        Args:
+            match: Regex match object with groups for whitespace and first letter
+
+        Returns:
+            String with first letter capitalized
+        """
+        return match.group(1) + match.group(2).upper()
 
     def _has_disclaimer(self, text: str, lang_code: str = "en") -> bool:
         """
