@@ -372,8 +372,8 @@ Phase 2 features are **60% implemented**:
 
 For more details, see:
 
-- **[README.md](../index.md)** - Quick start and overview
-- **[TECHNICAL_STRATEGIC_EVALUATION.md](../development/TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
+- **[Main Documentation](../../index.md)** - Quick start and overview
+- **[Technical Evaluation](../../development/TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
 - **[CURRENT_STATE_SUMMARY.md](../implementation-summaries/CURRENT_STATE_SUMMARY.md)** - Quick reference
 - **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Implementation details
 - **[TEST_REPORT.md](../testing/TEST_REPORT.md)** - Test coverage

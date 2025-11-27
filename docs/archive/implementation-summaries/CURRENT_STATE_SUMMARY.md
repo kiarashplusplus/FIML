@@ -172,8 +172,8 @@ This is a **production-ready, enterprise-grade financial intelligence platform**
 
 ## Key Documents
 
-- **[README.md](../index.md)** - Project overview and quick start
-- **[TECHNICAL_STRATEGIC_EVALUATION.md](../development/TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
+- **[Main Documentation](../../index.md)** - Project overview and quick start
+- **[Technical Evaluation](../../development/TECHNICAL_STRATEGIC_EVALUATION.md)** - Comprehensive 21KB analysis
 - **[PROJECT_STATUS.md](../project/PROJECT_STATUS.md)** - Detailed implementation status
 - **[TEST_REPORT.md](../testing/TEST_REPORT.md)** - Test coverage report
 

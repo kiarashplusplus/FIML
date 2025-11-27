@@ -36,7 +36,7 @@ Historical reports documenting development progress through each phase.
 
 ### WebSocket Streaming
 
-- [WebSocket Implementation](../user-guide/websocket.md)
+- [WebSocket Guide](../../user-guide/websocket.md)
 
 ### MCP Narrative Integration
 

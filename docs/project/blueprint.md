@@ -2,7 +2,7 @@
 ## 10-Year Extensible AI-Native Multi-Market Framework Blueprint  
   
 > 📋 **New User?** Start with [README.md](../index.md) for installation, quick start, and usage examples.  
-> 📊 **Current Status**: Phase 1 Complete - See [TEST_REPORT.md](../testing/TEST_REPORT.md) for validation results.  
+> 📊 **Current Status**: Phase 1 Complete - See [TEST_REPORT.md](../archive/testing/TEST_REPORT.md) for validation results.  
 > 🚀 **Try It Now**: Run `./quickstart.sh` to see FIML in action.  
   
 ---  
@@ -4963,7 +4963,7 @@ class EvaluationSuite:
 - **Infrastructure**: Fully containerized and monitored  
   
 See [README.md](../index.md) for current features, quick start, and usage examples.  
-See [TEST_REPORT.md](../testing/TEST_REPORT.md) for detailed test results.  
+See [TEST_REPORT.md](../archive/testing/TEST_REPORT.md) for detailed test results.  
   
 ---  
   
@@ -5126,7 +5126,7 @@ FIML is already the **universal financial intelligence interface** for AI agents
 **Get Started Today:**  
 1. See [README.md](../index.md) for installation and usage  
 2. Run `./quickstart.sh` for automated setup  
-3. Check [TEST_REPORT.md](../testing/TEST_REPORT.md) for validation results  
+3. Check [TEST_REPORT.md](../archive/testing/TEST_REPORT.md) for validation results  
 4. Review the examples directory for live demonstrations  
 5. Join the community and contribute  
   
@@ -5140,9 +5140,9 @@ FIML is already the **universal financial intelligence interface** for AI agents
   
 **Quick Links:**  
 - [README.md](../index.md) - Get started with FIML  
-- [TEST_REPORT.md](../testing/TEST_REPORT.md) - Test coverage and results  
-- [CONTRIBUTING.md](../development/contributing.md) - Contribution guidelines  
-- [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current project status  
+- [TEST_REPORT.md](../archive/testing/TEST_REPORT.md) - Test coverage and results
+- [CONTRIBUTING.md](../development/contributing.md) - Contribution guidelines
+- [PROJECT_STATUS.md](../archive/project/PROJECT_STATUS.md) - Current project status  
   
 ---  
   

@@ -339,7 +339,7 @@ FIML gives you:
 
 ## Learn More
 
-- [Back to Main Documentation](../index.md)
-- [Getting Started Guide](../getting-started/quickstart.md)
-- [Architecture Overview](../architecture/overview.md)
-- [GitHub Repository](https://github.com/kiarashplusplus/FIML)
+- **[README.md](../../index.md)** - Project overview
+- **[Quickstart Guide](../../getting-started/quickstart.md)** - Get up and running in minutes
+- **[Architecture Overview](../../architecture/overview.md)** - Technical deep dive
+- **[GitHub Repository](https://github.com/kiarashplusplus/FIML)**

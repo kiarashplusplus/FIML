@@ -403,6 +403,6 @@ Adjust limits if needed in docker-compose.yml.
 
 ## Next Steps
 
-- Set up [Monitoring](../architecture/overview.md#monitoring)
+- Set up [Monitoring](../operations/monitoring.md)
 - Configure [CI/CD Pipeline](https://github.com/kiarashplusplus/FIML/blob/main/.github/workflows/ci.yml)
 - Review [Security Best Practices](../architecture/overview.md#security)

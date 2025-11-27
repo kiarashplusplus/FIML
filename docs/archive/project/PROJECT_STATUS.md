@@ -800,11 +800,11 @@ make lint
 
 ## 📚 Documentation
 
-- **[README.md](../index.md)** - Project overview and quick start
-- **[BLUEPRINT.md](blueprint.md)** - Comprehensive system blueprint
-- **[ARCHITECTURE.md](../architecture/overview.md)** - System architecture and module structure
-- **[DEPLOYMENT.md](../development/deployment.md)** - Deployment guide for production
-- **[CONTRIBUTING.md](../development/contributing.md)** - Contribution guidelines
+- **[README.md](../../index.md)** - Project overview and quick start
+- **[BLUEPRINT.md](../../project/blueprint.md)** - Comprehensive system blueprint
+- **[ARCHITECTURE.md](../../architecture/overview.md)** - System architecture and module structure
+- [Deployment Guide](../../development/deployment.md)** - Deployment guide for production
+- [Contributing Guide](../../development/contributing.md)** - Contribution guidelines
 - **[LICENSE](https://github.com/kiarashplusplus/FIML/blob/main/LICENSE)** - Apache 2.0 License
 
 ---

@@ -63,7 +63,7 @@ python examples/websocket_demo.py
 | Document | Focus |
 |----------|-------|
 | [TEST_INFRASTRUCTURE_IMPROVEMENT.md](./TEST_INFRASTRUCTURE_IMPROVEMENT.md) | Test infrastructure improvements |
-| [PERFORMANCE_TESTING.md](../development/PERFORMANCE_TESTING.md) | Performance testing guide |
+| [Performance Testing Guide](../../development/PERFORMANCE_TESTING.md) | Performance testing guide |
 
 ### Historical Reports
 
@@ -242,7 +242,7 @@ pip install -e ".[dev]"
 - **CONTRIBUTING.md** - Contribution guidelines (see repo root)
 - **README.md** - Main documentation (see repo root)
 - **DEPLOYMENT.md** - Deployment guide (see repo root)
-- [Development Guides](../development/contributing.md) - Development documentation
+- [Contributing Guidelines](../../development/contributing.md) - Development documentation
 - [Testing Documentation](index.md) - Testing resources
 
 ## 🔍 Finding Specific Tests

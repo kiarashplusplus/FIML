@@ -936,7 +936,7 @@ Bot: 🔮 FK-DSL Query Results
 
 **Scope**: Ecosystem \u0026 Innovation
 
-See [BLUEPRINT.md](../project/blueprint.md) for complete 10-year vision including:
+See [BLUEPRINT.md](../../project/blueprint.md) for complete 10-year vision including:
 
 - **Financial OS**: Plugin ecosystem for financial tools
 - **Decentralized Data**: Blockchain-based data verification
@@ -1284,7 +1284,7 @@ The FIML Educational Bot has achieved **full operational status** as of November
 
 ### Long-Term Vision
 
-See [BLUEPRINT.md](../project/blueprint.md) for the complete 10-year roadmap toward building a comprehensive Financial OS powered by FIML's intelligent data infrastructure.
+See [BLUEPRINT.md](../../project/blueprint.md) for the complete 10-year roadmap toward building a comprehensive Financial OS powered by FIML's intelligent data infrastructure.
 
 ---
 
