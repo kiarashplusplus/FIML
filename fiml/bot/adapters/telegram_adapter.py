@@ -3,8 +3,9 @@ Component 4: Telegram Bot Adapter
 Handles Telegram bot integration with conversation flows for key management
 """
 
+import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 import yaml
@@ -26,6 +27,7 @@ from fiml.bot.education.compliance_filter import EducationalComplianceFilter
 from fiml.bot.education.gamification import GamificationEngine
 from fiml.bot.education.lesson_engine import LessonContentEngine
 from fiml.bot.education.quiz_system import QuizSystem
+from fiml.mcp.tools import execute_fk_dsl
 
 logger = structlog.get_logger(__name__)
 
@@ -35,6 +37,40 @@ PROVIDER_SELECT: int
 KEY_ENTRY: int
 CONFIRMATION: int
 PROVIDER_SELECT, KEY_ENTRY, CONFIRMATION = range(3)
+
+# FK-DSL Query Templates
+DSL_TEMPLATES = {
+    "analyze_stock": {
+        "display": "📊 Analyze Stock",
+        "query": "EVALUATE AAPL: PRICE, VOLUME, VOLATILITY(30d)",
+        "description": "Get comprehensive analysis of a stock with price, volume, and 30-day volatility",
+        "example": "Try with: TSLA, MSFT, or NVDA"
+    },
+    "compare_tech": {
+        "display": "⚖️ Compare Tech Giants",
+        "query": "COMPARE AAPL, MSFT, GOOGL BY PE, MARKETCAP, VOLUME",
+        "description": "Side-by-side comparison of major tech stocks by key metrics",
+        "example": "Compare any 2-5 stocks"
+    },
+    "correlate_crypto": {
+        "display": "🔗 Crypto Correlation",
+        "query": "CORRELATE BTC WITH ETH, SPY WINDOW 30d",
+        "description": "Analyze 30-day correlation between Bitcoin and other assets",
+        "example": "Useful for portfolio diversification"
+    },
+    "scan_stocks": {
+        "display": "🔍 Stock Scanner",
+        "query": "SCAN US_TECH WHERE PE < 30 AND VOLUME > 1000000",
+        "description": "Find tech stocks with P/E ratio under 30 and high volume",
+        "example": "Customize the criteria to find opportunities"
+    },
+    "custom": {
+        "display": "✏️ Custom Query",
+        "query": "",
+        "description": "Write your own FK-DSL query for advanced analysis",
+        "example": "Use EVALUATE, COMPARE, CORRELATE, or SCAN"
+    }
+}
 
 
 class TelegramBotAdapter:
@@ -133,6 +169,7 @@ class TelegramBotAdapter:
         self.application.add_handler(CommandHandler("quiz", self.cmd_quiz))
         self.application.add_handler(CommandHandler("mentor", self.cmd_mentor))
         self.application.add_handler(CommandHandler("progress", self.cmd_progress))
+        self.application.add_handler(CommandHandler("fkdsl", self.cmd_fkdsl))
 
         # Mentor persona selection
         self.application.add_handler(
@@ -147,6 +184,11 @@ class TelegramBotAdapter:
         # Quiz answer handling
         self.application.add_handler(
             CallbackQueryHandler(self.handle_quiz_answer, pattern="^quiz_answer:")
+        )
+
+        # DSL template selection
+        self.application.add_handler(
+            CallbackQueryHandler(self.handle_dsl_template, pattern="^dsl_template:")
         )
 
         # Remove key callback
@@ -201,6 +243,9 @@ Choose your path:
 /quiz - Take a practice quiz
 /mentor - Talk to AI mentor
 /progress - View your learning progress
+
+**Advanced Analysis:**
+/fkdsl - Run Financial Knowledge DSL queries
 
 **Help:**
 /help - Show this message
@@ -1058,6 +1103,281 @@ _Type your question below, or use /help for commands._
             text += f"[{progress_bar}] {percent:.0f}%"
 
         await update.message.reply_text(text, parse_mode="Markdown")
+
+    async def cmd_fkdsl(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Handle /fkdsl command - FK-DSL query interface"""
+        text = """
+🔮 **Financial Knowledge DSL (FK-DSL)**
+
+Execute advanced financial analysis queries using FIML's powerful DSL.
+
+**What is FK-DSL?**
+A specialized query language for multi-asset financial analysis:
+• `EVALUATE` - Analyze single assets with multiple metrics
+• `COMPARE` - Side-by-side comparison of assets
+• `CORRELATE` - Correlation analysis between assets
+• `SCAN` - Market screening with custom filters
+
+**Choose a template to get started:**
+"""
+
+        # Create inline keyboard with templates
+        keyboard = []
+        for template_id, template_data in DSL_TEMPLATES.items():
+            keyboard.append([
+                InlineKeyboardButton(
+                    template_data["display"],
+                    callback_data=f"dsl_template:{template_id}"
+                )
+            ])
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+    async def handle_dsl_template(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Handle DSL template selection"""
+        query = update.callback_query
+        await query.answer()
+
+        user_id = str(update.effective_user.id)
+        template_id = query.data.split(":")[1]
+
+        template = DSL_TEMPLATES.get(template_id)
+        if not template:
+            await query.edit_message_text("❌ Template not found.")
+            return
+
+        if template_id == "custom":
+            # Custom query - ask user to send their query
+            text = """
+✏️ **Custom FK-DSL Query**
+
+Send your query as a message. Examples:
+
+`EVALUATE TSLA: PRICE, VOLATILITY(30d), CORRELATE(BTC)`
+
+`COMPARE BTC, ETH, SOL BY VOLUME(7d), MOMENTUM`
+
+`CORRELATE NVDA WITH AAPL, AMD WINDOW 60d`
+
+`SCAN US_TECH WHERE PE < 25 AND MARKETCAP > 1000000000`
+
+📚 **DSL Syntax:**
+• Asset symbols: AAPL, BTC, ETH, etc.
+• Metrics: PRICE, VOLUME, PE, MARKETCAP, VOLATILITY
+• Time windows: 7d, 30d, 60d, 90d
+• Operators: <, >, =, AND, OR
+
+Type your query below or /cancel to abort.
+"""
+            await query.edit_message_text(text, parse_mode="Markdown")
+            context.user_data["awaiting_dsl_query"] = True
+            return
+
+        # Show template with option to execute
+        text = f"""
+{template['display']}
+
+**Description:** {template['description']}
+
+**Query:**
+```
+{template['query']}
+```
+
+**Example:** {template['example']}
+
+🔄 Executing query...
+"""
+        await query.edit_message_text(text, parse_mode="Markdown")
+
+        # Execute the query
+        await self.execute_user_dsl_query(
+            update=update,
+            context=context,
+            user_id=user_id,
+            query=template["query"],
+            from_callback=True
+        )
+
+    async def execute_user_dsl_query(
+        self,
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+        user_id: str,
+        query: str,
+        from_callback: bool = False
+    ) -> None:
+        """Execute FK-DSL query and display results"""
+
+        try:
+            # Execute DSL query (sync mode for immediate results)
+            logger.info("Executing FK-DSL query", user_id=user_id, query=query)
+            result = await execute_fk_dsl(query=query, async_execution=False)
+
+            # Format the result
+            formatted_message = await self.format_dsl_result(result, query)
+
+            # Send result to user
+            if from_callback:
+                # Edit the existing message
+                try:
+                    await update.callback_query.message.reply_text(
+                        formatted_message,
+                        parse_mode="Markdown"
+                    )
+                except Exception as e:
+                    logger.warning("Failed to send as reply, sending new message", error=str(e))
+                    await update.callback_query.message.chat.send_message(
+                        formatted_message,
+                        parse_mode="Markdown"
+                    )
+            else:
+                # Send new message
+                await update.message.reply_text(formatted_message, parse_mode="Markdown")
+
+            # Award XP for successful query
+            if result.get("status") == "completed":
+                xp_amount = 15  # Base XP for DSL query
+                await self.gamification.award_xp(user_id, "dsl_query_completed")
+                logger.info("Awarded XP for DSL query", user_id=user_id, xp=xp_amount)
+
+        except Exception as e:
+            error_message = f"""
+❌ **Query Execution Failed**
+
+**Error:** {str(e)}
+
+**Your query:**
+```
+{query}
+```
+
+**Tips:**
+• Check your syntax (EVALUATE, COMPARE, CORRELATE, SCAN)
+• Verify asset symbols are valid
+• Ensure metrics are supported
+
+Try /fkdsl again to see examples!
+
+⚠️ Educational purposes only — not financial advice.
+"""
+            logger.error("DSL query execution failed", user_id=user_id, query=query, error=str(e))
+
+            if from_callback:
+                await update.callback_query.message.reply_text(error_message, parse_mode="Markdown")
+            else:
+                await update.message.reply_text(error_message, parse_mode="Markdown")
+
+    async def format_dsl_result(self, result: Dict[str, Any], query: str) -> str:
+        """Format DSL execution result for Telegram display"""
+
+        if result.get("status") == "failed":
+            return f"""
+❌ **Query Failed**
+
+**Query:** `{query}`
+
+**Error:** {result.get('error', 'Unknown error')}
+
+Try /fkdsl for template examples!
+
+⚠️ Educational purposes only — not financial advice.
+"""
+
+        if result.get("status") == "running":
+            return f"""
+🔄 **Query Running**
+
+**Task ID:** `{result.get('task_id')}`
+
+**Query:** `{query}`
+
+**Progress:** {result.get('total_steps', 0)} steps
+
+Use /status to check progress (coming soon).
+
+⚠️ Educational purposes only — not financial advice.
+"""
+
+        # Status is "completed"
+        query_text = result.get("query", query)
+        result_data = result.get("result", {})
+
+        # Start building formatted message
+        message_parts = [
+            "✅ **Query Completed**",
+            "",
+            f"**Query:** `{query_text}`",
+            ""
+        ]
+
+        # Format result data based on content
+        if isinstance(result_data, dict):
+            message_parts.append("**Results:**")
+            message_parts.append("```")
+
+            # Try to format as table or key-value pairs
+            for key, value in result_data.items():
+                if isinstance(value, dict):
+                    message_parts.append(f"{key}:")
+                    for sub_key, sub_value in value.items():
+                        # Format numbers nicely
+                        if isinstance(sub_value, (int, float)):
+                            if isinstance(sub_value, float):
+                                formatted_value = f"{sub_value:,.2f}"
+                            else:
+                                formatted_value = f"{sub_value:,}"
+                            message_parts.append(f"  {sub_key}: {formatted_value}")
+                        else:
+                            message_parts.append(f"  {sub_key}: {sub_value}")
+                else:
+                    if isinstance(value, (int, float)):
+                        if isinstance(value, float):
+                            formatted_value = f"{value:,.2f}"
+                        else:
+                            formatted_value = f"{value:,}"
+                        message_parts.append(f"{key}: {formatted_value}")
+                    else:
+                        message_parts.append(f"{key}: {value}")
+
+            message_parts.append("```")
+        else:
+            # Fallback to JSON representation
+            message_parts.append("**Results:**")
+            message_parts.append("```json")
+            message_parts.append(json.dumps(result_data, indent=2))
+            message_parts.append("```")
+
+        # Add metadata
+        message_parts.extend([
+            "",
+            "📊 **Data Quality:**",
+            f"• Status: {result.get('status', 'unknown').title()}",
+        ])
+
+        # Add educational note
+        message_parts.extend([
+            "",
+            "💡 **What's Next?**",
+            "• Try modifying the query with different assets",
+            "• Explore other DSL templates with /fkdsl",
+            "• Check your progress with /progress",
+            "",
+            "⚠️ Educational purposes only — not financial advice."
+        ])
+
+        # Join all parts
+        full_message = "\n".join(message_parts)
+
+        # Check Telegram's 4096 character limit
+        if len(full_message) > 4000:
+            # Truncate and add notice
+            full_message = full_message[:3900] + "\n\n...\n\n[Results truncated due to length]\n\n⚠️ Educational purposes only — not financial advice."
+
+        return full_message
 
     async def start(self) -> None:
         """Start the bot"""
