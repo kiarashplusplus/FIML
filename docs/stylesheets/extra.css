@@ -1,57 +1,106 @@
 /* Custom styles for FIML documentation */
 
 :root {
-  --md-primary-fg-color: #3f51b5;
-  --md-accent-fg-color: #536dfe;
+  --md-primary-fg-color: #0f172a;
+  --md-primary-fg-color--light: #1e293b;
+  --md-primary-fg-color--dark: #020617;
+  --md-accent-fg-color: #06b6d4;
 }
 
-/* Enhanced code blocks */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #ffffff;
+  --md-primary-fg-color--light: #f8fafc;
+  --md-primary-fg-color--dark: #e2e8f0;
+  --md-accent-fg-color: #4f46e5;
+}
+
+/* Modern Typography */
+body {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Glassmorphism Header */
+.md-header {
+  background-color: rgba(var(--md-primary-fg-color--rgb), 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced Cards & Admonitions */
+.md-typeset .admonition,
+.md-typeset pre {
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(128, 128, 128, 0.1);
+}
+
+.md-typeset .admonition {
+  border-left-width: 4px;
+}
+
+/* Code Blocks */
 .highlight {
-  border-radius: 4px;
+  border-radius: 12px;
 }
 
-/* Admonition tweaks */
-.admonition {
-  border-left: 4px solid var(--md-accent-fg-color);
+/* Modern Tables */
+.md-typeset table:not([class]) {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
-/* Improve table styling */
-table {
-  border-collapse: collapse;
-  width: 100%;
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color--light);
+  color: var(--md-text-color);
+  font-weight: 600;
 }
 
-table th {
-  background-color: var(--md-primary-fg-color);
-  color: white;
-  font-weight: bold;
-}
-
-/* Badge styling */
-.badge {
-  display: inline-block;
-  padding: 0.25em 0.4em;
-  font-size: 75%;
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: baseline;
-  border-radius: 0.25rem;
-}
-
-/* Custom landing page hero section */
+/* Hero Section */
 .hero {
   text-align: center;
-  padding: 2rem 0;
+  padding: 4rem 0;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+  border-radius: 24px;
+  margin-bottom: 2rem;
 }
 
 .hero h1 {
-  font-size: 3rem;
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: -webkit-linear-gradient(315deg, #4f46e5 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 1rem;
 }
 
+[data-md-color-scheme="slate"] .hero h1 {
+  background: -webkit-linear-gradient(315deg, #818cf8 0%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .hero p {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   color: var(--md-default-fg-color--light);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Buttons */
+.md-button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.md-button--primary {
+  background: linear-gradient(135deg, var(--md-accent-fg-color) 0%, var(--md-accent-fg-color--light) 100%);
+  border: none;
+}
+
+.md-button--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--md-accent-fg-color--rgb), 0.4);
 }
