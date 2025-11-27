@@ -4,12 +4,10 @@ Handles collection, validation, and secure storage of user API keys (BYOK model)
 """
 
 import json
-import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import aiohttp
 import structlog
 from cryptography.fernet import Fernet
 
@@ -69,34 +67,46 @@ class UserProviderKeyManager:
 
     def __init__(self, encryption_key: Optional[bytes] = None, storage_path: str = "./data/keys"):
         """
-        Initialize key manager
+        Initialize key manager (now wraps UserKeyOnboardingService)
 
         Args:
             encryption_key: Fernet encryption key (generated if not provided)
             storage_path: Path to store encrypted keys
         """
+        # Initialize new service architecture
+        from fiml.services import UserKeyOnboardingService
+        from fiml.services.storage.file_storage import FileKeyStorage
+
         self.encryption_key = encryption_key or Fernet.generate_key()
-        self.cipher = Fernet(self.encryption_key)
         self.storage_path = Path(storage_path)
 
-        # In-memory cache for decrypted keys (session-scoped)
+        # Create file storage backend
+        file_storage = FileKeyStorage(storage_path=str(self.storage_path))
+
+        # Initialize service with file storage
+        self._service = UserKeyOnboardingService(
+            storage=file_storage,
+            encryption_key=self.encryption_key
+        )
+
+        # Provide direct access to cipher for backward compatibility
+        self.cipher = self._service.cipher
+
+        # In-memory cache for decrypted keys (session-scoped) - now delegated to service
         self._key_cache: Dict[str, Dict[str, str]] = {}
 
-        # Quota tracking (in-memory for now, should be Redis in production)
-        self._quota_usage: Dict[str, int] = {}
+        # Quota tracking - now delegated to service
+        self._quota_usage: Dict[str, int] = self._service._quota_usage
 
-        logger.info("UserProviderKeyManager initialized", storage_path=storage_path)
+        logger.info("UserProviderKeyManager initialized (using new service layer)", storage_path=storage_path)
 
     def get_provider_info(self, provider: str) -> Optional[Dict[str, Any]]:
         """Get information about a provider for user guidance"""
-        return self.PROVIDER_INFO.get(provider)
+        return self._service.get_provider_info(provider)
 
     def list_supported_providers(self) -> List[Dict[str, Any]]:
         """List all supported providers with their information"""
-        return [
-            {"id": key, **value}
-            for key, value in self.PROVIDER_INFO.items()
-        ]
+        return self._service.list_supported_providers()
 
     def validate_key_format(self, provider: str, api_key: str) -> bool:
         """
@@ -109,19 +119,7 @@ class UserProviderKeyManager:
         Returns:
             True if format is valid
         """
-        pattern = self.KEY_PATTERNS.get(provider)
-        if not pattern:
-            logger.warning("No pattern for provider", provider=provider)
-            return True  # Allow unknown providers
-
-        is_valid = bool(re.match(pattern, api_key))
-        logger.info(
-            "Key format validation",
-            provider=provider,
-            valid=is_valid,
-            key_length=len(api_key)
-        )
-        return is_valid
+        return self._service.validate_key_format(provider, api_key)
 
     async def test_provider_key(self, provider: str, api_key: str) -> Dict[str, Any]:
         """
@@ -134,150 +132,10 @@ class UserProviderKeyManager:
         Returns:
             Dict with test results: {valid: bool, tier: str, message: str}
         """
-        logger.info("Testing provider key", provider=provider)
+        return await self._service.test_key(provider, api_key)
 
-        try:
-            if provider == "alpha_vantage":
-                return await self._test_alpha_vantage(api_key)
-            elif provider == "polygon":
-                return await self._test_polygon(api_key)
-            elif provider == "finnhub":
-                return await self._test_finnhub(api_key)
-            elif provider == "fmp":
-                return await self._test_fmp(api_key)
-            else:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": f"Provider {provider} not yet supported for testing"
-                }
-        except Exception as e:
-            logger.error("Key test failed", provider=provider, error=str(e))
-            return {
-                "valid": False,
-                "tier": "unknown",
-                "message": f"Test failed: {str(e)}"
-            }
-
-    async def _test_alpha_vantage(self, api_key: str) -> Dict[str, Any]:
-        """Test Alpha Vantage API key"""
-        url = "https://www.alphavantage.co/query"
-        params = {
-            "function": "TIME_SERIES_INTRADAY",
-            "symbol": "IBM",
-            "interval": "5min",
-            "apikey": api_key
-        }
-
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession() as session, session.get(url, params=params, timeout=timeout) as resp:
-            data = await resp.json()
-
-            if "Error Message" in data:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": "Invalid API key"
-                }
-            elif "Note" in data:
-                # Rate limit message
-                return {
-                    "valid": True,
-                    "tier": "free",
-                    "message": "Free tier (5 requests/minute, 500/day)"
-                }
-            elif "Time Series (5min)" in data:
-                return {
-                    "valid": True,
-                    "tier": "free",
-                    "message": "Free tier (5 requests/minute, 500/day)"
-                }
-            else:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": "Unexpected response from API"
-                }
-
-    async def _test_polygon(self, api_key: str) -> Dict[str, Any]:
-        """Test Polygon.io API key"""
-        url = "https://api.polygon.io/v2/aggs/ticker/AAPL/prev"
-        headers = {"Authorization": f"Bearer {api_key}"}
-
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession() as session, session.get(url, headers=headers, timeout=timeout) as resp:
-            if resp.status == 200:
-                return {
-                    "valid": True,
-                    "tier": "paid",
-                    "message": "Polygon.io key validated"
-                }
-            elif resp.status == 401:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": "Invalid API key"
-                }
-            else:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": f"API returned status {resp.status}"
-                }
-
-    async def _test_finnhub(self, api_key: str) -> Dict[str, Any]:
-        """Test Finnhub API key"""
-        url = f"https://finnhub.io/api/v1/quote?symbol=AAPL&token={api_key}"
-
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession() as session, session.get(url, timeout=timeout) as resp:
-            data = await resp.json()
-
-            if "error" in data:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": "Invalid API key"
-                }
-            elif "c" in data:  # Current price
-                return {
-                    "valid": True,
-                    "tier": "free",
-                    "message": "Free tier (60 requests/minute)"
-                }
-            else:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": "Unexpected response"
-                }
-
-    async def _test_fmp(self, api_key: str) -> Dict[str, Any]:
-        """Test Financial Modeling Prep API key"""
-        url = f"https://financialmodelingprep.com/api/v3/quote/AAPL?apikey={api_key}"
-
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession() as session, session.get(url, timeout=timeout) as resp:
-            data = await resp.json()
-
-            if isinstance(data, dict) and "Error Message" in data:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": "Invalid API key"
-                }
-            elif isinstance(data, list) and len(data) > 0:
-                return {
-                    "valid": True,
-                    "tier": "free",
-                    "message": "Free tier (250 requests/day)"
-                }
-            else:
-                return {
-                    "valid": False,
-                    "tier": "unknown",
-                    "message": "Unexpected response"
-                }
+    # Provider tests removed - now handled by service layer
+    # (Methods _test_alpha_vantage, _test_polygon, _test_finnhub, _test_fmp deleted)
 
     async def store_user_key(
         self,
@@ -287,7 +145,7 @@ class UserProviderKeyManager:
         metadata: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
-        Encrypt and store user API key
+        Encrypt and store user API key (delegates to service)
 
         Args:
             user_id: User identifier
@@ -298,58 +156,15 @@ class UserProviderKeyManager:
         Returns:
             True if stored successfully
         """
-        try:
-            # Encrypt the key
-            encrypted_key = self.cipher.encrypt(api_key.encode())
+        result = await self._service.add_key(user_id, provider, api_key, validate=False, metadata=metadata)
 
-            # Prepare storage object
-            key_data = {
-                "provider": provider,
-                "encrypted_key": encrypted_key.decode(),
-                "added_at": datetime.now(UTC).isoformat(),
-                "metadata": metadata or {}
-            }
-
-            # Store (simplified - in production use AWS Secrets Manager or similar)
-            import os
-            os.makedirs(self.storage_path, exist_ok=True)
-
-            user_file = self.storage_path / f"{user_id}.json"
-
-            # Load existing keys
-            if os.path.exists(user_file):
-                with open(user_file, "r") as f:
-                    user_keys = json.load(f)
-            else:
-                user_keys = {}
-
-            # Add new key
-            user_keys[provider] = key_data
-
-            # Save
-            with open(user_file, "w") as f:
-                json.dump(user_keys, f, indent=2)
-
-            # Update cache
+        # Update cache for backward compatibility
+        if result["success"]:
             if user_id not in self._key_cache:
                 self._key_cache[user_id] = {}
             self._key_cache[user_id][provider] = api_key
 
-            logger.info(
-                "User key stored",
-                user_id=user_id,
-                provider=provider,
-                has_metadata=bool(metadata)
-            )
-
-            # Audit log
-            await self._audit_log(user_id, f"Added {provider} key")
-
-            return True
-
-        except Exception as e:
-            logger.error("Failed to store key", user_id=user_id, provider=provider, error=str(e))
-            return False
+        return result["success"]
 
     async def get_user_keys(self, user_id: str) -> Dict[str, str]:
         """
@@ -365,32 +180,13 @@ class UserProviderKeyManager:
         if user_id in self._key_cache:
             return self._key_cache[user_id].copy()
 
-        # Load from storage
-        user_file = self.storage_path / f"{user_id}.json"
+        # Get from service
+        keys = await self._service.get_all_keys(user_id)
 
-        try:
-            import os
-            if not os.path.exists(user_file):
-                return {}
+        # Update cache
+        self._key_cache[user_id] = keys.copy()
 
-            with open(user_file, "r") as f:
-                user_keys_data = json.load(f)
-
-            # Decrypt keys
-            decrypted_keys = {}
-            for provider, key_data in user_keys_data.items():
-                encrypted_key = key_data["encrypted_key"].encode()
-                decrypted_key = self.cipher.decrypt(encrypted_key).decode()
-                decrypted_keys[provider] = decrypted_key
-
-            # Update cache
-            self._key_cache[user_id] = decrypted_keys.copy()
-
-            return decrypted_keys
-
-        except Exception as e:
-            logger.error("Failed to retrieve keys", user_id=user_id, error=str(e))
-            return {}
+        return keys
 
     async def remove_user_key(self, user_id: str, provider: str) -> bool:
         """
@@ -403,40 +199,13 @@ class UserProviderKeyManager:
         Returns:
             True if removed successfully
         """
-        try:
-            user_file = self.storage_path / f"{user_id}.json"
+        success = await self._service.remove_key(user_id, provider)
 
-            import os
-            if not os.path.exists(user_file):
-                return False
+        # Update cache
+        if success and user_id in self._key_cache and provider in self._key_cache[user_id]:
+            del self._key_cache[user_id][provider]
 
-            with open(user_file, "r") as f:
-                user_keys = json.load(f)
-
-            if provider not in user_keys:
-                return False
-
-            # Remove key
-            del user_keys[provider]
-
-            # Save
-            with open(user_file, "w") as f:
-                json.dump(user_keys, f, indent=2)
-
-            # Update cache
-            if user_id in self._key_cache and provider in self._key_cache[user_id]:
-                del self._key_cache[user_id][provider]
-
-            logger.info("User key removed", user_id=user_id, provider=provider)
-
-            # Audit log
-            await self._audit_log(user_id, f"Removed {provider} key")
-
-            return True
-
-        except Exception as e:
-            logger.error("Failed to remove key", user_id=user_id, provider=provider, error=str(e))
-            return False
+        return success
 
     async def list_user_providers(self, user_id: str) -> List[Dict[str, Any]]:
         """
