@@ -157,8 +157,26 @@ class EducationalComplianceFilter:
         Returns:
             (compliance_level, message)
         """
+        # ALWAYS check legacy advice patterns first for BLOCKED status
+        # This ensures backwards compatibility with existing tests
+        content_lower = content.lower()
+        for regex in self._advice_regex:
+            match = regex.search(content_lower)
+            if match:
+                matched_text = match.group(0)
+                logger.warning(
+                    "Advice pattern detected - BLOCKED",
+                    context=context,
+                    pattern=matched_text,
+                )
+                return (
+                    ComplianceLevel.BLOCKED,
+                    f"Content blocked: Contains advice language ('{matched_text}'). "
+                    "Educational content only.",
+                )
+
         if self.use_guardrail:
-            # Use the comprehensive ComplianceGuardrail
+            # Use the comprehensive ComplianceGuardrail for additional checks
             result = self._guardrail.process(
                 content,
                 asset_class=AssetClass.EQUITY,
@@ -178,7 +196,22 @@ class EducationalComplianceFilter:
                     f"Violations: {len(result.violations_found)}. Educational content only.",
                 )
 
-            if result.was_modified:
+            # Check for warning patterns
+            for regex in self._warning_regex:
+                match = regex.search(content_lower)
+                if match:
+                    matched_text = match.group(0)
+                    logger.info(
+                        "Warning pattern detected",
+                        context=context,
+                        pattern=matched_text,
+                    )
+                    return (
+                        ComplianceLevel.WARNING,
+                        self.add_disclaimer(content, ComplianceLevel.WARNING),
+                    )
+
+            if result.was_modified or result.violations_found:
                 logger.info(
                     "Content modified by ComplianceGuardrail",
                     context=context,
@@ -213,9 +246,7 @@ class EducationalComplianceFilter:
             match = regex.search(content_lower)
             if match:
                 matched_text = match.group(0)
-                logger.warning(
-                    "Advice pattern detected", context=context, pattern=matched_text
-                )
+                logger.warning("Advice pattern detected", context=context, pattern=matched_text)
                 return (
                     ComplianceLevel.BLOCKED,
                     f"Content blocked: Contains advice language ('{matched_text}'). "
@@ -227,9 +258,7 @@ class EducationalComplianceFilter:
             match = regex.search(content_lower)
             if match:
                 matched_text = match.group(0)
-                logger.info(
-                    "Warning pattern detected", context=context, pattern=matched_text
-                )
+                logger.info("Warning pattern detected", context=context, pattern=matched_text)
                 return (
                     ComplianceLevel.WARNING,
                     f"Warning: Borderline language detected ('{matched_text}'). "
@@ -282,9 +311,7 @@ class EducationalComplianceFilter:
         # Question is educational
         return ComplianceFilterResult(is_allowed=True, message="")
 
-    def add_disclaimer(
-        self, content: str, level: ComplianceLevel = ComplianceLevel.WARNING
-    ) -> str:
+    def add_disclaimer(self, content: str, level: ComplianceLevel = ComplianceLevel.WARNING) -> str:
         """Add appropriate disclaimer to content"""
 
         if level == ComplianceLevel.SAFE:
@@ -342,9 +369,7 @@ class EducationalComplianceFilter:
 
         return result.processed_text, result
 
-    async def check_and_filter(
-        self, content: str, context: str = "general"
-    ) -> Dict:
+    async def check_and_filter(self, content: str, context: str = "general") -> Dict:
         """
         Check content and return filtered version using ComplianceGuardrail
 
@@ -366,11 +391,7 @@ class EducationalComplianceFilter:
                 "guardrail_result": result,
             }
 
-        level = (
-            ComplianceLevel.WARNING
-            if result.was_modified
-            else ComplianceLevel.SAFE
-        )
+        level = ComplianceLevel.WARNING if result.was_modified else ComplianceLevel.SAFE
 
         return {
             "allowed": True,
