@@ -304,7 +304,7 @@ See [examples/websocket_streaming.py](examples/websocket_streaming.py) for compl
 
 ### MCP Tools
 
-> **Note**: MCP (Model Context Protocol) Tools are the externally-callable API endpoints that clients like ChatGPT and Claude can invoke. These are distinct from FIML's internal architectural components (arbitration engine, cache manager, provider registry, Ray agents, etc.) which power these tools behind the scenes.
+> **Note**: MCP (Model Context Protocol) is a standardized protocol for AI model-to-tool communication. MCP Tools are the callable endpoints that AI clients (ChatGPT, Claude, etc.) can invoke via this protocol. These are distinct from FIML's internal architectural components (arbitration engine, cache manager, provider registry, Ray agents, etc.) which power these tools behind the scenes.
 
 FIML exposes **9 MCP tools** organized into two categories:
 
@@ -320,8 +320,7 @@ Search for a stock by symbol with instant cached data and async deep analysis.
     "symbol": "TSLA",
     "market": "US",
     "depth": "standard",
-    "language": "en",
-    "sessionId": "optional-session-uuid"
+    "language": "en"
   }
 }
 ```
