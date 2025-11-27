@@ -106,9 +106,7 @@ class NarrativeValidator:
 
         # Length validation
         if not self.check_length(text, min_length, max_length):
-            errors.append(
-                f"Length must be between {min_length} and {max_length} characters"
-            )
+            errors.append(f"Length must be between {min_length} and {max_length} characters")
 
         # Disclaimer validation
         if not self.check_disclaimer(text):
@@ -170,9 +168,7 @@ class NarrativeValidator:
             True if disclaimer is present
         """
         text_lower = text.lower()
-        return any(
-            disclaimer in text_lower for disclaimer in self.REQUIRED_DISCLAIMERS
-        )
+        return any(disclaimer in text_lower for disclaimer in self.REQUIRED_DISCLAIMERS)
 
     def check_investment_advice(self, text: str) -> bool:
         """
@@ -228,12 +224,12 @@ class NarrativeValidator:
             0-30: Very difficult
         """
         # Count sentences
-        sentences = len(re.findall(r'[.!?]+', text))
+        sentences = len(re.findall(r"[.!?]+", text))
         if sentences == 0:
             sentences = 1
 
         # Count words
-        words = len(re.findall(r'\b\w+\b', text))
+        words = len(re.findall(r"\b\w+\b", text))
         if words == 0:
             return 0.0
 
@@ -259,7 +255,7 @@ class NarrativeValidator:
         # Simple syllable counting: count vowel groups
         text = text.lower()
         syllables = 0
-        vowels = 'aeiouy'
+        vowels = "aeiouy"
         previous_was_vowel = False
 
         for char in text:
@@ -269,16 +265,14 @@ class NarrativeValidator:
             previous_was_vowel = is_vowel
 
         # Adjust for silent 'e' at end of words
-        words = re.findall(r'\b\w+\b', text)
+        words = re.findall(r"\b\w+\b", text)
         for word in words:
-            if len(word) > 2 and word.endswith('e'):
+            if len(word) > 2 and word.endswith("e"):
                 syllables -= 1
 
         return max(1, syllables)
 
-    def check_factual_accuracy(
-        self, text: str, source_data: dict
-    ) -> List[str]:
+    def check_factual_accuracy(self, text: str, source_data: dict) -> List[str]:
         """
         Check if narrative matches source data
 
@@ -292,44 +286,40 @@ class NarrativeValidator:
         issues: List[str] = []
 
         # Extract numerical values from text
-        numbers_in_text = re.findall(r'\$?(\d+(?:\.\d+)?)', text)
+        numbers_in_text = re.findall(r"\$?(\d+(?:\.\d+)?)", text)
 
         # Check price accuracy if provided
-        if 'price' in source_data:
-            price = source_data['price']
+        if "price" in source_data:
+            price = source_data["price"]
             price_str = f"{price:.2f}"
-            if price_str.replace('.', '') not in ''.join(numbers_in_text):
+            if price_str.replace(".", "") not in "".join(numbers_in_text):
                 # Allow for some rounding
                 price_rounded = round(price, 1)
                 price_rounded_str = f"{price_rounded:.1f}"
-                if price_rounded_str.replace('.', '') not in ''.join(numbers_in_text):
+                if price_rounded_str.replace(".", "") not in "".join(numbers_in_text):
                     issues.append(f"Price in text may not match source: ${price}")
 
         # Check percentage accuracy if provided
-        if 'change_percent' in source_data:
-            change_pct = source_data['change_percent']
+        if "change_percent" in source_data:
+            change_pct = source_data["change_percent"]
             # Look for percentage mentions
-            pct_matches = re.findall(r'(\d+(?:\.\d+)?)%', text)
+            pct_matches = re.findall(r"(\d+(?:\.\d+)?)%", text)
             if pct_matches:
                 # Check if any match is close to source
-                matches_found = any(
-                    abs(float(pct) - abs(change_pct)) < 0.5 for pct in pct_matches
-                )
+                matches_found = any(abs(float(pct) - abs(change_pct)) < 0.5 for pct in pct_matches)
                 if not matches_found:
-                    issues.append(
-                        f"Change percent in text may not match source: {change_pct}%"
-                    )
+                    issues.append(f"Change percent in text may not match source: {change_pct}%")
 
         # Check volume if provided (order of magnitude)
-        if 'volume' in source_data:
-            volume = source_data['volume']
+        if "volume" in source_data:
+            volume = source_data["volume"]
             # Convert volume to magnitude (millions/billions)
             if volume > 1_000_000_000:
-                magnitude = 'billion'
+                magnitude = "billion"
             elif volume > 1_000_000:
-                magnitude = 'million'
+                magnitude = "million"
             else:
-                magnitude = ''
+                magnitude = ""
 
             if magnitude and magnitude not in text.lower():
                 issues.append(f"Volume magnitude not mentioned: {magnitude}")
@@ -390,6 +380,63 @@ class NarrativeValidator:
                 logger.warning(f"Sanitized pattern: {pattern}")
 
         return sanitized
+
+    def process_with_guardrail(
+        self,
+        text: str,
+        asset_class: str = "equity",
+        region: str = "US",
+    ) -> Tuple[str, bool, List[str]]:
+        """
+        Process narrative through the compliance guardrail layer
+
+        This is a convenience method that integrates the comprehensive
+        ComplianceGuardrail with this validator.
+
+        Args:
+            text: Narrative text to process
+            asset_class: Type of asset (equity, crypto, etc.)
+            region: User's region (US, EU, UK, etc.)
+
+        Returns:
+            Tuple of (processed_text, is_compliant, violations_found)
+
+        Example:
+            >>> validator = NarrativeValidator()
+            >>> text, compliant, violations = validator.process_with_guardrail(
+            ...     "You should buy AAPL now!",
+            ...     asset_class="equity",
+            ...     region="US"
+            ... )
+            >>> print(compliant)
+            True
+            >>> print(violations)
+            ['Prescriptive verb found: ...']
+        """
+        from fiml.compliance.disclaimers import AssetClass
+        from fiml.compliance.guardrail import ComplianceGuardrail
+        from fiml.compliance.router import Region
+
+        # Map string to enum
+        try:
+            asset_enum = AssetClass(asset_class.lower())
+        except ValueError:
+            asset_enum = AssetClass.EQUITY
+
+        try:
+            region_enum = Region(region.upper())
+        except ValueError:
+            region_enum = Region.US
+
+        # Process through guardrail
+        guardrail = ComplianceGuardrail()
+        result = guardrail.process(
+            text,
+            asset_class=asset_enum,
+            region=region_enum,
+        )
+
+        return result.processed_text, result.is_compliant, result.violations_found
 
 
 # Global validator instance
