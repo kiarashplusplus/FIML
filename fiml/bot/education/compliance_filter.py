@@ -196,7 +196,7 @@ class EducationalComplianceFilter:
                     f"Violations: {len(result.violations_found)}. Educational content only.",
                 )
 
-            # Check for warning patterns
+            # Check for warning patterns (legacy patterns take precedence)
             for regex in self._warning_regex:
                 match = regex.search(content_lower)
                 if match:
@@ -211,17 +211,20 @@ class EducationalComplianceFilter:
                         self.add_disclaimer(content, ComplianceLevel.WARNING),
                     )
 
-            if result.was_modified or result.violations_found:
+            # If guardrail found violations (not just added disclaimer), return WARNING
+            if result.violations_found:
                 logger.info(
                     "Content modified by ComplianceGuardrail",
                     context=context,
                     modifications=len(result.modifications),
+                    violations=len(result.violations_found),
                 )
                 return (
                     ComplianceLevel.WARNING,
                     result.processed_text,
                 )
 
+            # If only disclaimer was added (no violations), content is SAFE
             return (ComplianceLevel.SAFE, "Content is educational and compliant")
 
         # Legacy pattern matching (fallback)
@@ -391,7 +394,9 @@ class EducationalComplianceFilter:
                 "guardrail_result": result,
             }
 
-        level = ComplianceLevel.WARNING if result.was_modified else ComplianceLevel.SAFE
+        # If violations were found, it's WARNING level
+        # If only disclaimer was added (no violations), it's SAFE
+        level = ComplianceLevel.WARNING if result.violations_found else ComplianceLevel.SAFE
 
         return {
             "allowed": True,
