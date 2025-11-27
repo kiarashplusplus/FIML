@@ -10,6 +10,16 @@ from typing import Any, Dict, List, Optional, cast
 
 import structlog
 
+from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
+from fiml.bot.education.fiml_adapter import FIMLEducationalDataAdapter
+from fiml.narrative.generator import NarrativeGenerator
+from fiml.narrative.models import (
+    ExpertiseLevel,
+    Language,
+    NarrativeContext,
+    NarrativePreferences,
+)
+
 logger = structlog.get_logger(__name__)
 
 
@@ -261,11 +271,24 @@ class UnifiedBotGateway:
     - Session management
     - Handler routing
     - Response formatting
+    - Integration with FIML Narrative Generation Engine
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        ai_mentor_service: Optional[AIMentorService] = None,
+        fiml_data_adapter: Optional[FIMLEducationalDataAdapter] = None,
+        narrative_generator: Optional[NarrativeGenerator] = None,
+    ) -> None:
         self.session_manager = SessionManager()
         self.intent_classifier: IntentClassifier = IntentClassifier()
+
+        # Initialize FIML services for narrative generation
+        self.narrative_generator = narrative_generator or NarrativeGenerator()
+        self.ai_mentor_service = ai_mentor_service or AIMentorService(
+            narrative_generator=self.narrative_generator
+        )
+        self.fiml_data_adapter = fiml_data_adapter or FIMLEducationalDataAdapter()
 
         # Handlers will be set by components
         self.handlers: Dict[IntentType, Any] = {
@@ -279,7 +302,7 @@ class UnifiedBotGateway:
             IntentType.UNKNOWN: self.handle_unknown,
         }
 
-        logger.info("UnifiedBotGateway initialized")
+        logger.info("UnifiedBotGateway initialized with FIML narrative generation")
 
     async def classify(self, message: AbstractMessage, session: UserSession) -> Intent:
         """
@@ -393,35 +416,285 @@ class UnifiedBotGateway:
     async def handle_ai_question(
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
-        """Handle AI mentor questions"""
-        # Placeholder - will be implemented by AIMentorService
+        """Handle AI mentor questions using FIML Narrative Generation Engine"""
         question = intent.data.get("question", "")
 
-        return AbstractResponse(
-            text="🤖 **AI Mentor Coming Soon!**\n\n"
-            f"You asked: _{question}_\n\n"
-            "Soon you'll chat with AI mentors (Maya, Theo, Zara) who will:\n"
-            "- Answer your trading questions\n"
-            "- Explain concepts with real examples\n"
-            "- Guide your learning journey\n\n"
-            "For now, use /help to see what's available."
-        )
+        try:
+            # Get mentor persona from session preferences (default to Maya)
+            mentor_name = session.preferences.get("mentor", "maya").lower()
+            try:
+                persona = MentorPersona(mentor_name)
+            except ValueError:
+                persona = MentorPersona.MAYA
+
+            # Use AIMentorService to generate response via NarrativeGenerator
+            response_data = await self.ai_mentor_service.respond(
+                user_id=message.user_id,
+                question=question,
+                persona=persona,
+                context=message.context,
+            )
+
+            # Format the response with mentor icon and disclaimer
+            mentor_icon = response_data.get("icon", "🤖")
+            mentor_name = response_data.get("mentor", "Maya")
+            response_text = response_data.get("text", "")
+            disclaimer = response_data.get(
+                "disclaimer", "Educational purposes only - not financial advice"
+            )
+
+            # Add related lesson suggestions if available
+            related_lessons = response_data.get("related_lessons", [])
+            lessons_text = ""
+            if related_lessons:
+                lessons_text = "\n\n📚 **Related Lessons:**\n" + "\n".join(
+                    [f"• {lesson}" for lesson in related_lessons]
+                )
+
+            formatted_response = (
+                f"{mentor_icon} **{mentor_name}:**\n\n"
+                f"{response_text}{lessons_text}\n\n"
+                f"_{disclaimer}_"
+            )
+
+            logger.info(
+                "AI mentor response generated",
+                user_id=message.user_id,
+                persona=persona.value,
+                question_length=len(question),
+            )
+
+            return AbstractResponse(
+                text=formatted_response,
+                metadata={"mentor": mentor_name, "persona": persona.value},
+            )
+
+        except Exception as e:
+            # Graceful fallback to template response if FIML services unavailable
+            logger.warning(
+                "Failed to generate AI mentor response, using fallback",
+                user_id=message.user_id,
+                error=str(e),
+            )
+
+            return AbstractResponse(
+                text="🤖 **AI Mentor:**\n\n"
+                f"You asked: _{question}_\n\n"
+                "I'm having trouble connecting to my knowledge base right now. "
+                "Please try again in a moment, or explore:\n"
+                "• /lesson - Browse available lessons\n"
+                "• /help - See what I can help with\n\n"
+                "_Educational purposes only - not financial advice_"
+            )
 
     async def handle_market_query(
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
-        """Handle market data queries"""
-        # Placeholder - will be implemented by FIMLEducationalDataAdapter
+        """Handle market data queries using FIML Educational Data Adapter"""
         query = intent.data.get("query", "")
 
-        return AbstractResponse(
-            text="📊 **Market Data Coming Soon!**\n\n"
-            f"You asked about: _{query}_\n\n"
-            "Soon you'll get real-time market data with educational context!\n\n"
-            "First, set up your API keys:\n"
-            "/addkey - Add provider keys\n"
-            "/listkeys - View connected providers"
-        )
+        try:
+            # Extract symbol from the query
+            symbol = self._extract_symbol_from_query(query)
+
+            if not symbol:
+                return AbstractResponse(
+                    text="📊 **Market Data Query**\n\n"
+                    "I couldn't identify a specific stock or crypto symbol in your query.\n\n"
+                    "Try asking about a specific symbol like:\n"
+                    "• 'Show me AAPL price'\n"
+                    "• 'What's the price of TSLA stock?'\n"
+                    "• 'Tell me about MSFT'\n\n"
+                    "_Educational purposes only - not financial advice_"
+                )
+
+            # Use FIMLEducationalDataAdapter to fetch market data with educational context
+            educational_data = await self.fiml_data_adapter.get_educational_snapshot(
+                symbol=symbol, user_id=message.user_id, context="mentor"
+            )
+
+            # Format the educational snapshot for display
+            formatted_data = await self.fiml_data_adapter.format_for_lesson(educational_data)
+
+            # Generate educational narrative using NarrativeGenerator if available
+            narrative_text = ""
+            try:
+                # Get user's expertise level from session (default to beginner)
+                expertise_str = session.preferences.get("expertise_level", "beginner")
+                try:
+                    expertise_level = ExpertiseLevel(expertise_str.lower())
+                except ValueError:
+                    expertise_level = ExpertiseLevel.BEGINNER
+
+                # Build narrative context from the educational data
+                price_info = educational_data.get("price", {})
+                narrative_context = NarrativeContext(
+                    asset_symbol=symbol,
+                    asset_name=educational_data.get("name", f"{symbol} Stock"),
+                    asset_type="stock",
+                    market="US",
+                    price_data={
+                        "price": price_info.get("current", 0),
+                        "change": price_info.get("change", 0),
+                        "change_percent": price_info.get("change_percent", 0),
+                    },
+                    preferences=NarrativePreferences(
+                        expertise_level=expertise_level,
+                        language=Language.ENGLISH,
+                        include_disclaimers=True,
+                        include_technical=False,
+                        include_fundamental=True,
+                        include_sentiment=False,
+                        include_risk=False,
+                    ),
+                    include_disclaimers=True,
+                )
+
+                # Generate a brief narrative summary
+                narrative = await self.narrative_generator.generate_narrative(
+                    context=narrative_context
+                )
+                narrative_text = f"\n\n📝 **Educational Insight:**\n{narrative.summary[:500]}..."
+
+            except Exception as narrative_error:
+                logger.debug(
+                    "Narrative generation skipped",
+                    symbol=symbol,
+                    error=str(narrative_error),
+                )
+
+            response_text = (
+                f"📊 **Market Data for {symbol}**\n\n"
+                f"{formatted_data}{narrative_text}\n\n"
+                f"_Source: {educational_data.get('data_source', 'FIML')}_\n"
+                f"_{educational_data.get('disclaimer', 'Educational purposes only - not financial advice')}_"
+            )
+
+            logger.info(
+                "Market query response generated",
+                user_id=message.user_id,
+                symbol=symbol,
+            )
+
+            return AbstractResponse(
+                text=response_text,
+                metadata={"symbol": symbol, "has_narrative": bool(narrative_text)},
+            )
+
+        except Exception as e:
+            # Graceful fallback if FIML services are unavailable
+            logger.warning(
+                "Failed to generate market query response, using fallback",
+                user_id=message.user_id,
+                query=query,
+                error=str(e),
+            )
+
+            return AbstractResponse(
+                text="📊 **Market Data:**\n\n"
+                f"You asked about: _{query}_\n\n"
+                "I'm having trouble fetching market data right now. "
+                "This could be due to:\n"
+                "• API keys not configured (/addkey to set up)\n"
+                "• Temporary service issues\n\n"
+                "Try again in a moment, or set up your API keys first:\n"
+                "• /addkey - Add provider keys\n"
+                "• /listkeys - View connected providers\n\n"
+                "_Educational purposes only - not financial advice_"
+            )
+
+    def _extract_symbol_from_query(self, query: str) -> Optional[str]:
+        """
+        Extract stock/crypto symbol from user query.
+
+        Args:
+            query: User's query text
+
+        Returns:
+            Detected symbol or None
+        """
+        query_upper = query.upper()
+
+        # Common stock symbols to look for
+        common_symbols = [
+            "AAPL",
+            "GOOGL",
+            "GOOG",
+            "MSFT",
+            "AMZN",
+            "TSLA",
+            "META",
+            "NVDA",
+            "JPM",
+            "V",
+            "WMT",
+            "PG",
+            "JNJ",
+            "UNH",
+            "DIS",
+            "NFLX",
+            "PYPL",
+            "INTC",
+            "CSCO",
+            "VZ",
+            "PFE",
+            "KO",
+            "PEP",
+            "NKE",
+            "MCD",
+            "BA",
+            "GE",
+            "IBM",
+            "GM",
+            "F",
+            "T",
+            "XOM",
+            "CVX",
+            "ORCL",
+            "CRM",
+            "AMD",
+            "SPY",
+            "QQQ",
+            "BTC",
+            "ETH",
+        ]
+
+        # Check for explicit symbol mentions
+        words = query_upper.split()
+        for word in words:
+            # Remove common punctuation
+            clean_word = word.strip(".,!?$")
+            if clean_word in common_symbols:
+                return clean_word
+
+        # Check for company name mentions
+        company_map = {
+            "APPLE": "AAPL",
+            "GOOGLE": "GOOGL",
+            "ALPHABET": "GOOGL",
+            "MICROSOFT": "MSFT",
+            "AMAZON": "AMZN",
+            "TESLA": "TSLA",
+            "FACEBOOK": "META",
+            "NVIDIA": "NVDA",
+            "NETFLIX": "NFLX",
+            "DISNEY": "DIS",
+            "BITCOIN": "BTC",
+            "ETHEREUM": "ETH",
+        }
+
+        for company_name, symbol in company_map.items():
+            if company_name in query_upper:
+                return symbol
+
+        # Check for $ prefix (e.g., $AAPL)
+        import re
+
+        dollar_match = re.search(r"\$([A-Z]{1,5})", query_upper)
+        if dollar_match:
+            return dollar_match.group(1)
+
+        return None
 
     async def handle_navigation(
         self, message: AbstractMessage, session: UserSession, intent: Intent

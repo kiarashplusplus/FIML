@@ -3,8 +3,13 @@ Tests for UnifiedBotGateway (Component 3)
 Tests message routing and intent classification
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from fiml.bot.core.gateway import (AbstractMessage, AbstractResponse,
                                    IntentType, SessionState, UnifiedBotGateway)
+from fiml.bot.education.ai_mentor import MentorPersona
 
 
 class TestUnifiedBotGateway:
@@ -201,3 +206,254 @@ class TestUnifiedBotGateway:
         # After cleanup, session should be gone or reset
         cleaned = gateway.session_manager.get_session("user_123")
         assert cleaned is None or cleaned.metadata == {}
+
+
+class TestGatewayFIMLIntegration:
+    """Test FIML integration in gateway handlers"""
+
+    async def test_gateway_initializes_fiml_services(self):
+        """Test gateway initializes FIML services"""
+        gateway = UnifiedBotGateway()
+
+        assert gateway.ai_mentor_service is not None
+        assert gateway.fiml_data_adapter is not None
+        assert gateway.narrative_generator is not None
+
+    async def test_gateway_accepts_custom_services(self):
+        """Test gateway accepts custom service instances"""
+        mock_mentor = MagicMock()
+        mock_adapter = MagicMock()
+        mock_generator = MagicMock()
+
+        gateway = UnifiedBotGateway(
+            ai_mentor_service=mock_mentor,
+            fiml_data_adapter=mock_adapter,
+            narrative_generator=mock_generator,
+        )
+
+        assert gateway.ai_mentor_service is mock_mentor
+        assert gateway.fiml_data_adapter is mock_adapter
+        assert gateway.narrative_generator is mock_generator
+
+    async def test_handle_ai_question_uses_mentor_service(self):
+        """Test handle_ai_question uses AIMentorService"""
+        mock_mentor = AsyncMock()
+        mock_mentor.respond.return_value = {
+            "text": "This is a test response about stocks.",
+            "mentor": "Maya",
+            "icon": "👩‍🏫",
+            "related_lessons": ["stock_basics_001"],
+            "disclaimer": "Educational purposes only - not financial advice",
+        }
+
+        gateway = UnifiedBotGateway(ai_mentor_service=mock_mentor)
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="What is a stock?", user_id="test_user", platform="test")
+
+        from fiml.bot.core.gateway import Intent
+
+        intent = Intent(type=IntentType.AI_QUESTION, data={"question": "What is a stock?"})
+
+        response = await gateway.handle_ai_question(msg, session, intent)
+
+        # Verify mentor service was called
+        mock_mentor.respond.assert_called_once()
+        call_kwargs = mock_mentor.respond.call_args.kwargs
+        assert call_kwargs["user_id"] == "test_user"
+        assert call_kwargs["question"] == "What is a stock?"
+        assert call_kwargs["persona"] == MentorPersona.MAYA
+
+        # Verify response format
+        assert response is not None
+        assert isinstance(response, AbstractResponse)
+        assert "Maya" in response.text
+        assert "This is a test response about stocks" in response.text
+        assert "Educational purposes only" in response.text
+
+    async def test_handle_ai_question_respects_mentor_preference(self):
+        """Test handle_ai_question uses mentor from session preferences"""
+        mock_mentor = AsyncMock()
+        mock_mentor.respond.return_value = {
+            "text": "Analytical response about stocks.",
+            "mentor": "Theo",
+            "icon": "👨‍💼",
+            "related_lessons": [],
+            "disclaimer": "Educational purposes only",
+        }
+
+        gateway = UnifiedBotGateway(ai_mentor_service=mock_mentor)
+        session = await gateway.session_manager.get_or_create("test_user")
+        session.preferences["mentor"] = "theo"
+
+        msg = AbstractMessage(text="Analyze AAPL", user_id="test_user", platform="test")
+        from fiml.bot.core.gateway import Intent
+
+        intent = Intent(type=IntentType.AI_QUESTION, data={"question": "Analyze AAPL"})
+
+        await gateway.handle_ai_question(msg, session, intent)
+
+        # Verify Theo persona was used
+        call_kwargs = mock_mentor.respond.call_args.kwargs
+        assert call_kwargs["persona"] == MentorPersona.THEO
+
+    async def test_handle_ai_question_fallback_on_error(self):
+        """Test handle_ai_question falls back gracefully on error"""
+        mock_mentor = AsyncMock()
+        mock_mentor.respond.side_effect = Exception("Service unavailable")
+
+        gateway = UnifiedBotGateway(ai_mentor_service=mock_mentor)
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="What is a stock?", user_id="test_user", platform="test")
+
+        from fiml.bot.core.gateway import Intent
+
+        intent = Intent(type=IntentType.AI_QUESTION, data={"question": "What is a stock?"})
+
+        response = await gateway.handle_ai_question(msg, session, intent)
+
+        # Should return fallback response, not raise exception
+        assert response is not None
+        assert isinstance(response, AbstractResponse)
+        assert "trouble connecting" in response.text.lower() or "try again" in response.text.lower()
+        assert "Educational purposes only" in response.text
+
+    async def test_handle_market_query_uses_data_adapter(self):
+        """Test handle_market_query uses FIMLEducationalDataAdapter"""
+        mock_adapter = AsyncMock()
+        mock_adapter.get_educational_snapshot.return_value = {
+            "symbol": "AAPL",
+            "name": "Apple Inc.",
+            "price": {
+                "current": 175.50,
+                "change": 2.30,
+                "change_percent": 1.33,
+                "explanation": "Moderate movement up - notable but not unusual",
+            },
+            "volume": {
+                "current": 50000000,
+                "average": 45000000,
+                "interpretation": "Volume is 1.1x average - elevated interest",
+            },
+            "fundamentals": {
+                "pe_ratio": 28.5,
+                "market_cap": "2.5T",
+                "explanation": "Moderate P/E (15-25) - fairly valued",
+            },
+            "disclaimer": "📚 Live market data for educational purposes only",
+            "data_source": "Via FIML from yahoo_finance",
+        }
+        mock_adapter.format_for_lesson.return_value = (
+            "📊 **AAPL - Apple Inc.**\n\n"
+            "**Current Price:** $175.50\n"
+            "**Change:** +1.33%"
+        )
+
+        # Mock narrative generator to avoid actual LLM calls
+        mock_generator = AsyncMock()
+
+        gateway = UnifiedBotGateway(
+            fiml_data_adapter=mock_adapter, narrative_generator=mock_generator
+        )
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="Show me AAPL price", user_id="test_user", platform="test")
+
+        from fiml.bot.core.gateway import Intent
+
+        intent = Intent(type=IntentType.MARKET_QUERY, data={"query": "Show me AAPL price"})
+
+        response = await gateway.handle_market_query(msg, session, intent)
+
+        # Verify data adapter was called
+        mock_adapter.get_educational_snapshot.assert_called_once()
+        call_kwargs = mock_adapter.get_educational_snapshot.call_args.kwargs
+        assert call_kwargs["symbol"] == "AAPL"
+        assert call_kwargs["user_id"] == "test_user"
+
+        # Verify response format
+        assert response is not None
+        assert isinstance(response, AbstractResponse)
+        assert "AAPL" in response.text
+
+    async def test_handle_market_query_no_symbol_found(self):
+        """Test handle_market_query when no symbol can be extracted"""
+        gateway = UnifiedBotGateway()
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="Show me some prices", user_id="test_user", platform="test")
+
+        from fiml.bot.core.gateway import Intent
+
+        intent = Intent(type=IntentType.MARKET_QUERY, data={"query": "Show me some prices"})
+
+        response = await gateway.handle_market_query(msg, session, intent)
+
+        # Should return helpful message about providing a symbol
+        assert response is not None
+        assert isinstance(response, AbstractResponse)
+        assert "couldn't identify" in response.text.lower() or "symbol" in response.text.lower()
+
+    async def test_handle_market_query_fallback_on_error(self):
+        """Test handle_market_query falls back gracefully on error"""
+        mock_adapter = AsyncMock()
+        mock_adapter.get_educational_snapshot.side_effect = Exception("API unavailable")
+
+        gateway = UnifiedBotGateway(fiml_data_adapter=mock_adapter)
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="Show me AAPL price", user_id="test_user", platform="test")
+
+        from fiml.bot.core.gateway import Intent
+
+        intent = Intent(type=IntentType.MARKET_QUERY, data={"query": "Show me AAPL price"})
+
+        response = await gateway.handle_market_query(msg, session, intent)
+
+        # Should return fallback response, not raise exception
+        assert response is not None
+        assert isinstance(response, AbstractResponse)
+        assert "trouble" in response.text.lower() or "try again" in response.text.lower()
+
+    async def test_extract_symbol_from_query(self):
+        """Test symbol extraction from various query formats"""
+        gateway = UnifiedBotGateway()
+
+        # Direct symbol
+        assert gateway._extract_symbol_from_query("Show me AAPL") == "AAPL"
+        assert gateway._extract_symbol_from_query("TSLA price") == "TSLA"
+
+        # Company name
+        assert gateway._extract_symbol_from_query("Show me Apple stock") == "AAPL"
+        assert gateway._extract_symbol_from_query("What is Tesla doing?") == "TSLA"
+        assert gateway._extract_symbol_from_query("Microsoft earnings") == "MSFT"
+
+        # Dollar sign prefix
+        assert gateway._extract_symbol_from_query("What's $GOOGL doing?") == "GOOGL"
+        assert gateway._extract_symbol_from_query("$NVDA analysis") == "NVDA"
+
+        # No symbol found
+        assert gateway._extract_symbol_from_query("Show me some stocks") is None
+        assert gateway._extract_symbol_from_query("What is the market doing?") is None
+
+    async def test_handle_ai_question_includes_related_lessons(self):
+        """Test that AI question response includes related lessons"""
+        mock_mentor = AsyncMock()
+        mock_mentor.respond.return_value = {
+            "text": "P/E ratio explanation...",
+            "mentor": "Maya",
+            "icon": "👩‍🏫",
+            "related_lessons": ["stock_basics_001", "valuation_101"],
+            "disclaimer": "Educational purposes only",
+        }
+
+        gateway = UnifiedBotGateway(ai_mentor_service=mock_mentor)
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="What is P/E ratio?", user_id="test_user", platform="test")
+
+        from fiml.bot.core.gateway import Intent
+
+        intent = Intent(type=IntentType.AI_QUESTION, data={"question": "What is P/E ratio?"})
+
+        response = await gateway.handle_ai_question(msg, session, intent)
+
+        # Related lessons should be in response
+        assert "Related Lessons" in response.text
+        assert "stock_basics_001" in response.text
+        assert "valuation_101" in response.text
