@@ -3,6 +3,7 @@ CCXT Cryptocurrency Provider Implementation
 """
 
 import asyncio
+import warnings
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -228,13 +229,17 @@ class CCXTProvider(BaseProvider):
         try:
             # Create exchange instance
             exchange_class = getattr(ccxt, self.exchange_id)
-            self._exchange = exchange_class({
-                'enableRateLimit': True,
-                'timeout': self.config.timeout_seconds * 1000,  # milliseconds
-            })
 
-            # Load markets
-            await self._exchange.load_markets()
+            # Suppress ResourceWarning for expected CCXT cleanup messages during initialization
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed")
+                self._exchange = exchange_class({
+                    'enableRateLimit': True,
+                    'timeout': self.config.timeout_seconds * 1000,  # milliseconds
+                })
+
+                # Load markets
+                await self._exchange.load_markets()
 
             self._is_initialized = True
             logger.info(f"CCXT provider initialized with {len(self._exchange.markets)} markets")

@@ -92,6 +92,7 @@ services:
     image: rayproject/ray:2.52.0-py311
     container_name: fiml-ray-head
     command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --metrics-export-port=8080 --block
+    shm_size: '5gb'
     ports:
       - "6379:6379"
       - "8265:8265" # Ray dashboard
@@ -106,6 +107,7 @@ services:
   ray-worker:
     image: rayproject/ray:2.52.0-py311
     command: ray start --address=ray-head:6379 --block
+    shm_size: '5gb'
     depends_on:
       - ray-head
     volumes:
