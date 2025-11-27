@@ -17,6 +17,7 @@ set -e
 # Configuration & Color Variables
 # =============================================================================
 BASE_URL="${FIML_BASE_URL:-http://localhost:8000}"
+RAY_HEAD_CONTAINER="${FIML_RAY_HEAD_CONTAINER:-fiml-ray-head}"
 
 # Color codes for output
 RED='\033[0;31m'
@@ -56,7 +57,8 @@ while [[ $# -gt 0 ]]; do
             echo "  --help, -h      Show this help message"
             echo ""
             echo "Environment Variables:"
-            echo "  FIML_BASE_URL   Base URL for FIML server (default: http://localhost:8000)"
+            echo "  FIML_BASE_URL            Base URL for FIML server (default: http://localhost:8000)"
+            echo "  FIML_RAY_HEAD_CONTAINER  Ray head container name (default: fiml-ray-head)"
             echo ""
             echo "This demo showcases capabilities from the FIML 10-year blueprint:"
             echo "  - Data Arbitration Engine"
@@ -337,16 +339,20 @@ try:
         print(f\"  {'Provider':<18} {'Score':>8} {'Latency':>10} {'Success':>10} {'Health':>10}\")
         print('  ' + '─' * 70)
         
+        # Constants for provider scoring (Blueprint 2.2)
+        DEFAULT_LATENCY_MS = 9999  # Default when latency unknown
+        MAX_ACCEPTABLE_LATENCY_MS = 5000  # Maximum acceptable latency for scoring
+        
         # Sort by calculated score
         scored = []
         for name, info in providers.items():
-            latency = info.get('avg_latency_ms', 9999)
+            latency = info.get('avg_latency_ms', DEFAULT_LATENCY_MS)
             success = info.get('success_rate', 0) * 100
             healthy = info.get('is_healthy', False)
             
-            # Simplified scoring based on blueprint formula
+            # Simplified scoring based on blueprint formula (Section 2.2)
             freshness_score = 100  # Assume fresh for demo
-            latency_score = max(0, 100 * (1 - latency / 5000))
+            latency_score = max(0, 100 * (1 - latency / MAX_ACCEPTABLE_LATENCY_MS))
             uptime_score = success
             completeness_score = 100 if healthy else 50
             reliability_score = success
@@ -544,7 +550,7 @@ if [ "$QUICK_MODE" != true ]; then
     print_subsection "Ray Cluster Status" "🔬"
     echo -e "  ${DIM}Checking Ray distributed computing cluster...${NC}"
     
-    ray_status_output=$(docker exec fiml-ray-head ray status 2>/dev/null) && {
+    ray_status_output=$(docker exec "$RAY_HEAD_CONTAINER" ray status 2>/dev/null) && {
         echo "$ray_status_output" | head -20 | while read -r line; do
             echo "  $line"
         done

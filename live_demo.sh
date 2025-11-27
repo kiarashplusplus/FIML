@@ -1306,6 +1306,8 @@ fi
 
 print_subsection "v0.3.0 Test Suite Summary" "✅"
 echo -e "  ${BOLD}Guardrail Test Coverage:${NC}"
+# Note: These test counts are from the v0.3.0 release (Nov 2025)
+# See CHANGELOG.md for current test statistics
 echo -e "    ${GREEN}91${NC}  guardrail-specific tests"
 echo -e "    ${GREEN}163${NC} total compliance-related tests"
 echo -e "    ${GREEN}0${NC}   CodeQL security alerts"
