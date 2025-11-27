@@ -3,7 +3,7 @@ FIML - Financial Intelligence Meta-Layer
 AI-Native Multi-Market Financial Intelligence Framework
 """
 
-__version__ = "0.2.2"
+__version__ = "0.3.0"
 __author__ = "Kiarash Adl"
 __license__ = "Apache-2.0"
 

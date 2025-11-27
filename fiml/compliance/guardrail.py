@@ -200,13 +200,14 @@ class MultilingualPatterns:
     ADVICE_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
         "en": [
             # Direct advice patterns - improved for grammatical correctness
+            # Handle variations with modifiers like "definitely", "certainly"
             (
-                r"\byou should (buy|sell|invest in|hold|trade)\b",
-                "one may consider reviewing options to \\1",
+                r"\byou should (definitely |certainly |absolutely |really )?(buy|sell|invest in|hold|trade)\b",
+                "one may consider reviewing options to \\2",
             ),
             (
-                r"\bi (recommend|suggest|advise) (that you |you )?(buy|sell|invest|hold)\b",
-                "the data shows factors related to",
+                r"\b(i |we )?(strongly |highly )?(recommend|suggest|advise)( that you| you)? (buy|sell|invest|hold|investing)\b",
+                "the data shows factors related to \\5",
             ),
             (
                 r"\b(buy|sell|invest in|trade) (now|immediately|today|asap)\b",
@@ -229,16 +230,12 @@ class MultilingualPatterns:
             (r"\b(overweight|underweight)\b", "adjusted allocation"),
             # Prediction patterns - improved grammar
             (
-                r"\bwill (definitely|certainly|surely|absolutely) (go up|rise|fall|increase|decrease)\b",
+                r"\bwill (definitely |certainly |surely |absolutely )?(go up|rise|fall|increase|decrease)\b",
                 "has historically shown \\2 movement",
             ),
             (
-                r"\bguaranteed to (rise|fall|increase|decrease|succeed)\b",
-                "has shown historical patterns of \\1",
-            ),
-            (
-                r"\bsure to (rise|fall|increase|decrease|make)\b",
-                "has shown historical patterns of \\1",
+                r"\b(is |are )?(guaranteed|certain|sure) to (rise|fall|increase|decrease|succeed|make)\b",
+                "has shown historical patterns of \\3",
             ),
             (r"\bwill reach \$(\d+)", "is currently trading (historical highs around $\\1)"),
             (r"\bprice target\b", "price analysis level"),
@@ -861,7 +858,8 @@ class ComplianceGuardrail:
 
         # Get the highest scoring language
         max_score = max(scores.values())
-        detected = max(scores, key=scores.get)  # type: ignore
+        # scores.get returns Optional[int] but we know all values exist since we just populated the dict
+        detected = max(scores, key=scores.get)  # type: ignore[arg-type]
 
         # Require a minimum threshold to override English default
         # This prevents false detection from common words
@@ -1230,7 +1228,8 @@ class ComplianceGuardrail:
             # Fix spacing issues
             (r"\s{2,}", " "),
             # Fix sentence-initial lowercase after replacement
-            (r"^\s*([a-z])", lambda m: m.group(0).upper()),
+            # Captures optional whitespace + first lowercase letter, uppercases just the letter
+            (r"^(\s*)([a-z])", lambda m: m.group(1) + m.group(2).upper()),
         ]
 
         for pattern, replacement in grammar_fixes:
