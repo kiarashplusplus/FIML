@@ -450,7 +450,7 @@ class UnifiedBotGateway:
 
         try:
             # Get mentor persona from session preferences (default to Maya)
-            mentor_name = session.preferences.get("mentor", "maya").lower()
+            mentor_name = (session.preferences or {}).get("mentor", "maya").lower()
             try:
                 persona = MentorPersona(mentor_name)
             except ValueError:
@@ -549,7 +549,7 @@ class UnifiedBotGateway:
             narrative_text = ""
             try:
                 # Get user's expertise level from session (default to beginner)
-                expertise_str = session.preferences.get("expertise_level", "beginner")
+                expertise_str = (session.preferences or {}).get("expertise_level", "beginner")
                 try:
                     expertise_level = ExpertiseLevel(expertise_str.lower())
                 except ValueError:

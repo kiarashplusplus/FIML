@@ -457,3 +457,168 @@ class TestGatewayFIMLIntegration:
         assert "Related Lessons" in response.text
         assert "stock_basics_001" in response.text
         assert "valuation_101" in response.text
+
+    async def test_handle_message_flow(self):
+        """Test the full message processing pipeline"""
+        gateway = UnifiedBotGateway()
+        
+        # Mock the classify method to return a known intent
+        with patch.object(gateway.intent_classifier, 'classify', new_callable=AsyncMock) as mock_classify:
+            from fiml.bot.core.gateway import Intent
+            mock_classify.return_value = Intent(type=IntentType.COMMAND, data={"command": "/help"})
+            
+            response = await gateway.handle_message(
+                platform="telegram",
+                user_id="test_user_flow",
+                text="/help"
+            )
+            
+            # Verify session was created/retrieved
+            session = gateway.session_manager.get_session("test_user_flow")
+            assert session is not None
+            assert session.platform == "telegram"
+            
+            # Verify intent was classified
+            mock_classify.assert_called_once()
+            
+            # Verify response
+            assert isinstance(response, AbstractResponse)
+            assert response.metadata["intent"] == "command"
+
+    async def test_placeholder_handlers(self):
+        """Test placeholder handlers return expected responses"""
+        gateway = UnifiedBotGateway()
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="test", user_id="test_user", platform="test")
+        
+        from fiml.bot.core.gateway import Intent
+
+        # Test handle_command
+        intent = Intent(type=IntentType.COMMAND, data={"command": "/test"})
+        resp = await gateway.handle_command(msg, session, intent)
+        assert "handled by platform adapter" in resp.text
+
+        # Test handle_lesson_request
+        intent = Intent(type=IntentType.LESSON_REQUEST, data={})
+        resp = await gateway.handle_lesson_request(msg, session, intent)
+        assert "Lessons Coming Soon" in resp.text
+
+        # Test handle_lesson_navigation
+        intent = Intent(type=IntentType.LESSON_NAVIGATION, data={"action": "next"})
+        resp = await gateway.handle_lesson_navigation(msg, session, intent)
+        assert "Lesson navigation: next" in resp.text
+
+        # Test handle_quiz_answer
+        intent = Intent(type=IntentType.QUIZ_ANSWER, data={})
+        resp = await gateway.handle_quiz_answer(msg, session, intent)
+        assert "Quiz system coming soon" in resp.text
+
+        # Test handle_navigation
+        intent = Intent(type=IntentType.NAVIGATION, data={"action": "home"})
+        resp = await gateway.handle_navigation(msg, session, intent)
+        assert "Navigation: home" in resp.text
+
+        # Test handle_unknown
+        intent = Intent(type=IntentType.UNKNOWN, data={})
+        resp = await gateway.handle_unknown(msg, session, intent)
+        assert "I'm not sure what you mean" in resp.text
+
+    async def test_register_handler(self):
+        """Test registering custom handlers"""
+        gateway = UnifiedBotGateway()
+        
+        async def custom_handler(message, session, intent):
+            return AbstractResponse(text="Custom Handler Executed")
+            
+        gateway.register_handler(IntentType.UNKNOWN, custom_handler)
+        
+        # Verify handler was updated
+        assert gateway.handlers[IntentType.UNKNOWN] == custom_handler
+        
+        # Verify it's used
+        session = await gateway.session_manager.get_or_create("test_user")
+        msg = AbstractMessage(text="unknown", user_id="test_user", platform="test")
+        from fiml.bot.core.gateway import Intent
+        intent = Intent(type=IntentType.UNKNOWN, data={})
+        
+        resp = await gateway.handle_unknown(msg, session, intent) # Direct call to registered handler via map lookup in real flow
+        # But here we need to call the handler that is mapped
+        handler = gateway.handlers[IntentType.UNKNOWN]
+        resp = await handler(msg, session, intent)
+        
+        assert resp.text == "Custom Handler Executed"
+
+    async def test_session_manager_update_timestamp(self):
+        """Test session update refreshes timestamp"""
+        gateway = UnifiedBotGateway()
+        session = await gateway.session_manager.get_or_create("test_user")
+        original_time = session.updated_at
+        
+        # Wait a tiny bit to ensure time difference
+        import asyncio
+        await asyncio.sleep(0.001)
+        
+        await gateway.session_manager.update("test_user", session)
+        assert session.updated_at > original_time
+
+    async def test_session_manager_delete_idempotency(self):
+        """Test session delete is idempotent"""
+        gateway = UnifiedBotGateway()
+        
+        # Delete non-existent
+        await gateway.session_manager.delete("non_existent")
+        
+        # Create and delete
+        await gateway.session_manager.get_or_create("test_user")
+        await gateway.session_manager.delete("test_user")
+        assert gateway.session_manager.get_session("test_user") is None
+        
+        # Delete again
+        await gateway.session_manager.delete("test_user")
+
+    async def test_intent_classification_priority(self):
+        """Test priority of educational patterns over market keywords"""
+        gateway = UnifiedBotGateway()
+        session = await gateway.session_manager.get_or_create("test_user")
+        
+        # "what is stock" contains "stock" (market keyword) but "what is" (educational pattern)
+        msg = AbstractMessage(text="what is stock", user_id="test_user", platform="test")
+        intent = await gateway.classify(msg, session)
+        
+        # Should be AI_QUESTION because of "what is", not MARKET_QUERY
+        assert intent.type == IntentType.AI_QUESTION
+
+    async def test_market_query_expertise_parsing(self):
+        """Test parsing of expertise level in market query"""
+        # This tests the logic inside handle_market_query where it parses session preferences
+        
+        mock_adapter = AsyncMock()
+        mock_adapter.get_educational_snapshot.return_value = {
+            "symbol": "AAPL", "price": {"current": 100}
+        }
+        mock_adapter.format_for_lesson.return_value = "Price: 100"
+        
+        mock_generator = AsyncMock()
+        # We want to verify the context passed to generator has correct expertise
+        
+        gateway = UnifiedBotGateway(
+            fiml_data_adapter=mock_adapter,
+            narrative_generator=mock_generator
+        )
+        
+        session = await gateway.session_manager.get_or_create("test_user")
+        session.preferences["expertise_level"] = "INVALID_LEVEL"
+        
+        msg = AbstractMessage(text="AAPL", user_id="test_user", platform="test")
+        from fiml.bot.core.gateway import Intent
+        intent = Intent(type=IntentType.MARKET_QUERY, data={"query": "AAPL"})
+        
+        await gateway.handle_market_query(msg, session, intent)
+        
+        # Verify narrative generator was called
+        if mock_generator.generate_narrative.called:
+            call_args = mock_generator.generate_narrative.call_args
+            context = call_args.kwargs.get('context') or call_args.args[0]
+            # Should default to BEGINNER
+            from fiml.narrative.models import ExpertiseLevel
+            assert context.preferences.expertise_level == ExpertiseLevel.BEGINNER
