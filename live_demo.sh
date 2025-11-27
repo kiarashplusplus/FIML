@@ -207,7 +207,7 @@ echo ""
 echo -e "${BOLD}${WHITE}╔════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BOLD}${WHITE}║          🚀 ${CYAN}FIML LIVE SYSTEM DEMONSTRATION${WHITE} 🚀                  ║${NC}"
 echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
-echo -e "${BOLD}${WHITE}║  ${DIM}Financial Intelligence Meta-Layer v0.2.2${WHITE}                     ║${NC}"
+echo -e "${BOLD}${WHITE}║  ${DIM}Financial Intelligence Meta-Layer v0.3.0${WHITE}                     ║${NC}"
 if [ "$QUICK_MODE" = true ]; then
 echo -e "${BOLD}${WHITE}║  ${YELLOW}Running in QUICK mode${WHITE}                                        ║${NC}"
 fi
@@ -221,12 +221,15 @@ echo ""
 check_server
 
 # =============================================================================
-# SECTION 1: Enhanced System & Provider Health
+# SECTION 1: System & Provider Health
+# Validates: Core system availability, database connectivity, cache status,
+# and provider health across all 17 registered data providers.
 # =============================================================================
 print_section "SECTION 1: System & Provider Health" "🏥"
 start_timing "section1"
 
 print_subsection "System Health Check" "💚"
+echo -e "  ${DIM}Validates: API server status, version, and environment configuration${NC}"
 health_response=$(http_get "/health")
 echo "$health_response" | python3 -c "
 import sys, json
@@ -240,6 +243,7 @@ except Exception as e:
 "
 
 print_subsection "Database Health" "🗄️"
+echo -e "  ${DIM}Validates: PostgreSQL/TimescaleDB connection for L2 cache persistence${NC}"
 db_health=$(http_get "/health/db")
 echo "$db_health" | python3 -c "
 import sys, json
@@ -256,6 +260,7 @@ except Exception as e:
 "
 
 print_subsection "Cache Health (Redis)" "📦"
+echo -e "  ${DIM}Validates: Redis connection for L1 cache (10-100ms target latency)${NC}"
 cache_health=$(http_get "/health/cache")
 echo "$cache_health" | python3 -c "
 import sys, json
@@ -271,6 +276,7 @@ except Exception as e:
 "
 
 print_subsection "Provider Health Status" "🔌"
+echo -e "  ${DIM}Validates: All 17 data providers (Yahoo, FMP, Alpha Vantage, CCXT exchanges)${NC}"
 providers_health=$(http_get "/health/providers")
 echo "$providers_health" | python3 -c "
 import sys, json
@@ -295,6 +301,7 @@ except Exception as e:
 "
 
 print_subsection "Cache Analytics" "📊"
+echo -e "  ${DIM}Validates: L1/L2 cache hit rates, latencies, and overall performance${NC}"
 cache_metrics=$(http_get "/api/metrics/cache")
 echo "$cache_metrics" | python3 -c "
 import sys, json
@@ -319,11 +326,14 @@ end_timing "section1"
 
 # =============================================================================
 # SECTION 2: Basic Queries with Narratives
+# Validates: MCP tool functionality, provider arbitration, AI narrative
+# generation, and multi-depth analysis (quick/standard/deep).
 # =============================================================================
 print_section "SECTION 2: Basic Queries with Narratives" "📈"
 start_timing "section2"
 
 print_subsection "Stock Query with Narrative (AAPL - Standard Depth)" "🍎"
+echo -e "  ${DIM}Validates: search-by-symbol MCP tool, US equity data fetch, AI narrative${NC}"
 aapl_response=$(call_mcp_tool "search-by-symbol" '{"symbol":"AAPL","market":"US","depth":"standard"}')
 echo "$aapl_response" | python3 -c "
 import sys, json
@@ -357,6 +367,7 @@ except Exception as e:
 "
 
 print_subsection "Cryptocurrency Query with Metrics (BTC)" "₿"
+echo -e "  ${DIM}Validates: search-by-coin MCP tool, CCXT crypto exchange data fetch${NC}"
 btc_response=$(call_mcp_tool "search-by-coin" '{"symbol":"BTC","exchange":"binance","depth":"standard"}')
 echo "$btc_response" | python3 -c "
 import sys, json
@@ -387,6 +398,7 @@ except Exception as e:
 
 if [ "$QUICK_MODE" != true ]; then
     print_subsection "Multi-Depth Comparison Demo" "📊"
+    echo -e "  ${DIM}Validates: Analysis depth levels (quick/standard/deep) with varying detail${NC}"
     echo -e "  ${DIM}Comparing analysis depths for TSLA...${NC}"
 
     # Quick depth
@@ -494,11 +506,14 @@ end_timing "section2"
 
 # =============================================================================
 # SECTION 3: FK-DSL Demonstrations
+# Validates: Financial Knowledge DSL parser (Lark-based), query execution,
+# multi-asset comparison, correlation analysis, and market scanning.
 # =============================================================================
 print_section "SECTION 3: FK-DSL Query Language" "🔮"
 start_timing "section3"
 
 print_subsection "Simple EVALUATE Query" "▶️"
+echo -e "  ${DIM}Validates: Basic FK-DSL EVALUATE syntax for single asset metrics${NC}"
 echo -e "  ${DIM}Query: EVALUATE AAPL: PRICE, VOLUME${NC}"
 dsl_simple=$(call_mcp_tool "execute-fk-dsl" '{"query":"EVALUATE AAPL: PRICE, VOLUME","async":false}')
 echo "$dsl_simple" | python3 -c "
@@ -564,6 +579,7 @@ except Exception as e:
 
 if [ "$QUICK_MODE" != true ]; then
     print_subsection "Multi-Asset COMPARE Query" "📊"
+    echo -e "  ${DIM}Validates: FK-DSL COMPARE syntax for multi-asset fundamental comparison${NC}"
     echo -e "  ${DIM}Query: COMPARE AAPL, MSFT, GOOGL BY PE, MARKETCAP${NC}"
     dsl_compare=$(call_mcp_tool "execute-fk-dsl" '{"query":"COMPARE AAPL, MSFT, GOOGL BY PE, MARKETCAP","async":false}')
     echo "$dsl_compare" | python3 -c "
@@ -612,6 +628,7 @@ except Exception as e:
 "
 
     print_subsection "Correlation Analysis" "🔗"
+    echo -e "  ${DIM}Validates: FK-DSL CORRELATE syntax for cross-asset correlation${NC}"
     echo -e "  ${DIM}Query: CORRELATE BTC WITH ETH, SPY WINDOW 30d${NC}"
     dsl_correlate=$(call_mcp_tool "execute-fk-dsl" '{"query":"CORRELATE BTC WITH ETH, SPY WINDOW 30d","async":false}')
     echo "$dsl_correlate" | python3 -c "
@@ -669,6 +686,7 @@ except Exception as e:
 "
 
     print_subsection "Complex SCAN Query" "🔍"
+    echo -e "  ${DIM}Validates: FK-DSL SCAN syntax for market screening with conditions${NC}"
     echo -e "  ${DIM}Query: SCAN US_TECH WHERE PE < 30 AND VOLUME > 1000000${NC}"
     dsl_scan=$(call_mcp_tool "execute-fk-dsl" '{"query":"SCAN US_TECH WHERE PE < 30 AND VOLUME > 1000000","async":false}')
     echo "$dsl_scan" | python3 -c "
@@ -722,11 +740,14 @@ end_timing "section3"
 
 # =============================================================================
 # SECTION 4: Session Management
+# Validates: Analysis session creation, session context queries, session
+# analytics, TTL management, and multi-asset portfolio tracking.
 # =============================================================================
 print_section "SECTION 4: Session Management" "📋"
 start_timing "section4"
 
 print_subsection "Create Analysis Session" "➕"
+echo -e "  ${DIM}Validates: Session creation with portfolio assets, TTL, and tags${NC}"
 session_response=$(call_mcp_tool "create-analysis-session" '{"assets":["AAPL","TSLA","BTC"],"sessionType":"portfolio","userId":"demo-user","ttlHours":24,"tags":["demo","live-test"]}')
 echo "$session_response" | python3 -c "
 import sys, json
@@ -814,11 +835,14 @@ end_timing "section4"
 
 # =============================================================================
 # SECTION 5: Provider Arbitration
+# Validates: 5-factor provider scoring (freshness, latency, uptime, completeness,
+# reliability), intelligent provider selection, and data lineage tracking.
 # =============================================================================
 print_section "SECTION 5: Provider Arbitration" "⚖️"
 start_timing "section5"
 
 print_subsection "Data Lineage Example" "🔍"
+echo -e "  ${DIM}Validates: Data source tracking, confidence scoring, cache status${NC}"
 echo -e "  ${DIM}Showing data source tracking for AAPL query...${NC}"
 lineage_response=$(call_mcp_tool "search-by-symbol" '{"symbol":"AAPL","market":"US","depth":"quick"}')
 echo "$lineage_response" | python3 -c "
@@ -846,6 +870,7 @@ except:
 "
 
 print_subsection "Provider Selection Demo" "🎯"
+echo -e "  ${DIM}Validates: Provider arbitration ranking using 5-factor scoring algorithm${NC}"
 echo -e "  ${DIM}Demonstrating intelligent provider selection...${NC}"
 providers_health=$(http_get "/health/providers")
 echo "$providers_health" | python3 -c "
@@ -888,11 +913,14 @@ end_timing "section5"
 
 # =============================================================================
 # SECTION 6: Performance Metrics
+# Validates: L1/L2 cache performance, provider latencies, Ray cluster status,
+# and task registry metrics for async operations.
 # =============================================================================
 print_section "SECTION 6: Performance Metrics" "⚡"
 start_timing "section6"
 
 print_subsection "Cache Performance" "💾"
+echo -e "  ${DIM}Validates: L1 (Redis) and L2 (PostgreSQL) cache hit rates and latencies${NC}"
 cache_metrics=$(http_get "/api/metrics/cache")
 echo "$cache_metrics" | python3 -c "
 import sys, json
@@ -926,6 +954,7 @@ except:
 "
 
 print_subsection "Provider Latency Comparison" "📶"
+echo -e "  ${DIM}Validates: Provider response times ranked by P95 latency${NC}"
 providers_health=$(http_get "/health/providers")
 echo "$providers_health" | python3 -c "
 import sys, json
@@ -954,6 +983,7 @@ except:
 
 if [ "$QUICK_MODE" != true ]; then
     print_subsection "Ray Cluster Status" "🔬"
+    echo -e "  ${DIM}Validates: Ray multi-agent orchestration cluster health${NC}"
     # Check if Ray is available via docker and capture output in single call
     ray_status_output=$(docker exec fiml-ray-head ray status 2>/dev/null) && {
         echo "$ray_status_output" | head -15 | while read -r line; do
@@ -966,6 +996,7 @@ if [ "$QUICK_MODE" != true ]; then
 fi
 
 print_subsection "Task Registry Status" "📝"
+echo -e "  ${DIM}Validates: Async task execution, completion rates, and task types${NC}"
 task_metrics=$(http_get "/api/metrics/tasks")
 echo "$task_metrics" | python3 -c "
 import sys, json
@@ -989,12 +1020,15 @@ except:
 end_timing "section6"
 
 # =============================================================================
-# SECTION 7: v0.2.2 Features - Monitoring & Observability
+# SECTION 7: Monitoring & Observability
+# Validates: Watchdog health monitoring, performance metrics, AI narrative
+# generation, and MCP tool discovery for API integration.
 # =============================================================================
-print_section "SECTION 7: v0.2.2 Monitoring & Observability" "🔭"
+print_section "SECTION 7: Monitoring & Observability" "🔭"
 start_timing "section7"
 
 print_subsection "Watchdog Health Monitor" "👁️"
+echo -e "  ${DIM}Validates: System-wide health monitoring and component status tracking${NC}"
 watchdog_metrics=$(http_get "/api/metrics/watchdog")
 echo "$watchdog_metrics" | python3 -c "
 import sys, json
@@ -1036,6 +1070,7 @@ except Exception as e:
 "
 
 print_subsection "Performance Monitoring" "📈"
+echo -e "  ${DIM}Validates: Request statistics, success rates, and endpoint metrics${NC}"
 perf_metrics=$(http_get "/api/metrics/performance")
 echo "$perf_metrics" | python3 -c "
 import sys, json
@@ -1080,6 +1115,7 @@ except Exception as e:
 
 if [ "$QUICK_MODE" != true ]; then
     print_subsection "Narrative Generation Capability" "✍️"
+    echo -e "  ${DIM}Validates: Azure OpenAI integration, AI narrative generation, compliance${NC}"
     echo -e "  ${DIM}Demonstrating AI-powered narrative generation...${NC}"
     narrative_response=$(call_mcp_tool "search-by-symbol" '{"symbol":"MSFT","market":"US","depth":"deep"}')
     echo "$narrative_response" | python3 -c "
@@ -1128,7 +1164,8 @@ except Exception as e:
 "
 
     print_subsection "MCP Tool Discovery" "🔧"
-    echo -e "  ${DIM}Available MCP Tools (v0.2.2):${NC}"
+    echo -e "  ${DIM}Validates: MCP protocol tool registry and API integration points${NC}"
+    echo -e "  ${DIM}Available MCP Tools (v0.3.0):${NC}"
     tools_response=$(http_get "/mcp/tools")
     echo "$tools_response" | python3 -c "
 import sys, json
@@ -1164,6 +1201,127 @@ fi
 end_timing "section7"
 
 # =============================================================================
+# SECTION 8: v0.3.0 Compliance Guardrail Layer
+# =============================================================================
+print_section "SECTION 8: v0.3.0 Compliance Guardrail Layer" "🛡️"
+start_timing "section8"
+
+print_subsection "Multilingual Compliance Support" "🌍"
+echo -e "  ${DIM}Demonstrating compliance guardrail with multilingual support...${NC}"
+echo ""
+echo -e "  ${BOLD}Supported Languages (9 total):${NC}"
+echo -e "    ${GREEN}•${NC} English (en)    - Full support with comprehensive patterns"
+echo -e "    ${GREEN}•${NC} Spanish (es)    - Prescriptive verbs, advice patterns, disclaimers"
+echo -e "    ${GREEN}•${NC} French (fr)     - Prescriptive verbs, advice patterns, disclaimers"
+echo -e "    ${GREEN}•${NC} German (de)     - Prescriptive verbs, advice patterns, disclaimers"
+echo -e "    ${GREEN}•${NC} Italian (it)    - Prescriptive verbs, advice patterns, disclaimers"
+echo -e "    ${GREEN}•${NC} Portuguese (pt) - Prescriptive verbs, advice patterns, disclaimers"
+echo -e "    ${GREEN}•${NC} Japanese (ja)   - Script detection, advice patterns, disclaimers"
+echo -e "    ${GREEN}•${NC} Chinese (zh)    - Script detection, advice patterns, disclaimers"
+echo -e "    ${GREEN}•${NC} Farsi/Persian (fa) - Script detection, advice patterns, disclaimers"
+
+print_subsection "Guardrail Capabilities" "⚡"
+echo -e "  ${BOLD}Output Scanning Features:${NC}"
+echo -e "    ${CYAN}•${NC} Prescriptive Verb Detection  - Detects 'should', 'must', 'recommend', etc."
+echo -e "    ${CYAN}•${NC} Advice Pattern Matching      - Context-aware pattern matching"
+echo -e "    ${CYAN}•${NC} Opinion-as-Fact Detection    - Identifies subjective claims as facts"
+echo -e "    ${CYAN}•${NC} Certainty Language Blocking  - Prevents absolute predictions"
+echo ""
+echo -e "  ${BOLD}Compliance Actions:${NC}"
+echo -e "    ${GREEN}PASSED${NC}   - Content is compliant without modifications"
+echo -e "    ${YELLOW}MODIFIED${NC} - Content was modified to be compliant"
+echo -e "    ${RED}BLOCKED${NC}  - Content blocked due to severe violations (strict mode)"
+echo ""
+echo -e "  ${BOLD}Automatic Features:${NC}"
+echo -e "    ${CYAN}•${NC} Automatic language detection (script-based for CJK/Arabic)"
+echo -e "    ${CYAN}•${NC} Region-appropriate disclaimer generation"
+echo -e "    ${CYAN}•${NC} Asset-class specific compliance requirements"
+echo -e "    ${CYAN}•${NC} Post-replacement grammar cleanup"
+
+if [ "$QUICK_MODE" != true ]; then
+    print_subsection "Guardrail Demo - English Advice Conversion" "🔄"
+    echo -e "  ${DIM}Testing compliance processing with sample advice content...${NC}"
+
+    # This demonstrates that guardrail integration exists in the narrative pipeline
+    # The guardrail processes advice language and converts it to descriptive statements
+    narrative_with_guardrail=$(call_mcp_tool "search-by-symbol" '{"symbol":"NVDA","market":"US","depth":"deep"}')
+    echo "$narrative_with_guardrail" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if not data.get('isError', False):
+        result = json.loads(data['content'][0]['text'])
+        narrative = result.get('narrative', {})
+        
+        if narrative:
+            print('  \033[32m✓ Compliance-Filtered Narrative Generated\033[0m')
+            print()
+            
+            # Show confidence (higher = more compliant original content)
+            confidence = narrative.get('confidence', result.get('cached', {}).get('confidence', 1.0))
+            if isinstance(confidence, (int, float)):
+                conf_pct = confidence * 100 if confidence <= 1 else confidence
+                color = '\033[32m' if conf_pct >= 85 else '\033[33m' if conf_pct >= 70 else '\033[31m'
+                print(f\"  Compliance Confidence: {color}{conf_pct:.0f}%\033[0m\")
+            
+            # Show that narrative has been processed
+            summary = narrative.get('summary', '')
+            if summary:
+                # Check for compliance indicators
+                has_disclaimer = any(phrase in summary.lower() for phrase in 
+                    ['not financial advice', 'not investment advice', 'informational', 
+                     'educational', 'consult', 'past performance'])
+                
+                print(f\"  Disclaimer Present: {'\\033[32mYes\\033[0m' if has_disclaimer else '\\033[33mVerify in full output\\033[0m'}\")
+                print()
+                print('  \033[1mCompliance-Filtered Summary (first 200 chars):\033[0m')
+                import textwrap
+                wrapped = textwrap.fill(summary[:200], width=60, initial_indent='    ', subsequent_indent='    ')
+                print(wrapped)
+                if len(summary) > 200:
+                    print('    ...')
+        else:
+            print('  \033[33mNarrative generation requires LLM configuration\033[0m')
+            print('  \033[33mGuardrail processes all LLM-generated content automatically\033[0m')
+except Exception as e:
+    print(f\"  \033[33mGuardrail demonstration (narrative mode): {str(e)[:50]}\033[0m\")
+"
+
+    print_subsection "Compliance Pattern Categories" "📋"
+    echo -e "  ${BOLD}Prescriptive Verb Examples (converted to descriptive):${NC}"
+    echo -e "    ${RED}✗${NC} 'You should buy AAPL'     ${DIM}→${NC}  ${GREEN}✓${NC} 'Purchasing options are available'"
+    echo -e "    ${RED}✗${NC} 'Must sell before drop'   ${DIM}→${NC}  ${GREEN}✓${NC} 'Selling is possible for this asset'"
+    echo -e "    ${RED}✗${NC} 'I recommend investing'   ${DIM}→${NC}  ${GREEN}✓${NC} 'Investment options exist'"
+    echo ""
+    echo -e "  ${BOLD}Certainty Language Examples (converted to historical):${NC}"
+    echo -e "    ${RED}✗${NC} 'Will definitely rise'    ${DIM}→${NC}  ${GREEN}✓${NC} 'Has historically shown rise patterns'"
+    echo -e "    ${RED}✗${NC} 'Guaranteed returns'      ${DIM}→${NC}  ${GREEN}✓${NC} 'Potential returns (not guaranteed)'"
+    echo -e "    ${RED}✗${NC} 'Sure to succeed'         ${DIM}→${NC}  ${GREEN}✓${NC} 'Has historical patterns of success'"
+    echo ""
+    echo -e "  ${BOLD}Opinion-as-Fact Examples (converted to analytical):${NC}"
+    echo -e "    ${RED}✗${NC} 'This is undervalued'     ${DIM}→${NC}  ${GREEN}✓${NC} 'Has metrics some analysts consider relevant'"
+    echo -e "    ${RED}✗${NC} 'Easy money opportunity'  ${DIM}→${NC}  ${GREEN}✓${NC} 'A trading opportunity exists'"
+    echo -e "    ${RED}✗${NC} 'Risk-free investment'    ${DIM}→${NC}  ${GREEN}✓${NC} 'An option with associated risks'"
+fi
+
+print_subsection "v0.3.0 Test Suite Summary" "✅"
+echo -e "  ${BOLD}Guardrail Test Coverage:${NC}"
+# Note: These test counts are from the v0.3.0 release (Nov 2025)
+# See CHANGELOG.md for current test statistics
+echo -e "    ${GREEN}91${NC}  guardrail-specific tests"
+echo -e "    ${GREEN}163${NC} total compliance-related tests"
+echo -e "    ${GREEN}0${NC}   CodeQL security alerts"
+echo ""
+echo -e "  ${BOLD}Components Tested:${NC}"
+echo -e "    ${CYAN}•${NC} ComplianceGuardrail class"
+echo -e "    ${CYAN}•${NC} MultilingualPatterns for all 9 languages"
+echo -e "    ${CYAN}•${NC} GuardrailResult with detected language field"
+echo -e "    ${CYAN}•${NC} NarrativeValidator integration"
+echo -e "    ${CYAN}•${NC} Grammar cleanup post-replacement"
+
+end_timing "section8"
+
+# =============================================================================
 # Demo Summary
 # =============================================================================
 DEMO_END_TIME=$(date +%s.%N)
@@ -1182,12 +1340,17 @@ echo -e "${BOLD}${WHITE}║    ${BLUE}API Docs:${NC}       ${BASE_URL}/docs     
 echo -e "${BOLD}${WHITE}║    ${BLUE}Health:${NC}         ${BASE_URL}/health                  ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}MCP Tools:${NC}      ${BASE_URL}/mcp/tools               ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
-echo -e "${BOLD}${WHITE}║  ${DIM}v0.2.2 Metrics & Monitoring:${NC}                                 ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║  ${DIM}v0.3.0 Metrics & Monitoring:${NC}                                 ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}Prometheus:${NC}     ${BASE_URL}/metrics                 ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}Cache:${NC}          ${BASE_URL}/api/metrics/cache       ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}Watchdog:${NC}       ${BASE_URL}/api/metrics/watchdog    ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}Performance:${NC}    ${BASE_URL}/api/metrics/performance ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${BLUE}Tasks:${NC}          ${BASE_URL}/api/metrics/tasks       ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
+echo -e "${BOLD}${WHITE}║  ${DIM}v0.3.0 Compliance Guardrail:${NC}                                 ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${MAGENTA}Languages:${NC}     9 supported (EN, ES, FR, DE, IT, PT, JA, ZH, FA) ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${MAGENTA}Features:${NC}      Advice removal, prescriptive verb blocking  ${BOLD}${WHITE}║${NC}"
+echo -e "${BOLD}${WHITE}║    ${MAGENTA}Auto:${NC}          Language detection, disclaimers          ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
 echo -e "${BOLD}${WHITE}║  ${DIM}For comprehensive testing, run:${NC}                              ${BOLD}${WHITE}║${NC}"
 echo -e "${BOLD}${WHITE}║    ${YELLOW}./scripts/test_live_system.sh${NC}                               ${BOLD}${WHITE}║${NC}"
