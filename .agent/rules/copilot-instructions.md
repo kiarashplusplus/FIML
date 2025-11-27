@@ -2,6 +2,8 @@
 trigger: always_on
 ---
 
+Testing: Maintain the 100% pass rate standard for new bot components.
+
 # FIML AI Coding Agent Instructions
 
 FIML (Financial Intelligence Meta-Layer) is an AI-native financial data MCP server with intelligent provider orchestration. This guide helps AI agents navigate the codebase effectively.
