@@ -117,7 +117,7 @@ class Settings(BaseSettings):
     enable_derivatives: bool = False
     enable_predictive_cache: bool = True
     enable_real_time_events: bool = True
-    enable_cache_warming: bool = True
+    enable_cache_warming: bool = False
     enable_cache_eviction: bool = True
 
     # MCP Protocol

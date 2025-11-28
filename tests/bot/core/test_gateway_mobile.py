@@ -11,6 +11,10 @@ def mock_lesson_engine():
     engine.render_lesson = AsyncMock()
     engine.mark_lesson_started = MagicMock()
     engine.get_user_progress = AsyncMock(return_value={"completed": [], "in_progress": []})
+    engine.list_lessons = AsyncMock(return_value=[
+        {"id": "lesson1", "title": "Lesson 1", "difficulty": "beginner"},
+        {"id": "lesson2", "title": "Lesson 2", "difficulty": "intermediate"}
+    ])
     engine.create_sample_lesson = MagicMock()
     return engine
 

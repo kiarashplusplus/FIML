@@ -399,7 +399,7 @@ class LessonContentEngine:
         Returns:
             List of lesson metadata dicts with id, title, category, difficulty
         """
-        lessons = []
+        lessons: List[Dict[str, Any]] = []
 
         if not self.lessons_path.exists():
             logger.warning("Lessons directory not found", path=str(self.lessons_path))

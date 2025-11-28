@@ -206,9 +206,14 @@ def mock_azure_openai_httpx():
 
     NOTE: This only mocks calls to the Azure OpenAI endpoint, not all httpx calls.
     """
-    # Only mock if we're using the mock endpoint
-    azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
-    if azure_endpoint.startswith("https://mock"):
+    # Force mock endpoint for non-live tests
+    from fiml.core.config import settings
+    
+    mock_endpoint = "https://mock-azure-openai.openai.azure.com/"
+    
+    # Patch settings to use mock endpoint
+    with patch.object(settings, "azure_openai_endpoint", mock_endpoint):
+        # Create a mock response that mimics Azure OpenAI's response format
         # Create a mock response that mimics Azure OpenAI's response format
         mock_openai_response = MagicMock()
         mock_openai_response.status_code = 200
@@ -217,7 +222,7 @@ def mock_azure_openai_httpx():
                 {
                     "message": {
                         "role": "assistant",
-                        "content": "This is a mock response from Azure OpenAI for testing purposes.",
+                        "content": "This is a mock response from Azure OpenAI for testing purposes. This is educational content and not financial advice.",
                     },
                     "finish_reason": "stop",
                     "index": 0,
@@ -272,9 +277,6 @@ def mock_azure_openai_httpx():
         # Patch with our selective mock
         with patch.object(httpx.AsyncClient, "post", selective_mock_post):
             yield
-    else:
-        # If using real endpoint, don't mock anything
-        yield
 
 
 @pytest.fixture

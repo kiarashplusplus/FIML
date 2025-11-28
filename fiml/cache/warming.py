@@ -118,6 +118,15 @@ class PredictiveCacheWarmer:
         self.is_running = False
         self._warming_task: Optional[asyncio.Task] = None
 
+    async def initialize(self) -> None:
+        """Initialize with global dependencies"""
+        from fiml.cache.manager import cache_manager
+        from fiml.providers import provider_registry
+
+        self.cache_manager = cache_manager
+        self.provider_registry = provider_registry
+        logger.info("Predictive cache warmer initialized")
+
     def record_cache_access(
         self, symbol: str, data_type: DataType, timestamp: Optional[datetime] = None
     ) -> None:
@@ -390,3 +399,10 @@ class PredictiveCacheWarmer:
 
         logger.info("Cleared old query patterns", removed=len(old_patterns))
         return len(old_patterns)
+
+
+# Global cache warmer instance (initialized lazily)
+cache_warmer = PredictiveCacheWarmer(
+    cache_manager=None,  # Will be set during initialization
+    provider_registry=None,  # Will be set during initialization
+)

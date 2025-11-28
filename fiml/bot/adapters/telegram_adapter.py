@@ -1340,7 +1340,7 @@ Use /status to check progress (coming soon).
         message_parts.extend(
             [
                 "",
-                "💡 What's Next?", 
+                "💡 What's Next?",
                 "• Try modifying the query with different assets",
                 "• Explore other DSL templates with /fkdsl",
                 "• Check your progress with /progress",

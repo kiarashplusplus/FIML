@@ -210,7 +210,7 @@ class AIMentorService:
                     ),
                     include_disclaimers=True,
                 )
-                
+
                 narrative = await self.narrative_generator.generate_narrative(context=narrative_context)
                 response_text = self._adapt_narrative_to_persona(narrative.summary, persona, question)
             else:
@@ -265,7 +265,7 @@ class AIMentorService:
     async def _generate_general_response(self, question: str, persona: MentorPersona) -> str:
         """Generate general educational response using LLM"""
         mentor = self.MENTORS[persona]
-        
+
         # System prompt based on persona
         system_content = (
             f"You are {mentor['name']}, an AI trading mentor. {mentor['description']}. "
@@ -275,12 +275,12 @@ class AIMentorService:
             "If the question is not about finance/trading, politely steer back to the topic. "
             "Keep responses concise and helpful."
         )
-        
+
         messages = [
             {"role": "system", "content": system_content},
             {"role": "user", "content": question}
         ]
-        
+
         try:
             # Access Azure client through narrative generator
             client = self.narrative_generator.azure_client
@@ -290,7 +290,7 @@ class AIMentorService:
             else:
                 logger.warning("Azure client not available for general response")
                 return self._generate_template_response(question, persona, None)
-                
+
         except Exception as e:
             logger.error("Failed to generate general LLM response", error=str(e))
             return self._generate_template_response(question, persona, None)

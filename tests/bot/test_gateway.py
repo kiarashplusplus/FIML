@@ -496,12 +496,14 @@ class TestGatewayFIMLIntegration:
         # Test handle_command
         intent = Intent(type=IntentType.COMMAND, data={"command": "/test"})
         resp = await gateway.handle_command(msg, session, intent)
-        assert "handled by platform adapter" in resp.text
+        assert "not fully implemented on mobile yet" in resp.text
 
         # Test handle_lesson_request
         intent = Intent(type=IntentType.LESSON_REQUEST, data={})
         resp = await gateway.handle_lesson_request(msg, session, intent)
-        assert "Lessons Coming Soon" in resp.text
+        # It might return "Available Lessons" or "No lessons available yet" depending on file system
+        # But definitely not "Lessons Coming Soon" which was the old placeholder
+        assert "Available Lessons" in resp.text or "No lessons available" in resp.text
 
         # Test handle_lesson_navigation
         intent = Intent(type=IntentType.LESSON_NAVIGATION, data={"action": "next"})
@@ -511,7 +513,7 @@ class TestGatewayFIMLIntegration:
         # Test handle_quiz_answer
         intent = Intent(type=IntentType.QUIZ_ANSWER, data={})
         resp = await gateway.handle_quiz_answer(msg, session, intent)
-        assert "Quiz system coming soon" in resp.text
+        assert "Quiz interaction not understood" in resp.text
 
         # Test handle_navigation
         intent = Intent(type=IntentType.NAVIGATION, data={"action": "home"})

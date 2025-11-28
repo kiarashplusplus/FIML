@@ -325,6 +325,35 @@ except Exception as e:
 end_timing "section1"
 
 # =============================================================================
+# SECTION 1.5: Cache Warming
+# Validates: Cache warming functionality to pre-populate L1/L2 caches.
+# =============================================================================
+print_section "SECTION 1.5: Cache Warming" "🔥"
+start_timing "section1_5"
+
+print_subsection "Trigger Cache Warming" "🚀"
+echo -e "  ${DIM}Warming cache for key assets (AAPL, MSFT, BTC, ETH)...${NC}"
+warming_response=$(call_mcp_tool "warm-cache" '{"symbols":["AAPL","MSFT","BTC","ETH"],"concurrency":2}')
+echo "$warming_response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if not data.get('isError', False):
+        result = json.loads(data['content'][0]['text'])
+        print(f\"  Status: \033[32mCompleted\033[0m\")
+        print(\"  Results:\")
+        for symbol, success in result.items():
+            status_icon = '\033[32m✓\033[0m' if success else '\033[31m✗\033[0m'
+            print(f\"    {status_icon} {symbol}: {'Cached' if success else 'Failed'}\")
+    else:
+        print(f\"  \033[31mError: {data['content'][0]['text']}\033[0m\")
+except Exception as e:
+    print(f\"  \033[33mWarming failed: {e}\033[0m\")
+"
+
+end_timing "section1_5"
+
+# =============================================================================
 # SECTION 2: Basic Queries with Narratives
 # Validates: MCP tool functionality, provider arbitration, AI narrative
 # generation, and multi-depth analysis (quick/standard/deep).

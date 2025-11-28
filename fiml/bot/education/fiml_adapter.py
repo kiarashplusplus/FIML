@@ -7,7 +7,7 @@ through FIML's MCP tools and arbitration engine, with educational context.
 It is designed to be reusable across both Telegram bot and mobile app.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import structlog
 
@@ -507,7 +507,7 @@ class FIMLEducationalDataAdapter:
                     "price": 0.0,
                 }
             else:
-                results[symbol.upper()] = price_data
+                results[symbol.upper()] = cast(Dict[str, Any], price_data)
 
         return results
 

@@ -264,6 +264,26 @@ MCP_TOOLS = [
             },
         },
     },
+    {
+        "name": "warm-cache",
+        "description": "Trigger cache warming for specific assets",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "symbols": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of symbols to warm up",
+                },
+                "concurrency": {
+                    "type": "number",
+                    "description": "Concurrency level (default 5)",
+                    "default": 5,
+                },
+            },
+            "required": ["symbols"],
+        },
+    },
 ]
 
 
@@ -370,6 +390,20 @@ async def call_tool(request: MCPToolRequest) -> MCPToolResponse:
             import json
 
             return MCPToolResponse(content=[{"type": "text", "text": json.dumps(analytics_result)}])
+
+        elif request.name == "warm-cache":
+            from fiml.cache.warming import cache_warmer
+
+            symbols = request.arguments["symbols"]
+            concurrency = request.arguments.get("concurrency", 5)
+
+            warming_result = await cache_warmer.warm_cache_batch(
+                symbols=symbols,
+                concurrency=concurrency,
+            )
+            import json
+
+            return MCPToolResponse(content=[{"type": "text", "text": json.dumps(warming_result)}])
 
         else:
             raise HTTPException(status_code=404, detail=f"Tool not found: {request.name}")

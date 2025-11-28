@@ -257,7 +257,7 @@ class IntentClassifier:
         text = message.text.lower().strip()
 
         # Check for explicit action in context (from mobile app buttons)
-        context_action = message.context.get("action", "")
+        context_action = (message.context or {}).get("action", "")
         if context_action:
             if context_action.startswith("lesson:"):
                 return Intent(
@@ -529,12 +529,12 @@ class UnifiedBotGateway:
 
         elif command == "/progress":
              progress = await self.lesson_engine.get_user_progress(message.user_id)
-             completed = len(progress.get("completed", []))
+             completed = len((progress or {}).get("completed", []))
              return AbstractResponse(
                 text=f"📈 Your Progress\n\n"
                      f"Lessons Completed: {completed}\n"
-                     f"Current Streak: {session.metadata.get('streak', 0)} days\n"
-                     f"Total XP: {session.metadata.get('xp', 0)}",
+                     f"Current Streak: {(session.metadata or {}).get('streak', 0)} days\n"
+                     f"Total XP: {(session.metadata or {}).get('xp', 0)}",
                 actions=[{"text": "Continue Learning", "action": "/lesson", "type": "primary"}]
             )
 
@@ -692,7 +692,7 @@ class UnifiedBotGateway:
         actions = self._build_quiz_options(question, session_id)
 
         return AbstractResponse(
-            text=f"📝 Quiz: {lesson.get('title', lesson_id) if isinstance(lesson, dict) else lesson.title}\n\n{question.text}",
+            text=f"📝 Quiz: {lesson.get('title', lesson_id) if isinstance(lesson, dict) else getattr(lesson, 'title', lesson_id)}\n\n{question.text}",
             actions=actions
         )
 

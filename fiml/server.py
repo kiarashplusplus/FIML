@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
 
 from fiml.alerts.router import alert_router
+from fiml.bot.router import router as bot_router
 from fiml.core.config import settings
 from fiml.core.exceptions import FIMLException
 from fiml.core.logging import get_logger
@@ -19,12 +20,13 @@ from fiml.mcp.router import mcp_router
 from fiml.monitoring.performance import PerformanceMiddleware
 from fiml.providers import provider_registry
 from fiml.web.dashboard import dashboard_router
+from fiml.web.market_api import market_router
 from fiml.websocket.router import websocket_router
 
 logger = get_logger(__name__)
 
 
-@asynccontextmanager
+@asynccontextmanager  # type: ignore
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifecycle management for the application"""
     # Startup
@@ -53,6 +55,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except Exception as e:
             logger.warning(f"Agent orchestrator initialization failed (non-critical): {e}")
 
+    # Initialize Cache Warmer
+    if settings.enable_cache_warming:
+        logger.info("Initializing cache warmer...")
+        try:
+            from fiml.cache.warming import cache_warmer
+
+            await cache_warmer.initialize()
+            # Start background warming if enabled
+            await cache_warmer.start_background_warming(
+                interval_minutes=settings.cache_warming_interval_seconds // 60
+            )
+        except Exception as e:
+            logger.warning(f"Cache warmer initialization failed (non-critical): {e}")
+
     yield
 
     # Shutdown
@@ -67,6 +83,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.debug(f"Agent orchestrator shutdown skipped: {e}")
 
     await provider_registry.shutdown()
+
+    try:
+        from fiml.cache.warming import cache_warmer
+
+        if settings.enable_cache_warming:
+            await cache_warmer.stop_background_warming()
+    except (ImportError, Exception) as e:
+        logger.debug(f"Cache warmer shutdown skipped: {e}")
 
     try:
         from fiml.cache.manager import cache_manager
@@ -116,13 +140,9 @@ app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(alert_router, prefix="/api", tags=["alerts"])
 
 # Include Bot router (for Mobile/Web apps)
-from fiml.bot.router import router as bot_router
-
 app.include_router(bot_router, prefix="/api/bot", tags=["bot"])
 
 # Include Market API router (for Mobile/Web apps)
-from fiml.web.market_api import market_router
-
 app.include_router(market_router, prefix="/api/market", tags=["market"])
 
 
