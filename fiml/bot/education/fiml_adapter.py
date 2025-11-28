@@ -38,21 +38,21 @@ class FIMLEducationalDataAdapter:
     def _detect_asset_type(self, symbol: str) -> AssetType:
         """
         Detect if symbol is stock or crypto
-        
+
         Args:
             symbol: Asset symbol
-            
+
         Returns:
             AssetType enum value
         """
         # Common crypto symbols
         crypto_symbols = {
-            "BTC", "ETH", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC", 
+            "BTC", "ETH", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC",
             "LINK", "UNI", "ATOM", "LTC", "DOGE", "SHIB", "BNB",
         }
-        
+
         symbol_upper = symbol.upper().split("/")[0]  # Handle pairs like BTC/USDT
-        
+
         if symbol_upper in crypto_symbols:
             return AssetType.CRYPTO
         return AssetType.EQUITY
@@ -66,7 +66,7 @@ class FIMLEducationalDataAdapter:
         This method uses the full FIML integration via MCP tools (search_by_symbol
         or search_by_coin) which include:
         - Arbitration engine for provider selection
-        - Caching (L1/L2) 
+        - Caching (L1/L2)
         - Narrative generation
         - Compliance checking
 
@@ -82,7 +82,7 @@ class FIMLEducationalDataAdapter:
             from fiml.mcp.tools import search_by_coin, search_by_symbol
 
             asset_type = self._detect_asset_type(symbol)
-            
+
             if asset_type == AssetType.CRYPTO:
                 # Use search_by_coin for crypto
                 response = await search_by_coin(
@@ -94,7 +94,7 @@ class FIMLEducationalDataAdapter:
                     expertise_level="beginner",
                     include_narrative=True,
                 )
-                
+
                 # Build educational data from crypto response
                 cached = response.cached
                 educational_data = {
@@ -137,11 +137,11 @@ class FIMLEducationalDataAdapter:
                     expertise_level="beginner",
                     include_narrative=True,
                 )
-                
+
                 # Build educational data from stock response
                 cached = response.cached
                 structural = response.structural_data
-                
+
                 educational_data = {
                     "symbol": response.symbol,
                     "name": response.name,
@@ -198,8 +198,8 @@ class FIMLEducationalDataAdapter:
         except Exception as e:
             # Fallback to template data if FIML integration fails
             logger.warning(
-                "Failed to get live data via MCP tools, using template", 
-                symbol=symbol, 
+                "Failed to get live data via MCP tools, using template",
+                symbol=symbol,
                 error=str(e)
             )
             return self._get_template_snapshot(symbol)
@@ -207,14 +207,14 @@ class FIMLEducationalDataAdapter:
     def _get_template_snapshot(self, symbol: str) -> Dict[str, Any]:
         """
         Fallback template data when FIML is unavailable
-        
+
         This is used when:
         - Provider registry is not initialized
         - All providers fail
         - Cache is unavailable
         """
         asset_type = self._detect_asset_type(symbol)
-        
+
         if asset_type == AssetType.CRYPTO:
             return {
                 "symbol": symbol.upper(),
@@ -406,21 +406,21 @@ class FIMLEducationalDataAdapter:
     async def get_quick_price(self, symbol: str) -> Dict[str, Any]:
         """
         Get quick price data for a symbol (minimal processing, fast response)
-        
+
         This is optimized for mobile app price displays and quick lookups.
         Uses the 'quick' depth level for faster responses.
-        
+
         Args:
             symbol: Stock/crypto symbol
-            
+
         Returns:
             Quick price data dict
         """
         try:
             from fiml.mcp.tools import search_by_coin, search_by_symbol
-            
+
             asset_type = self._detect_asset_type(symbol)
-            
+
             if asset_type == AssetType.CRYPTO:
                 response = await search_by_coin(
                     symbol=symbol.upper().split("/")[0],
@@ -475,25 +475,25 @@ class FIMLEducationalDataAdapter:
     async def get_multiple_prices(self, symbols: list[str]) -> Dict[str, Dict[str, Any]]:
         """
         Get price data for multiple symbols concurrently
-        
+
         This is useful for mobile app market dashboards that need
         to display multiple assets at once.
-        
+
         Args:
             symbols: List of stock/crypto symbols
-            
+
         Returns:
             Dict mapping symbol to price data
         """
         import asyncio
-        
+
         results = {}
-        
+
         # Fetch all prices concurrently
         tasks = [self.get_quick_price(symbol) for symbol in symbols]
         prices = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for symbol, price_data in zip(symbols, prices):
+
+        for symbol, price_data in zip(symbols, prices, strict=False):
             if isinstance(price_data, Exception):
                 results[symbol.upper()] = {
                     "symbol": symbol.upper(),
@@ -502,7 +502,7 @@ class FIMLEducationalDataAdapter:
                 }
             else:
                 results[symbol.upper()] = price_data
-                
+
         return results
 
 

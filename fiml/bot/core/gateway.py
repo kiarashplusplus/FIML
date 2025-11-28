@@ -17,12 +17,6 @@ from fiml.bot.education.gamification import GamificationEngine
 from fiml.bot.education.lesson_engine import LessonContentEngine
 from fiml.bot.education.quiz_system import QuizSystem
 from fiml.narrative.generator import NarrativeGenerator
-from fiml.narrative.models import (
-    ExpertiseLevel,
-    Language,
-    NarrativeContext,
-    NarrativePreferences,
-)
 
 logger = structlog.get_logger(__name__)
 
@@ -246,37 +240,37 @@ class IntentClassifier:
     async def classify(self, message: AbstractMessage, session: UserSession) -> Intent:
         """
         Classify message intent based on content and context
-        
+
         Args:
             message: User message
             session: User session
-            
+
         Returns:
             Classified intent
         """
         text = message.text.lower().strip()
-        
+
         # Check for explicit action in context (from mobile app buttons)
         context_action = message.context.get("action", "")
         if context_action:
             if context_action.startswith("lesson:"):
                 return Intent(
-                    type=IntentType.LESSON_NAVIGATION, 
-                    data={"action": context_action}, 
+                    type=IntentType.LESSON_NAVIGATION,
+                    data={"action": context_action},
                     confidence=1.0
                 )
             elif context_action.startswith("quiz:"):
                 return Intent(
-                    type=IntentType.QUIZ_ANSWER, 
-                    data={"answer": context_action}, 
+                    type=IntentType.QUIZ_ANSWER,
+                    data={"answer": context_action},
                     confidence=1.0
                 )
             elif context_action.startswith("/"):
                 # Handle commands sent via context action
                 command = context_action.split()[0]
                 return Intent(
-                    type=IntentType.COMMAND, 
-                    data={"command": command}, 
+                    type=IntentType.COMMAND,
+                    data={"command": command},
                     confidence=1.0
                 )
 
@@ -354,7 +348,7 @@ class UnifiedBotGateway:
             narrative_generator=self.narrative_generator
         )
         self.fiml_data_adapter = fiml_data_adapter or FIMLEducationalDataAdapter()
-        
+
         # Initialize educational engines
         self.lesson_engine = LessonContentEngine()
         self.quiz_system = QuizSystem()
@@ -441,7 +435,7 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle bot commands"""
         command = intent.data.get("command", "").lower()
-        
+
         if command == "/help":
             return AbstractResponse(
                 text="📚 FIML Educational Bot Commands\n\n"
@@ -464,11 +458,11 @@ class UnifiedBotGateway:
                     {"text": "Ask Mentor", "action": "/mentor", "type": "secondary"},
                 ]
             )
-            
+
         elif command == "/lesson":
             # Delegate to lesson request handler
             return await self.handle_lesson_request(message, session, intent)
-            
+
         elif command == "/quiz":
             # Start a quiz for the current or last lesson
             if session.current_lesson:
@@ -496,7 +490,7 @@ class UnifiedBotGateway:
                      "Or use the web dashboard for easier management.",
                 actions=[{"text": "Open Dashboard", "url": "/dashboard", "type": "link"}] # Placeholder URL
             )
-            
+
         elif command == "/progress":
              progress = await self.lesson_engine.get_user_progress(message.user_id)
              completed = len(progress.get("completed", []))
@@ -520,11 +514,11 @@ class UnifiedBotGateway:
         # Get available lessons (using private method logic from adapter, adapted here)
         # In a real scenario, LessonContentEngine should expose this public method
         # For now, we'll list hardcoded basics if engine doesn't support listing yet
-        
-        # We need to list lessons. 
+
+        # We need to list lessons.
         # Ideally LessonContentEngine should have list_lessons()
         # Let's assume we can get them or use a static list for now
-        
+
         lessons = [
             {"id": "stock_basics_001", "title": "Understanding Stock Prices", "difficulty": "beginner"},
             {"id": "stock_basics_002", "title": "Market Orders vs Limit Orders", "difficulty": "beginner"},
@@ -532,7 +526,7 @@ class UnifiedBotGateway:
             {"id": "valuation_001", "title": "Understanding P/E Ratio", "difficulty": "intermediate"},
             {"id": "risk_001", "title": "Position Sizing and Risk", "difficulty": "intermediate"},
         ]
-        
+
         actions = []
         for lesson in lessons:
             actions.append({
@@ -540,7 +534,7 @@ class UnifiedBotGateway:
                 "action": f"lesson:start:{lesson['id']}",
                 "type": "secondary"
             })
-            
+
         return AbstractResponse(
             text="📚 Available Lessons\n\nSelect a lesson to start learning:",
             actions=actions
@@ -551,25 +545,25 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle lesson navigation"""
         action = intent.data.get("action", "")
-        
+
         if action.startswith("lesson:start:"):
             lesson_id = action.split(":")[-1]
-            
+
             # Load and render lesson
             lesson = await self.lesson_engine.load_lesson(lesson_id)
             if not lesson:
                 # Create sample if missing (for demo)
                 self.lesson_engine.create_sample_lesson(lesson_id)
                 lesson = await self.lesson_engine.load_lesson(lesson_id)
-                
+
             if lesson:
                 rendered = await self.lesson_engine.render_lesson(lesson, message.user_id)
                 self.lesson_engine.mark_lesson_started(message.user_id, lesson_id)
-                
+
                 # Update session
                 session.current_lesson = lesson_id
                 session.state = SessionState.IN_LESSON
-                
+
                 return AbstractResponse(
                     text=rendered.content,
                     actions=[
@@ -589,12 +583,12 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle quiz answers"""
         action = intent.data.get("answer", "") # Can be answer text or callback data
-        
+
         # Parse action if it's a callback string
         if isinstance(action, str) and action.startswith("quiz:start:"):
             lesson_id = action.split(":")[-1]
             return await self.start_quiz_for_lesson(lesson_id, message.user_id)
-            
+
         if isinstance(action, str) and action.startswith("quiz:answer:"):
             # Format: quiz:answer:session_id:question_index:answer_value
             parts = action.split(":")
@@ -602,14 +596,14 @@ class UnifiedBotGateway:
                 session_id = parts[2]
                 # q_idx = int(parts[3]) # Not needed for submit_answer if we trust session state or if submit_answer handles it
                 answer_val = parts[4]
-                
+
                 result = await self.quiz_system.submit_answer(session_id, answer_val)
-                
+
                 if result.get("error"):
                     return AbstractResponse(text=f"❌ Error: {result['error']}")
-                    
+
                 response_text = f"{'✅ Correct!' if result['correct'] else '❌ Incorrect.'}\n\n{result['explanation']}\n\nXP Earned: {result['xp_earned']}"
-                
+
                 if result.get("quiz_complete"):
                      response_text += f"\n\n🎉 Quiz Complete!\nScore: {result['score']}/{result['total_questions']}\nTotal XP: {result['total_xp']}"
                      actions = [{"text": "Back to Lessons", "action": "/lesson", "type": "primary"}]
@@ -633,28 +627,28 @@ class UnifiedBotGateway:
         lesson = await self.lesson_engine.load_lesson(lesson_id)
         if not lesson:
             return AbstractResponse(text="Lesson not found for quiz.")
-            
+
         # Get questions (handling dict vs object)
         if isinstance(lesson, dict):
              questions_data = lesson.get("quiz", {}).get("questions", [])
         else:
              questions_data = [
-                 {"id": q.id, "type": q.type, "text": q.text, "options": q.options, "correct_answer": q.correct_answer} 
+                 {"id": q.id, "type": q.type, "text": q.text, "options": q.options, "correct_answer": q.correct_answer}
                  for q in lesson.quiz_questions
              ]
-             
+
         if not questions_data:
             return AbstractResponse(text="No quiz available for this lesson.")
-            
+
         session_id = self.quiz_system.create_session(user_id, lesson_id, questions_data)
-        
+
         # Get first question
         question = await self.quiz_system.get_current_question(session_id)
         if not question:
              return AbstractResponse(text="Failed to start quiz.")
-             
+
         actions = self._build_quiz_options(question, session_id)
-        
+
         return AbstractResponse(
             text=f"📝 Quiz: {lesson.get('title', lesson_id) if isinstance(lesson, dict) else lesson.title}\n\n{question.text}",
             actions=actions
@@ -673,7 +667,7 @@ class UnifiedBotGateway:
         elif question.type == "true_false":
             actions.append({"text": "True", "action": f"quiz:answer:{session_id}:0:true", "type": "secondary"})
             actions.append({"text": "False", "action": f"quiz:answer:{session_id}:0:false", "type": "secondary"})
-            
+
         return actions
 
     async def handle_ai_question(
@@ -780,7 +774,7 @@ class UnifiedBotGateway:
 
             # Check if this is fallback data (API not configured)
             is_fallback = educational_data.get("is_fallback", False)
-            
+
             # Format the educational snapshot for display
             formatted_data = await self.fiml_data_adapter.format_for_lesson(educational_data)
 
@@ -792,7 +786,7 @@ class UnifiedBotGateway:
                 if len(narrative) > MAX_NARRATIVE_SUMMARY_LENGTH:
                     narrative = narrative[:MAX_NARRATIVE_SUMMARY_LENGTH] + "..."
                 narrative_text = f"\n\n📝 Educational Insight:\n{narrative}"
-            
+
             # Add key insights if available
             key_insights = educational_data.get("key_insights", [])
             if key_insights and len(key_insights) > 0:
@@ -803,10 +797,10 @@ class UnifiedBotGateway:
 
             # Build response text
             response_text = f"📊 Market Data for {symbol}\n\n{formatted_data}{narrative_text}"
-            
+
             # Add data source info
             response_text += f"\n\n_Source: {educational_data.get('data_source', 'FIML')}_"
-            
+
             # Add disclaimer
             response_text += f"\n_{educational_data.get('disclaimer', 'Educational purposes only - not financial advice')}_"
 

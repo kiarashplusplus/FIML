@@ -11,9 +11,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from fiml.bot.education.fiml_adapter import FIMLEducationalDataAdapter, get_fiml_data_adapter
+from fiml.bot.education.fiml_adapter import get_fiml_data_adapter
 from fiml.core.logging import get_logger
-from fiml.core.models import AnalysisDepth, Market
 
 logger = get_logger(__name__)
 
@@ -62,35 +61,35 @@ async def get_market_prices(
 ) -> MultiPriceResponse:
     """
     Get current prices for multiple symbols.
-    
+
     This endpoint is designed for mobile app market dashboards and
     any client that needs quick price data for multiple assets.
-    
+
     Args:
         symbols: Comma-separated list of symbols (e.g., "AAPL,TSLA,BTC")
-    
+
     Returns:
         Price data for each requested symbol
     """
     symbol_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
-    
+
     if not symbol_list:
         raise HTTPException(status_code=400, detail="No symbols provided")
-    
+
     if len(symbol_list) > 50:
         raise HTTPException(status_code=400, detail="Maximum 50 symbols allowed per request")
-    
+
     try:
         adapter = get_fiml_data_adapter()
         prices = await adapter.get_multiple_prices(symbol_list)
-        
+
         # Convert to response model
         price_data = {
             symbol: PriceData(**data) for symbol, data in prices.items()
         }
-        
+
         return MultiPriceResponse(prices=price_data, count=len(price_data))
-        
+
     except Exception as e:
         logger.error("Failed to fetch market prices", symbols=symbols, error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to fetch prices: {str(e)}")
@@ -100,17 +99,17 @@ async def get_market_prices(
 async def get_asset_details(symbol: str) -> AssetDetailsResponse:
     """
     Get detailed information about a specific asset with educational context.
-    
+
     This endpoint provides comprehensive asset data including:
     - Current price and changes
     - Volume analysis
     - Fundamental metrics
     - AI-generated narrative (if available)
     - Educational explanations
-    
+
     Args:
         symbol: Asset symbol (e.g., "AAPL", "BTC")
-    
+
     Returns:
         Detailed asset information with educational context
     """
@@ -121,7 +120,7 @@ async def get_asset_details(symbol: str) -> AssetDetailsResponse:
             user_id="api_user",  # Generic user for API access
             context="mobile_app"
         )
-        
+
         return AssetDetailsResponse(
             symbol=data.get("symbol", symbol.upper()),
             name=data.get("name", symbol.upper()),
@@ -137,7 +136,7 @@ async def get_asset_details(symbol: str) -> AssetDetailsResponse:
             timestamp=data.get("timestamp"),
             is_fallback=data.get("is_fallback", False),
         )
-        
+
     except Exception as e:
         logger.error("Failed to fetch asset details", symbol=symbol, error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to fetch asset details: {str(e)}")
@@ -150,13 +149,13 @@ async def search_assets(
 ) -> List[Dict[str, Any]]:
     """
     Search for assets by symbol or name.
-    
+
     This is a simple search endpoint for the mobile app autocomplete.
-    
+
     Args:
         q: Search query
         asset_type: Optional filter (stock or crypto)
-    
+
     Returns:
         List of matching assets
     """
@@ -181,17 +180,17 @@ async def search_assets(
         {"symbol": "NFLX", "name": "Netflix Inc.", "type": "stock"},
         {"symbol": "AMD", "name": "Advanced Micro Devices Inc.", "type": "stock"},
     ]
-    
+
     query_upper = q.upper()
-    
+
     # Filter by query
     results = [
         asset for asset in all_assets
         if query_upper in asset["symbol"] or query_upper in asset["name"].upper()
     ]
-    
+
     # Filter by asset type if specified
     if asset_type:
         results = [asset for asset in results if asset["type"] == asset_type.lower()]
-    
+
     return results[:10]  # Limit to 10 results
