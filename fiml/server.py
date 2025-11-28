@@ -120,6 +120,11 @@ from fiml.bot.router import router as bot_router
 
 app.include_router(bot_router, prefix="/api/bot", tags=["bot"])
 
+# Include Market API router (for Mobile/Web apps)
+from fiml.web.market_api import market_router
+
+app.include_router(market_router, prefix="/api/market", tags=["market"])
+
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
