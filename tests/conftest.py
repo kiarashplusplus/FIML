@@ -600,6 +600,8 @@ def mock_aiohttp_for_providers(request):
     Note: This only mocks specific financial data API domains, not all HTTP calls.
     Tests that need real API calls should use the @pytest.mark.live marker.
     """
+    from urllib.parse import urlparse
+
     # Skip mocking for live tests
     if "live" in request.keywords:
         yield
@@ -657,16 +659,27 @@ def mock_aiohttp_for_providers(request):
         mock_resp.__aexit__ = AsyncMock(return_value=None)
         return mock_resp
 
+    def get_url_host(url_str: str) -> str:
+        """Extract host from URL safely."""
+        try:
+            parsed = urlparse(str(url_str))
+            return parsed.netloc.lower() if parsed.netloc else ""
+        except Exception:
+            return ""
+
     def should_mock_url(url_str):
-        """Check if URL should be mocked based on domain."""
+        """Check if URL should be mocked based on domain using proper URL parsing."""
+        host = get_url_host(url_str)
         for domain in provider_domains:
-            if domain in url_str:
+            # Check exact match or subdomain match (host ends with .domain or equals domain)
+            if host == domain or host.endswith("." + domain):
                 return True
         return False
 
     def get_mock_data_for_url(url_str):
-        """Get provider-specific mock data based on URL."""
-        if "polygon.io" in url_str:
+        """Get provider-specific mock data based on URL host."""
+        host = get_url_host(url_str)
+        if host == "api.polygon.io" or host.endswith(".polygon.io"):
             return {
                 "status": "OK",
                 "results": [
@@ -680,7 +693,7 @@ def mock_aiohttp_for_providers(request):
                     }
                 ],
             }
-        elif "alphavantage.co" in url_str:
+        elif host == "www.alphavantage.co" or host.endswith(".alphavantage.co"):
             return {
                 "Global Quote": {
                     "01. symbol": "TSLA",
@@ -689,7 +702,7 @@ def mock_aiohttp_for_providers(request):
                     "10. change percent": "1.5%",
                 }
             }
-        elif "finnhub.io" in url_str:
+        elif host == "finnhub.io" or host.endswith(".finnhub.io"):
             return {
                 "c": 150.0,
                 "d": 2.0,
@@ -700,7 +713,7 @@ def mock_aiohttp_for_providers(request):
                 "pc": 148.0,
                 "t": 1630000000,
             }
-        elif "financialmodelingprep.com" in url_str:
+        elif host == "financialmodelingprep.com" or host.endswith(".financialmodelingprep.com"):
             return [
                 {
                     "symbol": "TSLA",

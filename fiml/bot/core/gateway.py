@@ -16,7 +16,6 @@ from fiml.bot.education.fiml_adapter import FIMLEducationalDataAdapter
 from fiml.bot.education.gamification import GamificationEngine
 from fiml.bot.education.lesson_engine import LessonContentEngine
 from fiml.bot.education.quiz_system import QuizSystem
-from fiml.bot.key_router import get_key_service
 from fiml.narrative.generator import NarrativeGenerator
 
 logger = structlog.get_logger(__name__)
@@ -422,6 +421,9 @@ class UnifiedBotGateway:
         self.lesson_engine = LessonContentEngine()
         self.quiz_system = QuizSystem()
         self.gamification = GamificationEngine()
+        # Lazy import to avoid circular import with key_router
+        from fiml.bot.key_router import get_key_service
+
         self.key_manager = get_key_service()
 
         # Handlers will be set by components
