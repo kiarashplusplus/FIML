@@ -273,7 +273,14 @@ class AIMentorService:
             f"Answer the user's question about trading or finance. "
             "Do not give financial advice. Always be educational. "
             "If the question is not about finance/trading, politely steer back to the topic. "
-            "Keep responses concise and helpful."
+            "Keep responses concise and helpful.\n\n"
+            "IMPORTANT FORMATTING RULES:\n"
+            "- Do NOT use markdown formatting (no **, ###, >, ---, etc.)\n"
+            "- Use plain text only\n"
+            "- Use emojis for visual interest (✅ ❌ 💡 📊 📈 etc.)\n"
+            "- Use simple bullet points with • or -\n"
+            "- Use line breaks for readability\n"
+            "- Keep it conversational and easy to read on mobile"
         )
 
         messages = [
