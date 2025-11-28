@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
-import { useOnboarding } from '../../hooks/useOnboarding';
 import ProviderKeyCard from '../../components/keys/ProviderKeyCard';
 import AddKeyModal from '../../components/keys/AddKeyModal';
 import UsageStatsCard from '../../components/usage/UsageStatsCard';
@@ -12,7 +11,6 @@ import type { Provider, UsageStatsResponse } from '../../types';
 export default function HomeScreen() {
     const { user } = useAuth();
     const router = useRouter();
-    const { hasCompletedOnboarding } = useOnboarding();
     const [providers, setProviders] = useState<Provider[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);

@@ -57,18 +57,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             logger.warning(f"Agent orchestrator initialization failed (non-critical): {e}")
 
     # Initialize Cache Warmer
-    if settings.enable_cache_warming:
-        logger.info("Initializing cache warmer...")
-        try:
-            from fiml.cache.warming import cache_warmer
+    logger.info("Initializing cache warmer...")
+    try:
+        from fiml.cache.warming import cache_warmer
 
-            await cache_warmer.initialize()
-            # Start background warming if enabled
+        await cache_warmer.initialize()
+        
+        # Start background warming if enabled
+        if settings.enable_cache_warming:
             await cache_warmer.start_background_warming(
                 interval_minutes=settings.cache_warming_interval_seconds // 60
             )
-        except Exception as e:
-            logger.warning(f"Cache warmer initialization failed (non-critical): {e}")
+    except Exception as e:
+        logger.warning(f"Cache warmer initialization failed (non-critical): {e}")
 
     yield
 

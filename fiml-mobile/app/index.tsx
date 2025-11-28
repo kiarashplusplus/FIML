@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, Dimensions, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { View, Text, TouchableOpacity, SafeAreaView, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width } = Dimensions.get('window');
+
 
 const SLIDES = [
     {
@@ -42,6 +43,13 @@ const SLIDES = [
 export default function OnboardingScreen() {
     const router = useRouter();
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+    const { completeOnboarding, hasCompletedOnboarding, isLoading } = useOnboarding();
+
+    useEffect(() => {
+        if (!isLoading && hasCompletedOnboarding) {
+            router.replace('/(tabs)/chat');
+        }
+    }, [hasCompletedOnboarding, isLoading]);
 
     const handleNext = () => {
         if (currentSlideIndex < SLIDES.length - 1) {
@@ -55,9 +63,9 @@ export default function OnboardingScreen() {
         completeOnboarding();
     };
 
-    const completeOnboarding = () => {
-        router.replace('/(tabs)/chat');
-    };
+    if (isLoading) {
+        return null; // Or a loading spinner
+    }
 
     const handleLinkPress = async (url: string) => {
         const supported = await Linking.canOpenURL(url);
