@@ -1,6 +1,8 @@
 import { API_BASE_URL } from '../constants';
 import * as SecureStore from 'expo-secure-store';
 import type { Provider, ValidationResponse, UsageStatsResponse } from '../types';
+import { getAllProviders } from '../providers';
+
 
 // Cache configuration
 const CACHE_KEYS = {
@@ -182,22 +184,17 @@ class KeyManagementService {
 
     /**
      * Get default provider list (offline fallback)
+     * Returns all 17 FIML providers with their metadata
      */
     private getDefaultProviders(): Provider[] {
-        return [
-            {
-                name: 'yfinance',
-                displayName: 'Yahoo Finance',
-                isConnected: false,
-                description: 'Free stock and market data'
-            },
-            {
-                name: 'binance',
-                displayName: 'Binance',
-                isConnected: false,
-                description: 'Crypto trading data'
-            }
-        ];
+        const allProviders = getAllProviders();
+
+        return allProviders.map(providerInfo => ({
+            name: providerInfo.name,
+            displayName: providerInfo.displayName,
+            isConnected: false,
+            description: providerInfo.description,
+        }));
     }
 
     /**
