@@ -145,13 +145,12 @@ def docker_services(request):
     no_docker = request.config.getoption("--no-docker")
 
     if no_docker:
-        # Assume services are already running
+        # Assume services are already running or not needed for unit tests
+        # We don't exit here to allow unit tests that mock Redis to run
         if not is_redis_ready():
-            pytest.exit("Redis is not available. Please start Redis or remove --no-docker flag.")
+            print("⚠️ Redis is not available, but continuing since --no-docker was specified.")
         if not is_postgres_ready():
-            pytest.exit(
-                "PostgreSQL is not available. Please start PostgreSQL or remove --no-docker flag."
-            )
+            print("⚠️ PostgreSQL is not available, but continuing since --no-docker was specified.")
         yield
         return
 
@@ -171,7 +170,7 @@ def docker_services(request):
     # Start services
     print("\n🐳 Starting test containers (Redis & PostgreSQL)...")
     subprocess.run(
-        ["sudo", "docker", "compose", "-f", compose_file, "up", "-d"],
+        ["docker", "compose", "-f", compose_file, "up", "-d"],
         cwd=project_root,
         check=True,
         capture_output=True,
@@ -181,7 +180,7 @@ def docker_services(request):
     print("⏳ Waiting for Redis to be ready...")
     if not is_redis_ready():
         subprocess.run(
-            ["sudo", "docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root
+            ["docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root
         )
         pytest.exit("Redis failed to start within timeout period")
     print("✅ Redis is ready")
@@ -189,7 +188,7 @@ def docker_services(request):
     print("⏳ Waiting for PostgreSQL to be ready...")
     if not is_postgres_ready():
         subprocess.run(
-            ["sudo", "docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root
+            ["docker", "compose", "-f", compose_file, "down", "-v"], cwd=project_root
         )
         pytest.exit("PostgreSQL failed to start within timeout period")
     print("✅ PostgreSQL is ready")
@@ -201,7 +200,7 @@ def docker_services(request):
     # Teardown: stop and remove containers
     print("\n🧹 Cleaning up test containers...")
     subprocess.run(
-        ["sudo", "docker", "compose", "-f", compose_file, "down", "-v"],
+        ["docker", "compose", "-f", compose_file, "down", "-v"],
         cwd=project_root,
         capture_output=True,
     )

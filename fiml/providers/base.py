@@ -3,7 +3,7 @@ Base Provider Interface
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
@@ -155,11 +155,11 @@ class BaseProvider(ABC):
         """Check if provider is in cooldown"""
         if self._cooldown_until is None:
             return False
-        
+
         if datetime.now(timezone.utc) > self._cooldown_until:
             self._cooldown_until = None
             return False
-            
+
         return True
 
     @property

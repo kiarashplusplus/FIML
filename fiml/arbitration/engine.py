@@ -173,19 +173,19 @@ class DataArbitrationEngine:
 
             except Exception as e:
                 error_msg = str(e).lower()
-                
+
                 # Check for rate limits
                 if "rate limit" in error_msg:
                     # Default cooldown: 60 seconds
                     cooldown_seconds = 60
-                    
+
                     # Try to parse wait time from error message
                     # Example: "Wait 18.5s"
                     import re
                     match = re.search(r"wait (\d+(\.\d+)?)s", error_msg)
                     if match:
                         cooldown_seconds = int(float(match.group(1))) + 1
-                        
+
                     provider.set_cooldown(cooldown_seconds)
                     logger.warning(
                         "Provider rate limited, setting cooldown",
