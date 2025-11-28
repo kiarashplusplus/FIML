@@ -11,8 +11,8 @@ from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
 
 from fiml.alerts.router import alert_router
-from fiml.bot.router import router as bot_router
 from fiml.bot.key_router import router as key_router
+from fiml.bot.router import router as bot_router
 from fiml.core.config import settings
 from fiml.core.exceptions import FIMLException
 from fiml.core.logging import get_logger

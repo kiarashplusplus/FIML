@@ -1,8 +1,10 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch, MagicMock
-from fiml.server import app
+
 from fiml.bot.core.gateway import AbstractResponse
+from fiml.server import app
 
 client = TestClient(app)
 
@@ -15,11 +17,11 @@ async def test_bot_message_endpoint():
         actions=[],
         metadata={"intent": "test"}
     )
-    
+
     # Mock the gateway instance
     mock_gateway = MagicMock()
     mock_gateway.handle_message = AsyncMock(return_value=mock_response)
-    
+
     # Patch get_gateway to return our mock
     with patch("fiml.bot.router.get_gateway", return_value=mock_gateway):
         response = client.post(
@@ -30,12 +32,12 @@ async def test_bot_message_endpoint():
                 "text": "Hello"
             }
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["text"] == "Hello from bot"
         assert data["metadata"]["intent"] == "test"
-        
+
         # Verify gateway was called with correct args
         mock_gateway.handle_message.assert_called_once_with(
             platform="mobile",
@@ -49,7 +51,7 @@ async def test_bot_message_endpoint_error():
     # Mock gateway to raise exception
     mock_gateway = MagicMock()
     mock_gateway.handle_message = AsyncMock(side_effect=Exception("Processing failed"))
-    
+
     with patch("fiml.bot.router.get_gateway", return_value=mock_gateway):
         response = client.post(
             "/api/bot/message",
@@ -58,19 +60,19 @@ async def test_bot_message_endpoint_error():
                 "text": "Hello"
             }
         )
-        
+
         assert response.status_code == 500
         assert "Processing failed" in response.json()["detail"]
 
 def test_get_gateway_singleton():
-    from fiml.bot.router import get_gateway, _gateway
-    
+    from fiml.bot.router import get_gateway
+
     # Reset singleton
     with patch("fiml.bot.router._gateway", None):
         # First call should create instance
         g1 = get_gateway()
         assert g1 is not None
-        
+
         # Second call should return same instance
         g2 = get_gateway()
         assert g1 is g2

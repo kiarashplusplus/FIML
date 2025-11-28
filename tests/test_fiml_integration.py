@@ -93,7 +93,7 @@ class TestFIMLEducationalDataAdapter:
     def test_get_template_snapshot_stock(self, adapter):
         """Test fallback template for stocks"""
         snapshot = adapter._get_template_snapshot("AAPL")
-        
+
         assert snapshot["symbol"] == "AAPL"
         assert snapshot["asset_type"] == "stock"
         assert snapshot["is_fallback"] is True
@@ -105,7 +105,7 @@ class TestFIMLEducationalDataAdapter:
     def test_get_template_snapshot_crypto(self, adapter):
         """Test fallback template for crypto"""
         snapshot = adapter._get_template_snapshot("BTC")
-        
+
         assert snapshot["symbol"] == "BTC"
         assert snapshot["asset_type"] == "crypto"
         assert snapshot["is_fallback"] is True
@@ -122,9 +122,9 @@ class TestFIMLEducationalDataAdapter:
             "fundamentals": {"pe_ratio": 25, "market_cap": "2.5T", "explanation": "Test"},
             "disclaimer": "Test disclaimer",
         }
-        
+
         formatted = await adapter.format_for_lesson(data)
-        
+
         assert "AAPL" in formatted
         assert "Apple Inc." in formatted
         assert "$150.00" in formatted
@@ -138,9 +138,9 @@ class TestFIMLEducationalDataAdapter:
             "price": {"current": 200.0, "change_percent": -1.5},
             "volume": {"current": 30000000},
         }
-        
+
         formatted = await adapter.format_for_quiz(data)
-        
+
         assert "TSLA" in formatted
         assert "$200.00" in formatted
         assert "-1.50%" in formatted
@@ -152,9 +152,9 @@ class TestFIMLEducationalDataAdapter:
             "symbol": "MSFT",
             "price": {"current": 350.0, "change_percent": 1.0, "explanation": "Moderate up"},
         }
-        
+
         formatted = await adapter.format_for_mentor(data, "What is MSFT?")
-        
+
         assert "MSFT" in formatted
         assert "$350.00" in formatted
 
@@ -180,7 +180,7 @@ class TestFIMLDataAdapterSingleton:
         """Test that singleton returns same instance"""
         adapter1 = get_fiml_data_adapter()
         adapter2 = get_fiml_data_adapter()
-        
+
         assert adapter1 is adapter2
 
     def test_get_fiml_data_adapter_returns_valid_adapter(self):

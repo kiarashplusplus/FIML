@@ -378,7 +378,7 @@ class AIMentorService:
                     topic = "stocks"
                 elif "volatility" in question_lower:
                     topic = "volatility"
-                
+
                 return (
                     f"Great question about {topic}! While I'm still learning to provide detailed explanations, "
                     f"I can tell you that this is an important concept in trading and finance.\n\n"

@@ -4,8 +4,7 @@ Tests for EducationalComplianceFilter (Component 11)
 
 import pytest
 
-from fiml.bot.education.compliance_filter import (ComplianceLevel,
-                                                  EducationalComplianceFilter)
+from fiml.bot.education.compliance_filter import ComplianceLevel, EducationalComplianceFilter
 
 
 class TestEducationalComplianceFilter:

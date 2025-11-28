@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
-from fiml.narrative.generator import NarrativeGenerator
-from fiml.llm.azure_client import AzureOpenAIClient
+
 
 @pytest.fixture
 def mock_azure_client():
@@ -15,7 +16,7 @@ def ai_mentor_service(mock_azure_client):
     narrative_generator = MagicMock() # Remove spec to allow dynamic attributes
     narrative_generator.azure_client = mock_azure_client
     narrative_generator.generate_narrative = AsyncMock() # Should not be called for general chat
-    
+
     service = AIMentorService(narrative_generator=narrative_generator)
     return service
 
@@ -24,12 +25,12 @@ async def test_general_chat_response(ai_mentor_service, mock_azure_client):
     # Test a general question that doesn't trigger symbol extraction
     question = "How are you?"
     user_id = "user123"
-    
+
     response = await ai_mentor_service.respond(user_id, question, persona=MentorPersona.MAYA)
-    
+
     # Verify generate_chat_response was called
     mock_azure_client.generate_chat_response.assert_called_once()
-    
+
     assert response["text"] == "This is a generated response from AI."
     assert response["mentor"] == "Maya"
     call_args = mock_azure_client.generate_chat_response.call_args
@@ -43,12 +44,12 @@ async def test_general_chat_response(ai_mentor_service, mock_azure_client):
 async def test_general_chat_fallback(ai_mentor_service, mock_azure_client):
     # Simulate error
     mock_azure_client.generate_chat_response.side_effect = Exception("API Error")
-    
+
     question = "What is life?"
     user_id = "user123"
-    
+
     response = await ai_mentor_service.respond(user_id, question, persona=MentorPersona.MAYA)
-    
+
     # Should fall back to template response
     assert "Maya here!" in response["text"]
     assert "Great question!" in response["text"]

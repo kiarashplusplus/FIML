@@ -235,7 +235,7 @@ async def get_historical_candles(
     """
     try:
         adapter = get_fiml_data_adapter()
-        
+
         # Fetch OHLCV data using the adapter
         # Note: The adapter's get_ohlcv returns a list of dictionaries or similar structure
         candles_data = await adapter.get_ohlcv(

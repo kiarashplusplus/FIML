@@ -537,7 +537,7 @@ class UnifiedBotGateway:
         # Check for provider-specific addkey (e.g., /addkey:binance)
         elif command.startswith("/addkey:"):
             provider = command.split(":")[-1].lower()
-            
+
             # Validate provider exists
             provider_info = self.key_manager.get_provider_info(provider)
             if not provider_info:
@@ -545,16 +545,16 @@ class UnifiedBotGateway:
                     text=f"❌ Unknown provider: {provider}\n\n"
                          f"Supported providers: binance, coinbase, alphavantage, polygon, finnhub, fmp"
                 )
-            
+
             # Update session to await key input
             session.state = SessionState.AWAITING_KEY_INPUT
             if session.metadata is None:
                 session.metadata = {}
             session.metadata["awaiting_key_for"] = provider
-            
+
             # Determine if secret is needed
             needs_secret = provider in ["binance", "coinbase", "kraken"]
-            
+
             if needs_secret:
                 instructions = (
                     f"🔑 Setting up {provider_info['name']}\n\n"
@@ -569,7 +569,7 @@ class UnifiedBotGateway:
                     f"Please send your API Key:\n\n"
                     f"Just paste your key in the next message."
                 )
-            
+
             return AbstractResponse(
                 text=instructions,
                 actions=[
@@ -580,7 +580,7 @@ class UnifiedBotGateway:
         elif command == "/addkey":
             # Platform-aware response
             is_mobile = message.platform in ("mobile", "expo", "app")
-            
+
             if is_mobile:
                 # Mobile users: direct to Home tab dashboard
                 return AbstractResponse(
@@ -812,19 +812,19 @@ class UnifiedBotGateway:
         # Check if waiting for key input
         if session.state == SessionState.AWAITING_KEY_INPUT:
             provider = session.metadata.get("awaiting_key_for")
-            
+
             if not provider:
                 # Reset state if no provider set
                 session.state = SessionState.IDLE
                 return AbstractResponse(
                     text="❌ Session error. Please try /addkey again."
                 )
-            
+
             # Parse key input
             parts = message.text.strip().split()
             api_key = parts[0] if len(parts) > 0 else ""
             api_secret = parts[1] if len(parts) > 1 else None
-            
+
             if not api_key:
                 return AbstractResponse(
                     text="❌ No API key provided. Please send your API key or use /cancel to exit.",
@@ -832,7 +832,7 @@ class UnifiedBotGateway:
                         {"text": "Cancel", "action": "/cancel", "type": "secondary"}
                     ]
                 )
-            
+
             # Attempt to store
             try:
                 success = await self.key_manager.store_user_key(
@@ -845,13 +845,13 @@ class UnifiedBotGateway:
                         "api_secret": api_secret if api_secret else None
                     }
                 )
-                
+
                 if success:
                     # Reset session state
                     session.state = SessionState.IDLE
                     if "awaiting_key_for" in session.metadata:
                         session.metadata.pop("awaiting_key_for")
-                    
+
                     return AbstractResponse(
                         text=f"✅ {provider.capitalize()} API key added successfully!\n\n"
                              f"Use /testkey to verify it works, or add more providers with /addkey.",
@@ -868,7 +868,7 @@ class UnifiedBotGateway:
                             {"text": "Cancel", "action": "/cancel", "type": "secondary"}
                         ]
                     )
-            
+
             except Exception as e:
                 logger.error("Error storing key", user_id=message.user_id, error=str(e))
                 session.state = SessionState.IDLE

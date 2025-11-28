@@ -7,8 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from fiml.core.exceptions import (ProviderError, ProviderRateLimitError,
-                                  RegionalRestrictionError)
+from fiml.core.exceptions import ProviderError, ProviderRateLimitError, RegionalRestrictionError
 from fiml.core.models import Asset, AssetType
 
 

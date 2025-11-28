@@ -514,11 +514,11 @@ class FIMLEducationalDataAdapter:
     async def get_ohlcv(self, symbol: str, timeframe: str = "1d") -> list[Dict[str, Any]]:
         """
         Get historical OHLCV data for a symbol
-        
+
         Args:
             symbol: Asset symbol
             timeframe: Candle timeframe (default: "1d")
-            
+
         Returns:
             List of OHLCV candles
         """
@@ -527,7 +527,7 @@ class FIMLEducationalDataAdapter:
             from fiml.core.models import Asset, DataType, Market
 
             asset_type = self._detect_asset_type(symbol)
-            
+
             # Create Asset object
             asset = Asset(
                 symbol=symbol.upper(),

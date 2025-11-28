@@ -7,8 +7,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from fiml.core.exceptions import (ArbitrationError, DataQualityError,
-                                  ProviderError)
+from fiml.core.exceptions import ArbitrationError, DataQualityError, ProviderError
 
 
 class TestServerConfiguration:

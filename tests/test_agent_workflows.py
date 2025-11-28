@@ -13,10 +13,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fiml.agents.workflows import (CryptoSentimentAnalysisWorkflow,
-                                   DeepEquityAnalysisWorkflow, WorkflowStatus,
-                                   crypto_sentiment_analysis,
-                                   deep_equity_analysis)
+from fiml.agents.workflows import (
+    CryptoSentimentAnalysisWorkflow,
+    DeepEquityAnalysisWorkflow,
+    WorkflowStatus,
+    crypto_sentiment_analysis,
+    deep_equity_analysis,
+)
 from fiml.core.models import Asset, AssetType, Market
 
 

@@ -1,8 +1,11 @@
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from fiml.bot.core.gateway import UnifiedBotGateway, AbstractMessage, IntentType
-from fiml.bot.education.lesson_engine import LessonContentEngine, Lesson, RenderedLesson
-from fiml.bot.education.quiz_system import QuizSystem, QuizSession, QuizQuestion
+
+from fiml.bot.core.gateway import UnifiedBotGateway
+from fiml.bot.education.lesson_engine import Lesson, LessonContentEngine, RenderedLesson
+from fiml.bot.education.quiz_system import QuizQuestion, QuizSystem
+
 
 @pytest.fixture
 def mock_lesson_engine():
@@ -32,17 +35,17 @@ def gateway(mock_lesson_engine, mock_quiz_system):
     mock_mentor = MagicMock()
     mock_data_adapter = MagicMock()
     mock_narrative = MagicMock()
-    
+
     gateway = UnifiedBotGateway(
         ai_mentor_service=mock_mentor,
         fiml_data_adapter=mock_data_adapter,
         narrative_generator=mock_narrative
     )
-    
+
     # Inject mocks
     gateway.lesson_engine = mock_lesson_engine
     gateway.quiz_system = mock_quiz_system
-    
+
     return gateway
 
 @pytest.mark.asyncio
@@ -52,7 +55,7 @@ async def test_help_command_returns_actions(gateway):
         user_id="user123",
         text="/help"
     )
-    
+
     assert "FIML Educational Bot Commands" in response.text
     assert response.actions is not None
     assert len(response.actions) > 0
@@ -65,7 +68,7 @@ async def test_lesson_command_returns_list(gateway):
         user_id="user123",
         text="/lesson"
     )
-    
+
     assert "Available Lessons" in response.text
     assert response.actions is not None
     assert len(response.actions) > 0
@@ -81,7 +84,7 @@ async def test_lesson_start_action(gateway, mock_lesson_engine):
         content="Lesson Content",
         metadata={}
     )
-    
+
     # Test context-based action
     response = await gateway.handle_message(
         platform="mobile_app",
@@ -89,11 +92,11 @@ async def test_lesson_start_action(gateway, mock_lesson_engine):
         text="Start Lesson",
         context={"action": "lesson:start:stock_basics_001"}
     )
-    
+
     assert response.text == "Lesson Content"
     assert response.actions is not None
     assert any(a["action"].startswith("quiz:start:") for a in response.actions)
-    
+
     # Verify engine calls
     mock_lesson_engine.load_lesson.assert_called_with("stock_basics_001")
     mock_lesson_engine.mark_lesson_started.assert_called_with("user123", "stock_basics_001")
@@ -105,7 +108,7 @@ async def test_quiz_start_action(gateway, mock_lesson_engine, mock_quiz_system):
     mock_lesson.title = "Test Lesson"
     mock_lesson.quiz_questions = [MagicMock()]
     mock_lesson_engine.load_lesson.return_value = mock_lesson
-    
+
     mock_question = QuizQuestion(
         id="q1",
         type="multiple_choice",
@@ -113,7 +116,7 @@ async def test_quiz_start_action(gateway, mock_lesson_engine, mock_quiz_system):
         options=[{"text": "A"}, {"text": "B"}]
     )
     mock_quiz_system.get_current_question.return_value = mock_question
-    
+
     # Test context-based action
     response = await gateway.handle_message(
         platform="mobile_app",
@@ -121,7 +124,7 @@ async def test_quiz_start_action(gateway, mock_lesson_engine, mock_quiz_system):
         text="Take Quiz",
         context={"action": "quiz:start:stock_basics_001"}
     )
-    
+
     assert "Question 1" in response.text
     assert response.actions is not None
     assert len(response.actions) == 2 # 2 options
@@ -138,7 +141,7 @@ async def test_quiz_answer_action(gateway, mock_quiz_system):
         "score": 1,
         "total_questions": 2
     }
-    
+
     mock_next_question = QuizQuestion(
         id="q2",
         type="true_false",
@@ -146,7 +149,7 @@ async def test_quiz_answer_action(gateway, mock_quiz_system):
         options=[]
     )
     mock_quiz_system.get_current_question.return_value = mock_next_question
-    
+
     # Test context-based action
     response = await gateway.handle_message(
         platform="mobile_app",
@@ -154,7 +157,7 @@ async def test_quiz_answer_action(gateway, mock_quiz_system):
         text="A",
         context={"action": "quiz:answer:session_123:0:A"}
     )
-    
+
     assert "Correct!" in response.text
     assert "Question 2" in response.text
     assert response.actions is not None

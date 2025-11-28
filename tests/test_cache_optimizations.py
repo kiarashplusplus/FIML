@@ -4,8 +4,7 @@ Tests for cache optimization features
 
 import pytest
 
-from fiml.cache import (BatchUpdateScheduler, CacheAnalytics, EvictionPolicy,
-                        PredictiveCacheWarmer)
+from fiml.cache import BatchUpdateScheduler, CacheAnalytics, EvictionPolicy, PredictiveCacheWarmer
 from fiml.cache.l1_cache import L1Cache
 from fiml.cache.manager import CacheManager
 from fiml.core.models import DataType

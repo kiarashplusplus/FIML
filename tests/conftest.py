@@ -208,9 +208,9 @@ def mock_azure_openai_httpx():
     """
     # Force mock endpoint for non-live tests
     from fiml.core.config import settings
-    
+
     mock_endpoint = "https://mock-azure-openai.openai.azure.com/"
-    
+
     # Patch settings to use mock endpoint
     with patch.object(settings, "azure_openai_endpoint", mock_endpoint):
         # Create a mock response that mimics Azure OpenAI's response format
@@ -682,7 +682,7 @@ def mock_aiohttp_for_providers(request):
                 else:
                     # Default generic response
                     mock_response.json.return_value = {"status": "ok", "data": {}}
-                
+
                 return mock_response
 
         # For all other calls, use the original method
