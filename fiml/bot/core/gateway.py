@@ -63,6 +63,7 @@ class IntentType(Enum):
     MARKET_QUERY = "market_query"
     KEY_MANAGEMENT = "key_management"
     NAVIGATION = "navigation"
+    GREETING = "greeting"
     UNKNOWN = "unknown"
 
 
@@ -236,6 +237,9 @@ class IntentClassifier:
     # Navigation keywords
     NAVIGATION_KEYWORDS = ["next", "back", "menu", "home", "continue", "skip"]
 
+    # Greeting keywords
+    GREETING_KEYWORDS = ["hi", "hello", "hey", "greetings", "yo", "start", "welcome"]
+
     async def classify(self, message: AbstractMessage, session: UserSession) -> Intent:
         """
         Classify message intent based on content and context
@@ -253,6 +257,10 @@ class IntentClassifier:
         if text.startswith("/"):
             command = text.split()[0]
             return Intent(type=IntentType.COMMAND, data={"command": command}, confidence=1.0)
+
+        # Check for greetings
+        if any(kw == text or text.startswith(kw + " ") for kw in self.GREETING_KEYWORDS):
+            return Intent(type=IntentType.GREETING, data={"greeting": message.text}, confidence=0.9)
 
         # Context-based classification
         if session.state == SessionState.IN_QUIZ:
@@ -328,6 +336,9 @@ class UnifiedBotGateway:
             IntentType.AI_QUESTION: self.handle_ai_question,
             IntentType.MARKET_QUERY: self.handle_market_query,
             IntentType.NAVIGATION: self.handle_navigation,
+            IntentType.MARKET_QUERY: self.handle_market_query,
+            IntentType.NAVIGATION: self.handle_navigation,
+            IntentType.GREETING: self.handle_greeting,
             IntentType.UNKNOWN: self.handle_unknown,
         }
 
@@ -673,6 +684,22 @@ class UnifiedBotGateway:
 
         return AbstractResponse(
             text=f"Navigation: {action}\n\n" "Use /help to see available commands"
+        )
+
+    async def handle_greeting(
+        self, message: AbstractMessage, session: UserSession, intent: Intent
+    ) -> AbstractResponse:
+        """Handle greetings"""
+        return AbstractResponse(
+            text="👋 **Hello! Welcome to FIML Mobile.**\n\n"
+            "I'm your AI trading mentor. I can help you:\n"
+            "• Learn trading concepts\n"
+            "• Analyze market data\n"
+            "• Practice with quizzes\n\n"
+            "Try asking me:\n"
+            "• 'What is a P/E ratio?'\n"
+            "• 'Show me AAPL price'\n"
+            "• 'Explain risk management'"
         )
 
     async def handle_unknown(

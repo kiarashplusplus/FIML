@@ -75,7 +75,7 @@ class AIMentorService:
         self._conversations: Dict[str, List[Dict]] = {}
         logger.info("AIMentorService initialized with FIML narrative generation")
 
-    def _extract_symbol_from_question(self, question: str) -> str:
+    def _extract_symbol_from_question(self, question: str) -> Optional[str]:
         """
         Extract stock symbol from user question.
 
@@ -151,8 +151,8 @@ class AIMentorService:
             if company_name in question_upper:
                 return symbol
 
-        # Default to AAPL if no symbol detected
-        return "AAPL"
+        # Default to None if no symbol detected
+        return None
 
     async def respond(
         self,
@@ -210,10 +210,12 @@ class AIMentorService:
             )
 
             # Generate narrative using FIML engine
-            narrative = await self.narrative_generator.generate_narrative(context=narrative_context)
-
-            # Adapt narrative to mentor persona style
-            response_text = self._adapt_narrative_to_persona(narrative.summary, persona, question)
+            if symbol:
+                narrative = await self.narrative_generator.generate_narrative(context=narrative_context)
+                response_text = self._adapt_narrative_to_persona(narrative.summary, persona, question)
+            else:
+                # General educational response without specific asset context
+                response_text = self._generate_general_response(question, persona)
 
             logger.info(
                 "FIML narrative generated for mentor response",
@@ -259,6 +261,27 @@ class AIMentorService:
             "related_lessons": self._suggest_lessons(question),
             "disclaimer": "Educational purposes only - not financial advice",
         }
+
+    def _generate_general_response(self, question: str, persona: MentorPersona) -> str:
+        """Generate general educational response without stock context"""
+        mentor = self.MENTORS[persona]
+        
+        # Simple heuristic response for now (would be LLM in full version)
+        if persona == MentorPersona.MAYA:
+            return (
+                f"That's a great question! To explain '{question}' properly, I'd usually look at a specific example.\n\n"
+                "Try asking me about a specific stock like 'Explain P/E ratio for AAPL' or 'How is TSLA doing?'"
+            )
+        elif persona == MentorPersona.THEO:
+            return (
+                f"To analyze '{question}', I need data. Market concepts are best understood with real numbers.\n\n"
+                "Give me a ticker symbol (like BTC or MSFT) and I'll break it down for you."
+            )
+        else:
+            return (
+                f"Trading psychology is key. When thinking about '{question}', remember to keep your emotions in check.\n\n"
+                "Focus on your process, not just the outcome."
+            )
 
     def _adapt_narrative_to_persona(
         self, narrative_text: str, persona: MentorPersona, question: str
@@ -308,7 +331,7 @@ class AIMentorService:
         if any(word in question_lower for word in ["what is", "explain", "how does"]):
             if persona == MentorPersona.MAYA:
                 return (
-                    f"{mentor['icon']} **Maya here!**\n\n"
+                    f"{mentor['icon']} Maya here!\n\n"
                     f"Great question! Let me explain this in a simple way.\n\n"
                     f"Think of it like this: [concept explanation would go here]\n\n"
                     f"Want to see a real example? Try the relevant lesson!\n\n"
@@ -317,7 +340,7 @@ class AIMentorService:
 
             elif persona == MentorPersona.THEO:
                 return (
-                    f"{mentor['icon']} **Theo here.**\n\n"
+                    f"{mentor['icon']} Theo here.\n\n"
                     f"Let's look at the data.\n\n"
                     f"[Analytical explanation with numbers would go here]\n\n"
                     f"The key metrics to watch are: [list]\n\n"
@@ -326,7 +349,7 @@ class AIMentorService:
 
             else:  # ZARA
                 return (
-                    f"{mentor['icon']} **Zara here.**\n\n"
+                    f"{mentor['icon']} Zara here.\n\n"
                     f"That's an important question about mindset.\n\n"
                     f"From a psychological perspective: [insight would go here]\n\n"
                     f"Remember: discipline beats emotion in trading.\n\n"
@@ -335,7 +358,7 @@ class AIMentorService:
 
         # Default response
         return (
-            f"{mentor['icon']} **{mentor['name']} here!**\n\n"
+            f"{mentor['icon']} {mentor['name']} here!\n\n"
             f"I understand you're asking about: _{question}_\n\n"
             f"This is a great topic! The AI mentor system is being integrated with "
             f"FIML's narrative generation engine. Soon I'll be able to:\n"

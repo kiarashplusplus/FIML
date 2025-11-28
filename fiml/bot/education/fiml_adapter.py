@@ -153,7 +153,7 @@ class FIMLEducationalDataAdapter:
                 "explanation": "P/E ratio of 28.5 suggests investors expect growth",
             },
             "disclaimer": "📚 Sample data for educational purposes",
-            "data_source": "Template (FIML integration pending)",
+            "data_source": "Demo Data (API keys not configured)",
         }
 
     def explain_price_movement(self, change_percent: float) -> str:

@@ -990,13 +990,13 @@ No providers connected yet.
 
 Choose your learning companion:
 
-👩‍🏫 **Maya** - Patient guide
+👩‍🏫 Maya - Patient guide
 Uses analogies, beginner-friendly
 
-👨‍💼 **Theo** - Analytical expert
+👨‍💼 Theo - Analytical expert
 Data-driven, technical analysis
 
-🧘‍♀️ **Zara** - Psychology coach
+🧘‍♀️ Zara - Psychology coach
 Trading discipline and mindset
 """
 
