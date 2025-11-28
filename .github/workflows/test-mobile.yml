@@ -1,0 +1,33 @@
+name: Mobile Tests
+
+on:
+  push:
+    paths:
+      - 'fiml-mobile/**'
+  pull_request:
+    paths:
+      - 'fiml-mobile/**'
+
+jobs:
+  test-mobile:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./fiml-mobile
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: fiml-mobile/package-lock.json
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Run Tests
+        run: npm test
