@@ -65,3 +65,54 @@ export const getHistoricalData = async (symbol: string, timeframe: string = '1d'
     const response = await api.get(`/api/market/candles/${symbol}`, { params: { timeframe } });
     return response.data;
 };
+
+// ============================================================================
+// FK-DSL API Functions
+// ============================================================================
+
+export interface DSLQueryRequest {
+    query: string;
+    async_execution?: boolean;
+}
+
+export interface DSLQueryResponse {
+    query: string;
+    status: string;
+    result?: Record<string, any>;
+    task_id?: string;
+    error?: string;
+}
+
+export interface DSLTemplate {
+    id: string;
+    name: string;
+    description: string;
+    query: string;
+    example: string;
+    category: string;
+}
+
+export interface DSLTemplatesResponse {
+    templates: DSLTemplate[];
+}
+
+/**
+ * Execute a FK-DSL query
+ * 
+ * Example queries:
+ * - EVALUATE TSLA: PRICE, VOLATILITY(30d)
+ * - COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP
+ * - CORRELATE BTC, ETH: PRICE(90d)
+ */
+export const executeDSLQuery = async (request: DSLQueryRequest): Promise<DSLQueryResponse> => {
+    const response = await api.post('/api/market/dsl/execute', request);
+    return response.data;
+};
+
+/**
+ * Get available DSL query templates
+ */
+export const getDSLTemplates = async (): Promise<DSLTemplatesResponse> => {
+    const response = await api.get('/api/market/dsl/templates');
+    return response.data;
+};

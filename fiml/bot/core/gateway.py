@@ -17,12 +17,6 @@ from fiml.bot.education.gamification import GamificationEngine
 from fiml.bot.education.lesson_engine import LessonContentEngine
 from fiml.bot.education.quiz_system import QuizSystem
 from fiml.narrative.generator import NarrativeGenerator
-from fiml.narrative.models import (
-    ExpertiseLevel,
-    Language,
-    NarrativeContext,
-    NarrativePreferences,
-)
 
 logger = structlog.get_logger(__name__)
 
@@ -64,6 +58,7 @@ class IntentType(Enum):
     QUIZ_ANSWER = "quiz_answer"
     AI_QUESTION = "ai_question"
     MARKET_QUERY = "market_query"
+    FK_DSL_QUERY = "fk_dsl_query"
     KEY_MANAGEMENT = "key_management"
     NAVIGATION = "navigation"
     GREETING = "greeting"
@@ -210,6 +205,8 @@ class IntentClassifier:
         "/quiz",
         "/mentor",
         "/market",
+        "/fkdsl",
+        "/dsl",
         "/addkey",
         "/listkeys",
         "/removekey",
@@ -237,6 +234,9 @@ class IntentClassifier:
     # Market keywords
     MARKET_KEYWORDS = ["price", "stock", "chart", "quote", "$", "market", "ticker"]
 
+    # FK-DSL keywords - queries that should be routed to DSL execution
+    DSL_KEYWORDS = ["evaluate", "compare", "correlate", "analyze", "trend", "volatility"]
+
     # Navigation keywords
     NAVIGATION_KEYWORDS = ["next", "back", "menu", "home", "continue", "skip"]
 
@@ -246,37 +246,37 @@ class IntentClassifier:
     async def classify(self, message: AbstractMessage, session: UserSession) -> Intent:
         """
         Classify message intent based on content and context
-        
+
         Args:
             message: User message
             session: User session
-            
+
         Returns:
             Classified intent
         """
         text = message.text.lower().strip()
-        
+
         # Check for explicit action in context (from mobile app buttons)
         context_action = message.context.get("action", "")
         if context_action:
             if context_action.startswith("lesson:"):
                 return Intent(
-                    type=IntentType.LESSON_NAVIGATION, 
-                    data={"action": context_action}, 
+                    type=IntentType.LESSON_NAVIGATION,
+                    data={"action": context_action},
                     confidence=1.0
                 )
             elif context_action.startswith("quiz:"):
                 return Intent(
-                    type=IntentType.QUIZ_ANSWER, 
-                    data={"answer": context_action}, 
+                    type=IntentType.QUIZ_ANSWER,
+                    data={"answer": context_action},
                     confidence=1.0
                 )
             elif context_action.startswith("/"):
                 # Handle commands sent via context action
                 command = context_action.split()[0]
                 return Intent(
-                    type=IntentType.COMMAND, 
-                    data={"command": command}, 
+                    type=IntentType.COMMAND,
+                    data={"command": command},
                     confidence=1.0
                 )
 
@@ -302,6 +302,13 @@ class IntentClassifier:
                     type=IntentType.LESSON_NAVIGATION, data={"action": text}, confidence=0.8
                 )
 
+        # Check for FK-DSL query patterns (high priority)
+        # DSL queries typically start with EVALUATE, COMPARE, CORRELATE, etc.
+        if self._is_dsl_query(text):
+            return Intent(
+                type=IntentType.FK_DSL_QUERY, data={"query": message.text}, confidence=0.9
+            )
+
         # Check for educational questions first (higher priority than market keywords)
         if any(pattern in text for pattern in self.EDUCATIONAL_PATTERNS):
             return Intent(
@@ -324,6 +331,30 @@ class IntentClassifier:
 
         # Default to AI question
         return Intent(type=IntentType.AI_QUESTION, data={"question": message.text}, confidence=0.5)
+
+    def _is_dsl_query(self, text: str) -> bool:
+        """
+        Check if text is a FK-DSL query.
+
+        FK-DSL queries typically start with uppercase keywords like:
+        - EVALUATE TSLA: PRICE, VOLATILITY(30d)
+        - COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP
+        - CORRELATE BTC, ETH: PRICE(90d)
+        """
+        text_upper = text.upper().strip()
+
+        # Check for DSL command prefixes
+        dsl_prefixes = ["EVALUATE", "COMPARE", "CORRELATE", "ANALYZE", "TREND", "SCREEN"]
+        if any(text_upper.startswith(prefix) for prefix in dsl_prefixes):
+            return True
+
+        # Check for DSL syntax patterns (colon after symbol, parentheses for timeframes)
+        import re
+        dsl_pattern = r"^[A-Z]+\s+[A-Z0-9,\s]+:\s*[A-Z_,\s\(\)0-9d]+$"
+        if re.match(dsl_pattern, text_upper):
+            return True
+
+        return False
 
 
 class UnifiedBotGateway:
@@ -354,7 +385,7 @@ class UnifiedBotGateway:
             narrative_generator=self.narrative_generator
         )
         self.fiml_data_adapter = fiml_data_adapter or FIMLEducationalDataAdapter()
-        
+
         # Initialize educational engines
         self.lesson_engine = LessonContentEngine()
         self.quiz_system = QuizSystem()
@@ -368,8 +399,7 @@ class UnifiedBotGateway:
             IntentType.QUIZ_ANSWER: self.handle_quiz_answer,
             IntentType.AI_QUESTION: self.handle_ai_question,
             IntentType.MARKET_QUERY: self.handle_market_query,
-            IntentType.NAVIGATION: self.handle_navigation,
-            IntentType.MARKET_QUERY: self.handle_market_query,
+            IntentType.FK_DSL_QUERY: self.handle_fk_dsl_query,
             IntentType.NAVIGATION: self.handle_navigation,
             IntentType.GREETING: self.handle_greeting,
             IntentType.UNKNOWN: self.handle_unknown,
@@ -441,7 +471,7 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle bot commands"""
         command = intent.data.get("command", "").lower()
-        
+
         if command == "/help":
             return AbstractResponse(
                 text="📚 FIML Educational Bot Commands\n\n"
@@ -464,11 +494,11 @@ class UnifiedBotGateway:
                     {"text": "Ask Mentor", "action": "/mentor", "type": "secondary"},
                 ]
             )
-            
+
         elif command == "/lesson":
             # Delegate to lesson request handler
             return await self.handle_lesson_request(message, session, intent)
-            
+
         elif command == "/quiz":
             # Start a quiz for the current or last lesson
             if session.current_lesson:
@@ -496,7 +526,7 @@ class UnifiedBotGateway:
                      "Or use the web dashboard for easier management.",
                 actions=[{"text": "Open Dashboard", "url": "/dashboard", "type": "link"}] # Placeholder URL
             )
-            
+
         elif command == "/progress":
              progress = await self.lesson_engine.get_user_progress(message.user_id)
              completed = len(progress.get("completed", []))
@@ -508,6 +538,9 @@ class UnifiedBotGateway:
                 actions=[{"text": "Continue Learning", "action": "/lesson", "type": "primary"}]
             )
 
+        elif command in ("/fkdsl", "/dsl"):
+            return await self._show_fkdsl_help()
+
         return AbstractResponse(
             text=f"Command {command} is not fully implemented on mobile yet.",
             metadata={"handled_by": "gateway_fallback"},
@@ -516,33 +549,36 @@ class UnifiedBotGateway:
     async def handle_lesson_request(
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
-        """Handle lesson requests"""
-        # Get available lessons (using private method logic from adapter, adapted here)
-        # In a real scenario, LessonContentEngine should expose this public method
-        # For now, we'll list hardcoded basics if engine doesn't support listing yet
-        
-        # We need to list lessons. 
-        # Ideally LessonContentEngine should have list_lessons()
-        # Let's assume we can get them or use a static list for now
-        
-        lessons = [
-            {"id": "stock_basics_001", "title": "Understanding Stock Prices", "difficulty": "beginner"},
-            {"id": "stock_basics_002", "title": "Market Orders vs Limit Orders", "difficulty": "beginner"},
-            {"id": "stock_basics_003", "title": "Volume and Liquidity", "difficulty": "beginner"},
-            {"id": "valuation_001", "title": "Understanding P/E Ratio", "difficulty": "intermediate"},
-            {"id": "risk_001", "title": "Position Sizing and Risk", "difficulty": "intermediate"},
-        ]
-        
+        """Handle lesson requests with dynamic lesson loading from content directory"""
+        # Dynamically load lessons from the lesson engine
+        lessons = await self.lesson_engine.list_lessons()
+
+        if not lessons:
+            # Fallback if no lessons found
+            return AbstractResponse(
+                text="📚 No lessons available yet.\n\n"
+                     "The lesson content is being prepared. Please check back later!",
+                actions=[]
+            )
+
         actions = []
         for lesson in lessons:
+            difficulty_badge = {
+                "beginner": "🟢",
+                "intermediate": "🟡",
+                "advanced": "🔴"
+            }.get(lesson.get("difficulty", "beginner"), "⚪")
+
             actions.append({
-                "text": f"{lesson['title']} ({lesson['difficulty']})",
+                "text": f"{difficulty_badge} {lesson['title']}",
                 "action": f"lesson:start:{lesson['id']}",
                 "type": "secondary"
             })
-            
+
         return AbstractResponse(
-            text="📚 Available Lessons\n\nSelect a lesson to start learning:",
+            text=f"📚 Available Lessons ({len(lessons)} total)\n\n"
+                 "🟢 Beginner | 🟡 Intermediate | 🔴 Advanced\n\n"
+                 "Select a lesson to start learning:",
             actions=actions
         )
 
@@ -551,25 +587,25 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle lesson navigation"""
         action = intent.data.get("action", "")
-        
+
         if action.startswith("lesson:start:"):
             lesson_id = action.split(":")[-1]
-            
+
             # Load and render lesson
             lesson = await self.lesson_engine.load_lesson(lesson_id)
             if not lesson:
                 # Create sample if missing (for demo)
                 self.lesson_engine.create_sample_lesson(lesson_id)
                 lesson = await self.lesson_engine.load_lesson(lesson_id)
-                
+
             if lesson:
                 rendered = await self.lesson_engine.render_lesson(lesson, message.user_id)
                 self.lesson_engine.mark_lesson_started(message.user_id, lesson_id)
-                
+
                 # Update session
                 session.current_lesson = lesson_id
                 session.state = SessionState.IN_LESSON
-                
+
                 return AbstractResponse(
                     text=rendered.content,
                     actions=[
@@ -589,12 +625,12 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle quiz answers"""
         action = intent.data.get("answer", "") # Can be answer text or callback data
-        
+
         # Parse action if it's a callback string
         if isinstance(action, str) and action.startswith("quiz:start:"):
             lesson_id = action.split(":")[-1]
             return await self.start_quiz_for_lesson(lesson_id, message.user_id)
-            
+
         if isinstance(action, str) and action.startswith("quiz:answer:"):
             # Format: quiz:answer:session_id:question_index:answer_value
             parts = action.split(":")
@@ -602,14 +638,14 @@ class UnifiedBotGateway:
                 session_id = parts[2]
                 # q_idx = int(parts[3]) # Not needed for submit_answer if we trust session state or if submit_answer handles it
                 answer_val = parts[4]
-                
+
                 result = await self.quiz_system.submit_answer(session_id, answer_val)
-                
+
                 if result.get("error"):
                     return AbstractResponse(text=f"❌ Error: {result['error']}")
-                    
+
                 response_text = f"{'✅ Correct!' if result['correct'] else '❌ Incorrect.'}\n\n{result['explanation']}\n\nXP Earned: {result['xp_earned']}"
-                
+
                 if result.get("quiz_complete"):
                      response_text += f"\n\n🎉 Quiz Complete!\nScore: {result['score']}/{result['total_questions']}\nTotal XP: {result['total_xp']}"
                      actions = [{"text": "Back to Lessons", "action": "/lesson", "type": "primary"}]
@@ -633,28 +669,28 @@ class UnifiedBotGateway:
         lesson = await self.lesson_engine.load_lesson(lesson_id)
         if not lesson:
             return AbstractResponse(text="Lesson not found for quiz.")
-            
+
         # Get questions (handling dict vs object)
         if isinstance(lesson, dict):
              questions_data = lesson.get("quiz", {}).get("questions", [])
         else:
              questions_data = [
-                 {"id": q.id, "type": q.type, "text": q.text, "options": q.options, "correct_answer": q.correct_answer} 
+                 {"id": q.id, "type": q.type, "text": q.text, "options": q.options, "correct_answer": q.correct_answer}
                  for q in lesson.quiz_questions
              ]
-             
+
         if not questions_data:
             return AbstractResponse(text="No quiz available for this lesson.")
-            
+
         session_id = self.quiz_system.create_session(user_id, lesson_id, questions_data)
-        
+
         # Get first question
         question = await self.quiz_system.get_current_question(session_id)
         if not question:
              return AbstractResponse(text="Failed to start quiz.")
-             
+
         actions = self._build_quiz_options(question, session_id)
-        
+
         return AbstractResponse(
             text=f"📝 Quiz: {lesson.get('title', lesson_id) if isinstance(lesson, dict) else lesson.title}\n\n{question.text}",
             actions=actions
@@ -673,7 +709,7 @@ class UnifiedBotGateway:
         elif question.type == "true_false":
             actions.append({"text": "True", "action": f"quiz:answer:{session_id}:0:true", "type": "secondary"})
             actions.append({"text": "False", "action": f"quiz:answer:{session_id}:0:false", "type": "secondary"})
-            
+
         return actions
 
     async def handle_ai_question(
@@ -767,82 +803,65 @@ class UnifiedBotGateway:
                     "Try asking about a specific symbol like:\n"
                     "• 'Show me AAPL price'\n"
                     "• 'What's the price of TSLA stock?'\n"
-                    "• 'Tell me about MSFT'\n\n"
+                    "• 'Tell me about MSFT'\n"
+                    "• 'Bitcoin price' or 'BTC price'\n\n"
                     "_Educational purposes only - not financial advice_"
                 )
 
             # Use FIMLEducationalDataAdapter to fetch market data with educational context
+            # This now uses full FIML MCP tools integration for real data
             educational_data = await self.fiml_data_adapter.get_educational_snapshot(
                 symbol=symbol, user_id=message.user_id, context="mentor"
             )
 
+            # Check if this is fallback data (API not configured)
+            is_fallback = educational_data.get("is_fallback", False)
+
             # Format the educational snapshot for display
             formatted_data = await self.fiml_data_adapter.format_for_lesson(educational_data)
 
-            # Generate educational narrative using NarrativeGenerator if available
+            # Use narrative from the educational snapshot (already generated by MCP tools)
             narrative_text = ""
-            try:
-                # Get user's expertise level from session (default to beginner)
-                expertise_str = (session.preferences or {}).get("expertise_level", "beginner")
-                try:
-                    expertise_level = ExpertiseLevel(expertise_str.lower())
-                except ValueError:
-                    expertise_level = ExpertiseLevel.BEGINNER
+            if educational_data.get("narrative"):
+                narrative = educational_data["narrative"]
+                # Truncate if needed
+                if len(narrative) > MAX_NARRATIVE_SUMMARY_LENGTH:
+                    narrative = narrative[:MAX_NARRATIVE_SUMMARY_LENGTH] + "..."
+                narrative_text = f"\n\n📝 Educational Insight:\n{narrative}"
 
-                # Build narrative context from the educational data
-                price_info = educational_data.get("price", {})
-                narrative_context = NarrativeContext(
-                    asset_symbol=symbol,
-                    asset_name=educational_data.get("name", f"{symbol} Stock"),
-                    asset_type="stock",
-                    market="US",
-                    price_data={
-                        "price": price_info.get("current", 0),
-                        "change": price_info.get("change", 0),
-                        "change_percent": price_info.get("change_percent", 0),
-                    },
-                    preferences=NarrativePreferences(
-                        expertise_level=expertise_level,
-                        language=Language.ENGLISH,
-                        include_disclaimers=True,
-                        include_technical=False,
-                        include_fundamental=True,
-                        include_sentiment=False,
-                        include_risk=False,
-                    ),
-                    include_disclaimers=True,
-                )
+            # Add key insights if available
+            key_insights = educational_data.get("key_insights", [])
+            if key_insights and len(key_insights) > 0:
+                insights_text = "\n\n💡 Key Insights:\n"
+                for insight in key_insights[:3]:  # Limit to 3 insights
+                    insights_text += f"• {insight}\n"
+                narrative_text += insights_text
 
-                # Generate a brief narrative summary
-                narrative = await self.narrative_generator.generate_narrative(
-                    context=narrative_context
-                )
-                summary = narrative.summary[:MAX_NARRATIVE_SUMMARY_LENGTH]
-                narrative_text = f"\n\n📝 Educational Insight:\n{summary}..."
+            # Build response text
+            response_text = f"📊 Market Data for {symbol}\n\n{formatted_data}{narrative_text}"
 
-            except Exception as narrative_error:
-                logger.debug(
-                    "Narrative generation skipped",
-                    symbol=symbol,
-                    error=str(narrative_error),
-                )
+            # Add data source info
+            response_text += f"\n\n_Source: {educational_data.get('data_source', 'FIML')}_"
 
-            response_text = (
-                f"📊 Market Data for {symbol}\n\n"
-                f"{formatted_data}{narrative_text}\n\n"
-                f"_Source: {educational_data.get('data_source', 'FIML')}_\n"
-                f"_{educational_data.get('disclaimer', 'Educational purposes only - not financial advice')}_"
-            )
+            # Add disclaimer
+            response_text += f"\n_{educational_data.get('disclaimer', 'Educational purposes only - not financial advice')}_"
 
             logger.info(
                 "Market query response generated",
                 user_id=message.user_id,
                 symbol=symbol,
+                is_fallback=is_fallback,
+                has_narrative=bool(educational_data.get("narrative")),
             )
 
             return AbstractResponse(
                 text=response_text,
-                metadata={"symbol": symbol, "has_narrative": bool(narrative_text)},
+                metadata={
+                    "symbol": symbol,
+                    "has_narrative": bool(narrative_text),
+                    "is_live_data": not is_fallback,
+                    "asset_type": educational_data.get("asset_type", "stock"),
+                },
             )
 
         except Exception as e:
@@ -936,6 +955,152 @@ class UnifiedBotGateway:
             "/lesson - Start learning (coming soon)\n"
             "/addkey - Set up your API keys"
         )
+
+    async def _show_fkdsl_help(self) -> AbstractResponse:
+        """Show FK-DSL help and example queries"""
+        return AbstractResponse(
+            text="🔮 Financial Knowledge DSL (FK-DSL)\n\n"
+                 "FK-DSL lets you run advanced financial analysis queries.\n\n"
+                 "📝 Example Queries:\n"
+                 "• `EVALUATE TSLA: PRICE, VOLATILITY(30d)`\n"
+                 "• `COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP`\n"
+                 "• `CORRELATE BTC, ETH: PRICE(90d)`\n"
+                 "• `SCREEN SECTOR=TECH: PE_RATIO < 30`\n\n"
+                 "💡 Tips:\n"
+                 "• Use uppercase for commands (EVALUATE, COMPARE, etc.)\n"
+                 "• Separate metrics with commas\n"
+                 "• Add timeframes in parentheses: (30d), (1y)\n\n"
+                 "_Type a query to execute it!_",
+            actions=[
+                {"text": "EVALUATE AAPL: PRICE", "action": "dsl:EVALUATE AAPL: PRICE, VOLUME", "type": "primary"},
+                {"text": "COMPARE TSLA, NVDA", "action": "dsl:COMPARE TSLA, NVDA: PE_RATIO", "type": "secondary"},
+                {"text": "CORRELATE BTC, ETH", "action": "dsl:CORRELATE BTC, ETH: PRICE(30d)", "type": "secondary"},
+            ],
+            metadata={"intent": "fk_dsl_help"},
+        )
+
+    async def handle_fk_dsl_query(
+        self, message: AbstractMessage, session: UserSession, intent: Intent
+    ) -> AbstractResponse:
+        """
+        Handle FK-DSL query execution.
+
+        This method provides a unified interface for executing FK-DSL queries
+        across both Telegram bot and mobile app.
+        """
+        from fiml.mcp.tools import execute_fk_dsl
+
+        query = intent.data.get("query", "")
+
+        # Check if this is a DSL action from button press
+        if query.startswith("dsl:"):
+            query = query[4:]  # Remove "dsl:" prefix
+
+        if not query.strip():
+            return await self._show_fkdsl_help()
+
+        try:
+            logger.info(
+                "Executing FK-DSL query",
+                user_id=message.user_id,
+                query=query,
+            )
+
+            # Execute the DSL query synchronously for immediate response
+            result = await execute_fk_dsl(query=query, async_execution=False)
+
+            if result.get("status") == "failed":
+                return AbstractResponse(
+                    text=f"❌ DSL Query Failed\n\n"
+                         f"Query: `{query}`\n\n"
+                         f"Error: {result.get('error', 'Unknown error')}\n\n"
+                         "Try /fkdsl for examples and syntax help.",
+                    metadata={"status": "error", "query": query},
+                )
+
+            # Format successful result
+            formatted_result = self._format_dsl_result(query, result)
+
+            return AbstractResponse(
+                text=formatted_result,
+                metadata={
+                    "status": "success",
+                    "query": query,
+                    "intent": "fk_dsl_query",
+                },
+                actions=[
+                    {"text": "Run Another Query", "action": "/fkdsl", "type": "secondary"},
+                ],
+            )
+
+        except Exception as e:
+            logger.error(
+                "FK-DSL execution error",
+                user_id=message.user_id,
+                query=query,
+                error=str(e),
+            )
+
+            return AbstractResponse(
+                text=f"❌ Error executing query\n\n"
+                     f"Query: `{query}`\n"
+                     f"Error: {str(e)}\n\n"
+                     "Try /fkdsl for syntax help and examples.",
+                metadata={"status": "error", "query": query},
+            )
+
+    def _format_dsl_result(self, query: str, result: dict) -> str:
+        """Format DSL execution result for display"""
+        output = ["🔮 FK-DSL Query Result\n"]
+        output.append(f"Query: `{query}`\n")
+
+        if result.get("status") == "completed":
+            data = result.get("result", {})
+
+            # Handle different result types
+            if isinstance(data, dict):
+                if "symbols" in data:
+                    # Multi-symbol result
+                    for symbol, metrics in data.get("data", {}).items():
+                        output.append(f"\n📊 **{symbol}**")
+                        if isinstance(metrics, dict):
+                            for key, value in metrics.items():
+                                output.append(f"  • {key}: {self._format_value(value)}")
+                elif "comparison" in data:
+                    # Comparison result
+                    output.append("\n📈 Comparison:")
+                    for item in data.get("comparison", []):
+                        output.append(f"  • {item}")
+                elif "correlation" in data:
+                    # Correlation result
+                    corr = data.get("correlation", {})
+                    output.append(f"\n🔗 Correlation: {corr.get('value', 'N/A')}")
+                    output.append(f"   Period: {corr.get('period', 'N/A')}")
+                else:
+                    # Generic dict result
+                    for key, value in data.items():
+                        output.append(f"• {key}: {self._format_value(value)}")
+            else:
+                output.append(f"\n{data}")
+
+        output.append("\n_Educational purposes only - not financial advice_")
+        return "\n".join(output)
+
+    def _format_value(self, value: Any) -> str:
+        """Format a value for display"""
+        if isinstance(value, float):
+            if abs(value) >= 1_000_000_000:
+                return f"${value/1_000_000_000:.2f}B"
+            elif abs(value) >= 1_000_000:
+                return f"${value/1_000_000:.2f}M"
+            elif abs(value) < 0.01:
+                return f"{value:.6f}"
+            else:
+                return f"{value:.2f}"
+        elif isinstance(value, int):
+            return f"{value:,}"
+        else:
+            return str(value)
 
     def register_handler(self, intent_type: IntentType, handler: Any) -> None:
         """Register custom handler for intent type"""

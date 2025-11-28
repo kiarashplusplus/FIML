@@ -1,14 +1,17 @@
 """
 Component 10: FIML Educational Data Adapter
 Formats market data with educational context and explanations
+
+This adapter provides a unified interface for fetching real market data
+through FIML's MCP tools and arbitration engine, with educational context.
+It is designed to be reusable across both Telegram bot and mobile app.
 """
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import structlog
 
-from fiml.arbitration.engine import DataArbitrationEngine
-from fiml.core.models import Asset, DataType
+from fiml.core.models import AnalysisDepth, AssetType, Market
 
 logger = structlog.get_logger(__name__)
 
@@ -22,24 +25,50 @@ class FIMLEducationalDataAdapter:
     - Context and interpretation for all metrics
     - Educational narratives
     - Platform-specific formatting
-    - Integration with FIML arbitration engine
+    - Full integration with FIML MCP tools (search_by_symbol, search_by_coin)
+    - Reusable across Telegram bot and mobile app
     """
 
-    def __init__(self, arbitration_engine: Optional[DataArbitrationEngine] = None):
+    def __init__(self) -> None:
         """
-        Initialize adapter with FIML arbitration engine
+        Initialize adapter with FIML MCP tools integration
+        """
+        logger.info("FIMLEducationalDataAdapter initialized with FIML MCP integration")
+
+    def _detect_asset_type(self, symbol: str) -> AssetType:
+        """
+        Detect if symbol is stock or crypto
 
         Args:
-            arbitration_engine: FIML data arbitration engine (creates new if None)
+            symbol: Asset symbol
+
+        Returns:
+            AssetType enum value
         """
-        self.arbitration_engine = arbitration_engine or DataArbitrationEngine()
-        logger.info("FIMLEducationalDataAdapter initialized with FIML integration")
+        # Common crypto symbols
+        crypto_symbols = {
+            "BTC", "ETH", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC",
+            "LINK", "UNI", "ATOM", "LTC", "DOGE", "SHIB", "BNB",
+        }
+
+        symbol_upper = symbol.upper().split("/")[0]  # Handle pairs like BTC/USDT
+
+        if symbol_upper in crypto_symbols:
+            return AssetType.CRYPTO
+        return AssetType.EQUITY
 
     async def get_educational_snapshot(
         self, symbol: str, user_id: str, context: str = "lesson"
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """
-        Get market data formatted for education using FIML arbitration
+        Get market data formatted for education using FIML MCP tools
+
+        This method uses the full FIML integration via MCP tools (search_by_symbol
+        or search_by_coin) which include:
+        - Arbitration engine for provider selection
+        - Caching (L1/L2)
+        - Narrative generation
+        - Compliance checking
 
         Args:
             symbol: Stock/crypto symbol
@@ -50,111 +79,198 @@ class FIMLEducationalDataAdapter:
             Educational data dict with live FIML data and educational interpretations
         """
         try:
-            # Create asset and get data via FIML arbitration
-            asset = Asset(symbol=symbol, asset_class="stock")
+            from fiml.mcp.tools import search_by_coin, search_by_symbol
 
-            # Get arbitration plan (will use user's keys via FIMLProviderConfigurator)
-            plan = await self.arbitration_engine.arbitrate_request(
-                asset=asset, data_type=DataType.PRICE, user_region="US"
-            )
+            asset_type = self._detect_asset_type(symbol)
 
-            # Execute the plan to get actual data
-            from fiml.providers.registry import provider_registry
+            if asset_type == AssetType.CRYPTO:
+                # Use search_by_coin for crypto
+                response = await search_by_coin(
+                    symbol=symbol.upper().split("/")[0],  # Extract base symbol
+                    exchange="binance",
+                    pair="USDT",
+                    depth=AnalysisDepth.STANDARD,
+                    language="en",
+                    expertise_level="beginner",
+                    include_narrative=True,
+                )
 
-            provider = provider_registry.get_provider(plan.primary_provider)
-            if not provider:
-                raise ValueError(f"Provider {plan.primary_provider} not found")
-            response = await provider.fetch_price(asset)
+                # Build educational data from crypto response
+                cached = response.cached
+                educational_data = {
+                    "symbol": response.symbol,
+                    "name": response.name,
+                    "asset_type": "crypto",
+                    "price": {
+                        "current": cached.price,
+                        "change": cached.change,
+                        "change_percent": cached.change_percent,
+                        "explanation": self.explain_price_movement(cached.change_percent),
+                    },
+                    "volume": {
+                        # For crypto, 24h volume is the standard metric
+                        # Average volume comparison not typically available for crypto
+                        "current": response.crypto_metrics.get("volume24h", 0),
+                        "average": None,  # Not available for crypto
+                        "interpretation": "24-hour trading volume across exchanges",
+                    },
+                    "crypto_metrics": {
+                        "high_24h": response.crypto_metrics.get("high_24h", 0),
+                        "low_24h": response.crypto_metrics.get("low_24h", 0),
+                        "ath": response.crypto_metrics.get("ath", 0),
+                    },
+                    "fundamentals": {
+                        "market_dominance": response.crypto_metrics.get("dominance", "N/A"),
+                        "explanation": "Market dominance shows this coin's share of total crypto market cap",
+                    },
+                    "narrative": response.narrative.summary if response.narrative else None,
+                    "disclaimer": response.disclaimer or "📚 Live market data for educational purposes only",
+                    "data_source": f"Via FIML from {cached.source}",
+                    "timestamp": cached.as_of.isoformat() if cached.as_of else None,
+                    "confidence": cached.confidence,
+                }
+            else:
+                # Use search_by_symbol for stocks
+                response = await search_by_symbol(
+                    symbol=symbol.upper(),
+                    market=Market.US,
+                    depth=AnalysisDepth.STANDARD,
+                    language="en",
+                    expertise_level="beginner",
+                    include_narrative=True,
+                )
 
-            # Extract data from response
-            quote = response.data
-            current_price = quote.get("price", 0)
-            open_price = quote.get("open", current_price)
-            change = current_price - open_price
-            change_percent = (change / open_price * 100) if open_price > 0 else 0
-            volume = quote.get("volume", 0)
-            avg_volume = quote.get("avg_volume", volume)
+                # Build educational data from stock response
+                cached = response.cached
+                structural = response.structural_data
 
-            # Build educational snapshot with live data
-            educational_data = {
-                "symbol": symbol,
-                "name": quote.get("name", f"{symbol} Inc."),
-                "price": {
-                    "current": current_price,
-                    "change": change,
-                    "change_percent": change_percent,
-                    "explanation": self.explain_price_movement(change_percent),
-                },
-                "volume": {
-                    "current": volume,
-                    "average": avg_volume,
-                    "interpretation": self.explain_volume(volume, avg_volume),
-                },
-                "fundamentals": {
-                    "pe_ratio": quote.get("pe_ratio"),
-                    "market_cap": quote.get("market_cap"),
-                    "explanation": (
-                        self.explain_pe_ratio(float(quote["pe_ratio"]))
-                        if quote.get("pe_ratio") is not None
-                        else "P/E ratio not available"
-                    ),
-                },
-                "disclaimer": "📚 Live market data for educational purposes only",
-                "data_source": f"Via FIML from {plan.primary_provider}",
-                "timestamp": quote.get("timestamp"),
-            }
-
-            # Safely calculate freshness if timestamps available
-            if quote.get("timestamp") and quote.get("fetched_at"):
-                try:
-                    from datetime import datetime
-
-                    ts = quote.get("timestamp")
-                    fetched = quote.get("fetched_at")
-                    if isinstance(ts, datetime) and isinstance(fetched, datetime):
-                        educational_data["freshness_seconds"] = (fetched - ts).total_seconds()
-                except Exception:
-                    pass  # Skip freshness if calculation fails
+                educational_data = {
+                    "symbol": response.symbol,
+                    "name": response.name,
+                    "asset_type": "stock",
+                    "exchange": response.exchange,
+                    "price": {
+                        "current": cached.price,
+                        "change": cached.change,
+                        "change_percent": cached.change_percent,
+                        "explanation": self.explain_price_movement(cached.change_percent),
+                    },
+                    "volume": {
+                        # Note: FIML's StructuralData only provides avg_volume
+                        # For real-time volume, a separate provider call would be needed
+                        "current": structural.avg_volume if structural else 0,
+                        "average": structural.avg_volume if structural else 0,
+                        "interpretation": (
+                            "Average daily trading volume"
+                            if structural and structural.avg_volume
+                            else "Volume data not available"
+                        ),
+                    },
+                    "fundamentals": {
+                        "pe_ratio": structural.pe_ratio if structural else None,
+                        "market_cap": structural.market_cap if structural else None,
+                        "beta": structural.beta if structural else None,
+                        "sector": structural.sector if structural else None,
+                        "industry": structural.industry if structural else None,
+                        "week_52_high": structural.week_52_high if structural else None,
+                        "week_52_low": structural.week_52_low if structural else None,
+                        "explanation": (
+                            self.explain_pe_ratio(float(structural.pe_ratio))
+                            if structural and structural.pe_ratio
+                            else "P/E ratio not available"
+                        ),
+                    },
+                    "narrative": response.narrative.summary if response.narrative else None,
+                    "key_insights": response.narrative.key_insights if response.narrative else [],
+                    "risk_factors": response.narrative.risk_factors if response.narrative else [],
+                    "disclaimer": response.disclaimer or "📚 Live market data for educational purposes only",
+                    "data_source": f"Via FIML from {cached.source}",
+                    "timestamp": cached.as_of.isoformat() if cached.as_of else None,
+                    "confidence": cached.confidence,
+                }
 
             logger.info(
                 "Educational snapshot created with live FIML data",
                 symbol=symbol,
                 user_id=user_id,
-                provider=plan.primary_provider,
+                asset_type=asset_type.value,
+                source=cached.source,
                 context=context,
             )
 
+            return educational_data
+
         except Exception as e:
             # Fallback to template data if FIML integration fails
-            logger.warning("Failed to get live data, using template", symbol=symbol, error=str(e))
-            educational_data = self._get_template_snapshot(symbol)
+            logger.warning(
+                "Failed to get live data via MCP tools, using template",
+                symbol=symbol,
+                error=str(e)
+            )
+            return self._get_template_snapshot(symbol)
 
-        return educational_data
+    def _get_template_snapshot(self, symbol: str) -> Dict[str, Any]:
+        """
+        Fallback template data when FIML is unavailable
 
-    def _get_template_snapshot(self, symbol: str) -> Dict:
-        """Fallback template data when FIML is unavailable"""
-        return {
-            "symbol": symbol,
-            "name": f"{symbol} Inc.",
-            "price": {
-                "current": 150.25,
-                "change": -2.30,
-                "change_percent": -1.51,
-                "explanation": self.explain_price_movement(-1.51),
-            },
-            "volume": {
-                "current": 75000000,
-                "average": 50000000,
-                "interpretation": self.explain_volume(75000000, 50000000),
-            },
-            "fundamentals": {
-                "pe_ratio": 28.5,
-                "market_cap": "2.5T",
-                "explanation": "P/E ratio of 28.5 suggests investors expect growth",
-            },
-            "disclaimer": "📚 Sample data for educational purposes",
-            "data_source": "Demo Data (API keys not configured)",
-        }
+        This is used when:
+        - Provider registry is not initialized
+        - All providers fail
+        - Cache is unavailable
+        """
+        asset_type = self._detect_asset_type(symbol)
+
+        if asset_type == AssetType.CRYPTO:
+            return {
+                "symbol": symbol.upper(),
+                "name": symbol.upper(),
+                "asset_type": "crypto",
+                "price": {
+                    "current": 0.0,
+                    "change": 0.0,
+                    "change_percent": 0.0,
+                    "explanation": "Unable to fetch live data - please check your API keys or try again later",
+                },
+                "volume": {
+                    "current": 0,
+                    "average": 0,
+                    "interpretation": "Volume data unavailable",
+                },
+                "crypto_metrics": {},
+                "fundamentals": {
+                    "explanation": "Fundamental data unavailable",
+                },
+                "narrative": None,
+                "disclaimer": "📚 Unable to fetch live data - please configure API keys with /addkey",
+                "data_source": "Unavailable (API not configured or service error)",
+                "is_fallback": True,
+            }
+        else:
+            return {
+                "symbol": symbol.upper(),
+                "name": f"{symbol.upper()} Inc.",
+                "asset_type": "stock",
+                "price": {
+                    "current": 0.0,
+                    "change": 0.0,
+                    "change_percent": 0.0,
+                    "explanation": "Unable to fetch live data - please check your API keys or try again later",
+                },
+                "volume": {
+                    "current": 0,
+                    "average": 0,
+                    "interpretation": "Volume data unavailable",
+                },
+                "fundamentals": {
+                    "pe_ratio": None,
+                    "market_cap": None,
+                    "explanation": "Fundamental data unavailable",
+                },
+                "narrative": None,
+                "disclaimer": "📚 Unable to fetch live data - please configure API keys with /addkey",
+                "data_source": "Unavailable (API not configured or service error)",
+                "is_fallback": True,
+            }
 
     def explain_price_movement(self, change_percent: float) -> str:
         """Educational interpretation of price change"""
@@ -291,3 +407,118 @@ class FIMLEducationalDataAdapter:
             f"📈 Chart would show {trend} ({color} candles) "
             f"with current price at ${price.get('current', 0):.2f}"
         )
+
+    async def get_quick_price(self, symbol: str) -> Dict[str, Any]:
+        """
+        Get quick price data for a symbol (minimal processing, fast response)
+
+        This is optimized for mobile app price displays and quick lookups.
+        Uses the 'quick' depth level for faster responses.
+
+        Args:
+            symbol: Stock/crypto symbol
+
+        Returns:
+            Quick price data dict
+        """
+        try:
+            from fiml.mcp.tools import search_by_coin, search_by_symbol
+
+            asset_type = self._detect_asset_type(symbol)
+
+            if asset_type == AssetType.CRYPTO:
+                response = await search_by_coin(
+                    symbol=symbol.upper().split("/")[0],
+                    exchange="binance",
+                    pair="USDT",
+                    depth=AnalysisDepth.QUICK,
+                    language="en",
+                    include_narrative=False,  # Skip narrative for speed
+                )
+                cached = response.cached
+                return {
+                    "symbol": response.symbol,
+                    "name": response.name,
+                    "price": cached.price,
+                    "change": cached.change,
+                    "change_percent": cached.change_percent,
+                    "source": cached.source,
+                    "timestamp": cached.as_of.isoformat() if cached.as_of else None,
+                    "asset_type": "crypto",
+                }
+            else:
+                response = await search_by_symbol(
+                    symbol=symbol.upper(),
+                    market=Market.US,
+                    depth=AnalysisDepth.QUICK,
+                    language="en",
+                    include_narrative=False,  # Skip narrative for speed
+                )
+                cached = response.cached
+                return {
+                    "symbol": response.symbol,
+                    "name": response.name,
+                    "price": cached.price,
+                    "change": cached.change,
+                    "change_percent": cached.change_percent,
+                    "source": cached.source,
+                    "timestamp": cached.as_of.isoformat() if cached.as_of else None,
+                    "asset_type": "stock",
+                }
+        except Exception as e:
+            logger.warning("Failed to get quick price", symbol=symbol, error=str(e))
+            return {
+                "symbol": symbol.upper(),
+                "name": symbol.upper(),
+                "price": 0.0,
+                "change": 0.0,
+                "change_percent": 0.0,
+                "source": "error",
+                "error": str(e),
+            }
+
+    async def get_multiple_prices(self, symbols: list[str]) -> Dict[str, Dict[str, Any]]:
+        """
+        Get price data for multiple symbols concurrently
+
+        This is useful for mobile app market dashboards that need
+        to display multiple assets at once.
+
+        Args:
+            symbols: List of stock/crypto symbols
+
+        Returns:
+            Dict mapping symbol to price data
+        """
+        import asyncio
+
+        results = {}
+
+        # Fetch all prices concurrently
+        tasks = [self.get_quick_price(symbol) for symbol in symbols]
+        prices = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Use strict=True to catch any unexpected length mismatches
+        for symbol, price_data in zip(symbols, prices, strict=True):
+            if isinstance(price_data, Exception):
+                results[symbol.upper()] = {
+                    "symbol": symbol.upper(),
+                    "error": str(price_data),
+                    "price": 0.0,
+                }
+            else:
+                results[symbol.upper()] = price_data
+
+        return results
+
+
+# Singleton instance for easy access across the application
+_fiml_data_adapter: Optional[FIMLEducationalDataAdapter] = None
+
+
+def get_fiml_data_adapter() -> FIMLEducationalDataAdapter:
+    """Get or create the singleton FIML data adapter instance"""
+    global _fiml_data_adapter
+    if _fiml_data_adapter is None:
+        _fiml_data_adapter = FIMLEducationalDataAdapter()
+    return _fiml_data_adapter
