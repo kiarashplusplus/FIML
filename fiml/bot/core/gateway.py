@@ -518,14 +518,46 @@ class UnifiedBotGateway:
                 actions=[]
             )
 
+
         elif command == "/addkey":
-             return AbstractResponse(
-                text="🔑 Add API Key\n\n"
-                     "To add an API key, please use the /addkey command followed by the provider name and key.\n"
-                     "Example: `/addkey binance <your_api_key>`\n\n"
-                     "Or use the web dashboard for easier management.",
-                actions=[{"text": "Open Dashboard", "url": "/dashboard", "type": "link"}] # Placeholder URL
-            )
+            # Platform-aware response
+            is_mobile = message.platform in ("mobile", "expo", "app")
+            
+            if is_mobile:
+                # Mobile users: direct to Home tab dashboard
+                return AbstractResponse(
+                    text="🔑 API Key Management\n\n"
+                         "Head to your **Home** tab to manage API keys visually!\n\n"
+                         "You can:\n"
+                         "✓ View all providers at a glance\n"
+                         "✓ Add keys with a simple form\n"
+                         "✓ Test connections instantly\n"
+                         "✓ Remove keys securely\n\n"
+                         "Or select a provider below:",
+                    actions=[
+                        {"text": "Binance", "action": "/addkey:binance", "type": "secondary"},
+                        {"text": "Coinbase", "action": "/addkey:coinbase", "type": "secondary"},
+                        {"text": "Alpha Vantage", "action": "/addkey:alphavantage", "type": "secondary"},
+                        {"text": "Go to Home", "action": "navigate:home", "type": "primary"},
+                    ]
+                )
+            else:
+                # Telegram users: command-based instructions
+                return AbstractResponse(
+                    text="🔑 Add API Key\n\n"
+                         "To add an API key, use:\n"
+                         "`/addkey <provider> <api_key> [api_secret]`\n\n"
+                         "Example:\n"
+                         "`/addkey binance abc123xyz`\n\n"
+                         "Or select a provider:",
+                    actions=[
+                        {"text": "Binance", "action": "/addkey:binance", "type": "secondary"},
+                        {"text": "Coinbase", "action": "/addkey:coinbase", "type": "secondary"},
+                        {"text": "Alpha Vantage", "action": "/addkey:alphavantage", "type": "secondary"},
+                        {"text": "Help", "action": "/help", "type": "primary"},
+                    ]
+                )
+
 
         elif command == "/progress":
              progress = await self.lesson_engine.get_user_progress(message.user_id)

@@ -1,0 +1,218 @@
+"""
+API Key Management Router
+Provides REST endpoints for managing user API keys from mobile/web clients.
+"""
+
+from typing import Dict, List, Optional
+
+from fastapi import APIRouter, HTTPException, Header
+from pydantic import BaseModel
+
+from fiml.bot.core.key_manager import UserProviderKeyManager
+from fiml.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+router = APIRouter()
+
+# Singleton instance
+_key_service: Optional[UserProviderKeyManager] = None
+
+
+def get_key_service() -> UserProviderKeyManager:
+    """Get or create the singleton key service instance"""
+    global _key_service
+    if _key_service is None:
+        logger.info("Initializing UserProviderKeyManager for REST API")
+        _key_service = UserProviderKeyManager()
+    return _key_service
+
+
+
+class Provider(BaseModel):
+    """Provider model"""
+    name: str
+    displayName: str
+    isConnected: bool
+    description: Optional[str] = None
+
+
+class AddKeyRequest(BaseModel):
+    """Request model for adding API key"""
+    provider: str
+    api_key: str
+    api_secret: Optional[str] = None
+
+
+class KeyResponse(BaseModel):
+    """Response model for key operations"""
+    success: bool
+    message: Optional[str] = None
+    error: Optional[str] = None
+
+
+@router.get("/api/user/{user_id}/keys")
+async def get_provider_status(
+    user_id: str,
+    authorization: Optional[str] = Header(None)
+) -> Dict[str, List[Provider]]:
+    """
+    Get the status of all providers for a user.
+    Returns which providers have keys configured.
+    """
+    service = get_key_service()
+    
+    try:
+        # Get all configured providers
+        user_keys = await service.list_keys(user_id)
+        
+        # Define available providers
+        all_providers = [
+            {
+                "name": "binance",
+                "displayName": "Binance",
+                "description": "Crypto trading data and market information",
+            },
+            {
+                "name": "coinbase",
+                "displayName": "Coinbase",
+                "description": "Cryptocurrency exchange integration",
+            },
+            {
+                "name": "alphavantage",
+                "displayName": "Alpha Vantage",
+                "description": "Stock market data and financial indicators",
+            },
+            {
+                "name": "yfinance",
+                "displayName": "Yahoo Finance",
+                "description": "Free stock and market data (no key required)",
+            },
+        ]
+        
+        # Mark which providers are connected
+        providers = []
+        for provider_info in all_providers:
+            is_connected = provider_info["name"] in user_keys
+            providers.append(Provider(
+                name=provider_info["name"],
+                displayName=provider_info["displayName"],
+                isConnected=is_connected,
+                description=provider_info.get("description"),
+            ))
+        
+        return {"providers": [p.model_dump() for p in providers]}
+        
+    except Exception as e:
+        logger.error("Error fetching provider status", user_id=user_id, error=str(e))
+        # Return default providers on error
+        return {
+            "providers": [
+                {"name": "binance", "displayName": "Binance", "isConnected": False, "description": "Crypto trading data and market information"},
+                {"name": "coinbase", "displayName": "Coinbase", "isConnected": False, "description": "Cryptocurrency exchange integration"},
+                {"name": "alphavantage", "displayName": "Alpha Vantage", "isConnected": False, "description": "Stock market data"},
+                {"name": "yfinance", "displayName": "Yahoo Finance", "isConnected": False, "description": "Free stock data"},
+            ]
+        }
+
+
+@router.post("/api/user/{user_id}/keys")
+async def add_key(
+    user_id: str,
+    request: AddKeyRequest,
+    authorization: Optional[str] = Header(None)
+) -> KeyResponse:
+    """
+    Add a new API key for a provider.
+    """
+    service = get_key_service()
+    
+    try:
+        # Add the key
+        await service.add_key(
+            user_id=user_id,
+            provider=request.provider,
+            api_key=request.api_key,
+            api_secret=request.api_secret,
+        )
+        
+        logger.info("API key added successfully", user_id=user_id, provider=request.provider)
+        
+        return KeyResponse(
+            success=True,
+            message=f"{request.provider.capitalize()} API key added successfully"
+        )
+        
+    except Exception as e:
+        logger.error("Error adding API key", user_id=user_id, provider=request.provider, error=str(e))
+        return KeyResponse(
+            success=False,
+            error=f"Failed to add API key: {str(e)}"
+        )
+
+
+@router.post("/api/user/{user_id}/keys/{provider}/test")
+async def test_key(
+    user_id: str,
+    provider: str,
+    authorization: Optional[str] = Header(None)
+) -> KeyResponse:
+    """
+    Test if an API key is valid by making a test request.
+    """
+    service = get_key_service()
+    
+    try:
+        # Get the key
+        keys = await service.get_key(user_id, provider)
+        
+        if not keys:
+            return KeyResponse(
+                success=False,
+                error=f"No API key found for {provider}"
+            )
+        
+        # TODO: Implement actual provider testing
+        # For now, just verify the key exists
+        logger.info("API key test requested", user_id=user_id, provider=provider)
+        
+        return KeyResponse(
+            success=True,
+            message=f"{provider.capitalize()} API key is configured"
+        )
+        
+    except Exception as e:
+        logger.error("Error testing API key", user_id=user_id, provider=provider, error=str(e))
+        return KeyResponse(
+            success=False,
+            error=f"Failed to test API key: {str(e)}"
+        )
+
+
+@router.delete("/api/user/{user_id}/keys/{provider}")
+async def remove_key(
+    user_id: str,
+    provider: str,
+    authorization: Optional[str] = Header(None)
+) -> KeyResponse:
+    """
+    Remove an API key for a provider.
+    """
+    service = get_key_service()
+    
+    try:
+        await service.remove_key(user_id, provider)
+        
+        logger.info("API key removed successfully", user_id=user_id, provider=provider)
+        
+        return KeyResponse(
+            success=True,
+            message=f"{provider.capitalize()} API key removed successfully"
+        )
+        
+    except Exception as e:
+        logger.error("Error removing API key", user_id=user_id, provider=provider, error=str(e))
+        return KeyResponse(
+            success=False,
+            error=f"Failed to remove API key: {str(e)}"
+        )

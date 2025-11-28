@@ -12,6 +12,7 @@ from prometheus_client import make_asgi_app
 
 from fiml.alerts.router import alert_router
 from fiml.bot.router import router as bot_router
+from fiml.bot.key_router import router as key_router
 from fiml.core.config import settings
 from fiml.core.exceptions import FIMLException
 from fiml.core.logging import get_logger
@@ -141,6 +142,10 @@ app.include_router(alert_router, prefix="/api", tags=["alerts"])
 
 # Include Bot router (for Mobile/Web apps)
 app.include_router(bot_router, prefix="/api/bot", tags=["bot"])
+
+# Key Management API (for mobile app)
+app.include_router(key_router, tags=["keys"])
+
 
 # Include Market API router (for Mobile/Web apps)
 app.include_router(market_router, prefix="/api/market", tags=["market"])

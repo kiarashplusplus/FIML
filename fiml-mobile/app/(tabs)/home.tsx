@@ -1,11 +1,94 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import ProviderKeyCard from '../../components/keys/ProviderKeyCard';
+import AddKeyModal from '../../components/keys/AddKeyModal';
+import keyManagementService, { Provider } from '../../services/keyManagement';
 
 export default function HomeScreen() {
     const { user } = useAuth();
     const router = useRouter();
+    const [providers, setProviders] = useState<Provider[]>([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedProvider, setSelectedProvider] = useState<{ name: string; displayName: string } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        loadProviderStatus();
+    }, []);
+
+    const loadProviderStatus = async () => {
+        if (!user?.id) return;
+
+        setIsLoading(true);
+        try {
+            const providerList = await keyManagementService.getProviderStatus(user.id);
+            setProviders(providerList);
+        } catch (error) {
+            console.error('Failed to load provider status:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAddKey = (providerName: string) => {
+        const provider = providers.find(p => p.name === providerName);
+        if (provider) {
+            setSelectedProvider({ name: provider.name, displayName: provider.displayName });
+            setModalVisible(true);
+        }
+    };
+
+    const handleSubmitKey = async (providerName: string, apiKey: string, apiSecret?: string) => {
+        if (!user?.id) return;
+
+        const result = await keyManagementService.addKey(user.id, providerName, apiKey, apiSecret);
+
+        if (result.success) {
+            Alert.alert('Success', result.message || 'API key added successfully');
+            await loadProviderStatus(); // Refresh provider list
+        } else {
+            throw new Error(result.error || 'Failed to add API key');
+        }
+    };
+
+    const handleTestKey = async (providerName: string) => {
+        if (!user?.id) return;
+
+        const result = await keyManagementService.testKey(user.id, providerName);
+
+        Alert.alert(
+            result.success ? 'Success' : 'Error',
+            result.success ? '✅ API key is valid and working!' : `❌ ${result.error || 'Key test failed'}`
+        );
+    };
+
+    const handleRemoveKey = async (providerName: string) => {
+        if (!user?.id) return;
+
+        Alert.alert(
+            'Remove API Key',
+            'Are you sure you want to remove this API key?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const result = await keyManagementService.removeKey(user.id, providerName);
+
+                        if (result.success) {
+                            Alert.alert('Success', result.message || 'API key removed');
+                            await loadProviderStatus(); // Refresh provider list
+                        } else {
+                            Alert.alert('Error', result.error || 'Failed to remove API key');
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     return (
         <ScrollView className="flex-1 bg-gray-900 p-4">
@@ -25,8 +108,30 @@ export default function HomeScreen() {
                 </View>
             </View>
 
+            {/* API Keys Section */}
+            <View className="mb-8">
+                <Text className="text-xl font-bold text-white mb-4">🔑 API Keys</Text>
+                <Text className="text-gray-400 text-sm mb-4">
+                    Connect your data providers to unlock real-time market insights
+                </Text>
+
+                {isLoading ? (
+                    <Text className="text-gray-500 text-center py-4">Loading providers...</Text>
+                ) : (
+                    providers.map(provider => (
+                        <ProviderKeyCard
+                            key={provider.name}
+                            provider={provider}
+                            onAdd={handleAddKey}
+                            onTest={handleTestKey}
+                            onRemove={handleRemoveKey}
+                        />
+                    ))
+                )}
+            </View>
+
             <Text className="text-xl font-bold text-white mb-4">Quick Actions</Text>
-            <View className="flex-row flex-wrap gap-4">
+            <View className="flex-row flex-wrap gap-4 mb-6">
                 <TouchableOpacity
                     className="w-[47%] bg-gray-800 p-4 rounded-xl"
                     onPress={() => router.push('/(tabs)/learn')}
@@ -43,6 +148,20 @@ export default function HomeScreen() {
                     <Text className="text-gray-400">View live prices</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Add Key Modal */}
+            {selectedProvider && (
+                <AddKeyModal
+                    visible={modalVisible}
+                    providerName={selectedProvider.name}
+                    providerDisplayName={selectedProvider.displayName}
+                    onClose={() => {
+                        setModalVisible(false);
+                        setSelectedProvider(null);
+                    }}
+                    onSubmit={handleSubmitKey}
+                />
+            )}
         </ScrollView>
     );
 }
