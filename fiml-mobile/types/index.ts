@@ -11,6 +11,7 @@ export interface Provider {
     displayName: string;
     isConnected: boolean;
     description?: string;
+    tier?: 'free' | 'premium' | 'enterprise';
 }
 
 export interface ProviderInfo {

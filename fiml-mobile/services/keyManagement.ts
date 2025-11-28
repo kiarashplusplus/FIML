@@ -194,6 +194,7 @@ class KeyManagementService {
             displayName: providerInfo.displayName,
             isConnected: false,
             description: providerInfo.description,
+            tier: providerInfo.tier,
         }));
     }
 

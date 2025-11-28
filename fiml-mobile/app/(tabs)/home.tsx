@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useOnboarding } from '../../hooks/useOnboarding';
@@ -19,9 +19,25 @@ export default function HomeScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<{ name: string; displayName: string } | null>(null);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedTier, setSelectedTier] = useState<'all' | 'free' | 'premium' | 'enterprise'>('all');
+
     // Usage stats state
     const [usageStats, setUsageStats] = useState<UsageStatsResponse | null>(null);
     const [usageLoading, setUsageLoading] = useState(false);
+
+    // Filter providers based on search and tier
+    const filteredProviders = providers.filter(provider => {
+        const matchesSearch = (
+            provider.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (provider.description && provider.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+
+        const matchesTier = selectedTier === 'all' || provider.tier === selectedTier;
+
+        return matchesSearch && matchesTier;
+    });
 
     // Fetch provider status
     const fetchProviders = async (forceRefresh = false) => {
@@ -85,7 +101,7 @@ export default function HomeScreen() {
 
         if (result.success) {
             Alert.alert('Success', result.message || 'API key added successfully');
-            await loadProviderStatus(); // Refresh provider list
+            await fetchProviders(); // Refresh provider list
         } else {
             throw new Error(result.error || 'Failed to add API key');
         }
@@ -118,7 +134,7 @@ export default function HomeScreen() {
 
                         if (result.success) {
                             Alert.alert('Success', result.message || 'API key removed');
-                            await loadProviderStatus(); // Refresh provider list
+                            await fetchProviders(); // Refresh provider list
                         } else {
                             Alert.alert('Error', result.error || 'Failed to remove API key');
                         }
@@ -134,7 +150,7 @@ export default function HomeScreen() {
             refreshControl={
                 <RefreshControl
                     refreshing={refreshing}
-                    onRefresh={handleRefresh}
+                    onRefresh={onRefresh}
                     tintColor="#3B82F6"
                     colors={['#3B82F6']}
                 />
@@ -148,9 +164,47 @@ export default function HomeScreen() {
             {/* Page Header */}
             <View className="bg-gray-900 p-6">
                 <Text className="text-white text-3xl font-bold mb-2">Provider Keys</Text>
-                <Text className="text-gray-400">
+                <Text className="text-gray-400 mb-4">
                     Manage your API keys for data providers
                 </Text>
+
+                {/* Search Bar */}
+                <View className="bg-gray-800 rounded-xl p-3 mb-4 flex-row items-center">
+                    <Text className="text-gray-400 mr-2">🔍</Text>
+                    <TextInput
+                        className="flex-1 text-white text-base"
+                        placeholder="Search providers..."
+                        placeholderTextColor="#9CA3AF"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <Text className="text-gray-400">✕</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Filter Chips */}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+                    {(['all', 'free', 'premium', 'enterprise'] as const).map((tier) => (
+                        <TouchableOpacity
+                            key={tier}
+                            onPress={() => setSelectedTier(tier)}
+                            className={`px-4 py-2 rounded-full border ${selectedTier === tier
+                                ? 'bg-blue-600 border-blue-600'
+                                : 'bg-transparent border-gray-700'
+                                }`}
+                        >
+                            <Text
+                                className={`${selectedTier === tier ? 'text-white font-bold' : 'text-gray-400'
+                                    } capitalize`}
+                            >
+                                {tier}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
             </View>
 
             {/* Usage Statistics Card */}
@@ -164,8 +218,10 @@ export default function HomeScreen() {
             <View className="p-4">
                 {loading ? (
                     <Text className="text-gray-400 text-center">Loading providers...</Text>
+                ) : filteredProviders.length === 0 ? (
+                    <Text className="text-gray-400 text-center py-8">No providers found matching your criteria</Text>
                 ) : (
-                    providers.map((provider) => (
+                    filteredProviders.map((provider) => (
                         <ProviderKeyCard
                             key={provider.name}
                             provider={provider}
