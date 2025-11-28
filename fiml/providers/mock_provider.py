@@ -66,7 +66,7 @@ class MockProvider(BaseProvider):
         # Generate synthetic OHLCV data
         mock_candles = [
             {
-                "timestamp": datetime.now(timezone.utc),
+                "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),
                 "open": 100.0,
                 "high": 105.0,
                 "low": 98.0,

@@ -1,20 +1,24 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { CandlestickChart } from 'react-native-wagmi-charts';
+import { Line, Rect } from 'react-native-svg';
 import { useMarketData } from '../../hooks/useMarketData';
 
 const MarketDashboard = () => {
     const symbols = ['BTC', 'ETH', 'AAPL', 'TSLA'];
     const { prices, isConnected, getHistory } = useMarketData(symbols);
-    const [chartData, setChartData] = React.useState<any[]>([]);
+    const [chartsData, setChartsData] = React.useState<Record<string, any[]>>({});
 
     React.useEffect(() => {
         const fetchHistory = async () => {
-            // Fetch history for the first symbol as an example
-            const response = await getHistory(symbols[0], '1d');
-            if (response && response.candles && response.candles.length > 0) {
-                setChartData(response.candles);
+            const newChartsData: Record<string, any[]> = {};
+            for (const symbol of symbols) {
+                const response = await getHistory(symbol, '1d');
+                if (response && response.candles && response.candles.length > 0) {
+                    newChartsData[symbol] = response.candles;
+                }
             }
+            setChartsData(newChartsData);
         };
         fetchHistory();
     }, [isConnected]); // Re-fetch when connected or just once on mount
@@ -47,9 +51,12 @@ const MarketDashboard = () => {
                             </View>
 
                             {/* Simple chart visualization */}
-                            <CandlestickChart.Provider data={chartData.length > 0 ? chartData : []}>
+                            <CandlestickChart.Provider data={chartsData[symbol] || []}>
                                 <CandlestickChart height={150}>
-                                    <CandlestickChart.Candles />
+                                    <CandlestickChart.Candles
+                                        renderRect={({ useAnimations, ...props }) => <Rect {...props} />}
+                                        renderLine={({ useAnimations, ...props }) => <Line {...props} />}
+                                    />
                                 </CandlestickChart>
                             </CandlestickChart.Provider>
                         </View>

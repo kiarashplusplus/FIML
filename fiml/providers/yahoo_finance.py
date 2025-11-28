@@ -106,7 +106,7 @@ class YahooFinanceProvider(BaseProvider):
             for idx, row in history.iterrows():
                 candles.append(
                     {
-                        "timestamp": idx,
+                        "timestamp": int(idx.timestamp() * 1000),
                         "open": row["Open"],
                         "high": row["High"],
                         "low": row["Low"],
