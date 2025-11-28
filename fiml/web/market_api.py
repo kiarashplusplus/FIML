@@ -54,8 +54,21 @@ COMMON_ASSETS = [
 
 # Crypto symbols for detection
 CRYPTO_SYMBOLS = {
-    "BTC", "ETH", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC",
-    "LINK", "UNI", "ATOM", "LTC", "DOGE", "SHIB", "BNB",
+    "BTC",
+    "ETH",
+    "SOL",
+    "XRP",
+    "ADA",
+    "DOT",
+    "AVAX",
+    "MATIC",
+    "LINK",
+    "UNI",
+    "ATOM",
+    "LTC",
+    "DOGE",
+    "SHIB",
+    "BNB",
 }
 
 
@@ -92,13 +105,15 @@ async def search_symbol_via_mcp(query: str) -> List[Dict[str, Any]]:
                 language="en",
                 include_narrative=False,  # Skip narrative for search
             )
-            return [{
-                "symbol": response.symbol,
-                "name": response.name,
-                "type": "crypto",
-                "exchange": response.exchange,
-                "source": response.cached.source,
-            }]
+            return [
+                {
+                    "symbol": response.symbol,
+                    "name": response.name,
+                    "type": "crypto",
+                    "exchange": response.exchange,
+                    "source": response.cached.source,
+                }
+            ]
         else:
             # Use search_by_symbol for stocks (via arbitration engine)
             response = await search_by_symbol(
@@ -108,25 +123,24 @@ async def search_symbol_via_mcp(query: str) -> List[Dict[str, Any]]:
                 language="en",
                 include_narrative=False,  # Skip narrative for search
             )
-            return [{
-                "symbol": response.symbol,
-                "name": response.name,
-                "type": "stock",
-                "exchange": response.exchange,
-                "source": response.cached.source,
-            }]
+            return [
+                {
+                    "symbol": response.symbol,
+                    "name": response.name,
+                    "type": "stock",
+                    "exchange": response.exchange,
+                    "source": response.cached.source,
+                }
+            ]
 
     except Exception as e:
-        logger.debug(
-            "MCP symbol lookup failed",
-            query=query,
-            error=str(e)
-        )
+        logger.debug("MCP symbol lookup failed", query=query, error=str(e))
         return []
 
 
 class PriceData(BaseModel):
     """Price data for a single asset"""
+
     symbol: str
     name: str
     price: float
@@ -140,12 +154,14 @@ class PriceData(BaseModel):
 
 class MultiPriceResponse(BaseModel):
     """Response containing prices for multiple assets"""
+
     prices: Dict[str, PriceData]
     count: int
 
 
 class AssetDetailsResponse(BaseModel):
     """Detailed asset information with educational context"""
+
     symbol: str
     name: str
     asset_type: str
@@ -190,9 +206,7 @@ async def get_market_prices(
         prices = await adapter.get_multiple_prices(symbol_list)
 
         # Convert to response model
-        price_data = {
-            symbol: PriceData(**data) for symbol, data in prices.items()
-        }
+        price_data = {symbol: PriceData(**data) for symbol, data in prices.items()}
 
         return MultiPriceResponse(prices=price_data, count=len(price_data))
 
@@ -203,6 +217,7 @@ async def get_market_prices(
 
 class CandleData(BaseModel):
     """OHLCV candle data"""
+
     timestamp: int
     open: float
     high: float
@@ -213,6 +228,7 @@ class CandleData(BaseModel):
 
 class HistoryResponse(BaseModel):
     """Response containing historical candles"""
+
     symbol: str
     timeframe: str
     candles: List[CandleData]
@@ -220,8 +236,7 @@ class HistoryResponse(BaseModel):
 
 @market_router.get("/candles/{symbol}")
 async def get_historical_candles(
-    symbol: str,
-    timeframe: str = Query("1d", description="Timeframe (e.g., 1d, 1h, 15m)")
+    symbol: str, timeframe: str = Query("1d", description="Timeframe (e.g., 1d, 1h, 15m)")
 ) -> HistoryResponse:
     """
     Get historical OHLCV data for a symbol.
@@ -238,10 +253,7 @@ async def get_historical_candles(
 
         # Fetch OHLCV data using the adapter
         # Note: The adapter's get_ohlcv returns a list of dictionaries or similar structure
-        candles_data = await adapter.get_ohlcv(
-            symbol=symbol.upper(),
-            timeframe=timeframe
-        )
+        candles_data = await adapter.get_ohlcv(symbol=symbol.upper(), timeframe=timeframe)
 
         # Convert to response model
         # Assuming adapter returns list of dicts with keys: timestamp, open, high, low, close, volume
@@ -252,18 +264,17 @@ async def get_historical_candles(
                 high=c.get("high", 0.0),
                 low=c.get("low", 0.0),
                 close=c.get("close", 0.0),
-                volume=c.get("volume", 0.0)
-            ) for c in candles_data
+                volume=c.get("volume", 0.0),
+            )
+            for c in candles_data
         ]
 
-        return HistoryResponse(
-            symbol=symbol.upper(),
-            timeframe=timeframe,
-            candles=candles
-        )
+        return HistoryResponse(symbol=symbol.upper(), timeframe=timeframe, candles=candles)
 
     except Exception as e:
-        logger.error("Failed to fetch historical candles", symbol=symbol, timeframe=timeframe, error=str(e))
+        logger.error(
+            "Failed to fetch historical candles", symbol=symbol, timeframe=timeframe, error=str(e)
+        )
         raise HTTPException(status_code=500, detail=f"Failed to fetch history: {str(e)}")
 
 
@@ -290,7 +301,7 @@ async def get_asset_details(symbol: str) -> AssetDetailsResponse:
         data = await adapter.get_educational_snapshot(
             symbol=symbol.upper(),
             user_id="api_user",  # Generic user for API access
-            context="mobile_app"
+            context="mobile_app",
         )
 
         return AssetDetailsResponse(
@@ -317,7 +328,7 @@ async def get_asset_details(symbol: str) -> AssetDetailsResponse:
 @market_router.get("/search")
 async def search_assets(
     q: str = Query(..., description="Search query"),
-    asset_type: Optional[str] = Query(None, description="Filter by asset type (stock, crypto)")
+    asset_type: Optional[str] = Query(None, description="Filter by asset type (stock, crypto)"),
 ) -> List[Dict[str, Any]]:
     """
     Search for assets by symbol or name.
@@ -377,12 +388,14 @@ async def search_assets(
 
 class DSLQueryRequest(BaseModel):
     """Request model for FK-DSL query execution"""
+
     query: str
     async_execution: bool = False
 
 
 class DSLQueryResponse(BaseModel):
     """Response model for FK-DSL query execution"""
+
     query: str
     status: str
     result: Optional[Dict[str, Any]] = None
@@ -392,6 +405,7 @@ class DSLQueryResponse(BaseModel):
 
 class DSLTemplatesResponse(BaseModel):
     """Response model for DSL query templates"""
+
     templates: List[Dict[str, Any]]
 
 
@@ -422,10 +436,7 @@ async def execute_dsl_query(request: DSLQueryRequest) -> DSLQueryResponse:
     try:
         logger.info("Executing FK-DSL query via API", query=request.query)
 
-        result = await execute_fk_dsl(
-            query=request.query,
-            async_execution=request.async_execution
-        )
+        result = await execute_fk_dsl(query=request.query, async_execution=request.async_execution)
 
         return DSLQueryResponse(
             query=request.query,

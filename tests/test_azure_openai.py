@@ -17,12 +17,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from fiml.core.exceptions import (
-    ConfigurationError,
-    ProviderError,
-    ProviderTimeoutError,
-    RateLimitError,
-)
+from fiml.core.exceptions import (ConfigurationError, ProviderError,
+                                  ProviderTimeoutError, RateLimitError)
 from fiml.llm.azure_client import AzureOpenAIClient
 
 

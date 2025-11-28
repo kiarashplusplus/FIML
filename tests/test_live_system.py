@@ -314,7 +314,8 @@ class TestLiveCompliance:
     @pytest.mark.asyncio
     async def test_disclaimer_generation(self):
         """Test disclaimer generation"""
-        from fiml.compliance.disclaimers import AssetClass, disclaimer_generator
+        from fiml.compliance.disclaimers import (AssetClass,
+                                                 disclaimer_generator)
         from fiml.compliance.router import Region
 
         disclaimer = disclaimer_generator.generate_disclaimer(

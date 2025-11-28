@@ -17,15 +17,9 @@ import pytest
 
 from fiml.llm.azure_client import AzureOpenAIClient
 from fiml.narrative.generator import NarrativeGenerator
-from fiml.narrative.models import (
-    ExpertiseLevel,
-    Language,
-    Narrative,
-    NarrativeContext,
-    NarrativePreferences,
-    NarrativeSection,
-    NarrativeType,
-)
+from fiml.narrative.models import (ExpertiseLevel, Language, Narrative,
+                                   NarrativeContext, NarrativePreferences,
+                                   NarrativeSection, NarrativeType)
 from fiml.narrative.prompts import PromptTemplateLibrary, prompt_library
 
 # ============================================================================

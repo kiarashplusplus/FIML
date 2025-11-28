@@ -12,8 +12,10 @@ import pytest
 
 from fiml.core.models import TaskStatus
 from fiml.dsl.executor import ExecutionTaskInfo, TaskExecutor, fk_dsl_executor
-from fiml.dsl.parser import AssetSpec, ConditionSpec, MetricSpec, TimeframeSpec, fk_dsl_parser
-from fiml.dsl.planner import ExecutionPlan, ExecutionTask, TaskType, execution_planner
+from fiml.dsl.parser import (AssetSpec, ConditionSpec, MetricSpec,
+                             TimeframeSpec, fk_dsl_parser)
+from fiml.dsl.planner import (ExecutionPlan, ExecutionTask, TaskType,
+                              execution_planner)
 
 
 class TestTimeframeSpec:

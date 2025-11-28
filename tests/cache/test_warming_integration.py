@@ -1,4 +1,3 @@
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -13,13 +12,16 @@ async def test_cache_warmer_initialization():
     mock_cache_manager = AsyncMock()
     mock_provider_registry = AsyncMock()
 
-    with patch("fiml.cache.manager.cache_manager", mock_cache_manager), \
-         patch("fiml.providers.provider_registry", mock_provider_registry):
+    with (
+        patch("fiml.cache.manager.cache_manager", mock_cache_manager),
+        patch("fiml.providers.provider_registry", mock_provider_registry),
+    ):
 
         await warmer.initialize()
 
         assert warmer.cache_manager == mock_cache_manager
         assert warmer.provider_registry == mock_provider_registry
+
 
 @pytest.mark.asyncio
 async def test_warm_cache_batch():
@@ -45,9 +47,12 @@ async def test_warm_cache_batch():
     assert results["MSFT"] is True
 
     # Verify calls
-    assert warmer.provider_registry.get_provider_for_data_type.call_count >= 4 # 2 symbols * 2 data types
+    assert (
+        warmer.provider_registry.get_provider_for_data_type.call_count >= 4
+    )  # 2 symbols * 2 data types
     assert warmer.cache_manager.set_price.call_count == 2
     assert warmer.cache_manager.set_fundamentals.call_count == 2
+
 
 @pytest.mark.asyncio
 async def test_warm_cache_batch_failure():

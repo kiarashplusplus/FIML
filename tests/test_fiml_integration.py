@@ -7,10 +7,8 @@ FIML MCP tools and provides educational data for both bot and mobile app.
 
 import pytest
 
-from fiml.bot.education.fiml_adapter import (
-    FIMLEducationalDataAdapter,
-    get_fiml_data_adapter,
-)
+from fiml.bot.education.fiml_adapter import (FIMLEducationalDataAdapter,
+                                             get_fiml_data_adapter)
 from fiml.core.models import AssetType
 
 
@@ -197,6 +195,7 @@ class TestIntentClassifierDSL:
     def classifier(self):
         """Create intent classifier instance"""
         from fiml.bot.core.gateway import IntentClassifier
+
         return IntentClassifier()
 
     def test_is_dsl_query_evaluate(self, classifier):
@@ -232,6 +231,7 @@ class TestLessonEngine:
     def engine(self):
         """Create lesson engine instance with default path"""
         from fiml.bot.education.lesson_engine import LessonContentEngine
+
         return LessonContentEngine()
 
     @pytest.mark.asyncio

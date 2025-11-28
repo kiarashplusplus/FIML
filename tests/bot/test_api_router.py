@@ -8,14 +8,12 @@ from fiml.server import app
 
 client = TestClient(app)
 
+
 @pytest.mark.asyncio
 async def test_bot_message_endpoint():
     # Mock the gateway response
     mock_response = AbstractResponse(
-        text="Hello from bot",
-        media=[],
-        actions=[],
-        metadata={"intent": "test"}
+        text="Hello from bot", media=[], actions=[], metadata={"intent": "test"}
     )
 
     # Mock the gateway instance
@@ -25,12 +23,7 @@ async def test_bot_message_endpoint():
     # Patch get_gateway to return our mock
     with patch("fiml.bot.router.get_gateway", return_value=mock_gateway):
         response = client.post(
-            "/api/bot/message",
-            json={
-                "user_id": "test_user",
-                "platform": "mobile",
-                "text": "Hello"
-            }
+            "/api/bot/message", json={"user_id": "test_user", "platform": "mobile", "text": "Hello"}
         )
 
         assert response.status_code == 200
@@ -40,11 +33,9 @@ async def test_bot_message_endpoint():
 
         # Verify gateway was called with correct args
         mock_gateway.handle_message.assert_called_once_with(
-            platform="mobile",
-            user_id="test_user",
-            text="Hello",
-            context=None
+            platform="mobile", user_id="test_user", text="Hello", context=None
         )
+
 
 @pytest.mark.asyncio
 async def test_bot_message_endpoint_error():
@@ -53,16 +44,11 @@ async def test_bot_message_endpoint_error():
     mock_gateway.handle_message = AsyncMock(side_effect=Exception("Processing failed"))
 
     with patch("fiml.bot.router.get_gateway", return_value=mock_gateway):
-        response = client.post(
-            "/api/bot/message",
-            json={
-                "user_id": "test_user",
-                "text": "Hello"
-            }
-        )
+        response = client.post("/api/bot/message", json={"user_id": "test_user", "text": "Hello"})
 
         assert response.status_code == 500
         assert "Processing failed" in response.json()["detail"]
+
 
 def test_get_gateway_singleton():
     from fiml.bot.router import get_gateway

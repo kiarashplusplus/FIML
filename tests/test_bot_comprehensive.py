@@ -20,7 +20,8 @@ from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
 from fiml.bot.education.gamification import GamificationEngine, UserStats
 from fiml.bot.education.lesson_engine import LessonContentEngine
-from fiml.bot.education.quiz_system import QuizQuestion, QuizSession, QuizSystem
+from fiml.bot.education.quiz_system import (QuizQuestion, QuizSession,
+                                            QuizSystem)
 
 # ============================================================================
 # Fixtures
@@ -316,7 +317,11 @@ class TestFIMLProviderConfigurator:
         """Test configuring multiple providers for user"""
         user_id = "test_user"
 
-        providers = {"alpha_vantage": "ABC123XYZ4567890", "polygon": "abcd1234EFGH5678ijkl9012MNOP3456", "finnhub": "abcdefgh12345678ijkl"}
+        providers = {
+            "alpha_vantage": "ABC123XYZ4567890",
+            "polygon": "abcd1234EFGH5678ijkl9012MNOP3456",
+            "finnhub": "abcdefgh12345678ijkl",
+        }
 
         for provider, key in providers.items():
             await key_manager.store_user_key(user_id, provider, key)

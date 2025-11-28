@@ -315,7 +315,9 @@ class UserProviderKeyManager:
         # In production, write to dedicated audit log storage
 
     # Public API methods expected by tests
-    async def add_key(self, user_id: str, provider: str, api_key: str) -> bool:
+    async def add_key(
+        self, user_id: str, provider: str, api_key: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """
         Add/store an API key for a user (alias for store_user_key)
 
@@ -323,11 +325,12 @@ class UserProviderKeyManager:
             user_id: User identifier
             provider: Provider identifier
             api_key: API key to store
+            metadata: Optional metadata (e.g., api_secret)
 
         Returns:
             True if stored successfully
         """
-        return await self.store_user_key(user_id, provider, api_key)
+        return await self.store_user_key(user_id, provider, api_key, metadata=metadata)
 
     async def get_key(self, user_id: str, provider: str) -> Optional[str]:
         """

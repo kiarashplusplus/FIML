@@ -156,8 +156,12 @@ class TestUserProviderKeyManager:
         """Test listing user providers with full info"""
         user_id = "test_user_providers"
 
-        await key_manager.store_user_key(user_id, "alpha_vantage", "ABC123XYZ4567890", {"tier": "free"})
-        await key_manager.store_user_key(user_id, "polygon", "abcd1234EFGH5678ijkl9012MNOP3456", {"tier": "paid"})
+        await key_manager.store_user_key(
+            user_id, "alpha_vantage", "ABC123XYZ4567890", {"tier": "free"}
+        )
+        await key_manager.store_user_key(
+            user_id, "polygon", "abcd1234EFGH5678ijkl9012MNOP3456", {"tier": "paid"}
+        )
 
         providers = await key_manager.list_user_providers(user_id)
 

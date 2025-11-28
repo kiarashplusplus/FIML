@@ -7,18 +7,20 @@ from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
 
 @pytest.fixture
 def mock_azure_client():
-    client = MagicMock() # Remove spec to ensure new methods are accessible
+    client = MagicMock()  # Remove spec to ensure new methods are accessible
     client.generate_chat_response = AsyncMock(return_value="This is a generated response from AI.")
     return client
 
+
 @pytest.fixture
 def ai_mentor_service(mock_azure_client):
-    narrative_generator = MagicMock() # Remove spec to allow dynamic attributes
+    narrative_generator = MagicMock()  # Remove spec to allow dynamic attributes
     narrative_generator.azure_client = mock_azure_client
-    narrative_generator.generate_narrative = AsyncMock() # Should not be called for general chat
+    narrative_generator.generate_narrative = AsyncMock()  # Should not be called for general chat
 
     service = AIMentorService(narrative_generator=narrative_generator)
     return service
+
 
 @pytest.mark.asyncio
 async def test_general_chat_response(ai_mentor_service, mock_azure_client):
@@ -38,7 +40,8 @@ async def test_general_chat_response(ai_mentor_service, mock_azure_client):
     messages = call_args.kwargs["messages"]
     assert len(messages) == 2
     assert messages[1]["content"] == question
-    assert "Maya" in messages[0]["content"] # System prompt should contain persona name
+    assert "Maya" in messages[0]["content"]  # System prompt should contain persona name
+
 
 @pytest.mark.asyncio
 async def test_general_chat_fallback(ai_mentor_service, mock_azure_client):
@@ -52,4 +55,3 @@ async def test_general_chat_fallback(ai_mentor_service, mock_azure_client):
 
     # Should fall back to template response
     assert "Maya here!" in response["text"]
-

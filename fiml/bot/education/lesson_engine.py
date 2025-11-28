@@ -416,19 +416,19 @@ class LessonContentEngine:
                     lesson_data = yaml.safe_load(f)
 
                 if lesson_data and isinstance(lesson_data, dict):
-                    lessons.append({
-                        "id": lesson_data.get("id", lesson_file.stem),
-                        "title": lesson_data.get("title", "Untitled"),
-                        "category": lesson_data.get("category", "general"),
-                        "difficulty": lesson_data.get("difficulty", "beginner"),
-                        "duration_minutes": lesson_data.get("duration_minutes", 5),
-                        "xp_reward": lesson_data.get("xp_reward", 50),
-                    })
+                    lessons.append(
+                        {
+                            "id": lesson_data.get("id", lesson_file.stem),
+                            "title": lesson_data.get("title", "Untitled"),
+                            "category": lesson_data.get("category", "general"),
+                            "difficulty": lesson_data.get("difficulty", "beginner"),
+                            "duration_minutes": lesson_data.get("duration_minutes", 5),
+                            "xp_reward": lesson_data.get("xp_reward", 50),
+                        }
+                    )
             except Exception as e:
                 logger.warning(
-                    "Failed to load lesson metadata",
-                    file=str(lesson_file),
-                    error=str(e)
+                    "Failed to load lesson metadata", file=str(lesson_file), error=str(e)
                 )
 
         logger.info("Lessons listed", count=len(lessons))

@@ -5,13 +5,8 @@ Tests message routing and intent classification
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fiml.bot.core.gateway import (
-    AbstractMessage,
-    AbstractResponse,
-    IntentType,
-    SessionState,
-    UnifiedBotGateway,
-)
+from fiml.bot.core.gateway import (AbstractMessage, AbstractResponse,
+                                   IntentType, SessionState, UnifiedBotGateway)
 from fiml.bot.education.ai_mentor import MentorPersona
 
 
@@ -346,9 +341,7 @@ class TestGatewayFIMLIntegration:
             "data_source": "Via FIML from yahoo_finance",
         }
         mock_adapter.format_for_lesson.return_value = (
-            "📊 **AAPL - Apple Inc.**\n\n"
-            "**Current Price:** $175.50\n"
-            "**Change:** +1.33%"
+            "📊 **AAPL - Apple Inc.**\n\n" "**Current Price:** $175.50\n" "**Change:** +1.33%"
         )
 
         # Mock narrative generator to avoid actual LLM calls
@@ -466,14 +459,15 @@ class TestGatewayFIMLIntegration:
         gateway = UnifiedBotGateway()
 
         # Mock the classify method to return a known intent
-        with patch.object(gateway.intent_classifier, 'classify', new_callable=AsyncMock) as mock_classify:
+        with patch.object(
+            gateway.intent_classifier, "classify", new_callable=AsyncMock
+        ) as mock_classify:
             from fiml.bot.core.gateway import Intent
+
             mock_classify.return_value = Intent(type=IntentType.COMMAND, data={"command": "/help"})
 
             response = await gateway.handle_message(
-                platform="telegram",
-                user_id="test_user_flow",
-                text="/help"
+                platform="telegram", user_id="test_user_flow", text="/help"
             )
 
             # Verify session was created/retrieved
@@ -544,9 +538,12 @@ class TestGatewayFIMLIntegration:
         session = await gateway.session_manager.get_or_create("test_user")
         msg = AbstractMessage(text="unknown", user_id="test_user", platform="test")
         from fiml.bot.core.gateway import Intent
+
         intent = Intent(type=IntentType.UNKNOWN, data={})
 
-        resp = await gateway.handle_unknown(msg, session, intent) # Direct call to registered handler via map lookup in real flow
+        resp = await gateway.handle_unknown(
+            msg, session, intent
+        )  # Direct call to registered handler via map lookup in real flow
         # But here we need to call the handler that is mapped
         handler = gateway.handlers[IntentType.UNKNOWN]
         resp = await handler(msg, session, intent)
@@ -561,6 +558,7 @@ class TestGatewayFIMLIntegration:
 
         # Wait a tiny bit to ensure time difference
         import asyncio
+
         await asyncio.sleep(0.001)
 
         await gateway.session_manager.update("test_user", session)
@@ -599,7 +597,8 @@ class TestGatewayFIMLIntegration:
 
         mock_adapter = AsyncMock()
         mock_adapter.get_educational_snapshot.return_value = {
-            "symbol": "AAPL", "price": {"current": 100}
+            "symbol": "AAPL",
+            "price": {"current": 100},
         }
         mock_adapter.format_for_lesson.return_value = "Price: 100"
 
@@ -607,8 +606,7 @@ class TestGatewayFIMLIntegration:
         # We want to verify the context passed to generator has correct expertise
 
         gateway = UnifiedBotGateway(
-            fiml_data_adapter=mock_adapter,
-            narrative_generator=mock_generator
+            fiml_data_adapter=mock_adapter, narrative_generator=mock_generator
         )
 
         session = await gateway.session_manager.get_or_create("test_user")
@@ -616,6 +614,7 @@ class TestGatewayFIMLIntegration:
 
         msg = AbstractMessage(text="AAPL", user_id="test_user", platform="test")
         from fiml.bot.core.gateway import Intent
+
         intent = Intent(type=IntentType.MARKET_QUERY, data={"query": "AAPL"})
 
         await gateway.handle_market_query(msg, session, intent)
@@ -623,7 +622,8 @@ class TestGatewayFIMLIntegration:
         # Verify narrative generator was called
         if mock_generator.generate_narrative.called:
             call_args = mock_generator.generate_narrative.call_args
-            context = call_args.kwargs.get('context') or call_args.args[0]
+            context = call_args.kwargs.get("context") or call_args.args[0]
             # Should default to BEGINNER
             from fiml.narrative.models import ExpertiseLevel
+
             assert context.preferences.expertise_level == ExpertiseLevel.BEGINNER

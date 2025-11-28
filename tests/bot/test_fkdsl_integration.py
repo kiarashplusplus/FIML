@@ -7,7 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fiml.bot.adapters.telegram_adapter import DSL_TEMPLATES, TelegramBotAdapter
+from fiml.bot.adapters.telegram_adapter import (DSL_TEMPLATES,
+                                                TelegramBotAdapter)
 from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
 from fiml.bot.education.gamification import GamificationEngine

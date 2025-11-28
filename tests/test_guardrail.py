@@ -12,12 +12,8 @@ Comprehensive test suite covering:
 import pytest
 
 from fiml.compliance.disclaimers import AssetClass
-from fiml.compliance.guardrail import (
-    ComplianceGuardrail,
-    GuardrailAction,
-    GuardrailResult,
-    compliance_guardrail,
-)
+from fiml.compliance.guardrail import (ComplianceGuardrail, GuardrailAction,
+                                       GuardrailResult, compliance_guardrail)
 from fiml.compliance.router import Region
 
 # ============================================================================
@@ -725,12 +721,8 @@ class TestIntegrationWithExistingComponents:
 
     def test_import_from_package(self):
         """Test that guardrail can be imported from package"""
-        from fiml.compliance import (
-            ComplianceGuardrail,
-            GuardrailAction,
-            GuardrailResult,
-            compliance_guardrail,
-        )
+        from fiml.compliance import (ComplianceGuardrail, GuardrailAction,
+                                     GuardrailResult, compliance_guardrail)
 
         assert ComplianceGuardrail is not None
         assert GuardrailAction is not None

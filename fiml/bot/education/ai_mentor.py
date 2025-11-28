@@ -198,7 +198,9 @@ class AIMentorService:
                 narrative_context = NarrativeContext(
                     asset_symbol=symbol,
                     asset_name=(
-                        context.get("asset_name", f"{symbol} Stock") if context else f"{symbol} Stock"
+                        context.get("asset_name", f"{symbol} Stock")
+                        if context
+                        else f"{symbol} Stock"
                     ),
                     asset_type="stock",
                     market="US",
@@ -211,8 +213,12 @@ class AIMentorService:
                     include_disclaimers=True,
                 )
 
-                narrative = await self.narrative_generator.generate_narrative(context=narrative_context)
-                response_text = self._adapt_narrative_to_persona(narrative.summary, persona, question)
+                narrative = await self.narrative_generator.generate_narrative(
+                    context=narrative_context
+                )
+                response_text = self._adapt_narrative_to_persona(
+                    narrative.summary, persona, question
+                )
             else:
                 # General educational response without specific asset context
                 response_text = await self._generate_general_response(question, persona)
@@ -285,7 +291,7 @@ class AIMentorService:
 
         messages = [
             {"role": "system", "content": system_content},
-            {"role": "user", "content": question}
+            {"role": "user", "content": question},
         ]
 
         try:
@@ -352,7 +358,12 @@ class AIMentorService:
         question_lower = question.lower()
 
         # P/E Ratio specific response (most common question)
-        if "p/e" in question_lower or "pe ratio" in question_lower or "price to earnings" in question_lower or "price-to-earnings" in question_lower:
+        if (
+            "p/e" in question_lower
+            or "pe ratio" in question_lower
+            or "price to earnings" in question_lower
+            or "price-to-earnings" in question_lower
+        ):
             if persona == MentorPersona.MAYA:
                 return (
                     "Great question! The P/E ratio (Price-to-Earnings ratio) is like a price tag for a company's earnings.\n\n"
