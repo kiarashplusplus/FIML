@@ -33,6 +33,15 @@ FIML is an MCP (Model Context Protocol) server that provides intelligent financi
 - **🛡️ Compliance Guardrail (v0.3.0)**: Multilingual compliance (9 languages), prescriptive verb blocking, advice removal
 - **📈 Monitoring Hooks**: Prometheus metrics endpoints, health checks
 
+### 📱 Client Applications
+
+- **Telegram Bot**: Educational bot offering interactive lessons, quizzes, and market data queries.
+- **Mobile App (Expo)**: React Native application featuring:
+    - **Onboarding Flow**: Introduction to FIML's core value propositions.
+    - **Market Dashboard**: Real-time price tracking and charts.
+    - **Learning Hub**: Access to educational content and quizzes.
+    - **Cross-Platform**: Runs on iOS, Android, and Web.
+
 ## 🏗️ Architecture
 
 ```

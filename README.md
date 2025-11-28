@@ -102,6 +102,14 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
 - **🔌 Platform Integrations**: 🔜 **PLANNED** - ChatGPT MCP plugin, Claude integration
 - **🔐 Security Hardening**: 🔜 **PLANNED** - Penetration testing, rate limiting enhancements
 
+### 📱 Client Applications
+- **Telegram Bot**: Educational bot offering interactive lessons, quizzes, and market data queries.
+- **Mobile App (Expo)**: React Native application featuring:
+  - **Onboarding Flow**: Introduction to FIML's core value propositions.
+  - **Market Dashboard**: Real-time price tracking and charts.
+  - **Learning Hub**: Access to educational content and quizzes.
+  - **Cross-Platform**: Runs on iOS, Android, and Web.
+
 ## 🏗️ Architecture
 
 ```
