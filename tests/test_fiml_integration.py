@@ -186,5 +186,40 @@ class TestFIMLDataAdapterSingleton:
     def test_get_fiml_data_adapter_returns_valid_adapter(self):
         """Test that singleton returns valid adapter"""
         adapter = get_fiml_data_adapter()
-        
+
         assert isinstance(adapter, FIMLEducationalDataAdapter)
+
+
+class TestIntentClassifierDSL:
+    """Tests for DSL query detection in IntentClassifier"""
+
+    @pytest.fixture
+    def classifier(self):
+        """Create intent classifier instance"""
+        from fiml.bot.core.gateway import IntentClassifier
+        return IntentClassifier()
+
+    def test_is_dsl_query_evaluate(self, classifier):
+        """Test DSL query detection for EVALUATE"""
+        assert classifier._is_dsl_query("EVALUATE AAPL: PRICE, VOLUME")
+        assert classifier._is_dsl_query("EVALUATE TSLA: PRICE")
+        assert classifier._is_dsl_query("evaluate aapl: price")  # Case insensitive
+
+    def test_is_dsl_query_compare(self, classifier):
+        """Test DSL query detection for COMPARE"""
+        assert classifier._is_dsl_query("COMPARE AAPL, MSFT: PE_RATIO")
+        assert classifier._is_dsl_query("COMPARE BTC, ETH: PRICE(30d)")
+
+    def test_is_dsl_query_correlate(self, classifier):
+        """Test DSL query detection for CORRELATE"""
+        assert classifier._is_dsl_query("CORRELATE BTC, ETH: PRICE(90d)")
+
+    def test_is_dsl_query_screen(self, classifier):
+        """Test DSL query detection for SCREEN"""
+        assert classifier._is_dsl_query("SCREEN SECTOR=TECH: PE_RATIO")
+
+    def test_is_dsl_query_false_for_normal_text(self, classifier):
+        """Test that normal text is not detected as DSL"""
+        assert not classifier._is_dsl_query("What is a P/E ratio?")
+        assert not classifier._is_dsl_query("Show me AAPL price")
+        assert not classifier._is_dsl_query("Hello, how are you?")

@@ -200,3 +200,139 @@ async def search_assets(
         results = [asset for asset in results if asset["type"] == asset_type.lower()]
 
     return results[:10]  # Limit to 10 results
+
+
+# ============================================================================
+# FK-DSL API Endpoints
+# ============================================================================
+
+
+class DSLQueryRequest(BaseModel):
+    """Request model for FK-DSL query execution"""
+    query: str
+    async_execution: bool = False
+
+
+class DSLQueryResponse(BaseModel):
+    """Response model for FK-DSL query execution"""
+    query: str
+    status: str
+    result: Optional[Dict[str, Any]] = None
+    task_id: Optional[str] = None
+    error: Optional[str] = None
+
+
+class DSLTemplatesResponse(BaseModel):
+    """Response model for DSL query templates"""
+    templates: List[Dict[str, Any]]
+
+
+@market_router.post("/dsl/execute", response_model=DSLQueryResponse)
+async def execute_dsl_query(request: DSLQueryRequest) -> DSLQueryResponse:
+    """
+    Execute a Financial Knowledge DSL (FK-DSL) query.
+
+    This endpoint provides mobile app access to FIML's powerful DSL
+    for complex financial analysis queries.
+
+    Example queries:
+    - EVALUATE TSLA: PRICE, VOLATILITY(30d)
+    - COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP
+    - CORRELATE BTC, ETH: PRICE(90d)
+
+    Args:
+        request: DSL query request containing the query string
+
+    Returns:
+        Query execution result or task ID for async execution
+    """
+    from fiml.mcp.tools import execute_fk_dsl
+
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+    try:
+        logger.info("Executing FK-DSL query via API", query=request.query)
+
+        result = await execute_fk_dsl(
+            query=request.query,
+            async_execution=request.async_execution
+        )
+
+        return DSLQueryResponse(
+            query=request.query,
+            status=result.get("status", "unknown"),
+            result=result.get("result"),
+            task_id=result.get("task_id"),
+            error=result.get("error"),
+        )
+
+    except Exception as e:
+        logger.error("FK-DSL execution failed", query=request.query, error=str(e))
+        return DSLQueryResponse(
+            query=request.query,
+            status="failed",
+            error=str(e),
+        )
+
+
+@market_router.get("/dsl/templates", response_model=DSLTemplatesResponse)
+async def get_dsl_templates() -> DSLTemplatesResponse:
+    """
+    Get available FK-DSL query templates.
+
+    Returns a list of example queries that users can use as starting points.
+    Useful for mobile app UI to show template buttons.
+    """
+    templates = [
+        {
+            "id": "evaluate_single",
+            "name": "Evaluate Single Stock",
+            "description": "Get price and key metrics for a stock",
+            "query": "EVALUATE {SYMBOL}: PRICE, VOLUME, PE_RATIO",
+            "example": "EVALUATE AAPL: PRICE, VOLUME, PE_RATIO",
+            "category": "basic",
+        },
+        {
+            "id": "compare_stocks",
+            "name": "Compare Stocks",
+            "description": "Compare metrics across multiple stocks",
+            "query": "COMPARE {SYMBOL1}, {SYMBOL2}: PE_RATIO, MARKET_CAP",
+            "example": "COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP",
+            "category": "comparison",
+        },
+        {
+            "id": "correlate_crypto",
+            "name": "Crypto Correlation",
+            "description": "Analyze price correlation between cryptocurrencies",
+            "query": "CORRELATE {COIN1}, {COIN2}: PRICE({PERIOD})",
+            "example": "CORRELATE BTC, ETH: PRICE(30d)",
+            "category": "crypto",
+        },
+        {
+            "id": "volatility_analysis",
+            "name": "Volatility Analysis",
+            "description": "Analyze volatility over different timeframes",
+            "query": "EVALUATE {SYMBOL}: VOLATILITY({PERIOD}), PRICE",
+            "example": "EVALUATE TSLA: VOLATILITY(30d), PRICE",
+            "category": "technical",
+        },
+        {
+            "id": "sector_screen",
+            "name": "Sector Screening",
+            "description": "Screen stocks in a sector by criteria",
+            "query": "SCREEN SECTOR={SECTOR}: PE_RATIO < {VALUE}",
+            "example": "SCREEN SECTOR=TECH: PE_RATIO < 30",
+            "category": "screening",
+        },
+        {
+            "id": "trend_analysis",
+            "name": "Trend Analysis",
+            "description": "Analyze price trends over time",
+            "query": "TREND {SYMBOL}: PRICE({PERIOD})",
+            "example": "TREND NVDA: PRICE(90d)",
+            "category": "technical",
+        },
+    ]
+
+    return DSLTemplatesResponse(templates=templates)

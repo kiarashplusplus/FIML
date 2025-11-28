@@ -58,6 +58,7 @@ class IntentType(Enum):
     QUIZ_ANSWER = "quiz_answer"
     AI_QUESTION = "ai_question"
     MARKET_QUERY = "market_query"
+    FK_DSL_QUERY = "fk_dsl_query"
     KEY_MANAGEMENT = "key_management"
     NAVIGATION = "navigation"
     GREETING = "greeting"
@@ -204,6 +205,8 @@ class IntentClassifier:
         "/quiz",
         "/mentor",
         "/market",
+        "/fkdsl",
+        "/dsl",
         "/addkey",
         "/listkeys",
         "/removekey",
@@ -230,6 +233,9 @@ class IntentClassifier:
 
     # Market keywords
     MARKET_KEYWORDS = ["price", "stock", "chart", "quote", "$", "market", "ticker"]
+
+    # FK-DSL keywords - queries that should be routed to DSL execution
+    DSL_KEYWORDS = ["evaluate", "compare", "correlate", "analyze", "trend", "volatility"]
 
     # Navigation keywords
     NAVIGATION_KEYWORDS = ["next", "back", "menu", "home", "continue", "skip"]
@@ -296,6 +302,13 @@ class IntentClassifier:
                     type=IntentType.LESSON_NAVIGATION, data={"action": text}, confidence=0.8
                 )
 
+        # Check for FK-DSL query patterns (high priority)
+        # DSL queries typically start with EVALUATE, COMPARE, CORRELATE, etc.
+        if self._is_dsl_query(text):
+            return Intent(
+                type=IntentType.FK_DSL_QUERY, data={"query": message.text}, confidence=0.9
+            )
+
         # Check for educational questions first (higher priority than market keywords)
         if any(pattern in text for pattern in self.EDUCATIONAL_PATTERNS):
             return Intent(
@@ -318,6 +331,30 @@ class IntentClassifier:
 
         # Default to AI question
         return Intent(type=IntentType.AI_QUESTION, data={"question": message.text}, confidence=0.5)
+
+    def _is_dsl_query(self, text: str) -> bool:
+        """
+        Check if text is a FK-DSL query.
+
+        FK-DSL queries typically start with uppercase keywords like:
+        - EVALUATE TSLA: PRICE, VOLATILITY(30d)
+        - COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP
+        - CORRELATE BTC, ETH: PRICE(90d)
+        """
+        text_upper = text.upper().strip()
+
+        # Check for DSL command prefixes
+        dsl_prefixes = ["EVALUATE", "COMPARE", "CORRELATE", "ANALYZE", "TREND", "SCREEN"]
+        if any(text_upper.startswith(prefix) for prefix in dsl_prefixes):
+            return True
+
+        # Check for DSL syntax patterns (colon after symbol, parentheses for timeframes)
+        import re
+        dsl_pattern = r"^[A-Z]+\s+[A-Z0-9,\s]+:\s*[A-Z_,\s\(\)0-9d]+$"
+        if re.match(dsl_pattern, text_upper):
+            return True
+
+        return False
 
 
 class UnifiedBotGateway:
@@ -362,8 +399,7 @@ class UnifiedBotGateway:
             IntentType.QUIZ_ANSWER: self.handle_quiz_answer,
             IntentType.AI_QUESTION: self.handle_ai_question,
             IntentType.MARKET_QUERY: self.handle_market_query,
-            IntentType.NAVIGATION: self.handle_navigation,
-            IntentType.MARKET_QUERY: self.handle_market_query,
+            IntentType.FK_DSL_QUERY: self.handle_fk_dsl_query,
             IntentType.NAVIGATION: self.handle_navigation,
             IntentType.GREETING: self.handle_greeting,
             IntentType.UNKNOWN: self.handle_unknown,
@@ -501,6 +537,9 @@ class UnifiedBotGateway:
                      f"Total XP: {session.metadata.get('xp', 0)}",
                 actions=[{"text": "Continue Learning", "action": "/lesson", "type": "primary"}]
             )
+
+        elif command in ("/fkdsl", "/dsl"):
+            return await self._show_fkdsl_help()
 
         return AbstractResponse(
             text=f"Command {command} is not fully implemented on mobile yet.",
@@ -913,6 +952,152 @@ class UnifiedBotGateway:
             "/lesson - Start learning (coming soon)\n"
             "/addkey - Set up your API keys"
         )
+
+    async def _show_fkdsl_help(self) -> AbstractResponse:
+        """Show FK-DSL help and example queries"""
+        return AbstractResponse(
+            text="🔮 Financial Knowledge DSL (FK-DSL)\n\n"
+                 "FK-DSL lets you run advanced financial analysis queries.\n\n"
+                 "📝 Example Queries:\n"
+                 "• `EVALUATE TSLA: PRICE, VOLATILITY(30d)`\n"
+                 "• `COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP`\n"
+                 "• `CORRELATE BTC, ETH: PRICE(90d)`\n"
+                 "• `SCREEN SECTOR=TECH: PE_RATIO < 30`\n\n"
+                 "💡 Tips:\n"
+                 "• Use uppercase for commands (EVALUATE, COMPARE, etc.)\n"
+                 "• Separate metrics with commas\n"
+                 "• Add timeframes in parentheses: (30d), (1y)\n\n"
+                 "_Type a query to execute it!_",
+            actions=[
+                {"text": "EVALUATE AAPL: PRICE", "action": "dsl:EVALUATE AAPL: PRICE, VOLUME", "type": "primary"},
+                {"text": "COMPARE TSLA, NVDA", "action": "dsl:COMPARE TSLA, NVDA: PE_RATIO", "type": "secondary"},
+                {"text": "CORRELATE BTC, ETH", "action": "dsl:CORRELATE BTC, ETH: PRICE(30d)", "type": "secondary"},
+            ],
+            metadata={"intent": "fk_dsl_help"},
+        )
+
+    async def handle_fk_dsl_query(
+        self, message: AbstractMessage, session: UserSession, intent: Intent
+    ) -> AbstractResponse:
+        """
+        Handle FK-DSL query execution.
+
+        This method provides a unified interface for executing FK-DSL queries
+        across both Telegram bot and mobile app.
+        """
+        from fiml.mcp.tools import execute_fk_dsl
+
+        query = intent.data.get("query", "")
+
+        # Check if this is a DSL action from button press
+        if query.startswith("dsl:"):
+            query = query[4:]  # Remove "dsl:" prefix
+
+        if not query.strip():
+            return await self._show_fkdsl_help()
+
+        try:
+            logger.info(
+                "Executing FK-DSL query",
+                user_id=message.user_id,
+                query=query,
+            )
+
+            # Execute the DSL query synchronously for immediate response
+            result = await execute_fk_dsl(query=query, async_execution=False)
+
+            if result.get("status") == "failed":
+                return AbstractResponse(
+                    text=f"❌ DSL Query Failed\n\n"
+                         f"Query: `{query}`\n\n"
+                         f"Error: {result.get('error', 'Unknown error')}\n\n"
+                         "Try /fkdsl for examples and syntax help.",
+                    metadata={"status": "error", "query": query},
+                )
+
+            # Format successful result
+            formatted_result = self._format_dsl_result(query, result)
+
+            return AbstractResponse(
+                text=formatted_result,
+                metadata={
+                    "status": "success",
+                    "query": query,
+                    "intent": "fk_dsl_query",
+                },
+                actions=[
+                    {"text": "Run Another Query", "action": "/fkdsl", "type": "secondary"},
+                ],
+            )
+
+        except Exception as e:
+            logger.error(
+                "FK-DSL execution error",
+                user_id=message.user_id,
+                query=query,
+                error=str(e),
+            )
+
+            return AbstractResponse(
+                text=f"❌ Error executing query\n\n"
+                     f"Query: `{query}`\n"
+                     f"Error: {str(e)}\n\n"
+                     "Try /fkdsl for syntax help and examples.",
+                metadata={"status": "error", "query": query},
+            )
+
+    def _format_dsl_result(self, query: str, result: dict) -> str:
+        """Format DSL execution result for display"""
+        output = ["🔮 FK-DSL Query Result\n"]
+        output.append(f"Query: `{query}`\n")
+
+        if result.get("status") == "completed":
+            data = result.get("result", {})
+
+            # Handle different result types
+            if isinstance(data, dict):
+                if "symbols" in data:
+                    # Multi-symbol result
+                    for symbol, metrics in data.get("data", {}).items():
+                        output.append(f"\n📊 **{symbol}**")
+                        if isinstance(metrics, dict):
+                            for key, value in metrics.items():
+                                output.append(f"  • {key}: {self._format_value(value)}")
+                elif "comparison" in data:
+                    # Comparison result
+                    output.append("\n📈 Comparison:")
+                    for item in data.get("comparison", []):
+                        output.append(f"  • {item}")
+                elif "correlation" in data:
+                    # Correlation result
+                    corr = data.get("correlation", {})
+                    output.append(f"\n🔗 Correlation: {corr.get('value', 'N/A')}")
+                    output.append(f"   Period: {corr.get('period', 'N/A')}")
+                else:
+                    # Generic dict result
+                    for key, value in data.items():
+                        output.append(f"• {key}: {self._format_value(value)}")
+            else:
+                output.append(f"\n{data}")
+
+        output.append("\n_Educational purposes only - not financial advice_")
+        return "\n".join(output)
+
+    def _format_value(self, value: Any) -> str:
+        """Format a value for display"""
+        if isinstance(value, float):
+            if abs(value) >= 1_000_000_000:
+                return f"${value/1_000_000_000:.2f}B"
+            elif abs(value) >= 1_000_000:
+                return f"${value/1_000_000:.2f}M"
+            elif abs(value) < 0.01:
+                return f"{value:.6f}"
+            else:
+                return f"{value:.2f}"
+        elif isinstance(value, int):
+            return f"{value:,}"
+        else:
+            return str(value)
 
     def register_handler(self, intent_type: IntentType, handler: Any) -> None:
         """Register custom handler for intent type"""
