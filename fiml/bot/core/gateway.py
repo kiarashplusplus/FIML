@@ -549,33 +549,36 @@ class UnifiedBotGateway:
     async def handle_lesson_request(
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
-        """Handle lesson requests"""
-        # Get available lessons (using private method logic from adapter, adapted here)
-        # In a real scenario, LessonContentEngine should expose this public method
-        # For now, we'll list hardcoded basics if engine doesn't support listing yet
+        """Handle lesson requests with dynamic lesson loading from content directory"""
+        # Dynamically load lessons from the lesson engine
+        lessons = await self.lesson_engine.list_lessons()
 
-        # We need to list lessons.
-        # Ideally LessonContentEngine should have list_lessons()
-        # Let's assume we can get them or use a static list for now
-
-        lessons = [
-            {"id": "stock_basics_001", "title": "Understanding Stock Prices", "difficulty": "beginner"},
-            {"id": "stock_basics_002", "title": "Market Orders vs Limit Orders", "difficulty": "beginner"},
-            {"id": "stock_basics_003", "title": "Volume and Liquidity", "difficulty": "beginner"},
-            {"id": "valuation_001", "title": "Understanding P/E Ratio", "difficulty": "intermediate"},
-            {"id": "risk_001", "title": "Position Sizing and Risk", "difficulty": "intermediate"},
-        ]
+        if not lessons:
+            # Fallback if no lessons found
+            return AbstractResponse(
+                text="📚 No lessons available yet.\n\n"
+                     "The lesson content is being prepared. Please check back later!",
+                actions=[]
+            )
 
         actions = []
         for lesson in lessons:
+            difficulty_badge = {
+                "beginner": "🟢",
+                "intermediate": "🟡",
+                "advanced": "🔴"
+            }.get(lesson.get("difficulty", "beginner"), "⚪")
+
             actions.append({
-                "text": f"{lesson['title']} ({lesson['difficulty']})",
+                "text": f"{difficulty_badge} {lesson['title']}",
                 "action": f"lesson:start:{lesson['id']}",
                 "type": "secondary"
             })
 
         return AbstractResponse(
-            text="📚 Available Lessons\n\nSelect a lesson to start learning:",
+            text=f"📚 Available Lessons ({len(lessons)} total)\n\n"
+                 "🟢 Beginner | 🟡 Intermediate | 🔴 Advanced\n\n"
+                 "Select a lesson to start learning:",
             actions=actions
         )
 

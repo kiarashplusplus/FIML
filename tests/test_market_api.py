@@ -77,6 +77,26 @@ class TestMarketAPI:
         assert response.status_code == 400
         assert "50" in response.json()["detail"]
 
+    def test_search_assets_with_yfinance_lookup(self, client):
+        """Test that search can find symbols via yfinance"""
+        # Test exact symbol match that should trigger yfinance lookup
+        response = client.get("/api/market/search?q=AAPL")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) > 0
+        # Either from yfinance or local cache
+        symbols = [asset["symbol"] for asset in data]
+        assert "AAPL" in symbols
+
+    def test_search_empty_query(self, client):
+        """Test search with empty query"""
+        response = client.get("/api/market/search?q=")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 0
+
 
 class TestDSLAPI:
     """Tests for FK-DSL API endpoints"""

@@ -223,3 +223,37 @@ class TestIntentClassifierDSL:
         assert not classifier._is_dsl_query("What is a P/E ratio?")
         assert not classifier._is_dsl_query("Show me AAPL price")
         assert not classifier._is_dsl_query("Hello, how are you?")
+
+
+class TestLessonEngine:
+    """Tests for LessonContentEngine dynamic lesson loading"""
+
+    @pytest.fixture
+    def engine(self):
+        """Create lesson engine instance with default path"""
+        from fiml.bot.education.lesson_engine import LessonContentEngine
+        return LessonContentEngine()
+
+    @pytest.mark.asyncio
+    async def test_list_lessons_returns_list(self, engine):
+        """Test that list_lessons returns a list"""
+        lessons = await engine.list_lessons()
+        assert isinstance(lessons, list)
+
+    @pytest.mark.asyncio
+    async def test_list_lessons_has_required_fields(self, engine):
+        """Test that lessons have required metadata fields"""
+        lessons = await engine.list_lessons()
+        if lessons:  # Only test if lessons exist
+            lesson = lessons[0]
+            assert "id" in lesson
+            assert "title" in lesson
+            assert "difficulty" in lesson
+            assert "category" in lesson
+
+    @pytest.mark.asyncio
+    async def test_list_lessons_loads_from_content_dir(self, engine):
+        """Test that lessons are loaded from the content directory"""
+        lessons = await engine.list_lessons()
+        # Content directory has 20+ lessons
+        assert len(lessons) >= 15

@@ -19,6 +19,75 @@ logger = get_logger(__name__)
 market_router = APIRouter()
 
 
+# Common assets for fast local search (used as fallback)
+COMMON_ASSETS = [
+    {"symbol": "AAPL", "name": "Apple Inc.", "type": "stock"},
+    {"symbol": "GOOGL", "name": "Alphabet Inc.", "type": "stock"},
+    {"symbol": "MSFT", "name": "Microsoft Corporation", "type": "stock"},
+    {"symbol": "AMZN", "name": "Amazon.com Inc.", "type": "stock"},
+    {"symbol": "TSLA", "name": "Tesla Inc.", "type": "stock"},
+    {"symbol": "META", "name": "Meta Platforms Inc.", "type": "stock"},
+    {"symbol": "NVDA", "name": "NVIDIA Corporation", "type": "stock"},
+    {"symbol": "JPM", "name": "JPMorgan Chase & Co.", "type": "stock"},
+    {"symbol": "V", "name": "Visa Inc.", "type": "stock"},
+    {"symbol": "WMT", "name": "Walmart Inc.", "type": "stock"},
+    {"symbol": "DIS", "name": "The Walt Disney Company", "type": "stock"},
+    {"symbol": "NFLX", "name": "Netflix Inc.", "type": "stock"},
+    {"symbol": "AMD", "name": "Advanced Micro Devices Inc.", "type": "stock"},
+    {"symbol": "INTC", "name": "Intel Corporation", "type": "stock"},
+    {"symbol": "CRM", "name": "Salesforce Inc.", "type": "stock"},
+    {"symbol": "ORCL", "name": "Oracle Corporation", "type": "stock"},
+    {"symbol": "ADBE", "name": "Adobe Inc.", "type": "stock"},
+    {"symbol": "PYPL", "name": "PayPal Holdings Inc.", "type": "stock"},
+    {"symbol": "BTC", "name": "Bitcoin", "type": "crypto"},
+    {"symbol": "ETH", "name": "Ethereum", "type": "crypto"},
+    {"symbol": "SOL", "name": "Solana", "type": "crypto"},
+    {"symbol": "XRP", "name": "Ripple", "type": "crypto"},
+    {"symbol": "DOGE", "name": "Dogecoin", "type": "crypto"},
+    {"symbol": "ADA", "name": "Cardano", "type": "crypto"},
+    {"symbol": "DOT", "name": "Polkadot", "type": "crypto"},
+    {"symbol": "AVAX", "name": "Avalanche", "type": "crypto"},
+    {"symbol": "MATIC", "name": "Polygon", "type": "crypto"},
+    {"symbol": "LINK", "name": "Chainlink", "type": "crypto"},
+]
+
+
+async def search_symbol_with_yfinance(query: str) -> List[Dict[str, Any]]:
+    """
+    Search for symbols using yfinance.
+
+    This provides real-time symbol lookup for stocks.
+
+    Args:
+        query: Search query (symbol or company name)
+
+    Returns:
+        List of matching assets with symbol, name, and type
+    """
+    try:
+        import yfinance as yf
+
+        # Try to get info for exact symbol match first
+        symbol = query.upper()
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+
+        if info and info.get("symbol"):
+            # Valid symbol found
+            asset_type = "crypto" if info.get("quoteType") == "CRYPTOCURRENCY" else "stock"
+            return [{
+                "symbol": info.get("symbol", symbol),
+                "name": info.get("longName") or info.get("shortName") or symbol,
+                "type": asset_type,
+                "exchange": info.get("exchange", ""),
+                "sector": info.get("sector", ""),
+            }]
+    except Exception as e:
+        logger.debug("yfinance lookup failed", query=query, error=str(e))
+
+    return []
+
+
 class PriceData(BaseModel):
     """Price data for a single asset"""
     symbol: str
@@ -150,56 +219,51 @@ async def search_assets(
     """
     Search for assets by symbol or name.
 
-    This is a simple search endpoint for the mobile app autocomplete.
-
-    Note: Currently uses a static list of common assets for fast search.
-    Future enhancement: Integrate with a provider that supports symbol search
-    (e.g., Alpha Vantage SYMBOL_SEARCH or FMP search endpoint).
+    This endpoint combines:
+    1. Fast local search of common assets (instant results)
+    2. Real-time yfinance lookup for exact symbol matches
 
     Args:
-        q: Search query
+        q: Search query (symbol or company name)
         asset_type: Optional filter (stock or crypto)
 
     Returns:
-        List of matching assets
+        List of matching assets with symbol, name, and type
     """
-    # Static list of common assets for fast autocomplete
-    # TODO: Consider externalizing to config or integrating with symbol search API
-    # For now, this provides instant results without API latency
-    all_assets = [
-        {"symbol": "AAPL", "name": "Apple Inc.", "type": "stock"},
-        {"symbol": "GOOGL", "name": "Alphabet Inc.", "type": "stock"},
-        {"symbol": "MSFT", "name": "Microsoft Corporation", "type": "stock"},
-        {"symbol": "AMZN", "name": "Amazon.com Inc.", "type": "stock"},
-        {"symbol": "TSLA", "name": "Tesla Inc.", "type": "stock"},
-        {"symbol": "META", "name": "Meta Platforms Inc.", "type": "stock"},
-        {"symbol": "NVDA", "name": "NVIDIA Corporation", "type": "stock"},
-        {"symbol": "BTC", "name": "Bitcoin", "type": "crypto"},
-        {"symbol": "ETH", "name": "Ethereum", "type": "crypto"},
-        {"symbol": "SOL", "name": "Solana", "type": "crypto"},
-        {"symbol": "XRP", "name": "Ripple", "type": "crypto"},
-        {"symbol": "DOGE", "name": "Dogecoin", "type": "crypto"},
-        {"symbol": "JPM", "name": "JPMorgan Chase & Co.", "type": "stock"},
-        {"symbol": "V", "name": "Visa Inc.", "type": "stock"},
-        {"symbol": "WMT", "name": "Walmart Inc.", "type": "stock"},
-        {"symbol": "DIS", "name": "The Walt Disney Company", "type": "stock"},
-        {"symbol": "NFLX", "name": "Netflix Inc.", "type": "stock"},
-        {"symbol": "AMD", "name": "Advanced Micro Devices Inc.", "type": "stock"},
-    ]
+    if not q or len(q.strip()) < 1:
+        return []
 
-    query_upper = q.upper()
+    query_upper = q.upper().strip()
+    results = []
+    seen_symbols = set()
 
-    # Filter by query
-    results = [
-        asset for asset in all_assets
-        if query_upper in asset["symbol"] or query_upper in asset["name"].upper()
-    ]
+    # 1. Try real-time yfinance lookup for exact symbol match
+    if len(query_upper) >= 1 and len(query_upper) <= 10:
+        try:
+            yf_results = await search_symbol_with_yfinance(query_upper)
+            for asset in yf_results:
+                if asset["symbol"] not in seen_symbols:
+                    # Filter by asset type if specified
+                    if asset_type and asset.get("type") != asset_type.lower():
+                        continue
+                    results.append(asset)
+                    seen_symbols.add(asset["symbol"])
+        except Exception as e:
+            logger.debug("yfinance search failed", error=str(e))
 
-    # Filter by asset type if specified
-    if asset_type:
-        results = [asset for asset in results if asset["type"] == asset_type.lower()]
+    # 2. Search local common assets list (fast, no API call)
+    for asset in COMMON_ASSETS:
+        if asset["symbol"] in seen_symbols:
+            continue
+        if query_upper in asset["symbol"] or query_upper in asset["name"].upper():
+            # Filter by asset type if specified
+            if asset_type and asset.get("type") != asset_type.lower():
+                continue
+            results.append(asset)
+            seen_symbols.add(asset["symbol"])
 
-    return results[:10]  # Limit to 10 results
+    # Limit to 10 results
+    return results[:10]
 
 
 # ============================================================================
