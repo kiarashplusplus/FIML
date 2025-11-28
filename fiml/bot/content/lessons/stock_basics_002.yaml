@@ -1,0 +1,45 @@
+category: foundations
+difficulty: beginner
+duration_minutes: 5
+id: stock_basics_002
+learning_objectives:
+- Understand bid-ask spread
+- Read price charts
+- Interpret volume data
+next_lesson: stock_basics_002
+prerequisites: []
+quiz:
+  questions:
+  - correct_answer: $0.05
+    id: q1
+    options:
+    - correct: true
+      text: $0.05
+    - correct: false
+      text: $100
+    - correct: false
+      text: $200.05
+    text: If Bid=$100 and Ask=$100.05, what is the spread?
+    type: multiple_choice
+    xp_reward: 10
+sections:
+- content: Every second, millions of stock trades happen worldwide. Let's explore
+    what makes prices move using real market data!
+  type: introduction
+- content: Notice the bid and ask prices above? The bid is what buyers are willing
+    to pay, the ask is what sellers want. The difference is the spread.
+  fiml_query:
+    market: US
+    symbol: AAPL
+  type: live_example
+- content: The **spread** is the market's transaction cost. In liquid stocks like
+    AAPL, it's tiny (often $0.01). In less liquid stocks, it can be much wider.
+  type: explanation
+- content: 'Bid-ask spread = transaction cost
+
+    Liquid stocks have narrow spreads
+
+    Volume indicates market interest'
+  type: key_takeaways
+title: Understanding Stock Prices
+xp_reward: 50

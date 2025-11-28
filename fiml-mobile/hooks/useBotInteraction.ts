@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
-import { sendMessage as apiSendMessage, BotMessageResponse } from '../services/api';
+import { sendMessage as apiSendMessage, BotMessageResponse, BotMessageRequest } from '../services/api';
 
 export interface Message {
     id: string;
     text: string;
     sender: 'user' | 'bot';
     timestamp: number;
+    actions?: any[];
 }
 
 export const useBotInteraction = () => {
@@ -39,6 +40,7 @@ export const useBotInteraction = () => {
                 text: response.text,
                 sender: 'bot',
                 timestamp: Date.now(),
+                actions: response.actions,
             };
 
             setMessages((prev) => [...prev, botMsg]);
@@ -50,9 +52,47 @@ export const useBotInteraction = () => {
         }
     }, []);
 
+    const sendAction = useCallback(async (action: string, userId: string, label: string) => {
+        const isCommand = action.startsWith('/');
+
+        // Optimistically add user message
+        const userMsg: Message = {
+            id: Date.now().toString(),
+            text: label, // Show the label (e.g. "Start Lesson")
+            sender: 'user',
+            timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, userMsg]);
+        setIsLoading(true);
+
+        try {
+            // If it's a command, send as text. If it's a callback, send as context action.
+            const requestPayload: BotMessageRequest = isCommand
+                ? { user_id: userId, platform: 'mobile_app', text: action }
+                : { user_id: userId, platform: 'mobile_app', text: label, context: { action: action } };
+
+            const response = await apiSendMessage(requestPayload);
+
+            const botMsg: Message = {
+                id: (Date.now() + 1).toString(),
+                text: response.text,
+                sender: 'bot',
+                timestamp: Date.now(),
+                actions: response.actions,
+            };
+
+            setMessages((prev) => [...prev, botMsg]);
+        } catch (err: any) {
+            setError(err.message || 'Failed to send action');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     return {
         messages,
         sendMessage,
+        sendAction,
         isLoading,
         error,
     };

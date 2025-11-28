@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function ChatInterface() {
     const { user } = useAuth();
-    const { messages, sendMessage, isLoading, error } = useBotInteraction();
+    const { messages, sendMessage, sendAction, isLoading, error } = useBotInteraction();
     const [inputText, setInputText] = useState('');
     const flatListRef = useRef<FlatList>(null);
 
@@ -13,6 +13,12 @@ export default function ChatInterface() {
         if (inputText.trim() && user) {
             sendMessage(inputText, user.id);
             setInputText('');
+        }
+    };
+
+    const handleAction = (action: string, label: string) => {
+        if (user) {
+            sendAction(action, user.id, label);
         }
     };
 
@@ -25,7 +31,7 @@ export default function ChatInterface() {
     const renderMessage = ({ item }: { item: Message }) => {
         const isUser = item.sender === 'user';
         return (
-            <View className={`flex-row ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+            <View className={`mb-4 ${isUser ? 'items-end' : 'items-start'}`}>
                 <View
                     className={`max-w-[80%] p-3 rounded-2xl ${isUser ? 'bg-blue-600 rounded-tr-none' : 'bg-gray-700 rounded-tl-none'
                         }`}
@@ -35,9 +41,33 @@ export default function ChatInterface() {
                         {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                 </View>
+
+                {/* Render Actions if available (only for bot messages) */}
+                {!isUser && item.actions && item.actions.length > 0 && (
+                    <View className="mt-2 flex-row flex-wrap max-w-[85%]">
+                        {item.actions.map((action: any, index: number) => (
+                            <TouchableOpacity
+                                key={index}
+                                onPress={() => handleAction(action.action, action.text)}
+                                className={`mr-2 mb-2 px-4 py-2 rounded-full ${action.type === 'primary' ? 'bg-blue-500' : 'bg-gray-600 border border-gray-500'
+                                    }`}
+                            >
+                                <Text className="text-white text-sm font-medium">{action.text}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
             </View>
         );
     };
+
+    // Quick Actions (Always visible above input)
+    const quickActions = [
+        { text: "Help", action: "/help" },
+        { text: "Lessons", action: "/lesson" },
+        { text: "Mentor", action: "/mentor" },
+        { text: "Add Key", action: "/addkey" },
+    ];
 
     return (
         <KeyboardAvoidingView
@@ -65,7 +95,25 @@ export default function ChatInterface() {
                 </View>
             )}
 
-            <View className="p-4 bg-gray-800 border-t border-gray-700 flex-row items-center">
+            {/* Quick Actions Bar */}
+            <View className="h-12 bg-gray-800 border-t border-gray-700">
+                <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    data={quickActions}
+                    keyExtractor={(item) => item.action}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            onPress={() => handleAction(item.action, item.text)}
+                            className="bg-gray-700 px-4 py-2 m-2 rounded-full border border-gray-600"
+                        >
+                            <Text className="text-gray-300 text-xs font-bold">{item.text}</Text>
+                        </TouchableOpacity>
+                    )}
+                />
+            </View>
+
+            <View className="p-4 bg-gray-800 flex-row items-center">
                 <TextInput
                     className="flex-1 bg-gray-700 text-white p-3 rounded-xl mr-3 max-h-24"
                     placeholder="Ask about markets, crypto..."

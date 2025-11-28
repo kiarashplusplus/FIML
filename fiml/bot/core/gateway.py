@@ -13,6 +13,9 @@ import structlog
 
 from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
 from fiml.bot.education.fiml_adapter import FIMLEducationalDataAdapter
+from fiml.bot.education.gamification import GamificationEngine
+from fiml.bot.education.lesson_engine import LessonContentEngine
+from fiml.bot.education.quiz_system import QuizSystem
 from fiml.narrative.generator import NarrativeGenerator
 from fiml.narrative.models import (
     ExpertiseLevel,
@@ -243,15 +246,39 @@ class IntentClassifier:
     async def classify(self, message: AbstractMessage, session: UserSession) -> Intent:
         """
         Classify message intent based on content and context
-
+        
         Args:
             message: User message
             session: User session
-
+            
         Returns:
             Classified intent
         """
         text = message.text.lower().strip()
+        
+        # Check for explicit action in context (from mobile app buttons)
+        context_action = message.context.get("action", "")
+        if context_action:
+            if context_action.startswith("lesson:"):
+                return Intent(
+                    type=IntentType.LESSON_NAVIGATION, 
+                    data={"action": context_action}, 
+                    confidence=1.0
+                )
+            elif context_action.startswith("quiz:"):
+                return Intent(
+                    type=IntentType.QUIZ_ANSWER, 
+                    data={"answer": context_action}, 
+                    confidence=1.0
+                )
+            elif context_action.startswith("/"):
+                # Handle commands sent via context action
+                command = context_action.split()[0]
+                return Intent(
+                    type=IntentType.COMMAND, 
+                    data={"command": command}, 
+                    confidence=1.0
+                )
 
         # Check for commands
         if text.startswith("/"):
@@ -264,6 +291,7 @@ class IntentClassifier:
 
         # Context-based classification
         if session.state == SessionState.IN_QUIZ:
+            # If in quiz, treat text as answer unless it's a command
             return Intent(
                 type=IntentType.QUIZ_ANSWER, data={"answer": message.text}, confidence=0.9
             )
@@ -326,6 +354,11 @@ class UnifiedBotGateway:
             narrative_generator=self.narrative_generator
         )
         self.fiml_data_adapter = fiml_data_adapter or FIMLEducationalDataAdapter()
+        
+        # Initialize educational engines
+        self.lesson_engine = LessonContentEngine()
+        self.quiz_system = QuizSystem()
+        self.gamification = GamificationEngine()
 
         # Handlers will be set by components
         self.handlers: Dict[IntentType, Any] = {
@@ -407,12 +440,76 @@ class UnifiedBotGateway:
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle bot commands"""
-        command = intent.data.get("command", "")
+        command = intent.data.get("command", "").lower()
+        
+        if command == "/help":
+            return AbstractResponse(
+                text="📚 FIML Educational Bot Commands\n\n"
+                     "Key Management:\n"
+                     "/addkey - Add a new API key\n"
+                     "/listkeys - View your connected providers\n"
+                     "/removekey - Remove an API key\n"
+                     "/testkey - Test if your keys are working\n"
+                     "/status - View your provider status and usage\n\n"
+                     "Learning:\n"
+                     "/lesson - Browse and start lessons\n"
+                     "/quiz - Take a practice quiz\n"
+                     "/mentor - Talk to AI mentor\n"
+                     "/progress - View your learning progress\n\n"
+                     "Advanced Analysis:\n"
+                     "/fkdsl - Run Financial Knowledge DSL queries",
+                actions=[
+                    {"text": "Start Learning", "action": "/lesson", "type": "primary"},
+                    {"text": "Add API Key", "action": "/addkey", "type": "secondary"},
+                    {"text": "Ask Mentor", "action": "/mentor", "type": "secondary"},
+                ]
+            )
+            
+        elif command == "/lesson":
+            # Delegate to lesson request handler
+            return await self.handle_lesson_request(message, session, intent)
+            
+        elif command == "/quiz":
+            # Start a quiz for the current or last lesson
+            if session.current_lesson:
+                # Logic to start quiz for current lesson
+                return await self.start_quiz_for_lesson(session.current_lesson, message.user_id)
+            else:
+                return AbstractResponse(
+                    text="You haven't started a lesson yet. Start a lesson to take a quiz!",
+                    actions=[{"text": "Browse Lessons", "action": "/lesson", "type": "primary"}]
+                )
 
-        # These are handled by platform adapters
-        # This is a fallback for when gateway receives commands
+        elif command == "/mentor":
+             return AbstractResponse(
+                text="👋 I'm your AI Mentor.\n\n"
+                     "Ask me anything about trading, markets, or financial concepts.\n"
+                     "Try: 'What is a stop loss?' or 'Explain P/E ratio'",
+                actions=[]
+            )
+
+        elif command == "/addkey":
+             return AbstractResponse(
+                text="🔑 Add API Key\n\n"
+                     "To add an API key, please use the /addkey command followed by the provider name and key.\n"
+                     "Example: `/addkey binance <your_api_key>`\n\n"
+                     "Or use the web dashboard for easier management.",
+                actions=[{"text": "Open Dashboard", "url": "/dashboard", "type": "link"}] # Placeholder URL
+            )
+            
+        elif command == "/progress":
+             progress = await self.lesson_engine.get_user_progress(message.user_id)
+             completed = len(progress.get("completed", []))
+             return AbstractResponse(
+                text=f"📈 Your Progress\n\n"
+                     f"Lessons Completed: {completed}\n"
+                     f"Current Streak: {session.metadata.get('streak', 0)} days\n"
+                     f"Total XP: {session.metadata.get('xp', 0)}",
+                actions=[{"text": "Continue Learning", "action": "/lesson", "type": "primary"}]
+            )
+
         return AbstractResponse(
-            text=f"Command {command} should be handled by platform adapter",
+            text=f"Command {command} is not fully implemented on mobile yet.",
             metadata={"handled_by": "gateway_fallback"},
         )
 
@@ -420,16 +517,33 @@ class UnifiedBotGateway:
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle lesson requests"""
-        # Placeholder - will be implemented by LessonContentEngine
+        # Get available lessons (using private method logic from adapter, adapted here)
+        # In a real scenario, LessonContentEngine should expose this public method
+        # For now, we'll list hardcoded basics if engine doesn't support listing yet
+        
+        # We need to list lessons. 
+        # Ideally LessonContentEngine should have list_lessons()
+        # Let's assume we can get them or use a static list for now
+        
+        lessons = [
+            {"id": "stock_basics_001", "title": "Understanding Stock Prices", "difficulty": "beginner"},
+            {"id": "stock_basics_002", "title": "Market Orders vs Limit Orders", "difficulty": "beginner"},
+            {"id": "stock_basics_003", "title": "Volume and Liquidity", "difficulty": "beginner"},
+            {"id": "valuation_001", "title": "Understanding P/E Ratio", "difficulty": "intermediate"},
+            {"id": "risk_001", "title": "Position Sizing and Risk", "difficulty": "intermediate"},
+        ]
+        
+        actions = []
+        for lesson in lessons:
+            actions.append({
+                "text": f"{lesson['title']} ({lesson['difficulty']})",
+                "action": f"lesson:start:{lesson['id']}",
+                "type": "secondary"
+            })
+            
         return AbstractResponse(
-            text="📚 **Lessons Coming Soon!**\n\n"
-            "The lesson system is being built. Soon you'll be able to:\n"
-            "- Learn trading fundamentals\n"
-            "- Practice with real market data\n"
-            "- Take interactive quizzes\n\n"
-            "For now, try:\n"
-            "/help - See available commands\n"
-            "/addkey - Add API keys for market data"
+            text="📚 Available Lessons\n\nSelect a lesson to start learning:",
+            actions=actions
         )
 
     async def handle_lesson_navigation(
@@ -437,21 +551,130 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle lesson navigation"""
         action = intent.data.get("action", "")
+        
+        if action.startswith("lesson:start:"):
+            lesson_id = action.split(":")[-1]
+            
+            # Load and render lesson
+            lesson = await self.lesson_engine.load_lesson(lesson_id)
+            if not lesson:
+                # Create sample if missing (for demo)
+                self.lesson_engine.create_sample_lesson(lesson_id)
+                lesson = await self.lesson_engine.load_lesson(lesson_id)
+                
+            if lesson:
+                rendered = await self.lesson_engine.render_lesson(lesson, message.user_id)
+                self.lesson_engine.mark_lesson_started(message.user_id, lesson_id)
+                
+                # Update session
+                session.current_lesson = lesson_id
+                session.state = SessionState.IN_LESSON
+                
+                return AbstractResponse(
+                    text=rendered.content,
+                    actions=[
+                        {"text": "Take Quiz", "action": f"quiz:start:{lesson_id}", "type": "primary"},
+                        {"text": "Back to Lessons", "action": "/lesson", "type": "secondary"}
+                    ]
+                )
+            else:
+                 return AbstractResponse(text="❌ Lesson not found.")
 
-        # Placeholder
         return AbstractResponse(
-            text=f"Lesson navigation: {action}\n\n" "(Lesson system coming soon)"
+            text=f"Lesson navigation: {action}"
         )
 
     async def handle_quiz_answer(
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle quiz answers"""
-        # Placeholder - will be implemented by QuizSystem
+        action = intent.data.get("answer", "") # Can be answer text or callback data
+        
+        # Parse action if it's a callback string
+        if isinstance(action, str) and action.startswith("quiz:start:"):
+            lesson_id = action.split(":")[-1]
+            return await self.start_quiz_for_lesson(lesson_id, message.user_id)
+            
+        if isinstance(action, str) and action.startswith("quiz:answer:"):
+            # Format: quiz:answer:session_id:question_index:answer_value
+            parts = action.split(":")
+            if len(parts) >= 5:
+                session_id = parts[2]
+                # q_idx = int(parts[3]) # Not needed for submit_answer if we trust session state or if submit_answer handles it
+                answer_val = parts[4]
+                
+                result = await self.quiz_system.submit_answer(session_id, answer_val)
+                
+                if result.get("error"):
+                    return AbstractResponse(text=f"❌ Error: {result['error']}")
+                    
+                response_text = f"{'✅ Correct!' if result['correct'] else '❌ Incorrect.'}\n\n{result['explanation']}\n\nXP Earned: {result['xp_earned']}"
+                
+                if result.get("quiz_complete"):
+                     response_text += f"\n\n🎉 Quiz Complete!\nScore: {result['score']}/{result['total_questions']}\nTotal XP: {result['total_xp']}"
+                     actions = [{"text": "Back to Lessons", "action": "/lesson", "type": "primary"}]
+                else:
+                    # Next question
+                    next_q = await self.quiz_system.get_current_question(session_id)
+                    if next_q:
+                        response_text += f"\n\nNext Question:\n{next_q.text}"
+                        actions = self._build_quiz_options(next_q, session_id)
+                    else:
+                        actions = [{"text": "Finish", "action": "/lesson", "type": "primary"}]
+
+                return AbstractResponse(text=response_text, actions=actions)
+
         return AbstractResponse(
-            text="Quiz system coming soon!\n\n"
-            "You'll be able to test your knowledge with interactive quizzes."
+            text="Quiz interaction not understood."
         )
+
+    async def start_quiz_for_lesson(self, lesson_id: str, user_id: str) -> AbstractResponse:
+        """Helper to start a quiz"""
+        lesson = await self.lesson_engine.load_lesson(lesson_id)
+        if not lesson:
+            return AbstractResponse(text="Lesson not found for quiz.")
+            
+        # Get questions (handling dict vs object)
+        if isinstance(lesson, dict):
+             questions_data = lesson.get("quiz", {}).get("questions", [])
+        else:
+             questions_data = [
+                 {"id": q.id, "type": q.type, "text": q.text, "options": q.options, "correct_answer": q.correct_answer} 
+                 for q in lesson.quiz_questions
+             ]
+             
+        if not questions_data:
+            return AbstractResponse(text="No quiz available for this lesson.")
+            
+        session_id = self.quiz_system.create_session(user_id, lesson_id, questions_data)
+        
+        # Get first question
+        question = await self.quiz_system.get_current_question(session_id)
+        if not question:
+             return AbstractResponse(text="Failed to start quiz.")
+             
+        actions = self._build_quiz_options(question, session_id)
+        
+        return AbstractResponse(
+            text=f"📝 Quiz: {lesson.get('title', lesson_id) if isinstance(lesson, dict) else lesson.title}\n\n{question.text}",
+            actions=actions
+        )
+
+    def _build_quiz_options(self, question: Any, session_id: str) -> List[Dict]:
+        """Helper to build quiz option buttons"""
+        actions = []
+        if question.type == "multiple_choice":
+            for i, opt in enumerate(question.options):
+                actions.append({
+                    "text": opt["text"],
+                    "action": f"quiz:answer:{session_id}:0:{opt['text']}", # Using text as answer for now
+                    "type": "secondary"
+                })
+        elif question.type == "true_false":
+            actions.append({"text": "True", "action": f"quiz:answer:{session_id}:0:true", "type": "secondary"})
+            actions.append({"text": "False", "action": f"quiz:answer:{session_id}:0:false", "type": "secondary"})
+            
+        return actions
 
     async def handle_ai_question(
         self, message: AbstractMessage, session: UserSession, intent: Intent
@@ -487,12 +710,12 @@ class UnifiedBotGateway:
             related_lessons = response_data.get("related_lessons", [])
             lessons_text = ""
             if related_lessons:
-                lessons_text = "\n\n📚 **Related Lessons:**\n" + "\n".join(
+                lessons_text = "\n\n📚 Related Lessons:\n" + "\n".join(
                     [f"• {lesson}" for lesson in related_lessons]
                 )
 
             formatted_response = (
-                f"{mentor_icon} **{mentor_name}:**\n\n"
+                f"{mentor_icon} {mentor_name}:\n\n"
                 f"{response_text}{lessons_text}\n\n"
                 f"_{disclaimer}_"
             )
@@ -518,7 +741,7 @@ class UnifiedBotGateway:
             )
 
             return AbstractResponse(
-                text="🤖 **AI Mentor:**\n\n"
+                text="🤖 AI Mentor:\n\n"
                 f"You asked: _{question}_\n\n"
                 "I'm having trouble connecting to my knowledge base right now. "
                 "Please try again in a moment, or explore:\n"
@@ -539,7 +762,7 @@ class UnifiedBotGateway:
 
             if not symbol:
                 return AbstractResponse(
-                    text="📊 **Market Data Query**\n\n"
+                    text="📊 Market Data Query\n\n"
                     "I couldn't identify a specific stock or crypto symbol in your query.\n\n"
                     "Try asking about a specific symbol like:\n"
                     "• 'Show me AAPL price'\n"
@@ -595,7 +818,7 @@ class UnifiedBotGateway:
                     context=narrative_context
                 )
                 summary = narrative.summary[:MAX_NARRATIVE_SUMMARY_LENGTH]
-                narrative_text = f"\n\n📝 **Educational Insight:**\n{summary}..."
+                narrative_text = f"\n\n📝 Educational Insight:\n{summary}..."
 
             except Exception as narrative_error:
                 logger.debug(
@@ -605,7 +828,7 @@ class UnifiedBotGateway:
                 )
 
             response_text = (
-                f"📊 **Market Data for {symbol}**\n\n"
+                f"📊 Market Data for {symbol}\n\n"
                 f"{formatted_data}{narrative_text}\n\n"
                 f"_Source: {educational_data.get('data_source', 'FIML')}_\n"
                 f"_{educational_data.get('disclaimer', 'Educational purposes only - not financial advice')}_"
@@ -632,7 +855,7 @@ class UnifiedBotGateway:
             )
 
             return AbstractResponse(
-                text="📊 **Market Data:**\n\n"
+                text="📊 Market Data:\n\n"
                 f"You asked about: _{query}_\n\n"
                 "I'm having trouble fetching market data right now. "
                 "This could be due to:\n"
@@ -691,7 +914,7 @@ class UnifiedBotGateway:
     ) -> AbstractResponse:
         """Handle greetings"""
         return AbstractResponse(
-            text="👋 **Hello! Welcome to FIML Mobile.**\n\n"
+            text="👋 Hello! Welcome to FIML Mobile.\n\n"
             "I'm your AI trading mentor. I can help you:\n"
             "• Learn trading concepts\n"
             "• Analyze market data\n"
