@@ -172,6 +172,27 @@ class DataArbitrationEngine:
                     )
 
             except Exception as e:
+                error_msg = str(e).lower()
+                
+                # Check for rate limits
+                if "rate limit" in error_msg:
+                    # Default cooldown: 60 seconds
+                    cooldown_seconds = 60
+                    
+                    # Try to parse wait time from error message
+                    # Example: "Wait 18.5s"
+                    import re
+                    match = re.search(r"wait (\d+(\.\d+)?)s", error_msg)
+                    if match:
+                        cooldown_seconds = int(float(match.group(1))) + 1
+                        
+                    provider.set_cooldown(cooldown_seconds)
+                    logger.warning(
+                        "Provider rate limited, setting cooldown",
+                        provider=provider.name,
+                        cooldown_seconds=cooldown_seconds
+                    )
+
                 provider_name = provider.name if provider else "unknown"
                 logger.warning(
                     "Provider failed, falling back",
@@ -237,6 +258,17 @@ class DataArbitrationEngine:
         Special rules:
         - NewsAPI gets bonus score for NEWS and SENTIMENT data types
         """
+        # Check if provider is in cooldown
+        if provider.is_in_cooldown():
+            return ProviderScore(
+                total=0.0,
+                freshness=0.0,
+                latency=0.0,
+                uptime=0.0,
+                completeness=0.0,
+                reliability=0.0,
+            )
+
         # Freshness score
         last_update = await provider.get_last_update(asset, data_type)
         age_seconds = (datetime.now(timezone.utc) - last_update).total_seconds()

@@ -3,7 +3,7 @@ Base Provider Interface
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
@@ -52,6 +52,7 @@ class BaseProvider(ABC):
         self._error_count = 0
         self._last_request_time: Optional[datetime] = None
         self._is_initialized = False
+        self._cooldown_until: Optional[datetime] = None
 
     @abstractmethod
     async def initialize(self) -> None:
@@ -146,7 +147,22 @@ class BaseProvider(ABC):
         """Record an error"""
         self._error_count += 1
 
+    def set_cooldown(self, seconds: int) -> None:
+        """Set provider cooldown"""
+        self._cooldown_until = datetime.now(timezone.utc) + timedelta(seconds=seconds)
+
+    def is_in_cooldown(self) -> bool:
+        """Check if provider is in cooldown"""
+        if self._cooldown_until is None:
+            return False
+        
+        if datetime.now(timezone.utc) > self._cooldown_until:
+            self._cooldown_until = None
+            return False
+            
+        return True
+
     @property
     def is_enabled(self) -> bool:
         """Check if provider is enabled"""
-        return self.config.enabled and self._is_initialized
+        return self.config.enabled and self._is_initialized and not self.is_in_cooldown()

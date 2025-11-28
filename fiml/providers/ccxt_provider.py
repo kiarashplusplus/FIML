@@ -358,7 +358,7 @@ class CCXTProvider(BaseProvider):
                 # CCXT format: [timestamp, open, high, low, close, volume]
                 ohlcv_data.append(
                     {
-                        "timestamp": datetime.fromtimestamp(candle[0] / 1000).isoformat(),
+                        "timestamp": int(candle[0]),
                         "open": float(candle[1]),
                         "high": float(candle[2]),
                         "low": float(candle[3]),
@@ -368,7 +368,7 @@ class CCXTProvider(BaseProvider):
                 )
 
             data = {
-                "ohlcv": ohlcv_data,
+                "candles": ohlcv_data,
                 "timeframe": timeframe,
                 "count": len(ohlcv_data),
                 "symbol": symbol,

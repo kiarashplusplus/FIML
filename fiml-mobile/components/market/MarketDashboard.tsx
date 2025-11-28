@@ -11,9 +11,9 @@ const MarketDashboard = () => {
     React.useEffect(() => {
         const fetchHistory = async () => {
             // Fetch history for the first symbol as an example
-            const history = await getHistory(symbols[0], '1d');
-            if (history && history.length > 0) {
-                setChartData(history);
+            const response = await getHistory(symbols[0], '1d');
+            if (response && response.candles && response.candles.length > 0) {
+                setChartData(response.candles);
             }
         };
         fetchHistory();
