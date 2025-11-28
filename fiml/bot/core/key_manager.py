@@ -1,8 +1,10 @@
 """
-Component 1: User Provider Key Manager
-Handles collection, validation, and secure storage of user API keys (BYOK model)
+User API Key Manager
+
+Manages encrypted storage and retrieval of user API keys with quota tracking.
 """
 
+import base64
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,18 +13,23 @@ from typing import Any, Dict, List, Optional
 import structlog
 from cryptography.fernet import Fernet
 
-logger = structlog.get_logger(__name__)
+from fiml.bot.core.usage_analytics import UsageAnalytics
+from fiml.cache.l1_cache import get_redis_client
+from fiml.core.config import settings
+from fiml.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class UserProviderKeyManager:
     """
-    Manages user-provided API keys for data providers (BYOK model)
-
+    Manages user API keys with encryption and quota tracking
+    
     Features:
-    - Secure key storage with encryption
-    - Key validation (format + API test)
-    - Quota tracking
-    - Multi-provider support
+    - Encrypted key storage using Fernet
+    - Provider-specific key management
+    - Usage tracking and quota warnings
+    - Key validation and testing
     """
 
     # Provider key format patterns
@@ -249,47 +256,47 @@ class UserProviderKeyManager:
 
     async def track_usage(self, user_id: str, provider: str) -> Dict[str, Any]:
         """
-        Track API usage for quota management
-
+        Track API usage for quota management using Redis-based analytics
+        
         Args:
             user_id: User identifier
             provider: Provider used
+            
+        Returns:
+            Dict with quota status and warning
         """
-        # In-memory tracking (should be Redis in production)
-        today = datetime.now(UTC).strftime("%Y-%m-%d")
-        key = f"{user_id}:{provider}:{today}"
-
-        if key not in self._quota_usage:
-            self._quota_usage[key] = 0
-
-        self._quota_usage[key] += 1
-
-        # Get usage
-        usage = self._quota_usage[key]
-
-        # Check if warning needed (simplified - should check actual provider limits)
-        # For now, warn at 80% of free tier limits
-        limits = {
-            "alpha_vantage": 400,  # 80% of 500
-            "fmp": 200,  # 80% of 250
-            "finnhub": 2000,  # 80% of some reasonable daily limit
-        }
-
-        limit = limits.get(provider, 1000)
-
-        if usage >= limit:
-            logger.warning(
-                "Quota warning", user_id=user_id, provider=provider, usage=usage, limit=limit
-            )
-            return {"warning": True, "usage": usage, "limit": limit}
-
-        return {"warning": False, "usage": usage, "limit": limit}
+        # Track the call
+        await self.usage_analytics.track_call(user_id, provider, "api_call")
+        
+        # Check quota status
+        quota_status = await self.usage_analytics.check_quota(user_id, provider)
+        
+        return quota_status
 
     async def get_usage(self, user_id: str, provider: str) -> int:
-        """Get current usage for user/provider"""
-        today = datetime.now(UTC).strftime("%Y-%m-%d")
-        key = f"{user_id}:{provider}:{today}"
-        return self._quota_usage.get(key, 0)
+        """
+        Get current daily usage for user/provider
+        
+        Args:
+            user_id: User identifier
+            provider: Provider name
+            
+        Returns:
+            Daily usage count
+        """
+        return await self.usage_analytics.get_usage(user_id, provider, "daily")
+    
+    async def get_all_usage_stats(self, user_id: str) -> Dict[str, Any]:
+        """
+        Get comprehensive usage statistics for all providers
+        
+        Args:
+            user_id: User identifier
+            
+        Returns:
+            Dict with usage stats for all providers, warnings, and totals
+        """
+        return await self.usage_analytics.get_all_usage(user_id)
 
     async def _audit_log(self, user_id: str, action: str) -> None:
         """

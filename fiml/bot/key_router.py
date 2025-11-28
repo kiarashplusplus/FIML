@@ -56,6 +56,27 @@ class KeyResponse(BaseModel):
     error: Optional[str] = None
 
 
+class UsageStats(BaseModel):
+    """Usage statistics for a single provider"""
+    provider: str
+    daily_usage: int
+    daily_limit: int | float  # float for infinity
+    monthly_usage: int
+    monthly_limit: int | float
+    daily_percentage: float
+    monthly_percentage: float
+    warning: bool
+    tier: str
+
+
+class UsageStatsResponse(BaseModel):
+    """Response model for usage statistics"""
+    stats: List[UsageStats]
+    total_calls_today: int
+    has_warnings: bool
+    timestamp: str
+
+
 @router.get("/api/user/{user_id}/keys")
 async def get_provider_status(
     user_id: str,
@@ -347,4 +368,71 @@ async def remove_key(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to remove API key: {str(e)}"
+        )
+
+
+@router.get("/api/user/{user_id}/usage")
+async def get_usage_stats(
+    user_id: str,
+    provider: Optional[str] = None,
+    authorization: Optional[str] = Header(None)
+) -> UsageStatsResponse:
+    """
+    Get API usage statistics for user
+
+    Query Parameters:
+        provider: Optional provider filter (returns stats for one provider)
+
+    Returns:
+        200: Usage statistics with quota warnings
+        500: Internal server error
+    """
+    service = get_key_service()
+
+    try:
+        if provider:
+            # Single provider stats
+            daily_usage = await service.usage_analytics.get_usage(user_id, provider, "daily")
+            monthly_usage = await service.usage_analytics.get_usage(user_id, provider, "monthly")
+            quota_info = await service.usage_analytics.check_quota(user_id, provider)
+
+            stats = [UsageStats(
+                provider=provider,
+                daily_usage=daily_usage,
+                daily_limit=quota_info["daily_limit"],
+                monthly_usage=monthly_usage,
+                monthly_limit=quota_info["monthly_limit"],
+                daily_percentage=quota_info["daily_percentage"],
+                monthly_percentage=quota_info["monthly_percentage"],
+                warning=quota_info["warning"],
+                tier=service.usage_analytics.get_provider_limits(provider).get("tier", "unknown")
+            )]
+
+            return UsageStatsResponse(
+                stats=stats,
+                total_calls_today=daily_usage,
+                has_warnings=quota_info["warning"],
+                timestamp=datetime.now(UTC).isoformat()
+            )
+        else:
+            # All providers stats
+            all_stats = await service.get_all_usage_stats(user_id)
+
+            # Convert to response model
+            stats_list = [
+                UsageStats(**stat) for stat in all_stats["stats"]
+            ]
+
+            return UsageStatsResponse(
+                stats=stats_list,
+                total_calls_today=all_stats["total_calls_today"],
+                has_warnings=all_stats["has_warnings"],
+                timestamp=all_stats["timestamp"]
+            )
+
+    except Exception as e:
+        logger.error("Error fetching usage stats", user_id=user_id, error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch usage statistics: {str(e)}"
         )

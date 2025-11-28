@@ -100,3 +100,26 @@ export interface AddKeyModalProps {
     onClose: () => void;
     onSubmit: (providerName: string, apiKey: string, apiSecret?: string) => Promise<void>;
 }
+
+// ============================================================================
+// Usage Statistics Types
+// ============================================================================
+
+export interface UsageStats {
+    provider: string;
+    daily_usage: number;
+    daily_limit: number;
+    monthly_usage: number;
+    monthly_limit: number;
+    daily_percentage: number;
+    monthly_percentage: number;
+    warning: boolean;
+    tier: string;
+}
+
+export interface UsageStatsResponse {
+    stats: UsageStats[];
+    total_calls_today: number;
+    has_warnings: boolean;
+    timestamp: string;
+}

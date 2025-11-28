@@ -5,8 +5,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import ProviderKeyCard from '../../components/keys/ProviderKeyCard';
 import AddKeyModal from '../../components/keys/AddKeyModal';
+import UsageStatsCard from '../../components/usage/UsageStatsCard';
 import keyManagementService from '../../services/keyManagement';
-import type { Provider } from '../../types';
+import type { Provider, UsageStatsResponse } from '../../types';
 
 export default function HomeScreen() {
     const { user } = useAuth();
@@ -18,30 +19,56 @@ export default function HomeScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<{ name: string; displayName: string } | null>(null);
 
-    useEffect(() => {
-        fetchProviders();
-    }, []);
+    // Usage stats state
+    const [usageStats, setUsageStats] = useState<UsageStatsResponse | null>(null);
+    const [usageLoading, setUsageLoading] = useState(false);
 
     // Fetch provider status
-    const fetchProviders = async (forceRefresh: boolean = false) => {
+    const fetchProviders = async (forceRefresh = false) => {
         if (!user?.id) return;
 
         try {
-            const data = await keyManagementService.getProviderStatus(user.id, forceRefresh);
-            setProviders(data);
+            setLoading(true);
+            const providerStatus = await keyManagementService.getProviderStatus(user.id, forceRefresh);
+            setProviders(providerStatus.providers);
         } catch (error) {
-            console.error('Failed to fetch providers:', error);
+            console.error('Error fetching providers:', error);
+            Alert.alert('Error', 'Failed to load provider status');
         } finally {
             setLoading(false);
         }
     };
 
-    // Pull-to-refresh handler
-    const handleRefresh = async () => {
+    const loadUsageStats = async () => {
+        if (!user?.id) return;
+
+        try {
+            setUsageLoading(true);
+            const stats = await keyManagementService.getUsageStats(user.id);
+            setUsageStats(stats);
+        } catch (error) {
+            console.error('Error loading usage stats:', error);
+            // Don't show alert for usage stats - fail silently
+        } finally {
+            setUsageLoading(false);
+        }
+    };
+
+    const onRefresh = async () => {
         setRefreshing(true);
-        await fetchProviders(true); // Force refresh
+        await Promise.all([
+            fetchProviders(true),
+            loadUsageStats()
+        ]);
         setRefreshing(false);
     };
+
+    useEffect(() => {
+        if (user?.id) {
+            fetchProviders();
+            loadUsageStats();
+        }
+    }, [user?.id]);
 
     const handleAddKey = (providerName: string) => {
         const provider = providers.find(p => p.name === providerName);
@@ -118,28 +145,27 @@ export default function HomeScreen() {
                 <Text className="text-3xl font-bold text-white">{user?.name || 'Trader'}</Text>
             </View>
 
-            <View className="flex-row space-x-4 mb-8">
-                <View className="flex-1 bg-blue-600/20 p-4 rounded-xl border border-blue-600/50">
-                    <Text className="text-blue-400 font-bold mb-1">XP Points</Text>
-                    <Text className="text-2xl text-white font-bold">{user?.xp || 0}</Text>
-                </View>
-                <View className="flex-1 bg-purple-600/20 p-4 rounded-xl border border-purple-600/50">
-                    <Text className="text-purple-400 font-bold mb-1">Level</Text>
-                    <Text className="text-2xl text-white font-bold">Novice</Text>
-                </View>
+            {/* Page Header */}
+            <View className="bg-gray-900 p-6">
+                <Text className="text-white text-3xl font-bold mb-2">Provider Keys</Text>
+                <Text className="text-gray-400">
+                    Manage your API keys for data providers
+                </Text>
             </View>
 
-            {/* API Keys Section */}
-            <View className="mb-8">
-                <Text className="text-xl font-bold text-white mb-4">🔑 API Keys</Text>
-                <Text className="text-gray-400 text-sm mb-4">
-                    Connect your data providers to unlock real-time market insights
-                </Text>
+            {/* Usage Statistics Card */}
+            <UsageStatsCard
+                stats={usageStats}
+                loading={usageLoading}
+                onRefresh={loadUsageStats}
+            />
 
-                {isLoading ? (
-                    <Text className="text-gray-500 text-center py-4">Loading providers...</Text>
+            {/* Provider Cards */}
+            <View className="p-4">
+                {loading ? (
+                    <Text className="text-gray-400 text-center">Loading providers...</Text>
                 ) : (
-                    providers.map(provider => (
+                    providers.map((provider) => (
                         <ProviderKeyCard
                             key={provider.name}
                             provider={provider}

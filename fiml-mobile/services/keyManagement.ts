@@ -359,16 +359,69 @@ return {
             description: 'Stock market data and financial indicators',
         },
         {
-            name: 'yfinance',
-            displayName: 'Yahoo Finance',
-            isConnected: false,
-            description: 'Free stock and market data (no key required)',
-        },
-    ];
-}
-}
+            /**
+             * Get default provider list (offline fallback)
+             */
+            private getDefaultProviders(): Provider[] {
+                return [
+                    {
+                        name: 'yfinance',
+                        displayName: 'Yahoo Finance',
+                        isConnected: false,
+                        description: 'Free stock and market data'
+                    },
+                    {
+                        name: 'binance',
+                        displayName: 'Binance',
+                        isConnected: false,
+                        description: 'Crypto trading data'
+                    }
+                ];
+            }
+
+    /**
+     * Get usage statistics for user
+     */
+    async getUsageStats(userId: string, provider?: string): Promise<UsageStatsResponse> {
+                try {
+                    const token = await this.getAuthToken();
+                    const url = provider
+                        ? `${API_BASE_URL}/api/user/${userId}/usage?provider=${provider}`
+                        : `${API_BASE_URL}/api/user/${userId}/usage`;
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        timeout: TIME_CONSTANTS.NETWORK_TIMEOUT_MS,
+                    });
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+
+                    // Return empty stats on error
+                    return {
+                        stats: [],
+                        total_calls_today: 0,
+                        has_warnings: false,
+                        timestamp: new Date().toISOString(),
+                    };
+                } catch (error) {
+                    console.error('Error fetching usage stats:', error);
+                    return {
+                        stats: [],
+                        total_calls_today: 0,
+                        has_warnings: false,
+                        timestamp: new Date().toISOString(),
+                    };
+                }
+            }
+        }
 
 // Re-export types for convenience
-export type { Provider, KeyManagementResponse, ValidationResponse } from '../types';
+export type { Provider, KeyManagementResponse, ValidationResponse, UsageStatsResponse, UsageStats } from '../types';
 
-export default new KeyManagementService();
+    export default new KeyManagementService();
