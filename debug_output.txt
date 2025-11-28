@@ -1,0 +1,279 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/kiarash/FIML
+configfile: pyproject.toml
+plugins: benchmark-5.2.3, cov-7.0.0, mock-3.15.1, anyio-4.11.0, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2 items
+
+tests/test_arbitration.py 
+🐳 Starting test containers (Redis & PostgreSQL)...
+⏳ Waiting for Redis to be ready...
+✅ Redis is ready
+⏳ Waiting for PostgreSQL to be ready...
+✅ PostgreSQL is ready
+✅ All test services are ready
+
+[2m2025-11-28T11:34:02.304197Z[0m [[32m[1minfo     [0m] [1mPrometheus metrics initialized[0m [[0m[1m[34mfiml.cache.analytics[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+Using selector: EpollSelector
+Using selector: EpollSelector
+[2m2025-11-28T11:34:02.484975Z[0m [[32m[1minfo     [0m] [1mInitializing provider registry[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.485174Z[0m [[32m[1minfo     [0m] [1mMock provider registered (test/development mode)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.485313Z[0m [[32m[1minfo     [0m] [1mAlpha Vantage provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.485451Z[0m [[32m[1minfo     [0m] [1mFMP provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.485579Z[0m [[32m[1minfo     [0m] [1mCCXT kraken provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.485701Z[0m [[32m[1minfo     [0m] [1mCCXT kucoin provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.485818Z[0m [[32m[1minfo     [0m] [1mCCXT okx provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.485936Z[0m [[32m[1minfo     [0m] [1mCCXT bybit provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486042Z[0m [[32m[1minfo     [0m] [1mCCXT gateio provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486154Z[0m [[32m[1minfo     [0m] [1mCCXT bitget provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486291Z[0m [[32m[1minfo     [0m] [1mNewsAPI provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486410Z[0m [[32m[1minfo     [0m] [1mPolygon provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486548Z[0m [[32m[1minfo     [0m] [1mFinnhub provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486660Z[0m [[32m[1minfo     [0m] [1mTwelvedata provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486789Z[0m [[32m[1minfo     [0m] [1mTiingo provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.486903Z[0m [[32m[1minfo     [0m] [1mCoinGecko provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.487039Z[0m [[32m[1minfo     [0m] [1mDefiLlama provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.487147Z[0m [[32m[1minfo     [0m] [1mCoinMarketCap provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.487244Z[0m [[32m[1minfo     [0m] [1mRegistered provider: mock_provider[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.487359Z[0m [[32m[1minfo     [0m] [1mInitializing Yahoo Finance provider[0m [[0m[1m[34mfiml.providers.yahoo_finance[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.487485Z[0m [[32m[1minfo     [0m] [1mRegistered provider: yahoo_finance[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.487605Z[0m [[32m[1minfo     [0m] [1mInitializing Alpha Vantage provider[0m [[0m[1m[34mfiml.providers.alpha_vantage[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.488235Z[0m [[32m[1minfo     [0m] [1mAlpha Vantage provider initialized successfully[0m [[0m[1m[34mfiml.providers.alpha_vantage[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.488353Z[0m [[32m[1minfo     [0m] [1mRegistered provider: alpha_vantage[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.488510Z[0m [[32m[1minfo     [0m] [1mInitializing FMP provider     [0m [[0m[1m[34mfiml.providers.fmp[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.488664Z[0m [[32m[1minfo     [0m] [1mFMP provider initialized successfully[0m [[0m[1m[34mfiml.providers.fmp[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.488763Z[0m [[32m[1minfo     [0m] [1mRegistered provider: fmp      [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.488910Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: kraken[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.489933Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.490059Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_kraken[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.490171Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: kucoin[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.490996Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.491119Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_kucoin[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.491238Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: okx[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.492034Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.492146Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_okx [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.492263Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: bybit[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.493000Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.493110Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_bybit[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.493226Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: gateio[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.494019Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.494133Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_gateio[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.494247Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: bitget[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495048Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495163Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_bitget[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495290Z[0m [[32m[1minfo     [0m] [1mInitializing NewsAPI provider [0m [[0m[1m[34mfiml.providers.newsapi[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495429Z[0m [[32m[1minfo     [0m] [1mRegistered provider: newsapi  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495568Z[0m [[32m[1minfo     [0m] [1mInitializing Polygon provider [0m [[0m[1m[34mfiml.providers.polygon[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495694Z[0m [[32m[1minfo     [0m] [1mPolygon provider initialized successfully[0m [[0m[1m[34mfiml.providers.polygon[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495788Z[0m [[32m[1minfo     [0m] [1mRegistered provider: polygon  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.495935Z[0m [[32m[1minfo     [0m] [1mInitializing Finnhub provider [0m [[0m[1m[34mfiml.providers.finnhub[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496072Z[0m [[32m[1minfo     [0m] [1mFinnhub provider initialized successfully[0m [[0m[1m[34mfiml.providers.finnhub[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496172Z[0m [[32m[1minfo     [0m] [1mRegistered provider: finnhub  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496295Z[0m [[32m[1minfo     [0m] [1mInitializing Twelvedata provider[0m [[0m[1m[34mfiml.providers.twelvedata[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496424Z[0m [[32m[1minfo     [0m] [1mTwelvedata provider initialized successfully[0m [[0m[1m[34mfiml.providers.twelvedata[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496566Z[0m [[32m[1minfo     [0m] [1mRegistered provider: twelvedata[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496686Z[0m [[32m[1minfo     [0m] [1mInitializing Tiingo provider  [0m [[0m[1m[34mfiml.providers.tiingo[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496822Z[0m [[32m[1minfo     [0m] [1mTiingo provider initialized successfully[0m [[0m[1m[34mfiml.providers.tiingo[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.496929Z[0m [[32m[1minfo     [0m] [1mRegistered provider: tiingo   [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497047Z[0m [[32m[1minfo     [0m] [1mInitializing CoinGecko provider[0m [[0m[1m[34mfiml.providers.coingecko[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497174Z[0m [[32m[1minfo     [0m] [1mCoinGecko provider initialized successfully[0m [[0m[1m[34mfiml.providers.coingecko[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497273Z[0m [[32m[1minfo     [0m] [1mRegistered provider: coingecko[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497389Z[0m [[32m[1minfo     [0m] [1mInitializing DefiLlama provider[0m [[0m[1m[34mfiml.providers.defillama[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497526Z[0m [[32m[1minfo     [0m] [1mDefiLlama provider initialized successfully[0m [[0m[1m[34mfiml.providers.defillama[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497618Z[0m [[32m[1minfo     [0m] [1mRegistered provider: defillama[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497739Z[0m [[32m[1minfo     [0m] [1mInitializing CoinMarketCap provider[0m [[0m[1m[34mfiml.providers.coinmarketcap[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497877Z[0m [[32m[1minfo     [0m] [1mCoinMarketCap provider initialized successfully[0m [[0m[1m[34mfiml.providers.coinmarketcap[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.497966Z[0m [[32m[1minfo     [0m] [1mRegistered provider: coinmarketcap[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.498074Z[0m [[32m[1minfo     [0m] [1mProvider registry initialized with 18 providers[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.498208Z[0m [[32m[1minfo     [0m] [1mArbitrating request           [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36masset[0m=[35mTSLA[0m [36mdata_type[0m=[35mprice[0m [36menvironment[0m=[35mdevelopment[0m [36mregion[0m=[35mUS[0m
+[2m2025-11-28T11:34:02.498486Z[0m [[32m[1minfo     [0m] [1mArbitration plan created      [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m [36mestimated_latency[0m=[35m100[0m [36mfallbacks[0m=[35m['twelvedata', 'tiingo'][0m [36mprimary[0m=[35mfinnhub[0m
+[2m2025-11-28T11:34:02.498610Z[0m [[32m[1minfo     [0m] [1mShutting down provider registry[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.498718Z[0m [[32m[1minfo     [0m] [1mShutdown provider: mock_provider[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.498815Z[0m [[32m[1minfo     [0m] [1mShutting down Yahoo Finance provider[0m [[0m[1m[34mfiml.providers.yahoo_finance[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.498912Z[0m [[32m[1minfo     [0m] [1mShutdown provider: yahoo_finance[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.499008Z[0m [[32m[1minfo     [0m] [1mShutting down Alpha Vantage provider[0m [[0m[1m[34mfiml.providers.alpha_vantage[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.499167Z[0m [[32m[1minfo     [0m] [1mShutdown provider: alpha_vantage[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.499266Z[0m [[32m[1minfo     [0m] [1mShutting down FMP provider    [0m [[0m[1m[34mfiml.providers.fmp[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.499402Z[0m [[32m[1minfo     [0m] [1mShutdown provider: fmp        [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.499511Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (kraken)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.499796Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_kraken[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.499901Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (kucoin)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.500222Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_kucoin[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.500337Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (okx)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.500626Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_okx   [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.500725Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (bybit)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.501031Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_bybit [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.501129Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (gateio)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.501398Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_gateio[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.501520Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (bitget)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.501783Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_bitget[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.501881Z[0m [[32m[1minfo     [0m] [1mShutting down NewsAPI provider[0m [[0m[1m[34mfiml.providers.newsapi[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502012Z[0m [[32m[1minfo     [0m] [1mShutdown provider: newsapi    [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502120Z[0m [[32m[1minfo     [0m] [1mShutting down Polygon provider[0m [[0m[1m[34mfiml.providers.polygon[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502251Z[0m [[32m[1minfo     [0m] [1mShutdown provider: polygon    [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502343Z[0m [[32m[1minfo     [0m] [1mShutting down Finnhub provider[0m [[0m[1m[34mfiml.providers.finnhub[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502494Z[0m [[32m[1minfo     [0m] [1mShutdown provider: finnhub    [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502598Z[0m [[32m[1minfo     [0m] [1mShutting down Twelvedata provider[0m [[0m[1m[34mfiml.providers.twelvedata[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502742Z[0m [[32m[1minfo     [0m] [1mShutdown provider: twelvedata [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502831Z[0m [[32m[1minfo     [0m] [1mShutting down Tiingo provider [0m [[0m[1m[34mfiml.providers.tiingo[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.502961Z[0m [[32m[1minfo     [0m] [1mShutdown provider: tiingo     [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.503053Z[0m [[32m[1minfo     [0m] [1mShutting down CoinGecko provider[0m [[0m[1m[34mfiml.providers.coingecko[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.503176Z[0m [[32m[1minfo     [0m] [1mShutdown provider: coingecko  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.503282Z[0m [[32m[1minfo     [0m] [1mShutting down DefiLlama provider[0m [[0m[1m[34mfiml.providers.defillama[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.503410Z[0m [[32m[1minfo     [0m] [1mShutdown provider: defillama  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.503533Z[0m [[32m[1minfo     [0m] [1mShutting down CoinMarketCap provider[0m [[0m[1m[34mfiml.providers.coinmarketcap[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.503691Z[0m [[32m[1minfo     [0m] [1mShutdown provider: coinmarketcap[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+.Using selector: EpollSelector
+[2m2025-11-28T11:34:02.507400Z[0m [[32m[1minfo     [0m] [1mInitializing provider registry[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.507551Z[0m [[32m[1minfo     [0m] [1mMock provider registered (test/development mode)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.507680Z[0m [[32m[1minfo     [0m] [1mAlpha Vantage provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.507791Z[0m [[32m[1minfo     [0m] [1mFMP provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.507903Z[0m [[32m[1minfo     [0m] [1mCCXT kraken provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508012Z[0m [[32m[1minfo     [0m] [1mCCXT kucoin provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508119Z[0m [[32m[1minfo     [0m] [1mCCXT okx provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508226Z[0m [[32m[1minfo     [0m] [1mCCXT bybit provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508332Z[0m [[32m[1minfo     [0m] [1mCCXT gateio provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508462Z[0m [[32m[1minfo     [0m] [1mCCXT bitget provider will be registered (public API)[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508582Z[0m [[32m[1minfo     [0m] [1mNewsAPI provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508692Z[0m [[32m[1minfo     [0m] [1mPolygon provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508802Z[0m [[32m[1minfo     [0m] [1mFinnhub provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.508911Z[0m [[32m[1minfo     [0m] [1mTwelvedata provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509019Z[0m [[32m[1minfo     [0m] [1mTiingo provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509128Z[0m [[32m[1minfo     [0m] [1mCoinGecko provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509252Z[0m [[32m[1minfo     [0m] [1mDefiLlama provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509359Z[0m [[32m[1minfo     [0m] [1mCoinMarketCap provider will be registered[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509488Z[0m [[32m[1minfo     [0m] [1mRegistered provider: mock_provider[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509579Z[0m [[32m[1minfo     [0m] [1mInitializing Yahoo Finance provider[0m [[0m[1m[34mfiml.providers.yahoo_finance[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509688Z[0m [[32m[1minfo     [0m] [1mRegistered provider: yahoo_finance[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.509795Z[0m [[32m[1minfo     [0m] [1mInitializing Alpha Vantage provider[0m [[0m[1m[34mfiml.providers.alpha_vantage[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.510108Z[0m [[32m[1minfo     [0m] [1mAlpha Vantage provider initialized successfully[0m [[0m[1m[34mfiml.providers.alpha_vantage[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.510224Z[0m [[32m[1minfo     [0m] [1mRegistered provider: alpha_vantage[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.510335Z[0m [[32m[1minfo     [0m] [1mInitializing FMP provider     [0m [[0m[1m[34mfiml.providers.fmp[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.510503Z[0m [[32m[1minfo     [0m] [1mFMP provider initialized successfully[0m [[0m[1m[34mfiml.providers.fmp[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.510606Z[0m [[32m[1minfo     [0m] [1mRegistered provider: fmp      [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.510719Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: kraken[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.511572Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.511683Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_kraken[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.511796Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: kucoin[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.513396Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.513527Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_kucoin[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.513639Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: okx[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.514300Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.514411Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_okx [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.514540Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: bybit[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.515210Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.515312Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_bybit[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.515420Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: gateio[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.516180Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.516289Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_gateio[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.516401Z[0m [[32m[1minfo     [0m] [1mInitializing CCXT provider with exchange: bitget[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517053Z[0m [[32m[1minfo     [0m] [1mCCXT provider initialized with 2 markets[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517174Z[0m [[32m[1minfo     [0m] [1mRegistered provider: ccxt_bitget[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517285Z[0m [[32m[1minfo     [0m] [1mInitializing NewsAPI provider [0m [[0m[1m[34mfiml.providers.newsapi[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517450Z[0m [[32m[1minfo     [0m] [1mRegistered provider: newsapi  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517553Z[0m [[32m[1minfo     [0m] [1mInitializing Polygon provider [0m [[0m[1m[34mfiml.providers.polygon[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517734Z[0m [[32m[1minfo     [0m] [1mPolygon provider initialized successfully[0m [[0m[1m[34mfiml.providers.polygon[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517832Z[0m [[32m[1minfo     [0m] [1mRegistered provider: polygon  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.517934Z[0m [[32m[1minfo     [0m] [1mInitializing Finnhub provider [0m [[0m[1m[34mfiml.providers.finnhub[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518068Z[0m [[32m[1minfo     [0m] [1mFinnhub provider initialized successfully[0m [[0m[1m[34mfiml.providers.finnhub[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518176Z[0m [[32m[1minfo     [0m] [1mRegistered provider: finnhub  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518288Z[0m [[32m[1minfo     [0m] [1mInitializing Twelvedata provider[0m [[0m[1m[34mfiml.providers.twelvedata[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518417Z[0m [[32m[1minfo     [0m] [1mTwelvedata provider initialized successfully[0m [[0m[1m[34mfiml.providers.twelvedata[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518528Z[0m [[32m[1minfo     [0m] [1mRegistered provider: twelvedata[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518628Z[0m [[32m[1minfo     [0m] [1mInitializing Tiingo provider  [0m [[0m[1m[34mfiml.providers.tiingo[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518758Z[0m [[32m[1minfo     [0m] [1mTiingo provider initialized successfully[0m [[0m[1m[34mfiml.providers.tiingo[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518849Z[0m [[32m[1minfo     [0m] [1mRegistered provider: tiingo   [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.518949Z[0m [[32m[1minfo     [0m] [1mInitializing CoinGecko provider[0m [[0m[1m[34mfiml.providers.coingecko[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519081Z[0m [[32m[1minfo     [0m] [1mCoinGecko provider initialized successfully[0m [[0m[1m[34mfiml.providers.coingecko[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519173Z[0m [[32m[1minfo     [0m] [1mRegistered provider: coingecko[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519277Z[0m [[32m[1minfo     [0m] [1mInitializing DefiLlama provider[0m [[0m[1m[34mfiml.providers.defillama[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519405Z[0m [[32m[1minfo     [0m] [1mDefiLlama provider initialized successfully[0m [[0m[1m[34mfiml.providers.defillama[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519512Z[0m [[32m[1minfo     [0m] [1mRegistered provider: defillama[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519614Z[0m [[32m[1minfo     [0m] [1mInitializing CoinMarketCap provider[0m [[0m[1m[34mfiml.providers.coinmarketcap[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519747Z[0m [[32m[1minfo     [0m] [1mCoinMarketCap provider initialized successfully[0m [[0m[1m[34mfiml.providers.coinmarketcap[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519839Z[0m [[32m[1minfo     [0m] [1mRegistered provider: coinmarketcap[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.519944Z[0m [[32m[1minfo     [0m] [1mProvider registry initialized with 18 providers[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.520055Z[0m [[32m[1minfo     [0m] [1mArbitrating request           [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36masset[0m=[35mTSLA[0m [36mdata_type[0m=[35mprice[0m [36menvironment[0m=[35mdevelopment[0m [36mregion[0m=[35mUS[0m
+[2m2025-11-28T11:34:02.520281Z[0m [[32m[1minfo     [0m] [1mArbitration plan created      [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m [36mestimated_latency[0m=[35m100[0m [36mfallbacks[0m=[35m['alpha_vantage', 'finnhub'][0m [36mprimary[0m=[35mpolygon[0m
+[2m2025-11-28T11:34:02.520410Z[0m [[32m[1minfo     [0m] [1mAttempting provider 1/3       [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36masset[0m=[35mTSLA[0m [36menvironment[0m=[35mdevelopment[0m [36mprovider[0m=[35mpolygon[0m
+[2m2025-11-28T11:34:02.520534Z[0m [[32m[1minfo     [0m] [1mFetching price for TSLA from Polygon[0m [[0m[1m[34mfiml.providers.polygon[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+Traceback (most recent call last):
+  File "/home/kiarash/FIML/fiml/arbitration/engine.py", line 153, in execute_with_fallback
+    response = await self._fetch_from_provider(provider, asset, data_type)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kiarash/FIML/fiml/arbitration/engine.py", line 294, in _fetch_from_provider
+    return await provider.fetch_price(asset)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kiarash/FIML/fiml/providers/polygon.py", line 114, in fetch_price
+    raise ProviderError(f"No price data available for {asset.symbol}")
+fiml.core.exceptions.ProviderError: No price data available for TSLA
+DEBUG: Provider polygon failed: No price data available for TSLA
+[2m2025-11-28T11:34:02.521318Z[0m [[33m[1mwarning  [0m] [1mProvider failed, falling back [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m [36merror[0m=[35m'No price data available for TSLA'[0m [36mfallback_available[0m=[35mTrue[0m [36mprovider[0m=[35mpolygon[0m
+[2m2025-11-28T11:34:02.521480Z[0m [[32m[1minfo     [0m] [1mAttempting provider 2/3       [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36masset[0m=[35mTSLA[0m [36menvironment[0m=[35mdevelopment[0m [36mprovider[0m=[35malpha_vantage[0m
+[2m2025-11-28T11:34:02.521590Z[0m [[32m[1minfo     [0m] [1mFetching price for TSLA from Alpha Vantage[0m [[0m[1m[34mfiml.providers.alpha_vantage[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+Traceback (most recent call last):
+  File "/home/kiarash/FIML/fiml/arbitration/engine.py", line 153, in execute_with_fallback
+    response = await self._fetch_from_provider(provider, asset, data_type)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kiarash/FIML/fiml/arbitration/engine.py", line 294, in _fetch_from_provider
+    return await provider.fetch_price(asset)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kiarash/FIML/fiml/providers/alpha_vantage.py", line 140, in fetch_price
+    raise ProviderError(f"No quote data available for {asset.symbol}")
+fiml.core.exceptions.ProviderError: No quote data available for TSLA
+DEBUG: Provider alpha_vantage failed: No quote data available for TSLA
+[2m2025-11-28T11:34:02.522127Z[0m [[33m[1mwarning  [0m] [1mProvider failed, falling back [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m [36merror[0m=[35m'No quote data available for TSLA'[0m [36mfallback_available[0m=[35mTrue[0m [36mprovider[0m=[35malpha_vantage[0m
+[2m2025-11-28T11:34:02.522265Z[0m [[32m[1minfo     [0m] [1mAttempting provider 3/3       [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36masset[0m=[35mTSLA[0m [36menvironment[0m=[35mdevelopment[0m [36mprovider[0m=[35mfinnhub[0m
+[2m2025-11-28T11:34:02.522380Z[0m [[32m[1minfo     [0m] [1mFetching price for TSLA from Finnhub[0m [[0m[1m[34mfiml.providers.finnhub[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.522605Z[0m [[32m[1minfo     [0m] [1mProvider succeeded            [0m [[0m[1m[34mfiml.arbitration.engine[0m][0m [36mapp[0m=[35mfiml[0m [36masset[0m=[35mTSLA[0m [36mconfidence[0m=[35m0.96[0m [36menvironment[0m=[35mdevelopment[0m [36mprovider[0m=[35mfinnhub[0m
+[2m2025-11-28T11:34:02.522721Z[0m [[32m[1minfo     [0m] [1mShutting down provider registry[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.522831Z[0m [[32m[1minfo     [0m] [1mShutdown provider: mock_provider[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.522928Z[0m [[32m[1minfo     [0m] [1mShutting down Yahoo Finance provider[0m [[0m[1m[34mfiml.providers.yahoo_finance[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.523028Z[0m [[32m[1minfo     [0m] [1mShutdown provider: yahoo_finance[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.523154Z[0m [[32m[1minfo     [0m] [1mShutting down Alpha Vantage provider[0m [[0m[1m[34mfiml.providers.alpha_vantage[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.523283Z[0m [[32m[1minfo     [0m] [1mShutdown provider: alpha_vantage[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.523376Z[0m [[32m[1minfo     [0m] [1mShutting down FMP provider    [0m [[0m[1m[34mfiml.providers.fmp[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.523538Z[0m [[32m[1minfo     [0m] [1mShutdown provider: fmp        [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.523641Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (kraken)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.523925Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_kraken[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.524026Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (kucoin)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.524291Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_kucoin[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.524395Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (okx)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.524671Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_okx   [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.524761Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (bybit)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525057Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_bybit [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525151Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (gateio)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525383Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_gateio[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525487Z[0m [[32m[1minfo     [0m] [1mShutting down CCXT provider (bitget)[0m [[0m[1m[34mfiml.providers.ccxt_provider[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525705Z[0m [[32m[1minfo     [0m] [1mShutdown provider: ccxt_bitget[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525790Z[0m [[32m[1minfo     [0m] [1mShutting down NewsAPI provider[0m [[0m[1m[34mfiml.providers.newsapi[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525900Z[0m [[32m[1minfo     [0m] [1mShutdown provider: newsapi    [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.525986Z[0m [[32m[1minfo     [0m] [1mShutting down Polygon provider[0m [[0m[1m[34mfiml.providers.polygon[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526086Z[0m [[32m[1minfo     [0m] [1mShutdown provider: polygon    [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526168Z[0m [[32m[1minfo     [0m] [1mShutting down Finnhub provider[0m [[0m[1m[34mfiml.providers.finnhub[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526265Z[0m [[32m[1minfo     [0m] [1mShutdown provider: finnhub    [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526349Z[0m [[32m[1minfo     [0m] [1mShutting down Twelvedata provider[0m [[0m[1m[34mfiml.providers.twelvedata[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526498Z[0m [[32m[1minfo     [0m] [1mShutdown provider: twelvedata [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526593Z[0m [[32m[1minfo     [0m] [1mShutting down Tiingo provider [0m [[0m[1m[34mfiml.providers.tiingo[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526727Z[0m [[32m[1minfo     [0m] [1mShutdown provider: tiingo     [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526824Z[0m [[32m[1minfo     [0m] [1mShutting down CoinGecko provider[0m [[0m[1m[34mfiml.providers.coingecko[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.526953Z[0m [[32m[1minfo     [0m] [1mShutdown provider: coingecko  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.527045Z[0m [[32m[1minfo     [0m] [1mShutting down DefiLlama provider[0m [[0m[1m[34mfiml.providers.defillama[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.527177Z[0m [[32m[1minfo     [0m] [1mShutdown provider: defillama  [0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.527268Z[0m [[32m[1minfo     [0m] [1mShutting down CoinMarketCap provider[0m [[0m[1m[34mfiml.providers.coinmarketcap[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+[2m2025-11-28T11:34:02.527421Z[0m [[32m[1minfo     [0m] [1mShutdown provider: coinmarketcap[0m [[0m[1m[34mfiml.providers.registry[0m][0m [36mapp[0m=[35mfiml[0m [36menvironment[0m=[35mdevelopment[0m
+.
+🧹 Cleaning up test containers...
+✅ Test containers cleaned up
+
+
+
+=============================== warnings summary ===============================
+../.local/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:319
+  /home/kiarash/.local/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:319: PydanticDeprecatedSince20: `json_encoders` is deprecated. See https://docs.pydantic.dev/2.12/concepts/serialization/#custom-serializers for alternatives. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================= 2 passed, 1 warning in 4.69s =========================
