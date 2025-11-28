@@ -14,14 +14,19 @@ export interface KeyManagementResponse {
     error?: string;
 }
 
-// Cache keys
+// Cache configuration
 const CACHE_KEYS = {
     PROVIDER_STATUS: 'provider_status_cache',
     CACHE_TIMESTAMP: 'provider_status_timestamp',
-};
+} as const;
 
-// Cache duration: 5 minutes
-const CACHE_DURATION_MS = 5 * 60 * 1000;
+// Time constants (in milliseconds)
+const TIME_CONSTANTS = {
+    CACHE_DURATION_MS: 5 * 60 * 1000,      // 5 minutes
+    REQUEST_TIMEOUT_MS: 10 * 1000,          // 10 seconds
+    SUCCESS_MODAL_DELAY_MS: 1500,           // 1.5 seconds
+    REMOVE_KEY_DELAY_MS: 1000,              // 1 second
+} as const;
 
 class KeyManagementService {
     private authTokenKey = 'auth_token';
@@ -47,7 +52,7 @@ class KeyManagementService {
             if (!timestamp) return false;
 
             const cacheAge = Date.now() - parseInt(timestamp, 10);
-            return cacheAge < CACHE_DURATION_MS;
+            return cacheAge < TIME_CONSTANTS.CACHE_DURATION_MS;
         } catch {
             return false;
         }
@@ -148,6 +153,9 @@ class KeyManagementService {
         return this.getDefaultProviders();
     }
 
+    /**
+     * Add a new API key
+     */
     async addKey(userId: string, provider: string, apiKey: string, apiSecret?: string): Promise<KeyManagementResponse> {
         try {
             const token = await this.getAuthToken();
@@ -164,21 +172,38 @@ class KeyManagementService {
                 }),
             });
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
+            // Handle different HTTP status codes
+            if (response.status === 201) {
                 // Clear cache on successful addition
                 await this.clearCache();
 
+                const data = await response.json();
                 return {
                     success: true,
                     message: data.message || 'API key added successfully',
                 };
             }
 
+            // Parse error response
+            const errorData = await response.json();
+
+            if (response.status === 400) {
+                return {
+                    success: false,
+                    error: errorData.detail || 'Invalid provider or key format',
+                };
+            }
+
+            if (response.status === 500) {
+                return {
+                    success: false,
+                    error: 'Server error. Please try again later.',
+                };
+            }
+
             return {
                 success: false,
-                error: data.error || 'Failed to add API key',
+                error: errorData.detail || 'Failed to add API key',
             };
         } catch (error) {
             return {
@@ -188,6 +213,9 @@ class KeyManagementService {
         }
     }
 
+    /**
+     * Test if an API key is valid
+     */
     async testKey(userId: string, provider: string): Promise<KeyManagementResponse> {
         try {
             const token = await this.getAuthToken();
@@ -199,18 +227,42 @@ class KeyManagementService {
                 },
             });
 
-            const data = await response.json();
+            // Handle different HTTP status codes
+            if (response.status === 200) {
+                const data = await response.json();
+                return {
+                    success: true,
+                    message: data.message || 'API key is valid',
+                };
+            }
 
-            if (!response.ok) {
+            // Parse error response
+            const errorData = await response.json();
+
+            if (response.status === 404) {
                 return {
                     success: false,
-                    error: data.error || 'Key test failed',
+                    error: 'No API key found for this provider',
+                };
+            }
+
+            if (response.status === 400) {
+                return {
+                    success: false,
+                    error: errorData.detail || 'Key validation failed',
+                };
+            }
+
+            if (response.status === 500) {
+                return {
+                    success: false,
+                    error: 'Server error. Please try again later.',
                 };
             }
 
             return {
-                success: true,
-                message: data.message || 'API key is valid',
+                success: false,
+                error: errorData.detail || 'Key test failed',
             };
         } catch (error) {
             return {

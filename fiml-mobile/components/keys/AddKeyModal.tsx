@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 
+// UI timing constants
+const SUCCESS_MODAL_DELAY_MS = 1500; // 1.5 seconds
+
 interface AddKeyModalProps {
     visible: boolean;
     providerName: string;
@@ -45,7 +48,7 @@ export default function AddKeyModal({ visible, providerName, providerDisplayName
                 setShowSuccess(false);
                 setIsLoading(false);
                 onClose();
-            }, 1500);
+            }, SUCCESS_MODAL_DELAY_MS);
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to add API key');

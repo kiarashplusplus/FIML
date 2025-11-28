@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 
+// UI timing constants
+const REMOVE_KEY_DELAY_MS = 1000; // 1 second
+
 interface Provider {
     name: string;
     displayName: string;
@@ -45,7 +48,7 @@ export default function ProviderKeyCard({ provider, onAdd, onTest, onRemove }: P
                     onPress: () => {
                         setRemovingKey(true);
                         onRemove(provider.name);
-                        setTimeout(() => setRemovingKey(false), 1000);
+                        setTimeout(() => setRemovingKey(false), REMOVE_KEY_DELAY_MS);
                     }
                 }
             ]
