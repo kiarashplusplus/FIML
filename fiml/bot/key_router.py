@@ -30,9 +30,9 @@ def get_key_service() -> UserProviderKeyManager:
     return _key_service
 
 
-
 class Provider(BaseModel):
     """Provider model"""
+
     name: str
     displayName: str
     isConnected: bool
@@ -41,6 +41,7 @@ class Provider(BaseModel):
 
 class AddKeyRequest(BaseModel):
     """Request model for adding API key"""
+
     provider: str
     api_key: str
     api_secret: Optional[str] = None
@@ -48,11 +49,13 @@ class AddKeyRequest(BaseModel):
 
 class ValidateKeyRequest(BaseModel):
     """Request model for validating API key format"""
+
     api_key: str
 
 
 class KeyResponse(BaseModel):
     """Response model for key operations"""
+
     success: bool
     message: Optional[str] = None
     error: Optional[str] = None
@@ -60,6 +63,7 @@ class KeyResponse(BaseModel):
 
 class UsageStats(BaseModel):
     """Usage statistics for a single provider"""
+
     provider: str
     daily_usage: int
     daily_limit: int | float  # float for infinity
@@ -73,6 +77,7 @@ class UsageStats(BaseModel):
 
 class UsageStatsResponse(BaseModel):
     """Response model for usage statistics"""
+
     stats: List[UsageStats]
     total_calls_today: int
     has_warnings: bool
@@ -81,8 +86,7 @@ class UsageStatsResponse(BaseModel):
 
 @router.get("/api/user/{user_id}/keys")
 async def get_provider_status(
-    user_id: str,
-    authorization: Optional[str] = Header(None)
+    user_id: str, authorization: Optional[str] = Header(None)
 ) -> Dict[str, List[Provider]]:
     """
     Get the status of all providers for a user.
@@ -122,12 +126,14 @@ async def get_provider_status(
         providers = []
         for provider_info in all_providers:
             is_connected = provider_info["name"] in user_keys
-            providers.append(Provider(
-                name=provider_info["name"],
-                displayName=provider_info["displayName"],
-                isConnected=is_connected,
-                description=provider_info.get("description"),
-            ))
+            providers.append(
+                Provider(
+                    name=provider_info["name"],
+                    displayName=provider_info["displayName"],
+                    isConnected=is_connected,
+                    description=provider_info.get("description"),
+                )
+            )
 
         return {"providers": [p.model_dump() for p in providers]}
 
@@ -136,10 +142,30 @@ async def get_provider_status(
         # Return default providers on error
         return {
             "providers": [
-                Provider(name="binance", displayName="Binance", isConnected=False, description="Crypto trading data and market information"),
-                Provider(name="coinbase", displayName="Coinbase", isConnected=False, description="Cryptocurrency exchange integration"),
-                Provider(name="alphavantage", displayName="Alpha Vantage", isConnected=False, description="Stock market data"),
-                Provider(name="yfinance", displayName="Yahoo Finance", isConnected=False, description="Free stock data"),
+                Provider(
+                    name="binance",
+                    displayName="Binance",
+                    isConnected=False,
+                    description="Crypto trading data and market information",
+                ),
+                Provider(
+                    name="coinbase",
+                    displayName="Coinbase",
+                    isConnected=False,
+                    description="Cryptocurrency exchange integration",
+                ),
+                Provider(
+                    name="alphavantage",
+                    displayName="Alpha Vantage",
+                    isConnected=False,
+                    description="Stock market data",
+                ),
+                Provider(
+                    name="yfinance",
+                    displayName="Yahoo Finance",
+                    isConnected=False,
+                    description="Free stock data",
+                ),
             ]
         }
 
@@ -149,7 +175,7 @@ async def validate_key_format(
     user_id: str,
     provider: str,
     request: ValidateKeyRequest,
-    authorization: Optional[str] = Header(None)
+    authorization: Optional[str] = Header(None),
 ) -> Dict[str, Any]:
     """
     Validate API key format without storing it.
@@ -166,8 +192,7 @@ async def validate_key_format(
         provider_info = service.get_provider_info(provider)
         if not provider_info:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unknown provider: {provider}"
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown provider: {provider}"
             )
 
         # Validate format using backend patterns
@@ -179,7 +204,7 @@ async def validate_key_format(
         response_data = {
             "valid": is_valid,
             "provider": provider,
-            "key_length": len(request.api_key)
+            "key_length": len(request.api_key),
         }
 
         if is_valid:
@@ -190,10 +215,7 @@ async def validate_key_format(
                 response_data["expected_pattern"] = format_info
 
         logger.debug(
-            "Format validation",
-            provider=provider,
-            valid=is_valid,
-            key_length=len(request.api_key)
+            "Format validation", provider=provider, valid=is_valid, key_length=len(request.api_key)
         )
 
         return response_data
@@ -204,15 +226,13 @@ async def validate_key_format(
         logger.error("Error validating key format", provider=provider, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to validate format: {str(e)}"
+            detail=f"Failed to validate format: {str(e)}",
         )
 
 
 @router.post("/api/user/{user_id}/keys", status_code=status.HTTP_201_CREATED)
 async def add_key(
-    user_id: str,
-    request: AddKeyRequest,
-    authorization: Optional[str] = Header(None)
+    user_id: str, request: AddKeyRequest, authorization: Optional[str] = Header(None)
 ) -> KeyResponse:
     """
     Add a new API key for a provider.
@@ -230,7 +250,7 @@ async def add_key(
         if not provider_info:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unknown provider: {request.provider}"
+                detail=f"Unknown provider: {request.provider}",
             )
 
         # Prepare metadata with secret if provided
@@ -243,31 +263,30 @@ async def add_key(
             user_id=user_id,
             provider=request.provider,
             api_key=request.api_key,
-            metadata=metadata if metadata else None
+            metadata=metadata if metadata else None,
         )
 
         logger.info("API key added successfully", user_id=user_id, provider=request.provider)
 
         return KeyResponse(
-            success=True,
-            message=f"{request.provider.capitalize()} API key added successfully"
+            success=True, message=f"{request.provider.capitalize()} API key added successfully"
         )
 
     except HTTPException:
         raise  # Re-raise HTTP exceptions
     except Exception as e:
-        logger.error("Error adding API key", user_id=user_id, provider=request.provider, error=str(e))
+        logger.error(
+            "Error adding API key", user_id=user_id, provider=request.provider, error=str(e)
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to add API key: {str(e)}"
+            detail=f"Failed to add API key: {str(e)}",
         )
 
 
 @router.post("/api/user/{user_id}/keys/{provider}/test")
 async def test_key(
-    user_id: str,
-    provider: str,
-    authorization: Optional[str] = Header(None)
+    user_id: str, provider: str, authorization: Optional[str] = Header(None)
 ) -> KeyResponse:
     """
     Test if an API key is valid by making a test request to the provider's API.
@@ -286,8 +305,7 @@ async def test_key(
 
         if not api_key:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No API key found for {provider}"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"No API key found for {provider}"
             )
 
         # Test the key with actual provider API
@@ -298,46 +316,38 @@ async def test_key(
                 "API key test passed",
                 user_id=user_id,
                 provider=provider,
-                tier=test_result.get("tier")
+                tier=test_result.get("tier"),
             )
 
             return KeyResponse(
-                success=True,
-                message=f"{provider.capitalize()}: {test_result['message']}"
+                success=True, message=f"{provider.capitalize()}: {test_result['message']}"
             )
         else:
             logger.warning(
                 "API key test failed",
                 user_id=user_id,
                 provider=provider,
-                reason=test_result.get("message")
+                reason=test_result.get("message"),
             )
 
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Key validation failed: {test_result['message']}"
+                detail=f"Key validation failed: {test_result['message']}",
             )
 
     except HTTPException:
         raise  # Re-raise HTTP exceptions
     except Exception as e:
-        logger.error(
-            "Error testing API key",
-            user_id=user_id,
-            provider=provider,
-            error=str(e)
-        )
+        logger.error("Error testing API key", user_id=user_id, provider=provider, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to test API key: {str(e)}"
+            detail=f"Failed to test API key: {str(e)}",
         )
 
 
 @router.delete("/api/user/{user_id}/keys/{provider}")
 async def remove_key(
-    user_id: str,
-    provider: str,
-    authorization: Optional[str] = Header(None)
+    user_id: str, provider: str, authorization: Optional[str] = Header(None)
 ) -> KeyResponse:
     """
     Remove an API key for a provider.
@@ -354,8 +364,7 @@ async def remove_key(
         existing_key = await service.get_key(user_id, provider)
         if not existing_key:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No API key found for {provider}"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"No API key found for {provider}"
             )
 
         # Remove the key
@@ -364,8 +373,7 @@ async def remove_key(
         logger.info("API key removed successfully", user_id=user_id, provider=provider)
 
         return KeyResponse(
-            success=True,
-            message=f"{provider.capitalize()} API key removed successfully"
+            success=True, message=f"{provider.capitalize()} API key removed successfully"
         )
 
     except HTTPException:
@@ -374,15 +382,13 @@ async def remove_key(
         logger.error("Error removing API key", user_id=user_id, provider=provider, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to remove API key: {str(e)}"
+            detail=f"Failed to remove API key: {str(e)}",
         )
 
 
 @router.get("/api/user/{user_id}/usage")
 async def get_usage_stats(
-    user_id: str,
-    provider: Optional[str] = None,
-    authorization: Optional[str] = Header(None)
+    user_id: str, provider: Optional[str] = None, authorization: Optional[str] = Header(None)
 ) -> UsageStatsResponse:
     """
     Get API usage statistics for user
@@ -403,43 +409,45 @@ async def get_usage_stats(
             monthly_usage = await service.usage_analytics.get_usage(user_id, provider, "monthly")
             quota_info = await service.usage_analytics.check_quota(user_id, provider)
 
-            stats = [UsageStats(
-                provider=provider,
-                daily_usage=daily_usage,
-                daily_limit=quota_info["daily_limit"],
-                monthly_usage=monthly_usage,
-                monthly_limit=quota_info["monthly_limit"],
-                daily_percentage=quota_info["daily_percentage"],
-                monthly_percentage=quota_info["monthly_percentage"],
-                warning=quota_info["warning"],
-                tier=service.usage_analytics.get_provider_limits(provider).get("tier", "unknown")
-            )]
+            stats = [
+                UsageStats(
+                    provider=provider,
+                    daily_usage=daily_usage,
+                    daily_limit=quota_info["daily_limit"],
+                    monthly_usage=monthly_usage,
+                    monthly_limit=quota_info["monthly_limit"],
+                    daily_percentage=quota_info["daily_percentage"],
+                    monthly_percentage=quota_info["monthly_percentage"],
+                    warning=quota_info["warning"],
+                    tier=service.usage_analytics.get_provider_limits(provider).get(
+                        "tier", "unknown"
+                    ),
+                )
+            ]
 
             return UsageStatsResponse(
                 stats=stats,
                 total_calls_today=daily_usage,
                 has_warnings=quota_info["warning"],
-                timestamp=datetime.now(UTC).isoformat()
+                timestamp=datetime.now(UTC).isoformat(),
             )
         else:
             # All providers stats
             all_stats = await service.get_all_usage_stats(user_id)
 
             # Convert to response model
-            stats_list = [
-                UsageStats(**stat) for stat in all_stats["stats"]
-            ]
+            stats_list = [UsageStats(**stat) for stat in all_stats["stats"]]
 
             return UsageStatsResponse(
                 stats=stats_list,
                 total_calls_today=all_stats["total_calls_today"],
                 has_warnings=all_stats["has_warnings"],
-                timestamp=all_stats["timestamp"]
+                timestamp=all_stats["timestamp"],
             )
 
     except Exception as e:
         logger.error("Error fetching usage stats", user_id=user_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch usage statistics: {str(e)}"
+            detail=f"Failed to fetch usage statistics: {str(e)}",
         )

@@ -21,7 +21,7 @@ PROVIDER_LIMITS = {
     "polygon": {"daily": 5, "monthly": 150, "tier": "free"},  # 5 calls/min
     "binance": {"daily": 1200, "monthly": 36000, "tier": "free"},  # Weight-based
     "coinbase": {"daily": 10000, "monthly": 300000, "tier": "free"},
-    "yfinance": {"daily": float('inf'), "monthly": float('inf'), "tier": "free"},  # Unlimited
+    "yfinance": {"daily": float("inf"), "monthly": float("inf"), "tier": "free"},  # Unlimited
 }
 
 # Quota warning threshold
@@ -56,10 +56,7 @@ class UsageAnalytics:
         self._redis = redis_client
         self._in_memory_fallback: Dict[str, int] = defaultdict(int)
 
-        logger.info(
-            "UsageAnalytics initialized",
-            redis_enabled=redis_client is not None
-        )
+        logger.info("UsageAnalytics initialized", redis_enabled=redis_client is not None)
 
     def _get_redis_key(self, user_id: str, provider: str, period_type: str = "daily") -> str:
         """
@@ -85,10 +82,7 @@ class UsageAnalytics:
         return f"usage:{user_id}:{provider}:{period}"
 
     async def track_call(
-        self,
-        user_id: str,
-        provider: str,
-        operation: str = "api_call"
+        self, user_id: str, provider: str, operation: str = "api_call"
     ) -> Dict[str, Any]:
         """
         Track an API call for a provider
@@ -129,7 +123,7 @@ class UsageAnalytics:
                 user_id=user_id,
                 provider=provider,
                 daily_count=daily_count,
-                monthly_count=monthly_count
+                monthly_count=monthly_count,
             )
 
             return {
@@ -140,19 +134,11 @@ class UsageAnalytics:
 
         except Exception as e:
             logger.error(
-                "Failed to track API call",
-                user_id=user_id,
-                provider=provider,
-                error=str(e)
+                "Failed to track API call", user_id=user_id, provider=provider, error=str(e)
             )
             return {"tracked": False, "error": str(e)}
 
-    async def get_usage(
-        self,
-        user_id: str,
-        provider: str,
-        period_type: str = "daily"
-    ) -> int:
+    async def get_usage(self, user_id: str, provider: str, period_type: str = "daily") -> int:
         """
         Get usage count for a provider
 
@@ -179,7 +165,7 @@ class UsageAnalytics:
                 user_id=user_id,
                 provider=provider,
                 period_type=period_type,
-                error=str(e)
+                error=str(e),
             )
             return 0
 
@@ -210,29 +196,36 @@ class UsageAnalytics:
             monthly_limit = cast(float, limits["monthly"])
 
             # Calculate percentages
-            daily_percentage = (daily_usage / daily_limit * 100) if daily_limit != float('inf') else 0
-            monthly_percentage = (monthly_usage / monthly_limit * 100) if monthly_limit != float('inf') else 0
+            daily_percentage = (
+                (daily_usage / daily_limit * 100) if daily_limit != float("inf") else 0
+            )
+            monthly_percentage = (
+                (monthly_usage / monthly_limit * 100) if monthly_limit != float("inf") else 0
+            )
 
             # Check for warnings (>= 80% threshold)
-            warning = daily_percentage >= (QUOTA_WARNING_THRESHOLD * 100) or \
-                     monthly_percentage >= (QUOTA_WARNING_THRESHOLD * 100)
+            warning = daily_percentage >= (QUOTA_WARNING_THRESHOLD * 100) or monthly_percentage >= (
+                QUOTA_WARNING_THRESHOLD * 100
+            )
 
             if warning:
                 has_warnings = True
 
             total_calls_today += daily_usage
 
-            stats.append({
-                "provider": provider,
-                "daily_usage": daily_usage,
-                "daily_limit": daily_limit,
-                "monthly_usage": monthly_usage,
-                "monthly_limit": monthly_limit,
-                "daily_percentage": round(daily_percentage, 2),
-                "monthly_percentage": round(monthly_percentage, 2),
-                "warning": warning,
-                "tier": limits["tier"],
-            })
+            stats.append(
+                {
+                    "provider": provider,
+                    "daily_usage": daily_usage,
+                    "daily_limit": daily_limit,
+                    "monthly_usage": monthly_usage,
+                    "monthly_limit": monthly_limit,
+                    "daily_percentage": round(daily_percentage, 2),
+                    "monthly_percentage": round(monthly_percentage, 2),
+                    "warning": warning,
+                    "tier": limits["tier"],
+                }
+            )
 
         # Sort by daily usage (descending)
         stats.sort(key=lambda x: cast(int, x["daily_usage"]), reverse=True)
@@ -244,11 +237,7 @@ class UsageAnalytics:
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-    async def check_quota(
-        self,
-        user_id: str,
-        provider: str
-    ) -> Dict[str, Any]:
+    async def check_quota(self, user_id: str, provider: str) -> Dict[str, Any]:
         """
         Check if user is approaching or exceeded quota
 
@@ -267,12 +256,15 @@ class UsageAnalytics:
         monthly_limit = limits["monthly"]
 
         # Calculate percentages
-        daily_percentage = (daily_usage / daily_limit * 100) if daily_limit != float('inf') else 0
-        monthly_percentage = (monthly_usage / monthly_limit * 100) if monthly_limit != float('inf') else 0
+        daily_percentage = (daily_usage / daily_limit * 100) if daily_limit != float("inf") else 0
+        monthly_percentage = (
+            (monthly_usage / monthly_limit * 100) if monthly_limit != float("inf") else 0
+        )
 
         # Determine warning status
-        warning = daily_percentage >= (QUOTA_WARNING_THRESHOLD * 100) or \
-                 monthly_percentage >= (QUOTA_WARNING_THRESHOLD * 100)
+        warning = daily_percentage >= (QUOTA_WARNING_THRESHOLD * 100) or monthly_percentage >= (
+            QUOTA_WARNING_THRESHOLD * 100
+        )
 
         exceeded = daily_usage >= daily_limit or monthly_usage >= monthly_limit
 
@@ -282,14 +274,14 @@ class UsageAnalytics:
                 user_id=user_id,
                 provider=provider,
                 daily_usage=daily_usage,
-                daily_limit=daily_limit
+                daily_limit=daily_limit,
             )
         elif warning:
             logger.info(
                 "Approaching quota limit",
                 user_id=user_id,
                 provider=provider,
-                daily_percentage=daily_percentage
+                daily_percentage=daily_percentage,
             )
 
         return {
@@ -314,17 +306,10 @@ class UsageAnalytics:
         Returns:
             Dict with daily/monthly limits
         """
-        return PROVIDER_LIMITS.get(provider, {
-            "daily": 1000,
-            "monthly": 30000,
-            "tier": "unknown"
-        })
+        return PROVIDER_LIMITS.get(provider, {"daily": 1000, "monthly": 30000, "tier": "unknown"})
 
     async def reset_usage(
-        self,
-        user_id: str,
-        provider: Optional[str] = None,
-        period_type: str = "daily"
+        self, user_id: str, provider: Optional[str] = None, period_type: str = "daily"
     ) -> Dict[str, Any]:
         """
         Reset usage counters (for testing/admin)
@@ -360,7 +345,7 @@ class UsageAnalytics:
                 user_id=user_id,
                 provider=provider or "all",
                 period_type=period_type,
-                reset_count=reset_count
+                reset_count=reset_count,
             )
 
             return {
@@ -369,10 +354,5 @@ class UsageAnalytics:
             }
 
         except Exception as e:
-            logger.error(
-                "Failed to reset usage",
-                user_id=user_id,
-                provider=provider,
-                error=str(e)
-            )
+            logger.error("Failed to reset usage", user_id=user_id, provider=provider, error=str(e))
             return {"reset": False, "error": str(e)}

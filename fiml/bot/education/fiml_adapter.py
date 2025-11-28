@@ -47,8 +47,21 @@ class FIMLEducationalDataAdapter:
         """
         # Common crypto symbols
         crypto_symbols = {
-            "BTC", "ETH", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC",
-            "LINK", "UNI", "ATOM", "LTC", "DOGE", "SHIB", "BNB",
+            "BTC",
+            "ETH",
+            "SOL",
+            "XRP",
+            "ADA",
+            "DOT",
+            "AVAX",
+            "MATIC",
+            "LINK",
+            "UNI",
+            "ATOM",
+            "LTC",
+            "DOGE",
+            "SHIB",
+            "BNB",
         }
 
         symbol_upper = symbol.upper().split("/")[0]  # Handle pairs like BTC/USDT
@@ -97,7 +110,7 @@ class FIMLEducationalDataAdapter:
 
                 # Build educational data from crypto response
                 cached = response.cached
-                educational_data = {
+                educational_data: Dict[str, Any] = {
                     "symbol": response.symbol,
                     "name": response.name,
                     "asset_type": "crypto",
@@ -124,7 +137,8 @@ class FIMLEducationalDataAdapter:
                         "explanation": "Market dominance shows this coin's share of total crypto market cap",
                     },
                     "narrative": response.narrative.summary if response.narrative else None,
-                    "disclaimer": response.disclaimer or "📚 Live market data for educational purposes only",
+                    "disclaimer": response.disclaimer
+                    or "📚 Live market data for educational purposes only",
                     "data_source": f"Via FIML from {cached.source}",
                     "timestamp": cached.as_of.isoformat() if cached.as_of else None,
                     "confidence": cached.confidence,
@@ -183,7 +197,8 @@ class FIMLEducationalDataAdapter:
                     "narrative": response.narrative.summary if response.narrative else None,
                     "key_insights": response.narrative.key_insights if response.narrative else [],
                     "risk_factors": response.narrative.risk_factors if response.narrative else [],
-                    "disclaimer": response.disclaimer or "📚 Live market data for educational purposes only",
+                    "disclaimer": response.disclaimer
+                    or "📚 Live market data for educational purposes only",
                     "data_source": f"Via FIML from {cached.source}",
                     "timestamp": cached.as_of.isoformat() if cached.as_of else None,
                     "confidence": cached.confidence,
@@ -203,9 +218,7 @@ class FIMLEducationalDataAdapter:
         except Exception as e:
             # Fallback to template data if FIML integration fails
             logger.warning(
-                "Failed to get live data via MCP tools, using template",
-                symbol=symbol,
-                error=str(e)
+                "Failed to get live data via MCP tools, using template", symbol=symbol, error=str(e)
             )
             return self._get_template_snapshot(symbol)
 
@@ -531,23 +544,19 @@ class FIMLEducationalDataAdapter:
             # Create Asset object
             asset = Asset(
                 symbol=symbol.upper(),
-                name=symbol.upper(), # Placeholder name
+                name=symbol.upper(),  # Placeholder name
                 asset_type=asset_type,
-                market=Market.US if asset_type == AssetType.EQUITY else Market.CRYPTO
+                market=Market.US if asset_type == AssetType.EQUITY else Market.CRYPTO,
             )
 
             # Arbitrate request
             plan = await arbitration_engine.arbitrate_request(
-                asset=asset,
-                data_type=DataType.OHLCV,
-                user_region="US"
+                asset=asset, data_type=DataType.OHLCV, user_region="US"
             )
 
             # Execute request
             response = await arbitration_engine.execute_with_fallback(
-                plan=plan,
-                asset=asset,
-                data_type=DataType.OHLCV
+                plan=plan, asset=asset, data_type=DataType.OHLCV
             )
 
             # Extract candles from response

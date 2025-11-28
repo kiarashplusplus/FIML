@@ -10,11 +10,9 @@ Focuses on:
 import pytest
 
 from fiml.bot.education.ai_mentor import AIMentorService, MentorPersona
-from fiml.bot.education.compliance_filter import (
-    ComplianceFilterResult,
-    ComplianceLevel,
-    EducationalComplianceFilter,
-)
+from fiml.bot.education.compliance_filter import (ComplianceFilterResult,
+                                                  ComplianceLevel,
+                                                  EducationalComplianceFilter)
 
 
 @pytest.fixture

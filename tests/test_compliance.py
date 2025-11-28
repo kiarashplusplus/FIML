@@ -2,7 +2,8 @@
 Tests for compliance module (disclaimers and routing)
 """
 
-from fiml.compliance.disclaimers import AssetClass, DisclaimerGenerator, disclaimer_generator
+from fiml.compliance.disclaimers import (AssetClass, DisclaimerGenerator,
+                                         disclaimer_generator)
 from fiml.compliance.router import ComplianceRouter, Region
 
 

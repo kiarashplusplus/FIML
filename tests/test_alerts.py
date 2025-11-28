@@ -11,16 +11,9 @@ Tests cover:
 import pytest
 from fastapi.testclient import TestClient
 
-from fiml.alerts.builder import (
-    AlertBuilder,
-    AlertConfig,
-    AlertTrigger,
-    DeliveryMethod,
-    EmailConfig,
-    TelegramConfig,
-    TriggerType,
-    WebhookConfig,
-)
+from fiml.alerts.builder import (AlertBuilder, AlertConfig, AlertTrigger,
+                                 DeliveryMethod, EmailConfig, TelegramConfig,
+                                 TriggerType, WebhookConfig)
 from fiml.server import app
 from fiml.watchdog.models import EventFilter, Severity
 

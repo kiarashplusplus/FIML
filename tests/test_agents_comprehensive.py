@@ -16,12 +16,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fiml.agents.health import (
-    WorkerHealthMonitor,
-    WorkerMetrics,
-    WorkerStatus,
-    worker_health_monitor,
-)
+from fiml.agents.health import (WorkerHealthMonitor, WorkerMetrics,
+                                WorkerStatus, worker_health_monitor)
 from fiml.agents.orchestrator import AgentOrchestrator, agent_orchestrator
 from fiml.core.models import Asset, AssetType, Market
 

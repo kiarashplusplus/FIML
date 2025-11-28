@@ -310,9 +310,7 @@ Get your API key:
         if provider_info.get("free_tier"):
             instructions += f"✅ Free tier available: {provider_info['free_limit']}\n\n"
         else:
-            instructions += (
-                f"💳 Pricing: {provider_info.get('paid_tiers', 'Check website')}\n\n"
-            )
+            instructions += f"💳 Pricing: {provider_info.get('paid_tiers', 'Check website')}\n\n"
 
         instructions += """
 Once you have your API key, paste it here.

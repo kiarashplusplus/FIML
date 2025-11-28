@@ -15,19 +15,11 @@ from typing import List
 import pytest
 
 from fiml.core.models import Asset, AssetType
-from fiml.watchdog import (
-    BaseWatchdog,
-    EarningsAnomalyWatchdog,
-    EventFilter,
-    EventStream,
-    EventType,
-    ExchangeOutageWatchdog,
-    PriceAnomalyWatchdog,
-    Severity,
-    UnusualVolumeWatchdog,
-    WatchdogEvent,
-    WatchdogManager,
-)
+from fiml.watchdog import (BaseWatchdog, EarningsAnomalyWatchdog, EventFilter,
+                           EventStream, EventType, ExchangeOutageWatchdog,
+                           PriceAnomalyWatchdog, Severity,
+                           UnusualVolumeWatchdog, WatchdogEvent,
+                           WatchdogManager)
 
 # ============================================================================
 # Test Fixtures

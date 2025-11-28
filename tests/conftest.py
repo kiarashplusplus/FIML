@@ -660,7 +660,16 @@ def mock_aiohttp_for_providers(request):
                 if "polygon.io" in url_str:
                     mock_response.json.return_value = {
                         "status": "OK",
-                        "results": [{"c": 150.0, "h": 155.0, "l": 145.0, "o": 148.0, "v": 1000000, "t": 1630000000000}]
+                        "results": [
+                            {
+                                "c": 150.0,
+                                "h": 155.0,
+                                "l": 145.0,
+                                "o": 148.0,
+                                "v": 1000000,
+                                "t": 1630000000000,
+                            }
+                        ],
                     }
                 elif "alphavantage.co" in url_str:
                     mock_response.json.return_value = {
@@ -668,17 +677,46 @@ def mock_aiohttp_for_providers(request):
                             "01. symbol": "TSLA",
                             "05. price": "150.00",
                             "09. change": "2.00",
-                            "10. change percent": "1.5%"
+                            "10. change percent": "1.5%",
                         }
                     }
                 elif "finnhub.io" in url_str:
                     mock_response.json.return_value = {
-                        "c": 150.0, "d": 2.0, "dp": 1.5, "h": 155.0, "l": 145.0, "o": 148.0, "pc": 148.0, "t": 1630000000
+                        "c": 150.0,
+                        "d": 2.0,
+                        "dp": 1.5,
+                        "h": 155.0,
+                        "l": 145.0,
+                        "o": 148.0,
+                        "pc": 148.0,
+                        "t": 1630000000,
                     }
                 elif "financialmodelingprep.com" in url_str:
-                    mock_response.json.return_value = [{
-                        "symbol": "TSLA", "price": 150.0, "changesPercentage": 1.5, "change": 2.0, "dayLow": 145.0, "dayHigh": 155.0, "yearHigh": 200.0, "yearLow": 100.0, "marketCap": 500000000000, "priceAvg50": 145.0, "priceAvg200": 140.0, "volume": 1000000, "avgVolume": 1000000, "exchange": "NASDAQ", "open": 148.0, "previousClose": 148.0, "eps": 5.0, "pe": 30.0, "earningsAnnouncement": "2023-01-01", "sharesOutstanding": 1000000000, "timestamp": 1630000000
-                    }]
+                    mock_response.json.return_value = [
+                        {
+                            "symbol": "TSLA",
+                            "price": 150.0,
+                            "changesPercentage": 1.5,
+                            "change": 2.0,
+                            "dayLow": 145.0,
+                            "dayHigh": 155.0,
+                            "yearHigh": 200.0,
+                            "yearLow": 100.0,
+                            "marketCap": 500000000000,
+                            "priceAvg50": 145.0,
+                            "priceAvg200": 140.0,
+                            "volume": 1000000,
+                            "avgVolume": 1000000,
+                            "exchange": "NASDAQ",
+                            "open": 148.0,
+                            "previousClose": 148.0,
+                            "eps": 5.0,
+                            "pe": 30.0,
+                            "earningsAnnouncement": "2023-01-01",
+                            "sharesOutstanding": 1000000000,
+                            "timestamp": 1630000000,
+                        }
+                    ]
                 else:
                     # Default generic response
                     mock_response.json.return_value = {"status": "ok", "data": {}}

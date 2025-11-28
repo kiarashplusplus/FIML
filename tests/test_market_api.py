@@ -133,10 +133,7 @@ class TestDSLAPI:
 
     def test_execute_dsl_query(self, client):
         """Test DSL query execution"""
-        response = client.post(
-            "/api/market/dsl/execute",
-            json={"query": "EVALUATE AAPL: PRICE"}
-        )
+        response = client.post("/api/market/dsl/execute", json={"query": "EVALUATE AAPL: PRICE"})
 
         assert response.status_code == 200
         data = response.json()

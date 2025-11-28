@@ -5,37 +5,17 @@ Tests for Core modules - models, config, exceptions, logging, sentry
 from unittest.mock import MagicMock, patch
 
 from fiml.core.config import Settings
-from fiml.core.exceptions import (
-    ArbitrationError,
-    CacheError,
-    ComplianceError,
-    DataQualityError,
-    FIMLException,
-    FKDSLExecutionError,
-    FKDSLParseError,
-    NoProviderAvailableError,
-    ProviderError,
-)
+from fiml.core.exceptions import (ArbitrationError, CacheError,
+                                  ComplianceError, DataQualityError,
+                                  FIMLException, FKDSLExecutionError,
+                                  FKDSLParseError, NoProviderAvailableError,
+                                  ProviderError)
 from fiml.core.logging import get_logger
-from fiml.core.models import (
-    ArbitrationPlan,
-    Asset,
-    AssetType,
-    DataLineage,
-    Market,
-    ProviderScore,
-    TaskInfo,
-    TaskStatus,
-)
-from fiml.core.sentry import (
-    add_breadcrumb,
-    capture_exception,
-    capture_message,
-    init_sentry,
-    set_context,
-    set_tag,
-    set_user,
-)
+from fiml.core.models import (ArbitrationPlan, Asset, AssetType, DataLineage,
+                              Market, ProviderScore, TaskInfo, TaskStatus)
+from fiml.core.sentry import (add_breadcrumb, capture_exception,
+                              capture_message, init_sentry, set_context,
+                              set_tag, set_user)
 
 
 class TestModels:

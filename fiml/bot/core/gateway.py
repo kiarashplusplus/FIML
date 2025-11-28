@@ -26,11 +26,46 @@ MAX_NARRATIVE_SUMMARY_LENGTH = 500
 
 # Common stock and crypto symbols for extraction from user queries
 COMMON_SYMBOLS = [
-    "AAPL", "GOOGL", "GOOG", "MSFT", "AMZN", "TSLA", "META", "NVDA",
-    "JPM", "V", "WMT", "PG", "JNJ", "UNH", "DIS", "NFLX", "PYPL",
-    "INTC", "CSCO", "VZ", "PFE", "KO", "PEP", "NKE", "MCD", "BA",
-    "GE", "IBM", "GM", "F", "T", "XOM", "CVX", "ORCL", "CRM", "AMD",
-    "SPY", "QQQ", "BTC", "ETH",
+    "AAPL",
+    "GOOGL",
+    "GOOG",
+    "MSFT",
+    "AMZN",
+    "TSLA",
+    "META",
+    "NVDA",
+    "JPM",
+    "V",
+    "WMT",
+    "PG",
+    "JNJ",
+    "UNH",
+    "DIS",
+    "NFLX",
+    "PYPL",
+    "INTC",
+    "CSCO",
+    "VZ",
+    "PFE",
+    "KO",
+    "PEP",
+    "NKE",
+    "MCD",
+    "BA",
+    "GE",
+    "IBM",
+    "GM",
+    "F",
+    "T",
+    "XOM",
+    "CVX",
+    "ORCL",
+    "CRM",
+    "AMD",
+    "SPY",
+    "QQQ",
+    "BTC",
+    "ETH",
 ]
 
 # Mapping of company names to stock symbols
@@ -265,22 +300,16 @@ class IntentClassifier:
                 return Intent(
                     type=IntentType.LESSON_NAVIGATION,
                     data={"action": context_action},
-                    confidence=1.0
+                    confidence=1.0,
                 )
             elif context_action.startswith("quiz:"):
                 return Intent(
-                    type=IntentType.QUIZ_ANSWER,
-                    data={"answer": context_action},
-                    confidence=1.0
+                    type=IntentType.QUIZ_ANSWER, data={"answer": context_action}, confidence=1.0
                 )
             elif context_action.startswith("/"):
                 # Handle commands sent via context action
                 command = context_action.split()[0]
-                return Intent(
-                    type=IntentType.COMMAND,
-                    data={"command": command},
-                    confidence=1.0
-                )
+                return Intent(type=IntentType.COMMAND, data={"command": command}, confidence=1.0)
 
         # Check for commands
         if text.startswith("/"):
@@ -352,6 +381,7 @@ class IntentClassifier:
 
         # Check for DSL syntax patterns (colon after symbol, parentheses for timeframes)
         import re
+
         dsl_pattern = r"^[A-Z]+\s+[A-Z0-9,\s]+:\s*[A-Z_,\s\(\)0-9d]+$"
         if re.match(dsl_pattern, text_upper):
             return True
@@ -478,18 +508,18 @@ class UnifiedBotGateway:
         if command == "/help":
             return AbstractResponse(
                 text="📚 Available Commands:\n\n"
-                     "📖 /lesson - Browse lessons\n"
-                     "📊 /progress - View your progress\n"
-                     "🏆 /leaderboard - See top learners\n"
-                     "🧠 /quiz - Take a quiz\n"
-                     "💬 /mentor - Talk to AI mentor\n"
-                     "🔑 /addkey - Add API keys\n"
-                     "📈 /fkdsl - Execute FK-DSL queries\n\n"
-                     "Or just ask me anything about markets or trading!",
+                "📖 /lesson - Browse lessons\n"
+                "📊 /progress - View your progress\n"
+                "🏆 /leaderboard - See top learners\n"
+                "🧠 /quiz - Take a quiz\n"
+                "💬 /mentor - Talk to AI mentor\n"
+                "🔑 /addkey - Add API keys\n"
+                "📈 /fkdsl - Execute FK-DSL queries\n\n"
+                "Or just ask me anything about markets or trading!",
                 actions=[
                     {"text": "Start Lesson", "action": "/lesson", "type": "primary"},
                     {"text": "View Progress", "action": "/progress", "type": "secondary"},
-                ]
+                ],
             )
 
         elif command == "/cancel":
@@ -500,18 +530,16 @@ class UnifiedBotGateway:
                     session.metadata.pop("awaiting_key_for")
                 return AbstractResponse(
                     text="✅ Key addition cancelled.\n\n"
-                         "Use /addkey when you're ready to add API keys.",
+                    "Use /addkey when you're ready to add API keys.",
                     actions=[
                         {"text": "Add Key", "action": "/addkey", "type": "primary"},
-                        {"text": "Help", "action": "/help", "type": "secondary"}
-                    ]
+                        {"text": "Help", "action": "/help", "type": "secondary"},
+                    ],
                 )
             else:
                 return AbstractResponse(
                     text="Nothing to cancel. How can I help you?",
-                    actions=[
-                        {"text": "Help", "action": "/help", "type": "primary"}
-                    ]
+                    actions=[{"text": "Help", "action": "/help", "type": "primary"}],
                 )
 
         elif command == "/lesson":
@@ -526,14 +554,14 @@ class UnifiedBotGateway:
             else:
                 return AbstractResponse(
                     text="You haven't started a lesson yet. Start a lesson to take a quiz!",
-                    actions=[{"text": "Browse Lessons", "action": "/lesson", "type": "primary"}]
+                    actions=[{"text": "Browse Lessons", "action": "/lesson", "type": "primary"}],
                 )
 
         elif command == "/mentor":
-             return AbstractResponse(
+            return AbstractResponse(
                 text="👋 I'm your AI Mentor.\n\n"
-                     "Ask me anything about trading, markets, or financial concepts.\n",
-                actions=[]
+                "Ask me anything about trading, markets, or financial concepts.\n",
+                actions=[],
             )
 
         # Check for provider-specific addkey (e.g., /addkey:binance)
@@ -545,7 +573,7 @@ class UnifiedBotGateway:
             if not provider_info:
                 return AbstractResponse(
                     text=f"❌ Unknown provider: {provider}\n\n"
-                         f"Supported providers: binance, coinbase, alphavantage, polygon, finnhub, fmp"
+                    f"Supported providers: binance, coinbase, alphavantage, polygon, finnhub, fmp"
                 )
 
             # Update session to await key input
@@ -574,9 +602,7 @@ class UnifiedBotGateway:
 
             return AbstractResponse(
                 text=instructions,
-                actions=[
-                    {"text": "Cancel", "action": "/cancel", "type": "secondary"}
-                ]
+                actions=[{"text": "Cancel", "action": "/cancel", "type": "secondary"}],
             )
 
         elif command == "/addkey":
@@ -587,47 +613,54 @@ class UnifiedBotGateway:
                 # Mobile users: direct to Home tab dashboard
                 return AbstractResponse(
                     text="🔑 API Key Management\n\n"
-                         "Head to your **Home** tab to manage API keys visually!\n\n"
-                         "You can:\n"
-                         "✓ View all providers at a glance\n"
-                         "✓ Add keys with a simple form\n"
-                         "✓ Test connections instantly\n"
-                         "✓ Remove keys securely\n\n"
-                         "Or select a provider below:",
+                    "Head to your **Home** tab to manage API keys visually!\n\n"
+                    "You can:\n"
+                    "✓ View all providers at a glance\n"
+                    "✓ Add keys with a simple form\n"
+                    "✓ Test connections instantly\n"
+                    "✓ Remove keys securely\n\n"
+                    "Or select a provider below:",
                     actions=[
                         {"text": "Binance", "action": "/addkey:binance", "type": "secondary"},
                         {"text": "Coinbase", "action": "/addkey:coinbase", "type": "secondary"},
-                        {"text": "Alpha Vantage", "action": "/addkey:alphavantage", "type": "secondary"},
+                        {
+                            "text": "Alpha Vantage",
+                            "action": "/addkey:alphavantage",
+                            "type": "secondary",
+                        },
                         {"text": "Go to Home", "action": "navigate:home", "type": "primary"},
-                    ]
+                    ],
                 )
             else:
                 # Telegram users: command-based instructions
                 return AbstractResponse(
                     text="🔑 Add API Key\n\n"
-                         "To add an API key, use:\n"
-                         "`/addkey <provider> <api_key> [api_secret]`\n\n"
-                         "Example:\n"
-                         "`/addkey binance abc123xyz`\n\n"
-                         "Or select a provider:",
+                    "To add an API key, use:\n"
+                    "`/addkey <provider> <api_key> [api_secret]`\n\n"
+                    "Example:\n"
+                    "`/addkey binance abc123xyz`\n\n"
+                    "Or select a provider:",
                     actions=[
                         {"text": "Binance", "action": "/addkey:binance", "type": "secondary"},
                         {"text": "Coinbase", "action": "/addkey:coinbase", "type": "secondary"},
-                        {"text": "Alpha Vantage", "action": "/addkey:alphavantage", "type": "secondary"},
+                        {
+                            "text": "Alpha Vantage",
+                            "action": "/addkey:alphavantage",
+                            "type": "secondary",
+                        },
                         {"text": "Help", "action": "/help", "type": "primary"},
-                    ]
+                    ],
                 )
 
-
         elif command == "/progress":
-             progress = await self.lesson_engine.get_user_progress(message.user_id)
-             completed = len((progress or {}).get("completed", []))
-             return AbstractResponse(
+            progress = await self.lesson_engine.get_user_progress(message.user_id)
+            completed = len((progress or {}).get("completed", []))
+            return AbstractResponse(
                 text=f"📈 Your Progress\n\n"
-                     f"Lessons Completed: {completed}\n"
-                     f"Current Streak: {(session.metadata or {}).get('streak', 0)} days\n"
-                     f"Total XP: {(session.metadata or {}).get('xp', 0)}",
-                actions=[{"text": "Continue Learning", "action": "/lesson", "type": "primary"}]
+                f"Lessons Completed: {completed}\n"
+                f"Current Streak: {(session.metadata or {}).get('streak', 0)} days\n"
+                f"Total XP: {(session.metadata or {}).get('xp', 0)}",
+                actions=[{"text": "Continue Learning", "action": "/lesson", "type": "primary"}],
             )
 
         elif command in ("/fkdsl", "/dsl"):
@@ -649,29 +682,29 @@ class UnifiedBotGateway:
             # Fallback if no lessons found
             return AbstractResponse(
                 text="📚 No lessons available yet.\n\n"
-                     "The lesson content is being prepared. Please check back later!",
-                actions=[]
+                "The lesson content is being prepared. Please check back later!",
+                actions=[],
             )
 
         actions = []
         for lesson in lessons:
-            difficulty_badge = {
-                "beginner": "🟢",
-                "intermediate": "🟡",
-                "advanced": "🔴"
-            }.get(lesson.get("difficulty", "beginner"), "⚪")
+            difficulty_badge = {"beginner": "🟢", "intermediate": "🟡", "advanced": "🔴"}.get(
+                lesson.get("difficulty", "beginner"), "⚪"
+            )
 
-            actions.append({
-                "text": f"{difficulty_badge} {lesson['title']}",
-                "action": f"lesson:start:{lesson['id']}",
-                "type": "secondary"
-            })
+            actions.append(
+                {
+                    "text": f"{difficulty_badge} {lesson['title']}",
+                    "action": f"lesson:start:{lesson['id']}",
+                    "type": "secondary",
+                }
+            )
 
         return AbstractResponse(
             text=f"📚 Available Lessons ({len(lessons)} total)\n\n"
-                 "🟢 Beginner | 🟡 Intermediate | 🔴 Advanced\n\n"
-                 "Select a lesson to start learning:",
-            actions=actions
+            "🟢 Beginner | 🟡 Intermediate | 🔴 Advanced\n\n"
+            "Select a lesson to start learning:",
+            actions=actions,
         )
 
     async def handle_lesson_navigation(
@@ -701,22 +734,24 @@ class UnifiedBotGateway:
                 return AbstractResponse(
                     text=rendered.content,
                     actions=[
-                        {"text": "Take Quiz", "action": f"quiz:start:{lesson_id}", "type": "primary"},
-                        {"text": "Back to Lessons", "action": "/lesson", "type": "secondary"}
-                    ]
+                        {
+                            "text": "Take Quiz",
+                            "action": f"quiz:start:{lesson_id}",
+                            "type": "primary",
+                        },
+                        {"text": "Back to Lessons", "action": "/lesson", "type": "secondary"},
+                    ],
                 )
             else:
-                 return AbstractResponse(text="❌ Lesson not found.")
+                return AbstractResponse(text="❌ Lesson not found.")
 
-        return AbstractResponse(
-            text=f"Lesson navigation: {action}"
-        )
+        return AbstractResponse(text=f"Lesson navigation: {action}")
 
     async def handle_quiz_answer(
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
         """Handle quiz answers"""
-        action = intent.data.get("answer", "") # Can be answer text or callback data
+        action = intent.data.get("answer", "")  # Can be answer text or callback data
 
         # Parse action if it's a callback string
         if isinstance(action, str) and action.startswith("quiz:start:"):
@@ -739,8 +774,8 @@ class UnifiedBotGateway:
                 response_text = f"{'✅ Correct!' if result['correct'] else '❌ Incorrect.'}\n\n{result['explanation']}\n\nXP Earned: {result['xp_earned']}"
 
                 if result.get("quiz_complete"):
-                     response_text += f"\n\n🎉 Quiz Complete!\nScore: {result['score']}/{result['total_questions']}\nTotal XP: {result['total_xp']}"
-                     actions = [{"text": "Back to Lessons", "action": "/lesson", "type": "primary"}]
+                    response_text += f"\n\n🎉 Quiz Complete!\nScore: {result['score']}/{result['total_questions']}\nTotal XP: {result['total_xp']}"
+                    actions = [{"text": "Back to Lessons", "action": "/lesson", "type": "primary"}]
                 else:
                     # Next question
                     next_q = await self.quiz_system.get_current_question(session_id)
@@ -752,9 +787,7 @@ class UnifiedBotGateway:
 
                 return AbstractResponse(text=response_text, actions=actions)
 
-        return AbstractResponse(
-            text="Quiz interaction not understood."
-        )
+        return AbstractResponse(text="Quiz interaction not understood.")
 
     async def start_quiz_for_lesson(self, lesson_id: str, user_id: str) -> AbstractResponse:
         """Helper to start a quiz"""
@@ -764,12 +797,18 @@ class UnifiedBotGateway:
 
         # Get questions (handling dict vs object)
         if isinstance(lesson, dict):
-             questions_data = lesson.get("quiz", {}).get("questions", [])
+            questions_data = lesson.get("quiz", {}).get("questions", [])
         else:
-             questions_data = [
-                 {"id": q.id, "type": q.type, "text": q.text, "options": q.options, "correct_answer": q.correct_answer}
-                 for q in lesson.quiz_questions
-             ]
+            questions_data = [
+                {
+                    "id": q.id,
+                    "type": q.type,
+                    "text": q.text,
+                    "options": q.options,
+                    "correct_answer": q.correct_answer,
+                }
+                for q in lesson.quiz_questions
+            ]
 
         if not questions_data:
             return AbstractResponse(text="No quiz available for this lesson.")
@@ -779,13 +818,13 @@ class UnifiedBotGateway:
         # Get first question
         question = await self.quiz_system.get_current_question(session_id)
         if not question:
-             return AbstractResponse(text="Failed to start quiz.")
+            return AbstractResponse(text="Failed to start quiz.")
 
         actions = self._build_quiz_options(question, session_id)
 
         return AbstractResponse(
             text=f"📝 Quiz: {lesson.get('title', lesson_id) if isinstance(lesson, dict) else getattr(lesson, 'title', lesson_id)}\n\n{question.text}",
-            actions=actions
+            actions=actions,
         )
 
     def _build_quiz_options(self, question: Any, session_id: str) -> List[Dict]:
@@ -793,14 +832,24 @@ class UnifiedBotGateway:
         actions = []
         if question.type == "multiple_choice":
             for i, opt in enumerate(question.options):
-                actions.append({
-                    "text": opt["text"],
-                    "action": f"quiz:answer:{session_id}:0:{opt['text']}", # Using text as answer for now
-                    "type": "secondary"
-                })
+                actions.append(
+                    {
+                        "text": opt["text"],
+                        "action": f"quiz:answer:{session_id}:0:{opt['text']}",  # Using text as answer for now
+                        "type": "secondary",
+                    }
+                )
         elif question.type == "true_false":
-            actions.append({"text": "True", "action": f"quiz:answer:{session_id}:0:true", "type": "secondary"})
-            actions.append({"text": "False", "action": f"quiz:answer:{session_id}:0:false", "type": "secondary"})
+            actions.append(
+                {"text": "True", "action": f"quiz:answer:{session_id}:0:true", "type": "secondary"}
+            )
+            actions.append(
+                {
+                    "text": "False",
+                    "action": f"quiz:answer:{session_id}:0:false",
+                    "type": "secondary",
+                }
+            )
 
         return actions
 
@@ -818,9 +867,7 @@ class UnifiedBotGateway:
             if not provider:
                 # Reset state if no provider set
                 session.state = SessionState.IDLE
-                return AbstractResponse(
-                    text="❌ Session error. Please try /addkey again."
-                )
+                return AbstractResponse(text="❌ Session error. Please try /addkey again.")
 
             # Parse key input
             parts = message.text.strip().split()
@@ -830,9 +877,7 @@ class UnifiedBotGateway:
             if not api_key:
                 return AbstractResponse(
                     text="❌ No API key provided. Please send your API key or use /cancel to exit.",
-                    actions=[
-                        {"text": "Cancel", "action": "/cancel", "type": "secondary"}
-                    ]
+                    actions=[{"text": "Cancel", "action": "/cancel", "type": "secondary"}],
                 )
 
             # Attempt to store
@@ -844,8 +889,8 @@ class UnifiedBotGateway:
                     metadata={
                         "added_via": "chat",
                         "added_at": datetime.now(UTC).isoformat(),
-                        "api_secret": api_secret if api_secret else None
-                    }
+                        "api_secret": api_secret if api_secret else None,
+                    },
                 )
 
                 if success:
@@ -856,19 +901,23 @@ class UnifiedBotGateway:
 
                     return AbstractResponse(
                         text=f"✅ {provider.capitalize()} API key added successfully!\n\n"
-                             f"Use /testkey to verify it works, or add more providers with /addkey.",
+                        f"Use /testkey to verify it works, or add more providers with /addkey.",
                         actions=[
-                            {"text": "Test Key", "action": f"/testkey:{provider}", "type": "primary"},
-                            {"text": "Add Another", "action": "/addkey", "type": "secondary"}
-                        ]
+                            {
+                                "text": "Test Key",
+                                "action": f"/testkey:{provider}",
+                                "type": "primary",
+                            },
+                            {"text": "Add Another", "action": "/addkey", "type": "secondary"},
+                        ],
                     )
                 else:
                     return AbstractResponse(
                         text="❌ Failed to store API key. Please check the format and try again.",
                         actions=[
                             {"text": "Retry", "action": f"/addkey:{provider}", "type": "primary"},
-                            {"text": "Cancel", "action": "/cancel", "type": "secondary"}
-                        ]
+                            {"text": "Cancel", "action": "/cancel", "type": "secondary"},
+                        ],
                     )
 
             except Exception as e:
@@ -876,7 +925,7 @@ class UnifiedBotGateway:
                 session.state = SessionState.IDLE
                 return AbstractResponse(
                     text=f"❌ Error: {str(e)}",
-                    actions=[{"text": "Try Again", "action": "/addkey", "type": "primary"}]
+                    actions=[{"text": "Try Again", "action": "/addkey", "type": "primary"}],
                 )
 
         question = intent.data.get("question", message.text)
@@ -1123,21 +1172,33 @@ class UnifiedBotGateway:
         """Show FK-DSL help and example queries"""
         return AbstractResponse(
             text="🔮 Financial Knowledge DSL (FK-DSL)\n\n"
-                 "FK-DSL lets you run advanced financial analysis queries.\n\n"
-                 "📝 Example Queries:\n"
-                 "• `EVALUATE TSLA: PRICE, VOLATILITY(30d)`\n"
-                 "• `COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP`\n"
-                 "• `CORRELATE BTC, ETH: PRICE(90d)`\n"
-                 "• `SCREEN SECTOR=TECH: PE_RATIO < 30`\n\n"
-                 "💡 Tips:\n"
-                 "• Use uppercase for commands (EVALUATE, COMPARE, etc.)\n"
-                 "• Separate metrics with commas\n"
-                 "• Add timeframes in parentheses: (30d), (1y)\n\n"
-                 "_Type a query to execute it!_",
+            "FK-DSL lets you run advanced financial analysis queries.\n\n"
+            "📝 Example Queries:\n"
+            "• `EVALUATE TSLA: PRICE, VOLATILITY(30d)`\n"
+            "• `COMPARE AAPL, MSFT: PE_RATIO, MARKET_CAP`\n"
+            "• `CORRELATE BTC, ETH: PRICE(90d)`\n"
+            "• `SCREEN SECTOR=TECH: PE_RATIO < 30`\n\n"
+            "💡 Tips:\n"
+            "• Use uppercase for commands (EVALUATE, COMPARE, etc.)\n"
+            "• Separate metrics with commas\n"
+            "• Add timeframes in parentheses: (30d), (1y)\n\n"
+            "_Type a query to execute it!_",
             actions=[
-                {"text": "EVALUATE AAPL: PRICE", "action": "dsl:EVALUATE AAPL: PRICE, VOLUME", "type": "primary"},
-                {"text": "COMPARE TSLA, NVDA", "action": "dsl:COMPARE TSLA, NVDA: PE_RATIO", "type": "secondary"},
-                {"text": "CORRELATE BTC, ETH", "action": "dsl:CORRELATE BTC, ETH: PRICE(30d)", "type": "secondary"},
+                {
+                    "text": "EVALUATE AAPL: PRICE",
+                    "action": "dsl:EVALUATE AAPL: PRICE, VOLUME",
+                    "type": "primary",
+                },
+                {
+                    "text": "COMPARE TSLA, NVDA",
+                    "action": "dsl:COMPARE TSLA, NVDA: PE_RATIO",
+                    "type": "secondary",
+                },
+                {
+                    "text": "CORRELATE BTC, ETH",
+                    "action": "dsl:CORRELATE BTC, ETH: PRICE(30d)",
+                    "type": "secondary",
+                },
             ],
             metadata={"intent": "fk_dsl_help"},
         )
@@ -1175,9 +1236,9 @@ class UnifiedBotGateway:
             if result.get("status") == "failed":
                 return AbstractResponse(
                     text=f"❌ DSL Query Failed\n\n"
-                         f"Query: `{query}`\n\n"
-                         f"Error: {result.get('error', 'Unknown error')}\n\n"
-                         "Try /fkdsl for examples and syntax help.",
+                    f"Query: `{query}`\n\n"
+                    f"Error: {result.get('error', 'Unknown error')}\n\n"
+                    "Try /fkdsl for examples and syntax help.",
                     metadata={"status": "error", "query": query},
                 )
 
@@ -1206,9 +1267,9 @@ class UnifiedBotGateway:
 
             return AbstractResponse(
                 text=f"❌ Error executing query\n\n"
-                     f"Query: `{query}`\n"
-                     f"Error: {str(e)}\n\n"
-                     "Try /fkdsl for syntax help and examples.",
+                f"Query: `{query}`\n"
+                f"Error: {str(e)}\n\n"
+                "Try /fkdsl for syntax help and examples.",
                 metadata={"status": "error", "query": query},
             )
 
