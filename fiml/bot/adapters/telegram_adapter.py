@@ -198,13 +198,13 @@ class TelegramBotAdapter:
         welcome_text = f"""
 👋 Welcome to Trading Educational Bot, {user.first_name}!
 
-I'll help you learn trading and investing with **real market data**.
+I'll help you learn trading and investing with real market data.
 
-🔑 **Get Started:**
+🔑 Get Started:
 First, let's set up your data access:
 
-• **Free Tier**: Use Yahoo Finance (no API key needed)
-• **Pro Tier**: Add your own API keys for better data
+• Free Tier: Use Yahoo Finance (no API key needed)
+• Pro Tier: Add your own API keys for better data
 
 Choose your path:
 /addkey - Add API keys for premium data
@@ -219,25 +219,25 @@ Choose your path:
     async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /help command"""
         help_text = """
-📚 **FIML Educational Bot Commands**
+📚 FIML Educational Bot Commands
 
-**Key Management:**
+Key Management:
 /addkey - Add a new API key
 /listkeys - View your connected providers
 /removekey - Remove an API key
 /testkey - Test if your keys are working
 /status - View your provider status and usage
 
-**Learning:**
+Learning:
 /lesson - Browse and start lessons
 /quiz - Take a practice quiz
 /mentor - Talk to AI mentor
 /progress - View your learning progress
 
-**Advanced Analysis:**
+Advanced Analysis:
 /fkdsl - Run Financial Knowledge DSL queries
 
-**Help:**
+Help:
 /help - Show this message
 /cancel - Cancel current operation
 
@@ -269,7 +269,7 @@ Choose your path:
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         text = """
-🔑 **Add API Key**
+🔑 Add API Key
 
 Choose which data provider you want to add:
 
@@ -298,18 +298,18 @@ Choose which data provider you want to add:
 
         # Provide instructions
         instructions = f"""
-📝 **{provider_info['name']} API Key**
+📝 {provider_info['name']} API Key
 
-**Get your API key:**
+Get your API key:
 🔗 {provider_info['signup_url']}
 
 """
 
         if provider_info.get("free_tier"):
-            instructions += f"✅ **Free tier available:** {provider_info['free_limit']}\n\n"
+            instructions += f"✅ Free tier available: {provider_info['free_limit']}\n\n"
         else:
             instructions += (
-                f"💳 **Pricing:** {provider_info.get('paid_tiers', 'Check website')}\n\n"
+                f"💳 Pricing: {provider_info.get('paid_tiers', 'Check website')}\n\n"
             )
 
         instructions += """
@@ -362,11 +362,11 @@ Once you have your API key, paste it here.
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         confirm_text = f"""
-✅ **Key validated successfully!**
+✅ Key validated successfully!
 
-**Provider:** {provider_id}
-**Tier:** {test_result['tier']}
-**Message:** {test_result['message']}
+Provider: {provider_id}
+Tier: {test_result['tier']}
+Message: {test_result['message']}
 
 Save this key?
 """
@@ -403,11 +403,11 @@ Save this key?
 
         if success:
             success_text = f"""
-🎉 **API Key Saved!**
+🎉 API Key Saved!
 
 Your {provider_id} key is now connected.
 
-**What's next:**
+What's next:
 • /listkeys - View all your keys
 • /status - Check usage and limits
 • /lesson - Start learning (coming soon)
@@ -437,7 +437,7 @@ Your {provider_id} key is now connected.
 
         if not providers:
             text = """
-🔑 **Your API Keys**
+🔑 Your API Keys
 
 You don't have any API keys connected yet.
 
@@ -446,14 +446,14 @@ Add one with /addkey to unlock premium data providers!
 💡 Or use the free tier (Yahoo Finance) without any keys.
 """
         else:
-            text = "🔑 **Your Connected Providers**\n\n"
+            text = "🔑 Your Connected Providers\n\n"
 
             for provider in providers:
                 name = provider["name"]
                 added = provider.get("added_at", "Unknown")
                 tier = provider.get("metadata", {}).get("tier", "unknown")
 
-                text += f"✅ **{name}**\n"
+                text += f"✅ {name}\n"
                 text += f"   Tier: {tier}\n"
                 text += f"   Added: {added[:10]}\n\n"  # Just date
 
@@ -505,7 +505,7 @@ Add one with /addkey to unlock premium data providers!
 
         if success:
             await query.edit_message_text(
-                f"✅ **{provider_id}** key removed successfully.\n\n"
+                f"✅ {provider_id} key removed successfully.\n\n"
                 "Use /listkeys to see your remaining providers."
             )
             logger.info("Key removed", user_id=user_id, provider=provider_id)
@@ -532,11 +532,11 @@ Add one with /addkey to unlock premium data providers!
             results.append((provider, test_result))
 
         # Format results
-        text = "🔍 **Key Test Results**\n\n"
+        text = "🔍 Key Test Results\n\n"
 
         for provider, result in results:
             status = "✅" if result["valid"] else "❌"
-            text += f"{status} **{provider}**: {result['message']}\n"
+            text += f"{status} {provider}: {result['message']}\n"
 
         await update.message.reply_text(text, parse_mode="Markdown")
 
@@ -548,21 +548,21 @@ Add one with /addkey to unlock premium data providers!
 
         if not status_list:
             text = """
-📊 **Provider Status**
+📊 Provider Status
 
 No providers connected yet.
 
 /addkey to get started!
 """
         else:
-            text = "📊 **Provider Status**\n\n"
+            text = "📊 Provider Status\n\n"
 
             for status in status_list:
                 name = status["name"]
                 usage = status["usage_today"]
                 tier = status["tier"]
 
-                text += f"**{name}**\n"
+                text += f"{name}\n"
                 text += f"   Tier: {tier}\n"
                 text += f"   Usage today: {usage} requests\n"
                 text += f"   Status: {status['status']}\n\n"
@@ -656,7 +656,7 @@ No providers connected yet.
         # (Telegram callback data has a 64-byte limit)
         display_lessons = lessons[:10]
 
-        text = "📚 **Available Lessons**\n\n"
+        text = "📚 Available Lessons\n\n"
 
         keyboard = []
         for lesson_id, title, difficulty in display_lessons:
@@ -767,9 +767,9 @@ No providers connected yet.
 
         question = session["questions"][0]
 
-        text = "📝 **Quiz Time!**\n\n"
+        text = "📝 Quiz Time!\n\n"
         text += f"Question 1 of {len(session['questions'])}\n\n"
-        text += f"❓ **{question['text']}**\n\n"
+        text += f"❓ {question['text']}\n\n"
 
         keyboard = []
         if question["type"] == "multiple_choice":
@@ -847,9 +847,9 @@ No providers connected yet.
 
         # Show result
         if result["correct"]:
-            text = f"✅ **Correct!** +{result['xp_earned']} XP\n\n"
+            text = f"✅ Correct! +{result['xp_earned']} XP\n\n"
         else:
-            text = f"❌ **Incorrect**\n{result.get('explanation', '')}\n\n"
+            text = f"❌ Incorrect\n{result.get('explanation', '')}\n\n"
 
         # Check if quiz complete
         score = self.quiz_system.get_quiz_score(session_id)
@@ -862,7 +862,7 @@ No providers connected yet.
 
             if current_idx >= total or session.get("completed_at"):
                 # Quiz complete
-                text += "🎉 **Quiz Complete!**\n\n"
+                text += "🎉 Quiz Complete!\n\n"
                 text += f"Score: {score['correct_answers']}/{total} ({score['percentage']:.0f}%)\n"
                 text += f"XP Earned: {score['total_xp']}\n\n"
 
@@ -879,7 +879,7 @@ No providers connected yet.
                 question = questions[current_idx]
 
                 text += f"Question {current_idx + 1} of {total}\n\n"
-                text += f"❓ **{question['text']}**\n\n"
+                text += f"❓ {question['text']}\n\n"
 
                 keyboard = []
                 if question["type"] == "multiple_choice":
@@ -931,12 +931,12 @@ No providers connected yet.
                     user_id=user_id, question=message, persona=mentor_persona, context={}
                 )
 
-                response_text = f"{response['icon']} **{response['mentor']}**\n\n"
+                response_text = f"{response['icon']} {response['mentor']}\n\n"
                 response_text += response["text"]
 
                 # Add suggested lessons if any
                 if response.get("related_lessons"):
-                    response_text += "\n\n📚 **Related lessons:**\n"
+                    response_text += "\n\n📚 Related lessons:\n"
                     for lesson_id in response["related_lessons"]:
                         response_text += f"• {lesson_id}\n"
 
@@ -986,7 +986,7 @@ No providers connected yet.
     async def cmd_mentor(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Start AI mentor interaction"""
         text = """
-🤖 **AI Mentor Selection**
+🤖 AI Mentor Selection
 
 Choose your learning companion:
 
@@ -1030,11 +1030,11 @@ Trading discipline and mindset
         mentor_info = self.mentor_service.get_mentor_info(persona)
 
         text = f"""
-{mentor_info['icon']} **{mentor_info['name']}** is ready to help!
+{mentor_info['icon']} {mentor_info['name']} is ready to help!
 
 {mentor_info['description']}
 
-**Focus:** {mentor_info['focus']}
+Focus: {mentor_info['focus']}
 
 💬 Ask me anything about trading and investing!
 
@@ -1057,17 +1057,17 @@ _Type your question below, or use /help for commands._
         completed_lessons = len(lesson_progress.get("completed", set()))
 
         text = f"""
-📊 **Your Learning Progress**
+📊 Your Learning Progress
 
-**Level:** {summary['level']} - {summary['level_title']}
-**Total XP:** {summary['total_xp']} XP
-**Streak:** {summary['streak_days']} days 🔥
+Level: {summary['level']} - {summary['level_title']}
+Total XP: {summary['total_xp']} XP
+Streak: {summary['streak_days']} days 🔥
 
-**Lessons:**
+Lessons:
 ✅ Completed: {completed_lessons}
 📝 Quizzes: {summary.get('quizzes_completed', 0)}
 
-**Badges:**
+Badges:
 """
         if summary["badges"]:
             for badge in summary["badges"]:
@@ -1083,7 +1083,7 @@ _Type your question below, or use /help for commands._
             bar_empty = 10 - bar_filled
             progress_bar = "█" * bar_filled + "░" * bar_empty
 
-            text += f"\n**Next Level:** {progress.get('xp_needed', 0)} XP needed\n"
+            text += f"\nNext Level: {progress.get('xp_needed', 0)} XP needed\n"
             text += f"[{progress_bar}] {percent:.0f}%"
 
         await update.message.reply_text(text, parse_mode="Markdown")
@@ -1091,18 +1091,18 @@ _Type your question below, or use /help for commands._
     async def cmd_fkdsl(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /fkdsl command - FK-DSL query interface"""
         text = """
-🔮 **Financial Knowledge DSL (FK-DSL)**
+🔮 Financial Knowledge DSL (FK-DSL)
 
 Execute advanced financial analysis queries using FIML's powerful DSL.
 
-**What is FK-DSL?**
+What is FK-DSL?
 A specialized query language for multi-asset financial analysis:
 • `EVALUATE` - Analyze single assets with multiple metrics
 • `COMPARE` - Side-by-side comparison of assets
 • `CORRELATE` - Correlation analysis between assets
 • `SCAN` - Market screening with custom filters
 
-**Choose a template to get started:**
+Choose a template to get started:
 """
 
         # Create inline keyboard with templates
@@ -1135,7 +1135,7 @@ A specialized query language for multi-asset financial analysis:
         if template_id == "custom":
             # Custom query - ask user to send their query
             text = """
-✏️ **Custom FK-DSL Query**
+✏️ Custom FK-DSL Query
 
 Send your query as a message. Examples:
 
@@ -1147,7 +1147,7 @@ Send your query as a message. Examples:
 
 `SCAN US_TECH WHERE PE < 25 AND MARKETCAP > 1000000000`
 
-📚 **DSL Syntax:**
+📚 DSL Syntax:
 • Asset symbols: AAPL, BTC, ETH, etc.
 • Metrics: PRICE, VOLUME, PE, MARKETCAP, VOLATILITY
 • Time windows: 7d, 30d, 60d, 90d
@@ -1163,14 +1163,14 @@ Type your query below or /cancel to abort.
         text = f"""
 {template['display']}
 
-**Description:** {template['description']}
+Description: {template['description']}
 
-**Query:**
+Query:
 ```
 {template['query']}
 ```
 
-**Example:** {template['example']}
+Example: {template['example']}
 
 🔄 Executing query...
 """
@@ -1227,16 +1227,16 @@ Type your query below or /cancel to abort.
 
         except Exception as e:
             error_message = f"""
-❌ **Query Execution Failed**
+❌ Query Execution Failed
 
-**Error:** {str(e)}
+Error: {str(e)}
 
-**Your query:**
+Your query:
 ```
 {query}
 ```
 
-**Tips:**
+Tips:
 • Check your syntax (EVALUATE, COMPARE, CORRELATE, SCAN)
 • Verify asset symbols are valid
 • Ensure metrics are supported
@@ -1257,11 +1257,11 @@ Try /fkdsl again to see examples!
 
         if result.get("status") == "failed":
             return f"""
-❌ **Query Failed**
+❌ Query Failed
 
-**Query:** `{query}`
+Query: `{query}`
 
-**Error:** {result.get('error', 'Unknown error')}
+Error: {result.get('error', 'Unknown error')}
 
 Try /fkdsl for template examples!
 
@@ -1270,13 +1270,13 @@ Try /fkdsl for template examples!
 
         if result.get("status") == "running":
             return f"""
-🔄 **Query Running**
+🔄 Query Running
 
-**Task ID:** `{result.get('task_id')}`
+Task ID: `{result.get('task_id')}`
 
-**Query:** `{query}`
+Query: `{query}`
 
-**Progress:** {result.get('total_steps', 0)} steps
+Progress: {result.get('total_steps', 0)} steps
 
 Use /status to check progress (coming soon).
 
@@ -1288,11 +1288,11 @@ Use /status to check progress (coming soon).
         result_data = result.get("result", {})
 
         # Start building formatted message
-        message_parts = ["✅ **Query Completed**", "", f"**Query:** `{query_text}`", ""]
+        message_parts = ["✅ Query Completed", "", f"Query: `{query_text}`", ""]
 
         # Format result data based on content
         if isinstance(result_data, dict):
-            message_parts.append("**Results:**")
+            message_parts.append("Results:")
             message_parts.append("```")
 
             # Try to format as table or key-value pairs
@@ -1322,7 +1322,7 @@ Use /status to check progress (coming soon).
             message_parts.append("```")
         else:
             # Fallback to JSON representation
-            message_parts.append("**Results:**")
+            message_parts.append("Results:")
             message_parts.append("```json")
             message_parts.append(json.dumps(result_data, indent=2))
             message_parts.append("```")
@@ -1331,7 +1331,7 @@ Use /status to check progress (coming soon).
         message_parts.extend(
             [
                 "",
-                "📊 **Data Quality:**",
+                "📊 Data Quality:",
                 f"• Status: {result.get('status', 'unknown').title()}",
             ]
         )
@@ -1340,7 +1340,7 @@ Use /status to check progress (coming soon).
         message_parts.extend(
             [
                 "",
-                "💡 **What's Next?**",
+                "💡 What's Next?", 
                 "• Try modifying the query with different assets",
                 "• Explore other DSL templates with /fkdsl",
                 "• Check your progress with /progress",
