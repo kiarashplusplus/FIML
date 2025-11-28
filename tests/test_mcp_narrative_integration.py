@@ -492,8 +492,7 @@ class TestMCPNarrativeIntegration:
     async def test_narrative_formatting_text(self):
         """Test narrative text formatting"""
         from fiml.mcp.tools import format_narrative_text
-        from fiml.narrative.models import (Narrative, NarrativeSection,
-                                           NarrativeType)
+        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
 
         # Create test narrative
         narrative = Narrative(
@@ -525,8 +524,7 @@ class TestMCPNarrativeIntegration:
     async def test_narrative_formatting_markdown(self):
         """Test narrative markdown formatting"""
         from fiml.mcp.tools import format_narrative_markdown
-        from fiml.narrative.models import (Narrative, NarrativeSection,
-                                           NarrativeType)
+        from fiml.narrative.models import Narrative, NarrativeSection, NarrativeType
 
         # Create test narrative
         narrative = Narrative(

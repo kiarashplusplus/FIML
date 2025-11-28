@@ -9,14 +9,13 @@ Tests the GET /api/user/{user_id}/usage endpoint with:
 - Authentication headers
 """
 
-from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from fiml.bot.core.key_manager import UserProviderKeyManager
-from fiml.bot.key_router import get_key_service, router
+from fiml.bot.key_router import router
 
 
 @pytest.fixture

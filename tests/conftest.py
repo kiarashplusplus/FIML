@@ -66,6 +66,23 @@ def pytest_addoption(parser):
         default=False,
         help="Skip Docker container startup (assume services are already running)",
     )
+    parser.addoption(
+        "--run-live",
+        action="store_true",
+        default=False,
+        help="Run tests that require live external connections",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip tests marked as live unless --run-live is given"""
+    if config.getoption("--run-live"):
+        return
+
+    skip_live = pytest.mark.skip(reason="need --run-live option to run")
+    for item in items:
+        if "live" in item.keywords:
+            item.add_marker(skip_live)
 
 
 def is_redis_ready(host="localhost", port=6379, max_retries=30):
@@ -99,6 +116,27 @@ def is_postgres_ready(host="localhost", port=5432, max_retries=30):
             if i < max_retries - 1:
                 time.sleep(1)
     return False
+
+
+@pytest.fixture(autouse=True)
+def reset_provider_registry():
+    """
+    Reset provider registry after each test to prevent test pollution.
+
+    This ensures that providers registered in one test (e.g., live tests)
+    don't persist to other tests.
+    """
+    from fiml.providers.registry import provider_registry
+
+    # Capture initial state
+    initial_providers = provider_registry.providers.copy()
+    initial_initialized = provider_registry._initialized
+
+    yield
+
+    # Reset to initial state
+    provider_registry.providers = initial_providers
+    provider_registry._initialized = initial_initialized
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -670,11 +708,10 @@ def mock_aiohttp_for_providers(request):
     def should_mock_url(url_str):
         """Check if URL should be mocked based on domain using proper URL parsing."""
         host = get_url_host(url_str)
-        for domain in provider_domains:
-            # Check exact match or subdomain match (host ends with .domain or equals domain)
-            if host == domain or host.endswith("." + domain):
-                return True
-        return False
+        return any(
+            host == domain or host.endswith("." + domain)
+            for domain in provider_domains
+        )
 
     def get_mock_data_for_url(url_str):
         """Get provider-specific mock data based on URL host."""

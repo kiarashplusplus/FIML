@@ -20,8 +20,7 @@ from fiml.bot.core.key_manager import UserProviderKeyManager
 from fiml.bot.core.provider_configurator import FIMLProviderConfigurator
 from fiml.bot.education.gamification import GamificationEngine, UserStats
 from fiml.bot.education.lesson_engine import LessonContentEngine
-from fiml.bot.education.quiz_system import (QuizQuestion, QuizSession,
-                                            QuizSystem)
+from fiml.bot.education.quiz_system import QuizQuestion, QuizSession, QuizSystem
 
 # ============================================================================
 # Fixtures

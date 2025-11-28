@@ -3,8 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from fiml.bot.core.gateway import UnifiedBotGateway
-from fiml.bot.education.lesson_engine import (Lesson, LessonContentEngine,
-                                              RenderedLesson)
+from fiml.bot.education.lesson_engine import Lesson, LessonContentEngine, RenderedLesson
 from fiml.bot.education.quiz_system import QuizQuestion, QuizSystem
 
 

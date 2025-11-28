@@ -14,9 +14,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from fiml.bot.core.usage_analytics import (PROVIDER_LIMITS,
-                                           QUOTA_WARNING_THRESHOLD,
-                                           UsageAnalytics)
+from fiml.bot.core.usage_analytics import PROVIDER_LIMITS, QUOTA_WARNING_THRESHOLD, UsageAnalytics
 
 
 @pytest.fixture

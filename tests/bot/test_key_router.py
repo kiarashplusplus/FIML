@@ -8,8 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from fiml.bot.key_router import (AddKeyRequest, KeyResponse, Provider,
-                                 ValidateKeyRequest, router)
+from fiml.bot.key_router import AddKeyRequest, KeyResponse, Provider, ValidateKeyRequest, router
 
 
 @pytest.fixture

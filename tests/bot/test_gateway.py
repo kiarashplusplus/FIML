@@ -5,8 +5,13 @@ Tests message routing and intent classification
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fiml.bot.core.gateway import (AbstractMessage, AbstractResponse,
-                                   IntentType, SessionState, UnifiedBotGateway)
+from fiml.bot.core.gateway import (
+    AbstractMessage,
+    AbstractResponse,
+    IntentType,
+    SessionState,
+    UnifiedBotGateway,
+)
 from fiml.bot.education.ai_mentor import MentorPersona
 
 

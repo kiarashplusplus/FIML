@@ -7,8 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-from fiml.sessions.models import (AnalysisHistory, QueryRecord, Session,
-                                  SessionState, SessionType)
+from fiml.sessions.models import AnalysisHistory, QueryRecord, Session, SessionState, SessionType
 from fiml.sessions.store import SessionStore
 
 
