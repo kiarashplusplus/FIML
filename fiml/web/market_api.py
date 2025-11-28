@@ -13,13 +13,14 @@ from pydantic import BaseModel
 
 from fiml.bot.education.fiml_adapter import get_fiml_data_adapter
 from fiml.core.logging import get_logger
+from fiml.core.models import AnalysisDepth, Market
 
 logger = get_logger(__name__)
 
 market_router = APIRouter()
 
 
-# Common assets for fast local search (used as fallback)
+# Common assets for fast local search (used as cache for instant results)
 COMMON_ASSETS = [
     {"symbol": "AAPL", "name": "Apple Inc.", "type": "stock"},
     {"symbol": "GOOGL", "name": "Alphabet Inc.", "type": "stock"},
@@ -51,12 +52,19 @@ COMMON_ASSETS = [
     {"symbol": "LINK", "name": "Chainlink", "type": "crypto"},
 ]
 
+# Crypto symbols for detection
+CRYPTO_SYMBOLS = {
+    "BTC", "ETH", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC",
+    "LINK", "UNI", "ATOM", "LTC", "DOGE", "SHIB", "BNB",
+}
 
-async def search_symbol_with_yfinance(query: str) -> List[Dict[str, Any]]:
+
+async def search_symbol_via_mcp(query: str) -> List[Dict[str, Any]]:
     """
-    Search for symbols using yfinance.
+    Search for symbols using FIML's MCP tools and arbitration engine.
 
-    This provides real-time symbol lookup for stocks.
+    This routes the symbol lookup through the proper arbitration layer,
+    which allows provider selection, failover, and A/B testing.
 
     Args:
         query: Search query (symbol or company name)
@@ -64,28 +72,57 @@ async def search_symbol_with_yfinance(query: str) -> List[Dict[str, Any]]:
     Returns:
         List of matching assets with symbol, name, and type
     """
+    from fiml.mcp.tools import search_by_coin, search_by_symbol
+
+    symbol = query.upper().strip()
+    if not symbol:
+        return []
+
     try:
-        import yfinance as yf
+        # Determine if this is a crypto or stock symbol
+        is_crypto = symbol.split("/")[0] in CRYPTO_SYMBOLS
 
-        # Try to get info for exact symbol match first
-        symbol = query.upper()
-        ticker = yf.Ticker(symbol)
-        info = ticker.info
-
-        if info and info.get("symbol"):
-            # Valid symbol found
-            asset_type = "crypto" if info.get("quoteType") == "CRYPTOCURRENCY" else "stock"
+        if is_crypto:
+            # Use search_by_coin for crypto (via arbitration engine)
+            response = await search_by_coin(
+                symbol=symbol.split("/")[0],
+                exchange="binance",
+                pair="USDT",
+                depth=AnalysisDepth.QUICK,  # Fast lookup
+                language="en",
+                include_narrative=False,  # Skip narrative for search
+            )
             return [{
-                "symbol": info.get("symbol", symbol),
-                "name": info.get("longName") or info.get("shortName") or symbol,
-                "type": asset_type,
-                "exchange": info.get("exchange", ""),
-                "sector": info.get("sector", ""),
+                "symbol": response.symbol,
+                "name": response.name,
+                "type": "crypto",
+                "exchange": response.exchange,
+                "source": response.cached.source,
             }]
-    except Exception as e:
-        logger.debug("yfinance lookup failed", query=query, error=str(e))
+        else:
+            # Use search_by_symbol for stocks (via arbitration engine)
+            response = await search_by_symbol(
+                symbol=symbol,
+                market=Market.US,
+                depth=AnalysisDepth.QUICK,  # Fast lookup
+                language="en",
+                include_narrative=False,  # Skip narrative for search
+            )
+            return [{
+                "symbol": response.symbol,
+                "name": response.name,
+                "type": "stock",
+                "exchange": response.exchange,
+                "source": response.cached.source,
+            }]
 
-    return []
+    except Exception as e:
+        logger.debug(
+            "MCP symbol lookup failed",
+            query=query,
+            error=str(e)
+        )
+        return []
 
 
 class PriceData(BaseModel):
@@ -219,9 +256,10 @@ async def search_assets(
     """
     Search for assets by symbol or name.
 
-    This endpoint combines:
-    1. Fast local search of common assets (instant results)
-    2. Real-time yfinance lookup for exact symbol matches
+    This endpoint uses FIML's MCP tools and arbitration engine for symbol lookup,
+    allowing provider selection, failover, and A/B testing. Combines:
+    1. MCP-based symbol lookup via arbitration engine (for exact matches)
+    2. Local cache of common assets (for fast autocomplete)
 
     Args:
         q: Search query (symbol or company name)
@@ -237,11 +275,11 @@ async def search_assets(
     results = []
     seen_symbols = set()
 
-    # 1. Try real-time yfinance lookup for exact symbol match
+    # 1. Try MCP lookup for exact symbol match (via arbitration engine)
     if len(query_upper) >= 1 and len(query_upper) <= 10:
         try:
-            yf_results = await search_symbol_with_yfinance(query_upper)
-            for asset in yf_results:
+            mcp_results = await search_symbol_via_mcp(query_upper)
+            for asset in mcp_results:
                 if asset["symbol"] not in seen_symbols:
                     # Filter by asset type if specified
                     if asset_type and asset.get("type") != asset_type.lower():
@@ -249,7 +287,7 @@ async def search_assets(
                     results.append(asset)
                     seen_symbols.add(asset["symbol"])
         except Exception as e:
-            logger.debug("yfinance search failed", error=str(e))
+            logger.debug("MCP symbol search failed", error=str(e))
 
     # 2. Search local common assets list (fast, no API call)
     for asset in COMMON_ASSETS:

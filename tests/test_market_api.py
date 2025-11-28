@@ -77,15 +77,15 @@ class TestMarketAPI:
         assert response.status_code == 400
         assert "50" in response.json()["detail"]
 
-    def test_search_assets_with_yfinance_lookup(self, client):
-        """Test that search can find symbols via yfinance"""
-        # Test exact symbol match that should trigger yfinance lookup
+    def test_search_assets_with_mcp_lookup(self, client):
+        """Test that search can find symbols via MCP arbitration"""
+        # Test exact symbol match that should trigger MCP lookup
         response = client.get("/api/market/search?q=AAPL")
 
         assert response.status_code == 200
         data = response.json()
         assert len(data) > 0
-        # Either from yfinance or local cache
+        # Either from MCP or local cache
         symbols = [asset["symbol"] for asset in data]
         assert "AAPL" in symbols
 
