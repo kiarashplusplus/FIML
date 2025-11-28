@@ -1,8 +1,10 @@
 """
 API Key Management Router
-Provides REST endpoints for managing user API keys from mobile/web clients.
+
+Handles API key storage, validation, and testing for user-provided keys.
 """
 
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Header, HTTPException, status

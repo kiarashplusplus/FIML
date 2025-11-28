@@ -4,18 +4,13 @@ User API Key Manager
 Manages encrypted storage and retrieval of user API keys with quota tracking.
 """
 
-import base64
 import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import structlog
 from cryptography.fernet import Fernet
 
-from fiml.bot.core.usage_analytics import UsageAnalytics
-from fiml.cache.l1_cache import get_redis_client
-from fiml.core.config import settings
 from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -24,7 +19,7 @@ logger = get_logger(__name__)
 class UserProviderKeyManager:
     """
     Manages user API keys with encryption and quota tracking
-    
+
     Features:
     - Encrypted key storage using Fernet
     - Provider-specific key management
@@ -257,42 +252,42 @@ class UserProviderKeyManager:
     async def track_usage(self, user_id: str, provider: str) -> Dict[str, Any]:
         """
         Track API usage for quota management using Redis-based analytics
-        
+
         Args:
             user_id: User identifier
             provider: Provider used
-            
+
         Returns:
             Dict with quota status and warning
         """
         # Track the call
         await self.usage_analytics.track_call(user_id, provider, "api_call")
-        
+
         # Check quota status
         quota_status = await self.usage_analytics.check_quota(user_id, provider)
-        
+
         return quota_status
 
     async def get_usage(self, user_id: str, provider: str) -> int:
         """
         Get current daily usage for user/provider
-        
+
         Args:
             user_id: User identifier
             provider: Provider name
-            
+
         Returns:
             Daily usage count
         """
         return await self.usage_analytics.get_usage(user_id, provider, "daily")
-    
+
     async def get_all_usage_stats(self, user_id: str) -> Dict[str, Any]:
         """
         Get comprehensive usage statistics for all providers
-        
+
         Args:
             user_id: User identifier
-            
+
         Returns:
             Dict with usage stats for all providers, warnings, and totals
         """
