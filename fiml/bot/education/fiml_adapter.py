@@ -552,7 +552,7 @@ class FIMLEducationalDataAdapter:
 
             # Extract candles from response
             # ProviderResponse.data for OHLCV should contain "candles" list
-            return response.data.get("candles", [])
+            return cast(list[Dict[str, Any]], response.data.get("candles", []))
 
         except Exception as e:
             logger.error("Failed to get OHLCV data", symbol=symbol, error=str(e))

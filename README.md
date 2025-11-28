@@ -10,11 +10,11 @@
 [![FIML CI/CD Pipeline (Core Only)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml)
 [![Deploy Documentation](https://github.com/kiarashplusplus/FIML/actions/workflows/docs.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/docs.yml)
 
-> 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | 🚀 **v0.3.0 RELEASED** | [Changelog](CHANGELOG.md) | [Technical Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
+> 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | 🚀 **v0.4.0 RELEASED** | [Changelog](CHANGELOG.md) | [Technical Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 Active Development 🚧 | **Version**: 0.3.0 | **Codebase**: 31,375 LOC | **Tests**: 🎉 **1,403 COLLECTED** (100% pass rate on core suite) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
+> **Current State**: Phase 1 Complete ✅ | Phase 2 Active Development 🚧 | **Version**: 0.4.0 | **Codebase**: 32,000+ LOC | **Tests**: 🎉 **1,403 COLLECTED** (100% pass rate on core suite) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
 > 
-> 🌍 **NEW in v0.3.0**: Multilingual Compliance Guardrail (9 languages: EN, ES, FR, DE, IT, PT, JA, ZH, FA)
+> 🌍 **NEW in v0.4.0**: FIML Mobile App (Expo), Usage Analytics & Quota Management, Multilingual Compliance Guardrail
 > 
 > ✅ **Production Ready**: Zero CodeQL security alerts, comprehensive test coverage, CI/CD validated
 > 
@@ -22,7 +22,7 @@
 
 
 > 📊 **Quick Links**:
-> - 🎉 [v0.3.0 Release Notes](CHANGELOG.md#030---2024-11-27) - Compliance Guardrail Layer with multilingual support
+> - 🎉 [v0.4.0 Release Notes](CHANGELOG.md) - Mobile App, Usage Analytics, and Compliance Guardrail Layer
 > - 🎯 [Phase Evaluation Report](docs/project/PHASE_EVALUATION_REPORT.md) - Visual summary and verification
 > - 📘 [Technical & Strategic Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md) - Comprehensive 21KB analysis
 > - ⚡ [Current State Summary](docs/implementation-summaries/CURRENT_STATE_SUMMARY.md) - TL;DR quick reference
@@ -44,9 +44,9 @@
 
 FIML is an MCP (Model Context Protocol) server that provides intelligent financial data access through a unified interface. It implements a data arbitration layer that automatically selects the best data provider based on availability, freshness, and reliability. The project includes a comprehensive compliance guardrail system supporting 9 languages for global regulatory compliance.
 
-The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](docs/project/blueprint.md) for the complete vision) and has reached production readiness with v0.3.0's multilingual compliance capabilities.
+The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](docs/project/blueprint.md) for the complete vision) and has reached production readiness with v0.4.0's mobile and analytics capabilities.
 
-## 🌟 What's Actually Working (Phase 1 Complete + v0.3.0 Enhancements)
+## 🌟 What's Actually Working (Phase 1 Complete + v0.4.0 Enhancements)
 
 ### ✅ Core Infrastructure (100%)
 - **🔀 Data Arbitration Engine**: Multi-provider scoring (5 factors), automatic fallback, conflict resolution
@@ -72,7 +72,20 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
 - **🛡️ Compliance Framework**: Regional checks (8 regions), disclaimers, investment advice detection
 - **📈 Monitoring Hooks**: Prometheus metrics endpoints, health checks
 
-### 🎉 v0.3.0 Compliance Guardrail Layer (NEW!)
+### 🎉 v0.4.0 Mobile & Analytics (NEW!)
+- **📱 FIML Mobile App (Expo)**:
+  - **Cross-Platform**: iOS, Android, and Web support via Expo/React Native
+  - **Chat Interface**: Interactive AI financial assistant (Maya, Theo, Zara)
+  - **Key Management**: Secure on-device API key storage and management
+  - **Market Dashboard**: Real-time price tracking (Coming Soon)
+  - **Learning Hub**: Interactive educational content (Coming Soon)
+- **📊 Usage Analytics & Quotas**:
+  - **Provider Tracking**: Real-time API usage tracking per provider
+  - **Quota Management**: Automatic enforcement of free/premium tier limits
+  - **Redis Persistence**: Durable usage counters with daily/monthly aggregation
+  - **Smart Alerts**: Warning thresholds (80%) for approaching limits
+
+### 🌍 v0.3.0 Compliance Guardrail Layer
 - **🌍 Multilingual Support**: 9 languages (EN, ES, FR, DE, IT, PT, JA, ZH, FA)
   - Language auto-detection with script-based recognition (CJK, Arabic)
   - Language-specific pattern matching for compliance violations
@@ -98,6 +111,8 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
 - **🤖 Advanced Multi-Agent Orchestration**: ✅ **FRAMEWORK COMPLETE** - Ray-based system with 8 specialized agents
 - **⚡ Performance Optimization**: ✅ **SHIPPED** - Cache warming, intelligent eviction, load testing suite
 - **🌍 Multilingual Compliance**: ✅ **SHIPPED** - 9 languages with auto-detection (v0.3.0)
+- **📱 Mobile App**: ✅ **SHIPPED** - Expo/React Native app with chat and key management (v0.4.0)
+- **📊 Usage Analytics**: ✅ **SHIPPED** - Provider usage tracking and quotas (v0.4.0)
 - [x] Educational Bot: ✅ **BETA** - Telegram integration with lesson system (MVP Implemented)
 - **🔌 Platform Integrations**: 🔜 **PLANNED** - ChatGPT MCP plugin, Claude integration
 - **🔐 Security Hardening**: 🔜 **PLANNED** - Penetration testing, rate limiting enhancements
@@ -105,6 +120,8 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
 ### 📱 Client Applications
 - **Telegram Bot**: Educational bot offering interactive lessons, quizzes, and market data queries.
 - **Mobile App (Expo)**: React Native application featuring:
+  - **Chat Interface**: Direct access to FIML's AI agents.
+  - **Key Management**: Securely manage your provider API keys.
   - **Onboarding Flow**: Introduction to FIML's core value propositions.
   - **Market Dashboard**: Real-time price tracking and charts.
   - **Learning Hub**: Access to educational content and quizzes.

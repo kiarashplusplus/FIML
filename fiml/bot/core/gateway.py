@@ -16,6 +16,7 @@ from fiml.bot.education.fiml_adapter import FIMLEducationalDataAdapter
 from fiml.bot.education.gamification import GamificationEngine
 from fiml.bot.education.lesson_engine import LessonContentEngine
 from fiml.bot.education.quiz_system import QuizSystem
+from fiml.bot.key_router import get_key_service
 from fiml.narrative.generator import NarrativeGenerator
 
 logger = structlog.get_logger(__name__)
@@ -391,6 +392,7 @@ class UnifiedBotGateway:
         self.lesson_engine = LessonContentEngine()
         self.quiz_system = QuizSystem()
         self.gamification = GamificationEngine()
+        self.key_manager = get_key_service()
 
         # Handlers will be set by components
         self.handlers: Dict[IntentType, Any] = {
@@ -494,7 +496,7 @@ class UnifiedBotGateway:
             # Cancel any ongoing operation
             if session.state == SessionState.AWAITING_KEY_INPUT:
                 session.state = SessionState.IDLE
-                if "awaiting_key_for" in session.metadata:
+                if session.metadata and "awaiting_key_for" in session.metadata:
                     session.metadata.pop("awaiting_key_for")
                 return AbstractResponse(
                     text="✅ Key addition cancelled.\n\n"
@@ -811,7 +813,7 @@ class UnifiedBotGateway:
         """
         # Check if waiting for key input
         if session.state == SessionState.AWAITING_KEY_INPUT:
-            provider = session.metadata.get("awaiting_key_for")
+            provider = session.metadata.get("awaiting_key_for") if session.metadata else None
 
             if not provider:
                 # Reset state if no provider set
@@ -849,7 +851,7 @@ class UnifiedBotGateway:
                 if success:
                     # Reset session state
                     session.state = SessionState.IDLE
-                    if "awaiting_key_for" in session.metadata:
+                    if session.metadata and "awaiting_key_for" in session.metadata:
                         session.metadata.pop("awaiting_key_for")
 
                     return AbstractResponse(

@@ -18,7 +18,7 @@ class TestServerConfiguration:
         from fiml.server import app
 
         assert app.title == "FIML - Financial Intelligence Meta-Layer"
-        assert app.version == "0.3.0"
+        assert app.version == "0.4.0"
         assert "AI-Native Multi-Market Financial Intelligence Framework" in app.description
 
     def test_app_has_routers(self):
@@ -59,7 +59,7 @@ class TestHealthEndpoints:
         data = response.json()
 
         assert data["status"] == "healthy"
-        assert data["version"] == "0.3.0"
+        assert data["version"] == "0.4.0"
         assert "environment" in data
 
     def test_root_endpoint(self, client):
@@ -70,7 +70,7 @@ class TestHealthEndpoints:
         data = response.json()
 
         assert data["service"] == "FIML - Financial Intelligence Meta-Layer"
-        assert data["version"] == "0.3.0"
+        assert data["version"] == "0.4.0"
         assert data["health"] == "/health"
         assert data["metrics"] == "/metrics"
 

@@ -1,7 +1,7 @@
 # FIML - Comprehensive Technical & Strategic Evaluation
 
 **Latest Evaluation**: November 27, 2025  
-**Version**: 0.3.0  
+**Version**: 0.4.0  
 **Evaluator**: Comprehensive Codebase Analysis  
 **Repository**: https://github.com/kiarashplusplus/FIML
 
@@ -13,7 +13,7 @@ FIML (Financial Intelligence Meta-Layer) has evolved into a **production-grade, 
 
 ### Current State: Phase 2 Active Development (60% Complete)
 
-**Version**: 0.3.0  
+**Version**: 0.4.0  
 **Last Major Update**: November 27, 2025 (Multilingual Compliance Guardrail)  
 **Development Status**: 🟢 Production Ready (Phase 1) + 🚧 Phase 2 Active (60%)
 

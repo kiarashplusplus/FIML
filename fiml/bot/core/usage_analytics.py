@@ -7,7 +7,7 @@ and comprehensive usage statistics.
 
 from collections import defaultdict
 from datetime import UTC, datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from fiml.core.logging import get_logger
 
@@ -46,7 +46,7 @@ class UsageAnalytics:
         usage:user123:binance:2025-11 (monthly)
     """
 
-    def __init__(self, redis_client=None):
+    def __init__(self, redis_client: Optional[Any] = None) -> None:
         """
         Initialize usage analytics
 
@@ -205,8 +205,8 @@ class UsageAnalytics:
                 continue
 
             limits = PROVIDER_LIMITS[provider]
-            daily_limit = limits["daily"]
-            monthly_limit = limits["monthly"]
+            daily_limit = cast(float, limits["daily"])
+            monthly_limit = cast(float, limits["monthly"])
 
             # Calculate percentages
             daily_percentage = (daily_usage / daily_limit * 100) if daily_limit != float('inf') else 0
@@ -234,7 +234,7 @@ class UsageAnalytics:
             })
 
         # Sort by daily usage (descending)
-        stats.sort(key=lambda x: x["daily_usage"], reverse=True)
+        stats.sort(key=lambda x: cast(int, x["daily_usage"]), reverse=True)
 
         return {
             "stats": stats,

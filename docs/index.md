@@ -3,7 +3,7 @@
 **An AI-Native Financial Data MCP Server with Intelligent Provider Orchestration**
 
 !!! info "Project Status"
-    ✅ **PHASE 1 COMPLETE** | 🚧 **PHASE 2 ACTIVE DEVELOPMENT (60%)** | 🚀 **Version**: 0.3.0 | **Tests**: 1,403 collected (100% pass rate) | 🌍 **NEW**: Multilingual Compliance (9 languages)
+    ✅ **PHASE 1 COMPLETE** | 🚧 **PHASE 2 ACTIVE DEVELOPMENT (60%)** | 🚀 **Version**: 0.4.0 | **Tests**: 1,403 collected (100% pass rate) | 🌍 **NEW**: Mobile App, Usage Analytics, Multilingual Compliance
     
     [![FIML CI/CD Pipeline](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml)
     [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
@@ -31,15 +31,18 @@ FIML is an MCP (Model Context Protocol) server that provides intelligent financi
 - **💰 Live Data**: Real stock prices (AAPL, TSLA, MSFT) from multiple providers
 - **₿ Crypto Support**: BTC, ETH via CCXT multi-exchange integration
 - **🛡️ Compliance Guardrail (v0.3.0)**: Multilingual compliance (9 languages), prescriptive verb blocking, advice removal
+- **📊 Usage Analytics (v0.4.0)**: Provider tracking, quota management, smart alerts
 - **📈 Monitoring Hooks**: Prometheus metrics endpoints, health checks
 
 ### 📱 Client Applications
 
 - **Telegram Bot**: Educational bot offering interactive lessons, quizzes, and market data queries.
 - **Mobile App (Expo)**: React Native application featuring:
+    - **Chat Interface**: Interactive AI financial assistant (Maya, Theo, Zara)
+    - **Key Management**: Secure on-device API key storage
     - **Onboarding Flow**: Introduction to FIML's core value propositions.
-    - **Market Dashboard**: Real-time price tracking and charts.
-    - **Learning Hub**: Access to educational content and quizzes.
+    - **Market Dashboard**: Real-time price tracking and charts (Coming Soon).
+    - **Learning Hub**: Access to educational content and quizzes (Coming Soon).
     - **Cross-Platform**: Runs on iOS, Android, and Web.
 
 ## 🏗️ Architecture

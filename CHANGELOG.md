@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-11-28
+
+### Added
+
+#### FIML Mobile App (Expo)
+- Cross-platform mobile application (iOS, Android, Web) built with Expo and React Native
+- **Chat Interface**: Interactive AI financial assistant (Maya, Theo, Zara)
+- **Key Management**: Secure on-device API key storage and management
+- **Onboarding Flow**: Introduction to FIML's core value propositions
+
+#### Usage Analytics & Quota Management
+- **Provider Tracking**: Real-time API usage tracking per provider
+- **Quota Management**: Automatic enforcement of free/premium tier limits
+- **Redis Persistence**: Durable usage counters with daily/monthly aggregation
+- **Smart Alerts**: Warning thresholds (80%) for approaching limits
+
+#### Key Management Service
+- Unified key storage interface for secure API key handling across platforms
+
+### Changed
+- Updated documentation to reflect new mobile and analytics capabilities
+- Bumped system version to 0.4.0
+
 ## [0.3.0] - 2024-11-27
 
 ### Added

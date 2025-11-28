@@ -218,7 +218,7 @@ echo -e "${BOLD}${WHITE}╔═════════════════�
 echo -e "${BOLD}${WHITE}║         🌟 ${CYAN}FIML BLUEPRINT CAPABILITIES DEMONSTRATION${WHITE} 🌟                        ║${NC}"
 echo -e "${BOLD}${WHITE}║                                                                                ║${NC}"
 echo -e "${BOLD}${WHITE}║  ${DIM}Financial Intelligence Meta-Layer - 10-Year Architecture Vision${WHITE}             ║${NC}"
-echo -e "${BOLD}${WHITE}║  ${DIM}Version 0.3.0 - Phase 1 Complete${WHITE}                                              ║${NC}"
+echo -e "${BOLD}${WHITE}║  ${DIM}Version 0.4.0 - Phase 1 Complete${WHITE}                                              ║${NC}"
 if [ "$QUICK_MODE" = true ]; then
 echo -e "${BOLD}${WHITE}║  ${YELLOW}Running in QUICK mode${WHITE}                                                        ║${NC}"
 fi
@@ -647,13 +647,13 @@ end_timing "section5"
 # =============================================================================
 # SECTION 6: Compliance & Safety Framework (Blueprint Section 8)
 # =============================================================================
-print_section "SECTION 6: Compliance & Safety Framework (v0.3.0)" "🛡️"
+print_section "SECTION 6: Compliance & Safety Framework (v0.4.0)" "🛡️"
 start_timing "section6"
 
-print_subsection "Compliance Guardrail Layer (Blueprint 8 + v0.3.0)" "⚖️"
+print_subsection "Compliance Guardrail Layer (Blueprint 8 + v0.4.0)" "⚖️"
 echo -e "  ${DIM}Demonstrating regulatory compliance for financial outputs...${NC}"
 echo ""
-echo -e "  ${BOLD}Guardrail Capabilities (v0.3.0):${NC}"
+echo -e "  ${BOLD}Guardrail Capabilities (v0.4.0):${NC}"
 echo ""
 echo -e "  ${GREEN}Output Scanning${NC}"
 echo -e "    ${CYAN}•${NC} Prescriptive verb detection (should, must, recommend)"

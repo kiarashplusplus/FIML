@@ -92,7 +92,7 @@ async def get_provider_status(
 
     try:
         # Get all configured providers
-        user_keys = await service.list_keys(user_id)
+        user_keys = await service.list_user_keys(user_id)
 
         # Define available providers
         all_providers = [
@@ -136,10 +136,10 @@ async def get_provider_status(
         # Return default providers on error
         return {
             "providers": [
-                {"name": "binance", "displayName": "Binance", "isConnected": False, "description": "Crypto trading data and market information"},
-                {"name": "coinbase", "displayName": "Coinbase", "isConnected": False, "description": "Cryptocurrency exchange integration"},
-                {"name": "alphavantage", "displayName": "Alpha Vantage", "isConnected": False, "description": "Stock market data"},
-                {"name": "yfinance", "displayName": "Yahoo Finance", "isConnected": False, "description": "Free stock data"},
+                Provider(name="binance", displayName="Binance", isConnected=False, description="Crypto trading data and market information"),
+                Provider(name="coinbase", displayName="Coinbase", isConnected=False, description="Cryptocurrency exchange integration"),
+                Provider(name="alphavantage", displayName="Alpha Vantage", isConnected=False, description="Stock market data"),
+                Provider(name="yfinance", displayName="Yahoo Finance", isConnected=False, description="Free stock data"),
             ]
         }
 
@@ -238,7 +238,6 @@ async def add_key(
             user_id=user_id,
             provider=request.provider,
             api_key=request.api_key,
-            api_secret=request.api_secret,
         )
 
         logger.info("API key added successfully", user_id=user_id, provider=request.provider)
