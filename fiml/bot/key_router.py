@@ -44,6 +44,11 @@ class AddKeyRequest(BaseModel):
     api_secret: Optional[str] = None
 
 
+class ValidateKeyRequest(BaseModel):
+    """Request model for validating API key format"""
+    api_key: str
+
+
 class KeyResponse(BaseModel):
     """Response model for key operations"""
     success: bool
@@ -114,6 +119,70 @@ async def get_provider_status(
                 {"name": "yfinance", "displayName": "Yahoo Finance", "isConnected": False, "description": "Free stock data"},
             ]
         }
+
+
+@router.post("/api/user/{user_id}/keys/{provider}/validate-format")
+async def validate_key_format(
+    user_id: str,
+    provider: str,
+    request: ValidateKeyRequest,
+    authorization: Optional[str] = Header(None)
+) -> Dict[str, Any]:
+    """
+    Validate API key format without storing it.
+    Provides real-time format validation feedback.
+    
+    Returns:
+        200: Format validation result with details
+        400: Unknown provider
+    """
+    service = get_key_service()
+    
+    try:
+        # Check if provider is supported
+        provider_info = service.get_provider_info(provider)
+        if not provider_info:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown provider: {provider}"
+            )
+        
+        # Validate format using backend patterns
+        is_valid = service.validate_key_format(provider, request.api_key)
+        
+        # Get format description
+        format_info = service._service.KEY_PATTERNS.get(provider)
+        
+        response_data = {
+            "valid": is_valid,
+            "provider": provider,
+            "key_length": len(request.api_key)
+        }
+        
+        if is_valid:
+            response_data["message"] = f"Valid {provider} key format"
+        else:
+            response_data["message"] = f"Invalid format for {provider}"
+            if format_info:
+                response_data["expected_pattern"] = format_info
+        
+        logger.debug(
+            "Format validation",
+            provider=provider,
+            valid=is_valid,
+            key_length=len(request.api_key)
+        )
+        
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error validating key format", provider=provider, error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to validate format: {str(e)}"
+        )
 
 
 @router.post("/api/user/{user_id}/keys", status_code=status.HTTP_201_CREATED)

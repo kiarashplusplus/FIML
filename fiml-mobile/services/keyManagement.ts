@@ -1,18 +1,6 @@
 import { API_BASE_URL } from '../constants';
 import * as SecureStore from 'expo-secure-store';
-
-export interface Provider {
-    name: string;
-    displayName: string;
-    isConnected: boolean;
-    description?: string;
-}
-
-export interface KeyManagementResponse {
-    success: boolean;
-    message?: string;
-    error?: string;
-}
+import type { Provider, KeyManagementResponse, ValidationResponse } from '../types';
 
 // Cache configuration
 const CACHE_KEYS = {
@@ -154,186 +142,233 @@ class KeyManagementService {
     }
 
     /**
-     * Add a new API key
+     * Validate API key format in real-time (without storing)
      */
-    async addKey(userId: string, provider: string, apiKey: string, apiSecret?: string): Promise<KeyManagementResponse> {
+    async validateKeyFormat(userId: string, provider: string, apiKey: string): Promise<ValidationResponse> {
+        if (!apiKey || apiKey.length === 0) {
+            return { valid: false, message: 'API key required' };
+        }
+
         try {
             const token = await this.getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/user/${userId}/keys`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    provider,
-                    api_key: apiKey,
-                    api_secret: apiSecret,
-                }),
-            });
+            const response = await fetch(
+                `${API_BASE_URL}/api/user/${userId}/keys/${provider}/validate-format`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ api_key: apiKey }),
+                }
+            );
 
-            // Handle different HTTP status codes
-            if (response.status === 201) {
-                // Clear cache on successful addition
-                await this.clearCache();
-
+            if (response.ok) {
                 const data = await response.json();
                 return {
-                    success: true,
-                    message: data.message || 'API key added successfully',
+                    valid: data.valid,
+                    message: data.message,
+                    expected_pattern: data.expected_pattern,
                 };
             }
 
-            // Parse error response
-            const errorData = await response.json();
-
-            if (response.status === 400) {
-                return {
-                    success: false,
-                    error: errorData.detail || 'Invalid provider or key format',
-                };
-            }
-
-            if (response.status === 500) {
-                return {
-                    success: false,
-                    error: 'Server error. Please try again later.',
-                };
-            }
-
-            return {
-                success: false,
-                error: errorData.detail || 'Failed to add API key',
-            };
+            return { valid: false, message: 'Validation failed' };
         } catch (error) {
-            return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Network error',
-            };
+            console.error('Format validation error:', error);
+            // On error, don't block the user
+            return { valid: true, message: 'Unable to validate format' };
         }
     }
 
     /**
-     * Test if an API key is valid
+     * Get default provider list (offline fallback)
      */
-    async testKey(userId: string, provider: string): Promise<KeyManagementResponse> {
-        try {
-            const token = await this.getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/user/${userId}/keys/${provider}/test`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+    private getDefaultProviders(): Provider[] {
 
-            // Handle different HTTP status codes
-            if (response.status === 200) {
-                const data = await response.json();
-                return {
-                    success: true,
-                    message: data.message || 'API key is valid',
-                };
-            }
+    /**
+     * Add a new API key
+     */
+    async addKey(userId: string, provider: string, apiKey: string, apiSecret ?: string): Promise < KeyManagementResponse > {
+            try {
+                const token = await this.getAuthToken();
+                const response = await fetch(`${API_BASE_URL}/api/user/${userId}/keys`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        provider,
+                        api_key: apiKey,
+                        api_secret: apiSecret,
+                    }),
+                });
 
-            // Parse error response
-            const errorData = await response.json();
-
-            if (response.status === 404) {
-                return {
-                    success: false,
-                    error: 'No API key found for this provider',
-                };
-            }
-
-            if (response.status === 400) {
-                return {
-                    success: false,
-                    error: errorData.detail || 'Key validation failed',
-                };
-            }
-
-            if (response.status === 500) {
-                return {
-                    success: false,
-                    error: 'Server error. Please try again later.',
-                };
-            }
-
-            return {
-                success: false,
-                error: errorData.detail || 'Key test failed',
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Network error',
-            };
-        }
-    }
-
-    async removeKey(userId: string, provider: string): Promise<KeyManagementResponse> {
-        try {
-            const token = await this.getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/user/${userId}/keys/${provider}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+                // Handle different HTTP status codes
+                if(response.status === 201) {
+            // Clear cache on successful addition
+            await this.clearCache();
 
             const data = await response.json();
-
-            if (response.ok && data.success) {
-                // Clear cache on successful removal
-                await this.clearCache();
-
-                return {
-                    success: true,
-                    message: data.message || 'API key removed successfully',
-                };
-            }
-
             return {
-                success: false,
-                error: data.error || 'Failed to remove API key',
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error instanceof Error ? error.message : 'Network error',
+                success: true,
+                message: data.message || 'API key added successfully',
             };
         }
+
+        // Parse error response
+        const errorData = await response.json();
+
+        if (response.status === 400) {
+            return {
+                success: false,
+                error: errorData.detail || 'Invalid provider or key format',
+            };
+        }
+
+        if (response.status === 500) {
+            return {
+                success: false,
+                error: 'Server error. Please try again later.',
+            };
+        }
+
+        return {
+            success: false,
+            error: errorData.detail || 'Failed to add API key',
+        };
+    } catch(error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Network error',
+        };
+    }
+}
+
+    /**
+     * Test if an API key is valid
+     */
+    async testKey(userId: string, provider: string): Promise < KeyManagementResponse > {
+    try {
+        const token = await this.getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/api/user/${userId}/keys/${provider}/test`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Handle different HTTP status codes
+        if(response.status === 200) {
+    const data = await response.json();
+    return {
+        success: true,
+        message: data.message || 'API key is valid',
+    };
+}
+
+// Parse error response
+const errorData = await response.json();
+
+if (response.status === 404) {
+    return {
+        success: false,
+        error: 'No API key found for this provider',
+    };
+}
+
+if (response.status === 400) {
+    return {
+        success: false,
+        error: errorData.detail || 'Key validation failed',
+    };
+}
+
+if (response.status === 500) {
+    return {
+        success: false,
+        error: 'Server error. Please try again later.',
+    };
+}
+
+return {
+    success: false,
+    error: errorData.detail || 'Key test failed',
+};
+        } catch (error) {
+    return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+    };
+}
+    }
+
+    async removeKey(userId: string, provider: string): Promise < KeyManagementResponse > {
+    try {
+        const token = await this.getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/api/user/${userId}/keys/${provider}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if(response.ok && data.success) {
+    // Clear cache on successful removal
+    await this.clearCache();
+
+    return {
+        success: true,
+        message: data.message || 'API key removed successfully',
+    };
+}
+
+return {
+    success: false,
+    error: data.error || 'Failed to remove API key',
+};
+        } catch (error) {
+    return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error',
+    };
+}
     }
 
     private getDefaultProviders(): Provider[] {
-        return [
-            {
-                name: 'binance',
-                displayName: 'Binance',
-                isConnected: false,
-                description: 'Crypto trading data and market information',
-            },
-            {
-                name: 'coinbase',
-                displayName: 'Coinbase',
-                isConnected: false,
-                description: 'Cryptocurrency exchange integration',
-            },
-            {
-                name: 'alphavantage',
-                displayName: 'Alpha Vantage',
-                isConnected: false,
-                description: 'Stock market data and financial indicators',
-            },
-            {
-                name: 'yfinance',
-                displayName: 'Yahoo Finance',
-                isConnected: false,
-                description: 'Free stock and market data (no key required)',
-            },
-        ];
-    }
+    return [
+        {
+            name: 'binance',
+            displayName: 'Binance',
+            isConnected: false,
+            description: 'Crypto trading data and market information',
+        },
+        {
+            name: 'coinbase',
+            displayName: 'Coinbase',
+            isConnected: false,
+            description: 'Cryptocurrency exchange integration',
+        },
+        {
+            name: 'alphavantage',
+            displayName: 'Alpha Vantage',
+            isConnected: false,
+            description: 'Stock market data and financial indicators',
+        },
+        {
+            name: 'yfinance',
+            displayName: 'Yahoo Finance',
+            isConnected: false,
+            description: 'Free stock and market data (no key required)',
+        },
+    ];
 }
+}
+
+// Re-export types for convenience
+export type { Provider, KeyManagementResponse, ValidationResponse } from '../types';
 
 export default new KeyManagementService();

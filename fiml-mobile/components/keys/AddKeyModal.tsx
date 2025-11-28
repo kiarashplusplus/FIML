@@ -1,25 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
+import keyManagementService from '../../services/keyManagement';
+import type { AddKeyModalProps } from '../../types';
 
 // UI timing constants
 const SUCCESS_MODAL_DELAY_MS = 1500; // 1.5 seconds
-
-interface AddKeyModalProps {
-    visible: boolean;
-    providerName: string;
-    providerDisplayName: string;
-    onClose: () => void;
-    onSubmit: (providerName: string, apiKey: string, apiSecret?: string) => Promise<void>;
-}
+const VALIDATION_DEBOUNCE_MS = 500;   // 0.5 seconds
 
 export default function AddKeyModal({ visible, providerName, providerDisplayName, onClose, onSubmit }: AddKeyModalProps) {
+    const { user } = useAuth();
     const [apiKey, setApiKey] = useState('');
     const [apiSecret, setApiSecret] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [error, setError] = useState('');
 
+    // Format validation state
+    const [isValidating, setIsValidating] = useState(false);
+    const [formatValid, setFormatValid] = useState<boolean | null>(null);
+    const [formatMessage, setFormatMessage] = useState('');
+
     const needsSecret = ['binance', 'coinbase', 'kraken'].includes(providerName.toLowerCase());
+
+    // Debounced format validation
+    useEffect(() => {
+        if (!apiKey || apiKey.length === 0) {
+            setFormatValid(null);
+            setFormatMessage('');
+            return;
+        }
+
+        setIsValidating(true);
+        const timeoutId = setTimeout(async () => {
+            if (user?.id) {
+                const result = await keyManagementService.validateKeyFormat(
+                    user.id,
+                    providerName,
+                    apiKey
+                );
+                setFormatValid(result.valid);
+                setFormatMessage(result.message || '');
+                setIsValidating(false);
+            }
+        }, VALIDATION_DEBOUNCE_MS);
+
+        return () => {
+            clearTimeout(timeoutId);
+            setIsValidating(false);
+        };
+    }, [apiKey, providerName, user?.id]);
 
     const handleSubmit = async () => {
         if (!apiKey.trim()) {
@@ -96,17 +126,38 @@ export default function AddKeyModal({ visible, providerName, providerDisplayName
                             {/* API Key Input */}
                             <View className="mb-4">
                                 <Text className="text-gray-300 font-medium mb-2">API Key</Text>
-                                <TextInput
-                                    className="bg-gray-700 text-white p-3 rounded-lg"
-                                    placeholder="Enter your API key"
-                                    placeholderTextColor="#6B7280"
-                                    value={apiKey}
-                                    onChangeText={setApiKey}
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    secureTextEntry
-                                    editable={!isLoading}
-                                />
+                                <View className="relative">
+                                    <TextInput
+                                        className="bg-gray-700 text-white p-3 rounded-lg pr-12"
+                                        placeholder="Enter your API key"
+                                        placeholderTextColor="#6B7280"
+                                        value={apiKey}
+                                        onChangeText={setApiKey}
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        secureTextEntry
+                                        editable={!isLoading}
+                                    />
+                                    {/* Format validation indicator */}
+                                    {apiKey.length > 0 && (
+                                        <View className="absolute right-3 top-3">
+                                            {isValidating ? (
+                                                <ActivityIndicator size="small" color="#9CA3AF" />
+                                            ) : formatValid === true ? (
+                                                <Text className="text-green-400 text-xl">✓</Text>
+                                            ) : formatValid === false ? (
+                                                <Text className="text-red-400 text-xl">✕</Text>
+                                            ) : null}
+                                        </View>
+                                    )}
+                                </View>
+
+                                {/* Format feedback message */}
+                                {formatMessage && apiKey.length > 0 && !isValidating && (
+                                    <Text className={`text-xs mt-1 ${formatValid ? 'text-green-400' : 'text-red-400'}`}>
+                                        {formatMessage}
+                                    </Text>
+                                )}
                             </View>
 
                             {/* API Secret Input (if needed) */}

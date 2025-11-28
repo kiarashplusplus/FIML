@@ -1,22 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import type { ProviderKeyCardProps } from '../../types';
 
 // UI timing constants
 const REMOVE_KEY_DELAY_MS = 1000; // 1 second
-
-interface Provider {
-    name: string;
-    displayName: string;
-    isConnected: boolean;
-    description?: string;
-}
-
-interface ProviderKeyCardProps {
-    provider: Provider;
-    onAdd: (providerName: string) => void;
-    onTest: (providerName: string) => Promise<void>;
-    onRemove: (providerName: string) => void;
-}
 
 export default function ProviderKeyCard({ provider, onAdd, onTest, onRemove }: ProviderKeyCardProps) {
     const [testingKey, setTestingKey] = useState(false);

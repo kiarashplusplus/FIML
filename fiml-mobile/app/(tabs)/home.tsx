@@ -5,7 +5,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import ProviderKeyCard from '../../components/keys/ProviderKeyCard';
 import AddKeyModal from '../../components/keys/AddKeyModal';
-import keyManagementService, { Provider } from '../../services/keyManagement';
+import keyManagementService from '../../services/keyManagement';
+import type { Provider } from '../../types';
 
 export default function HomeScreen() {
     const { user } = useAuth();
