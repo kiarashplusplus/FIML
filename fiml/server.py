@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         from fiml.cache.warming import cache_warmer
 
         await cache_warmer.initialize()
-        
+
         # Start background warming if enabled
         if settings.enable_cache_warming:
             await cache_warmer.start_background_warming(

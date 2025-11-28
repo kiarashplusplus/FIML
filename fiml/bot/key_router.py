@@ -98,40 +98,22 @@ async def get_provider_status(
         # Get all configured providers
         user_keys = await service.list_user_keys(user_id)
 
-        # Define available providers
-        all_providers = [
-            {
-                "name": "binance",
-                "displayName": "Binance",
-                "description": "Crypto trading data and market information",
-            },
-            {
-                "name": "coinbase",
-                "displayName": "Coinbase",
-                "description": "Cryptocurrency exchange integration",
-            },
-            {
-                "name": "alphavantage",
-                "displayName": "Alpha Vantage",
-                "description": "Stock market data and financial indicators",
-            },
-            {
-                "name": "yfinance",
-                "displayName": "Yahoo Finance",
-                "description": "Free stock and market data (no key required)",
-            },
-        ]
+        # Get available providers from service
+        supported_providers = service.list_supported_providers()
 
         # Mark which providers are connected
         providers = []
-        for provider_info in all_providers:
-            is_connected = provider_info["name"] in user_keys
+        for provider_info in supported_providers:
+            provider_id = provider_info["id"]
+            is_connected = provider_id in user_keys
+
+            # Map service info to Provider model
             providers.append(
                 Provider(
-                    name=provider_info["name"],
-                    displayName=provider_info["displayName"],
+                    name=provider_id,
+                    displayName=provider_info["name"],
                     isConnected=is_connected,
-                    description=provider_info.get("description"),
+                    description=f"Access {', '.join(provider_info.get('asset_types', []))} data",
                 )
             )
 
@@ -139,35 +121,8 @@ async def get_provider_status(
 
     except Exception as e:
         logger.error("Error fetching provider status", user_id=user_id, error=str(e))
-        # Return default providers on error
-        return {
-            "providers": [
-                Provider(
-                    name="binance",
-                    displayName="Binance",
-                    isConnected=False,
-                    description="Crypto trading data and market information",
-                ),
-                Provider(
-                    name="coinbase",
-                    displayName="Coinbase",
-                    isConnected=False,
-                    description="Cryptocurrency exchange integration",
-                ),
-                Provider(
-                    name="alphavantage",
-                    displayName="Alpha Vantage",
-                    isConnected=False,
-                    description="Stock market data",
-                ),
-                Provider(
-                    name="yfinance",
-                    displayName="Yahoo Finance",
-                    isConnected=False,
-                    description="Free stock data",
-                ),
-            ]
-        }
+        # Return empty list on error instead of misleading default
+        return {"providers": []}
 
 
 @router.post("/api/user/{user_id}/keys/{provider}/validate-format")

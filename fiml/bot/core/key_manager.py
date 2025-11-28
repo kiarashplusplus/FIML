@@ -38,12 +38,85 @@ class UserProviderKeyManager:
 
     # Provider information for user guidance
     PROVIDER_INFO = {
+        # Free Tier Providers
+        "yfinance": {
+            "name": "Yahoo Finance",
+            "asset_types": ["stocks", "crypto", "forex"],
+            "free_tier": True,
+            "free_limit": "Unlimited",
+            "signup_url": "https://finance.yahoo.com",
+        },
+        "coingecko": {
+            "name": "CoinGecko",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "10-50 calls/min",
+            "signup_url": "https://www.coingecko.com/en/api",
+        },
+        "defillama": {
+            "name": "DefiLlama",
+            "asset_types": ["crypto", "defi"],
+            "free_tier": True,
+            "free_limit": "Unlimited",
+            "signup_url": "https://defillama.com/docs/api",
+        },
+        # CCXT Public Exchanges
+        "ccxt-kraken": {
+            "name": "Kraken (CCXT)",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "Public API limits",
+            "signup_url": "https://www.kraken.com",
+        },
+        "ccxt-kucoin": {
+            "name": "KuCoin (CCXT)",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "Public API limits",
+            "signup_url": "https://www.kucoin.com",
+        },
+        "ccxt-okx": {
+            "name": "OKX (CCXT)",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "Public API limits",
+            "signup_url": "https://www.okx.com",
+        },
+        "ccxt-bybit": {
+            "name": "Bybit (CCXT)",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "Public API limits",
+            "signup_url": "https://www.bybit.com",
+        },
+        "ccxt-gateio": {
+            "name": "Gate.io (CCXT)",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "Public API limits",
+            "signup_url": "https://www.gate.io",
+        },
+        "ccxt-bitget": {
+            "name": "Bitget (CCXT)",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "Public API limits",
+            "signup_url": "https://www.bitget.com",
+        },
+        # Premium Providers
         "alpha_vantage": {
             "name": "Alpha Vantage",
             "asset_types": ["stocks", "forex", "crypto"],
             "free_tier": True,
             "free_limit": "5 requests/minute, 500/day",
             "signup_url": "https://www.alphavantage.co/support/#api-key",
+        },
+        "fmp": {
+            "name": "Financial Modeling Prep",
+            "asset_types": ["stocks", "crypto", "forex"],
+            "free_tier": True,
+            "free_limit": "250 requests/day",
+            "signup_url": "https://site.financialmodelingprep.com/developer/docs",
         },
         "polygon": {
             "name": "Polygon.io",
@@ -59,12 +132,55 @@ class UserProviderKeyManager:
             "free_limit": "60 requests/minute",
             "signup_url": "https://finnhub.io/pricing",
         },
-        "fmp": {
-            "name": "Financial Modeling Prep",
-            "asset_types": ["stocks", "crypto", "forex"],
+        "twelvedata": {
+            "name": "Twelve Data",
+            "asset_types": ["stocks", "forex", "crypto"],
             "free_tier": True,
-            "free_limit": "250 requests/day",
-            "signup_url": "https://site.financialmodelingprep.com/developer/docs",
+            "free_limit": "800 requests/day",
+            "signup_url": "https://twelvedata.com/pricing",
+        },
+        "tiingo": {
+            "name": "Tiingo",
+            "asset_types": ["stocks", "forex", "crypto"],
+            "free_tier": True,
+            "free_limit": "500 requests/hour",
+            "signup_url": "https://www.tiingo.com/about/pricing",
+        },
+        "marketstack": {
+            "name": "Marketstack",
+            "asset_types": ["stocks"],
+            "free_tier": True,
+            "free_limit": "100 requests/mo",
+            "signup_url": "https://marketstack.com/product",
+        },
+        "coinmarketcap": {
+            "name": "CoinMarketCap",
+            "asset_types": ["crypto"],
+            "free_tier": True,
+            "free_limit": "333 requests/day",
+            "signup_url": "https://coinmarketcap.com/api/pricing/",
+        },
+        "newsapi": {
+            "name": "NewsAPI",
+            "asset_types": ["news"],
+            "free_tier": True,
+            "free_limit": "100 requests/day (dev only)",
+            "signup_url": "https://newsapi.org/pricing",
+        },
+        # Enterprise Providers
+        "intrinio": {
+            "name": "Intrinio",
+            "asset_types": ["stocks", "financials"],
+            "free_tier": False,
+            "paid_tiers": "Enterprise pricing",
+            "signup_url": "https://intrinio.com/",
+        },
+        "quandl": {
+            "name": "Quandl",
+            "asset_types": ["financials", "economic"],
+            "free_tier": True,
+            "free_limit": "Varies by dataset",
+            "signup_url": "https://data.nasdaq.com/",
         },
     }
 
