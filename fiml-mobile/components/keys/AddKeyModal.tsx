@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, ActivityIndicator, Linking } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
 import keyManagementService from '../../services/keyManagement';
 import type { AddKeyModalProps } from '../../types';
@@ -119,9 +119,17 @@ export default function AddKeyModal({ visible, providerName, providerDisplayName
                         </View>
                     ) : (
                         <>
-                            <Text className="text-gray-400 text-sm mb-4">
+                            <Text className="text-gray-400 text-sm mb-1">
                                 Enter your API credentials securely. Your keys are encrypted and stored locally.
                             </Text>
+                            <TouchableOpacity
+                                onPress={() => Linking.openURL('https://kiarashplusplus.github.io/FIML/user-guide/api-keys/')}
+                                className="mb-4"
+                            >
+                                <Text className="text-blue-400 text-sm underline">
+                                    Need help finding your key?
+                                </Text>
+                            </TouchableOpacity>
 
                             {/* API Key Input */}
                             <View className="mb-4">

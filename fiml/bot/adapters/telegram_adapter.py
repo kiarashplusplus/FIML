@@ -274,6 +274,8 @@ Help:
 Choose which data provider you want to add:
 
 ℹ️ Providers with free tiers let you get started without costs.
+
+Need help finding keys? [Read our Guide](https://kiarashplusplus.github.io/FIML/user-guide/api-keys/)
 """
 
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
@@ -314,6 +316,8 @@ Get your API key:
 
         instructions += """
 Once you have your API key, paste it here.
+
+Need help? [View our API Key Guide](https://kiarashplusplus.github.io/FIML/user-guide/api-keys/)
 
 /cancel to abort
 """

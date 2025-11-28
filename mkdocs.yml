@@ -124,6 +124,7 @@ nav:
     - Configuration: getting-started/configuration.md
   - User Guide:
     - Overview: user-guide/overview.md
+    - Getting API Keys: user-guide/api-keys.md
     - MCP Tools: user-guide/mcp-tools.md
     - WebSocket Streaming: user-guide/websocket.md
     - FK-DSL Query Language: user-guide/fk-dsl.md
