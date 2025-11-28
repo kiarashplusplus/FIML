@@ -120,6 +120,7 @@ class SessionState(Enum):
     IN_LESSON = "in_lesson"
     IN_QUIZ = "in_quiz"
     IN_CONVERSATION = "in_conversation"
+    AWAITING_KEY_INPUT = "awaiting_key_input"
     IDLE = "idle"
 
 
@@ -474,26 +475,42 @@ class UnifiedBotGateway:
 
         if command == "/help":
             return AbstractResponse(
-                text="📚 FIML Educational Bot Commands\n\n"
-                     "Key Management:\n"
-                     "/addkey - Add a new API key\n"
-                     "/listkeys - View your connected providers\n"
-                     "/removekey - Remove an API key\n"
-                     "/testkey - Test if your keys are working\n"
-                     "/status - View your provider status and usage\n\n"
-                     "Learning:\n"
-                     "/lesson - Browse and start lessons\n"
-                     "/quiz - Take a practice quiz\n"
-                     "/mentor - Talk to AI mentor\n"
-                     "/progress - View your learning progress\n\n"
-                     "Advanced Analysis:\n"
-                     "/fkdsl - Run Financial Knowledge DSL queries",
+                text="📚 Available Commands:\n\n"
+                     "📖 /lesson - Browse lessons\n"
+                     "📊 /progress - View your progress\n"
+                     "🏆 /leaderboard - See top learners\n"
+                     "🧠 /quiz - Take a quiz\n"
+                     "💬 /mentor - Talk to AI mentor\n"
+                     "🔑 /addkey - Add API keys\n"
+                     "📈 /fkdsl - Execute FK-DSL queries\n\n"
+                     "Or just ask me anything about markets or trading!",
                 actions=[
-                    {"text": "Start Learning", "action": "/lesson", "type": "primary"},
-                    {"text": "Add API Key", "action": "/addkey", "type": "secondary"},
-                    {"text": "Ask Mentor", "action": "/mentor", "type": "secondary"},
+                    {"text": "Start Lesson", "action": "/lesson", "type": "primary"},
+                    {"text": "View Progress", "action": "/progress", "type": "secondary"},
                 ]
             )
+
+        elif command == "/cancel":
+            # Cancel any ongoing operation
+            if session.state == SessionState.AWAITING_KEY_INPUT:
+                session.state = SessionState.IDLE
+                if "awaiting_key_for" in session.metadata:
+                    session.metadata.pop("awaiting_key_for")
+                return AbstractResponse(
+                    text="✅ Key addition cancelled.\n\n"
+                         "Use /addkey when you're ready to add API keys.",
+                    actions=[
+                        {"text": "Add Key", "action": "/addkey", "type": "primary"},
+                        {"text": "Help", "action": "/help", "type": "secondary"}
+                    ]
+                )
+            else:
+                return AbstractResponse(
+                    text="Nothing to cancel. How can I help you?",
+                    actions=[
+                        {"text": "Help", "action": "/help", "type": "primary"}
+                    ]
+                )
 
         elif command == "/lesson":
             # Delegate to lesson request handler
@@ -513,11 +530,52 @@ class UnifiedBotGateway:
         elif command == "/mentor":
              return AbstractResponse(
                 text="👋 I'm your AI Mentor.\n\n"
-                     "Ask me anything about trading, markets, or financial concepts.\n"
-                     "Try: 'What is a stop loss?' or 'Explain P/E ratio'",
+                     "Ask me anything about trading, markets, or financial concepts.\n",
                 actions=[]
             )
 
+        # Check for provider-specific addkey (e.g., /addkey:binance)
+        elif command.startswith("/addkey:"):
+            provider = command.split(":")[-1].lower()
+            
+            # Validate provider exists
+            provider_info = self.key_manager.get_provider_info(provider)
+            if not provider_info:
+                return AbstractResponse(
+                    text=f"❌ Unknown provider: {provider}\n\n"
+                         f"Supported providers: binance, coinbase, alphavantage, polygon, finnhub, fmp"
+                )
+            
+            # Update session to await key input
+            session.state = SessionState.AWAITING_KEY_INPUT
+            if session.metadata is None:
+                session.metadata = {}
+            session.metadata["awaiting_key_for"] = provider
+            
+            # Determine if secret is needed
+            needs_secret = provider in ["binance", "coinbase", "kraken"]
+            
+            if needs_secret:
+                instructions = (
+                    f"🔑 Setting up {provider_info['name']}\n\n"
+                    f"Please send your API Key and Secret in this format:\n"
+                    f"`KEY SECRET`\n\n"
+                    f"Example: `abc123xyz def456uvw`\n\n"
+                    f"⚠️ Make sure to include both the key and secret separated by a space."
+                )
+            else:
+                instructions = (
+                    f"🔑 Setting up {provider_info['name']}\n\n"
+                    f"Please send your API Key:\n\n"
+                    f"Just paste your key in the next message."
+                )
+            
+            return AbstractResponse(
+                text=instructions,
+                actions=[
+                    {"text": "Cancel", "action": "/cancel", "type": "secondary"}
+                ]
+            )
 
         elif command == "/addkey":
             # Platform-aware response
@@ -747,8 +805,79 @@ class UnifiedBotGateway:
     async def handle_ai_question(
         self, message: AbstractMessage, session: UserSession, intent: Intent
     ) -> AbstractResponse:
-        """Handle AI mentor questions using FIML Narrative Generation Engine"""
-        question = intent.data.get("question", "")
+        """
+        Handle general AI mentor questions (any question not matching other intents)
+        Uses AIMentorService with proper FIML integration for market data
+        """
+        # Check if waiting for key input
+        if session.state == SessionState.AWAITING_KEY_INPUT:
+            provider = session.metadata.get("awaiting_key_for")
+            
+            if not provider:
+                # Reset state if no provider set
+                session.state = SessionState.IDLE
+                return AbstractResponse(
+                    text="❌ Session error. Please try /addkey again."
+                )
+            
+            # Parse key input
+            parts = message.text.strip().split()
+            api_key = parts[0] if len(parts) > 0 else ""
+            api_secret = parts[1] if len(parts) > 1 else None
+            
+            if not api_key:
+                return AbstractResponse(
+                    text="❌ No API key provided. Please send your API key or use /cancel to exit.",
+                    actions=[
+                        {"text": "Cancel", "action": "/cancel", "type": "secondary"}
+                    ]
+                )
+            
+            # Attempt to store
+            try:
+                success = await self.key_manager.store_user_key(
+                    user_id=message.user_id,
+                    provider=provider,
+                    api_key=api_key,
+                    metadata={
+                        "added_via": "chat",
+                        "added_at": datetime.now(UTC).isoformat(),
+                        "api_secret": api_secret if api_secret else None
+                    }
+                )
+                
+                if success:
+                    # Reset session state
+                    session.state = SessionState.IDLE
+                    if "awaiting_key_for" in session.metadata:
+                        session.metadata.pop("awaiting_key_for")
+                    
+                    return AbstractResponse(
+                        text=f"✅ {provider.capitalize()} API key added successfully!\n\n"
+                             f"Use /testkey to verify it works, or add more providers with /addkey.",
+                        actions=[
+                            {"text": "Test Key", "action": f"/testkey:{provider}", "type": "primary"},
+                            {"text": "Add Another", "action": "/addkey", "type": "secondary"}
+                        ]
+                    )
+                else:
+                    return AbstractResponse(
+                        text="❌ Failed to store API key. Please check the format and try again.",
+                        actions=[
+                            {"text": "Retry", "action": f"/addkey:{provider}", "type": "primary"},
+                            {"text": "Cancel", "action": "/cancel", "type": "secondary"}
+                        ]
+                    )
+            
+            except Exception as e:
+                logger.error("Error storing key", user_id=message.user_id, error=str(e))
+                session.state = SessionState.IDLE
+                return AbstractResponse(
+                    text=f"❌ Error: {str(e)}",
+                    actions=[{"text": "Try Again", "action": "/addkey", "type": "primary"}]
+                )
+
+        question = intent.data.get("question", message.text)
 
         try:
             # Get mentor persona from session preferences (default to Maya)
