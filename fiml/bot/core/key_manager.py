@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from cryptography.fernet import Fernet
 
+from fiml.bot.core.usage_analytics import UsageAnalytics
 from fiml.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -98,6 +99,9 @@ class UserProviderKeyManager:
 
         # Quota tracking - now delegated to service
         self._quota_usage: Dict[str, int] = self._service._quota_usage
+
+        # Initialize usage analytics
+        self.usage_analytics = UsageAnalytics()
 
         logger.info(
             "UserProviderKeyManager initialized (using new service layer)",

@@ -217,7 +217,7 @@ class TestUserProviderKeyManager:
         result2 = await key_manager.track_usage(user_id, provider)
 
         # Usage should be tracked
-        assert result1["usage"] < result2["usage"]
+        assert result1["daily_usage"] < result2["daily_usage"]
 
     async def test_get_usage(self, key_manager):
         """Test getting current usage"""
