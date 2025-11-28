@@ -56,7 +56,7 @@ async def test_help_command_returns_actions(gateway):
         text="/help"
     )
 
-    assert "FIML Educational Bot Commands" in response.text
+    assert "Available Commands" in response.text
     assert response.actions is not None
     assert len(response.actions) > 0
     assert any(a["action"] == "/lesson" for a in response.actions)

@@ -21,7 +21,7 @@ from fiml.bot.key_router import (
 def mock_key_service():
     """Mock UserProviderKeyManager for testing"""
     service = AsyncMock()
-    service.list_keys = AsyncMock(return_value=["binance", "alphavantage"])
+    service.list_user_keys = AsyncMock(return_value=["binance", "alphavantage"])
     service.get_provider_info = MagicMock(return_value={"name": "binance", "displayName": "Binance"})
     service.get_key = AsyncMock(return_value="test_api_key_123")
     service.add_key = AsyncMock()
@@ -70,7 +70,7 @@ class TestGetProviderStatus:
     async def test_get_provider_status_error_fallback(self, mock_get_service, client):
         """Test  fallback to default providers on error"""
         mock_service = AsyncMock()
-        mock_service.list_keys = AsyncMock(side_effect=Exception("Database error"))
+        mock_service.list_user_keys = AsyncMock(side_effect=Exception("Database error"))
         mock_get_service.return_value = mock_service
 
         response = client.get("/api/user/user123/keys")
