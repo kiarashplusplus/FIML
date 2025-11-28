@@ -511,6 +511,54 @@ class FIMLEducationalDataAdapter:
 
         return results
 
+    async def get_ohlcv(self, symbol: str, timeframe: str = "1d") -> list[Dict[str, Any]]:
+        """
+        Get historical OHLCV data for a symbol
+        
+        Args:
+            symbol: Asset symbol
+            timeframe: Candle timeframe (default: "1d")
+            
+        Returns:
+            List of OHLCV candles
+        """
+        try:
+            from fiml.arbitration.engine import arbitration_engine
+            from fiml.core.models import Asset, DataType, Market
+
+            asset_type = self._detect_asset_type(symbol)
+            
+            # Create Asset object
+            asset = Asset(
+                symbol=symbol.upper(),
+                name=symbol.upper(), # Placeholder name
+                asset_type=asset_type,
+                market=Market.US if asset_type == AssetType.EQUITY else Market.CRYPTO
+            )
+
+            # Arbitrate request
+            plan = await arbitration_engine.arbitrate_request(
+                asset=asset,
+                data_type=DataType.OHLCV,
+                user_region="US"
+            )
+
+            # Execute request
+            response = await arbitration_engine.execute_with_fallback(
+                plan=plan,
+                asset=asset,
+                data_type=DataType.OHLCV
+            )
+
+            # Extract candles from response
+            # ProviderResponse.data for OHLCV should contain "candles" list
+            return response.data.get("candles", [])
+
+        except Exception as e:
+            logger.error("Failed to get OHLCV data", symbol=symbol, error=str(e))
+            # Return empty list on error
+            return []
+
 
 # Singleton instance for easy access across the application
 _fiml_data_adapter: Optional[FIMLEducationalDataAdapter] = None

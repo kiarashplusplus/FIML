@@ -201,6 +201,72 @@ async def get_market_prices(
         raise HTTPException(status_code=500, detail=f"Failed to fetch prices: {str(e)}")
 
 
+class CandleData(BaseModel):
+    """OHLCV candle data"""
+    timestamp: int
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+
+
+class HistoryResponse(BaseModel):
+    """Response containing historical candles"""
+    symbol: str
+    timeframe: str
+    candles: List[CandleData]
+
+
+@market_router.get("/candles/{symbol}")
+async def get_historical_candles(
+    symbol: str,
+    timeframe: str = Query("1d", description="Timeframe (e.g., 1d, 1h, 15m)")
+) -> HistoryResponse:
+    """
+    Get historical OHLCV data for a symbol.
+
+    Args:
+        symbol: Asset symbol (e.g., "AAPL", "BTC")
+        timeframe: Candle timeframe (default: "1d")
+
+    Returns:
+        List of OHLCV candles
+    """
+    try:
+        adapter = get_fiml_data_adapter()
+        
+        # Fetch OHLCV data using the adapter
+        # Note: The adapter's get_ohlcv returns a list of dictionaries or similar structure
+        candles_data = await adapter.get_ohlcv(
+            symbol=symbol.upper(),
+            timeframe=timeframe
+        )
+
+        # Convert to response model
+        # Assuming adapter returns list of dicts with keys: timestamp, open, high, low, close, volume
+        candles = [
+            CandleData(
+                timestamp=c.get("timestamp", 0),
+                open=c.get("open", 0.0),
+                high=c.get("high", 0.0),
+                low=c.get("low", 0.0),
+                close=c.get("close", 0.0),
+                volume=c.get("volume", 0.0)
+            ) for c in candles_data
+        ]
+
+        return HistoryResponse(
+            symbol=symbol.upper(),
+            timeframe=timeframe,
+            candles=candles
+        )
+
+    except Exception as e:
+        logger.error("Failed to fetch historical candles", symbol=symbol, timeframe=timeframe, error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to fetch history: {str(e)}")
+
+
 @market_router.get("/assets/{symbol}")
 async def get_asset_details(symbol: str) -> AssetDetailsResponse:
     """
