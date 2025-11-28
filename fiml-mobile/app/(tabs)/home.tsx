@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import { useOnboarding } from '../../hooks/useOnboarding';
 import ProviderKeyCard from '../../components/keys/ProviderKeyCard';
 import AddKeyModal from '../../components/keys/AddKeyModal';
 import keyManagementService, { Provider } from '../../services/keyManagement';
@@ -9,27 +10,36 @@ import keyManagementService, { Provider } from '../../services/keyManagement';
 export default function HomeScreen() {
     const { user } = useAuth();
     const router = useRouter();
+    const { hasCompletedOnboarding } = useOnboarding();
     const [providers, setProviders] = useState<Provider[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<{ name: string; displayName: string } | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadProviderStatus();
+        fetchProviders();
     }, []);
 
-    const loadProviderStatus = async () => {
+    // Fetch provider status
+    const fetchProviders = async (forceRefresh: boolean = false) => {
         if (!user?.id) return;
 
-        setIsLoading(true);
         try {
-            const providerList = await keyManagementService.getProviderStatus(user.id);
-            setProviders(providerList);
+            const data = await keyManagementService.getProviderStatus(user.id, forceRefresh);
+            setProviders(data);
         } catch (error) {
-            console.error('Failed to load provider status:', error);
+            console.error('Failed to fetch providers:', error);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
+    };
+
+    // Pull-to-refresh handler
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await fetchProviders(true); // Force refresh
+        setRefreshing(false);
     };
 
     const handleAddKey = (providerName: string) => {
@@ -91,7 +101,17 @@ export default function HomeScreen() {
     };
 
     return (
-        <ScrollView className="flex-1 bg-gray-900 p-4">
+        <ScrollView
+            className="flex-1 bg-gray-900 p-4"
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    tintColor="#3B82F6"
+                    colors={['#3B82F6']}
+                />
+            }
+        >
             <View className="mb-8 mt-4">
                 <Text className="text-gray-400 text-lg">Welcome back,</Text>
                 <Text className="text-3xl font-bold text-white">{user?.name || 'Trader'}</Text>

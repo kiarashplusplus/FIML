@@ -5,7 +5,7 @@ Provides REST endpoints for managing user API keys from mobile/web clients.
 
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header, status
 from pydantic import BaseModel
 
 from fiml.bot.core.key_manager import UserProviderKeyManager
@@ -116,7 +116,7 @@ async def get_provider_status(
         }
 
 
-@router.post("/api/user/{user_id}/keys")
+@router.post("/api/user/{user_id}/keys", status_code=status.HTTP_201_CREATED)
 async def add_key(
     user_id: str,
     request: AddKeyRequest,
@@ -124,10 +124,23 @@ async def add_key(
 ) -> KeyResponse:
     """
     Add a new API key for a provider.
+    
+    Returns:
+        201: Key added successfully
+        400: Invalid provider or key format
+        500: Internal server error
     """
     service = get_key_service()
     
     try:
+        # Validate provider exists
+        provider_info = service.get_provider_info(request.provider)
+        if not provider_info:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown provider: {request.provider}"
+            )
+        
         # Add the key
         await service.add_key(
             user_id=user_id,
@@ -143,11 +156,13 @@ async def add_key(
             message=f"{request.provider.capitalize()} API key added successfully"
         )
         
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error("Error adding API key", user_id=user_id, provider=request.provider, error=str(e))
-        return KeyResponse(
-            success=False,
-            error=f"Failed to add API key: {str(e)}"
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add API key: {str(e)}"
         )
 
 
@@ -159,6 +174,12 @@ async def test_key(
 ) -> KeyResponse:
     """
     Test if an API key is valid by making a test request to the provider's API.
+    
+    Returns:
+        200: Key tested successfully
+        404: No API key found for provider
+        400: Key validation failed
+        500: Internal server error
     """
     service = get_key_service()
     
@@ -167,9 +188,9 @@ async def test_key(
         api_key = await service.get_key(user_id, provider)
         
         if not api_key:
-            return KeyResponse(
-                success=False,
-                error=f"No API key found for {provider}"
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No API key found for {provider}"
             )
         
         # Test the key with actual provider API
@@ -195,11 +216,13 @@ async def test_key(
                 reason=test_result.get("message")
             )
             
-            return KeyResponse(
-                success=False,
-                error=f"Key validation failed: {test_result['message']}"
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Key validation failed: {test_result['message']}"
             )
         
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error(
             "Error testing API key", 
@@ -207,9 +230,9 @@ async def test_key(
             provider=provider, 
             error=str(e)
         )
-        return KeyResponse(
-            success=False,
-            error=f"Failed to test API key: {str(e)}"
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to test API key: {str(e)}"
         )
 
 
@@ -221,10 +244,24 @@ async def remove_key(
 ) -> KeyResponse:
     """
     Remove an API key for a provider.
+    
+    Returns:
+        200: Key removed successfully
+        404: No API key found for provider
+        500: Internal server error
     """
     service = get_key_service()
     
     try:
+        # Check if key exists first
+        existing_key = await service.get_key(user_id, provider)
+        if not existing_key:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No API key found for {provider}"
+            )
+        
+        # Remove the key
         await service.remove_key(user_id, provider)
         
         logger.info("API key removed successfully", user_id=user_id, provider=provider)
@@ -234,9 +271,11 @@ async def remove_key(
             message=f"{provider.capitalize()} API key removed successfully"
         )
         
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error("Error removing API key", user_id=user_id, provider=provider, error=str(e))
-        return KeyResponse(
-            success=False,
-            error=f"Failed to remove API key: {str(e)}"
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to remove API key: {str(e)}"
         )
