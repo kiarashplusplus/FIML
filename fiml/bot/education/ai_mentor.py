@@ -191,31 +191,31 @@ class AIMentorService:
                 else self._extract_symbol_from_question(question)
             )
 
-            # Use FIML narrative generation for educational responses
-            # Build narrative context from educational question
-            narrative_context = NarrativeContext(
-                asset_symbol=symbol,
-                asset_name=(
-                    context.get("asset_name", f"{symbol} Stock") if context else f"{symbol} Stock"
-                ),
-                asset_type="stock",
-                market="US",
-                price_data=context.get("price_data", {}) if context else {},
-                preferences=NarrativePreferences(
-                    expertise_level=mentor["expertise_level"],
-                    language=Language.ENGLISH,
-                    include_disclaimers=True,
-                ),
-                include_disclaimers=True,
-            )
-
             # Generate narrative using FIML engine
             if symbol:
+                # Use FIML narrative generation for educational responses
+                # Build narrative context from educational question
+                narrative_context = NarrativeContext(
+                    asset_symbol=symbol,
+                    asset_name=(
+                        context.get("asset_name", f"{symbol} Stock") if context else f"{symbol} Stock"
+                    ),
+                    asset_type="stock",
+                    market="US",
+                    price_data=context.get("price_data", {}) if context else {},
+                    preferences=NarrativePreferences(
+                        expertise_level=mentor["expertise_level"],
+                        language=Language.ENGLISH,
+                        include_disclaimers=True,
+                    ),
+                    include_disclaimers=True,
+                )
+                
                 narrative = await self.narrative_generator.generate_narrative(context=narrative_context)
                 response_text = self._adapt_narrative_to_persona(narrative.summary, persona, question)
             else:
                 # General educational response without specific asset context
-                response_text = self._generate_general_response(question, persona)
+                response_text = await self._generate_general_response(question, persona)
 
             logger.info(
                 "FIML narrative generated for mentor response",
@@ -262,26 +262,38 @@ class AIMentorService:
             "disclaimer": "Educational purposes only - not financial advice",
         }
 
-    def _generate_general_response(self, question: str, persona: MentorPersona) -> str:
-        """Generate general educational response without stock context"""
+    async def _generate_general_response(self, question: str, persona: MentorPersona) -> str:
+        """Generate general educational response using LLM"""
         mentor = self.MENTORS[persona]
         
-        # Simple heuristic response for now (would be LLM in full version)
-        if persona == MentorPersona.MAYA:
-            return (
-                f"That's a great question! To explain '{question}' properly, I'd usually look at a specific example.\n\n"
-                "Try asking me about a specific stock like 'Explain P/E ratio for AAPL' or 'How is TSLA doing?'"
-            )
-        elif persona == MentorPersona.THEO:
-            return (
-                f"To analyze '{question}', I need data. Market concepts are best understood with real numbers.\n\n"
-                "Give me a ticker symbol (like BTC or MSFT) and I'll break it down for you."
-            )
-        else:
-            return (
-                f"Trading psychology is key. When thinking about '{question}', remember to keep your emotions in check.\n\n"
-                "Focus on your process, not just the outcome."
-            )
+        # System prompt based on persona
+        system_content = (
+            f"You are {mentor['name']}, an AI trading mentor. {mentor['description']}. "
+            f"Your style is {mentor['style']}. "
+            f"Answer the user's question about trading or finance. "
+            "Do not give financial advice. Always be educational. "
+            "If the question is not about finance/trading, politely steer back to the topic. "
+            "Keep responses concise and helpful."
+        )
+        
+        messages = [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": question}
+        ]
+        
+        try:
+            # Access Azure client through narrative generator
+            client = self.narrative_generator.azure_client
+            if client:
+                response = await client.generate_chat_response(messages=messages)
+                return response
+            else:
+                logger.warning("Azure client not available for general response")
+                return self._generate_template_response(question, persona, None)
+                
+        except Exception as e:
+            logger.error("Failed to generate general LLM response", error=str(e))
+            return self._generate_template_response(question, persona, None)
 
     def _adapt_narrative_to_persona(
         self, narrative_text: str, persona: MentorPersona, question: str

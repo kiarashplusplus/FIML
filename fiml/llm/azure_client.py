@@ -98,7 +98,7 @@ class AzureOpenAIClient:
     async def _make_request(
         self,
         messages: List[Dict[str, str]],
-        temperature: float = 0.7,
+        temperature: Optional[float] = 0.7,
         max_tokens: int = 1000,
     ) -> Dict[str, Any]:
         """
@@ -106,8 +106,8 @@ class AzureOpenAIClient:
 
         Args:
             messages: List of message dictionaries with 'role' and 'content'
-            temperature: Sampling temperature (0.0 to 2.0)
-            max_tokens: Maximum tokens in response
+            temperature: Sampling temperature (0.0 to 2.0). If None, uses model default.
+            max_tokens: Maximum tokens in response (mapped to max_completion_tokens)
 
         Returns:
             Response dictionary from Azure OpenAI
@@ -127,11 +127,17 @@ class AzureOpenAIClient:
             "api-key": self.api_key,  # type: ignore[dict-item]
         }
 
-        payload = {
+        # Construct payload
+        # Use max_completion_tokens for newer models (O1, GPT-4o, etc.)
+        payload: Dict[str, Any] = {
             "messages": messages,
-            "temperature": temperature,
-            "max_completion_tokens": max_tokens,  # Use max_completion_tokens for newer models
+            "max_completion_tokens": max_tokens,
         }
+        
+        # Only include temperature if explicitly provided
+        # Some reasoning models (like O1) do not support temperature or require it to be 1.0
+        if temperature is not None:
+            payload["temperature"] = temperature
 
         last_exception: Optional[Exception] = None
 
@@ -784,6 +790,48 @@ class AzureOpenAIClient:
         except Exception as e:
             logger.error("Failed to assess risk profile", error=str(e))
             return self._fallback_risk_assessment(volatility, beta, var)
+
+    async def generate_chat_response(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = 0.7,
+        max_completion_tokens: Optional[int] = None,
+        max_tokens: int = 500,
+    ) -> str:
+        """
+        Generate a chat response from a list of messages
+        
+        Args:
+            messages: List of message dictionaries with 'role' and 'content'
+            temperature: Sampling temperature (0.0 to 2.0). If None, uses model default.
+            max_completion_tokens: Maximum tokens in response (preferred for newer models)
+            max_tokens: Legacy alias for max_completion_tokens (default: 500)
+            
+        Returns:
+            Generated response text
+            
+        Raises:
+            ProviderError: On API errors
+        """
+        logger.info("Generating chat response", message_count=len(messages))
+        
+        # Use max_completion_tokens if provided, otherwise fallback to max_tokens
+        tokens = max_completion_tokens if max_completion_tokens is not None else max_tokens
+        
+        try:
+            response = await self._make_request(
+                messages=messages,
+                temperature=temperature,
+                max_tokens=tokens,
+            )
+            
+            content = response["choices"][0]["message"]["content"]
+            logger.info("Chat response generated", length=len(content))
+            return cast(str, content)
+            
+        except Exception as e:
+            logger.error("Failed to generate chat response", error=str(e))
+            raise
 
     async def compare_assets(
         self,
