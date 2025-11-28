@@ -9,6 +9,10 @@ export default function ProviderKeyCard({ provider, onAdd, onTest, onRemove }: P
     const [testingKey, setTestingKey] = useState(false);
     const [removingKey, setRemovingKey] = useState(false);
 
+    const isFreeTier = provider.tier === 'free';
+    // Free tier providers are always "connected" in this context
+    const isConnected = isFreeTier || provider.isConnected;
+
     const handleTest = async () => {
         setTestingKey(true);
         try {
@@ -42,9 +46,9 @@ export default function ProviderKeyCard({ provider, onAdd, onTest, onRemove }: P
         );
     };
 
-    const statusColor = provider.isConnected ? 'bg-green-600/20 border-green-600/50' : 'bg-gray-700/20 border-gray-600/50';
-    const statusIcon = provider.isConnected ? '🟢' : '🔴';
-    const statusText = provider.isConnected ? 'Connected' : 'Not Connected';
+    const statusColor = isConnected ? 'bg-green-600/20 border-green-600/50' : 'bg-gray-700/20 border-gray-600/50';
+    const statusIcon = isConnected ? '🟢' : '🔴';
+    const statusText = isConnected ? (isFreeTier ? 'Auto-Connected' : 'Connected') : 'Not Connected';
 
     return (
         <View className={`p-4 rounded-xl border ${statusColor} mb-3`}>
@@ -52,7 +56,14 @@ export default function ProviderKeyCard({ provider, onAdd, onTest, onRemove }: P
                 <View className="flex-row items-center flex-1">
                     <Text className="text-xl mr-2">{statusIcon}</Text>
                     <View className="flex-1">
-                        <Text className="text-white font-bold text-lg">{provider.displayName}</Text>
+                        <View className="flex-row items-center">
+                            <Text className="text-white font-bold text-lg mr-2">{provider.displayName}</Text>
+                            {isFreeTier && (
+                                <View className="bg-blue-600/30 px-2 py-0.5 rounded">
+                                    <Text className="text-blue-300 text-[10px] font-bold uppercase">Free</Text>
+                                </View>
+                            )}
+                        </View>
                         <Text className="text-gray-400 text-sm">{statusText}</Text>
                     </View>
                 </View>
@@ -63,8 +74,8 @@ export default function ProviderKeyCard({ provider, onAdd, onTest, onRemove }: P
             )}
 
             <View className="flex-row space-x-2">
-                {provider.isConnected ? (
-                    <View className="flex-row mt-3 space-x-2">
+                {isConnected ? (
+                    <View className="flex-row mt-3 space-x-2 w-full">
                         <TouchableOpacity
                             onPress={handleTest}
                             disabled={testingKey || removingKey}
@@ -73,27 +84,30 @@ export default function ProviderKeyCard({ provider, onAdd, onTest, onRemove }: P
                             {testingKey ? (
                                 <ActivityIndicator color="white" size="small" />
                             ) : (
-                                <Text className="text-white text-center font-medium text-sm">Test</Text>
+                                <Text className="text-white text-center font-medium text-sm">Test Connection</Text>
                             )}
                         </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={handleRemove}
-                            disabled={testingKey || removingKey}
-                            className={`flex-1 py-2 px-3 rounded-lg ${testingKey || removingKey ? 'bg-red-600/50' : 'bg-red-600'}`}
-                        >
-                            {removingKey ? (
-                                <ActivityIndicator color="white" size="small" />
-                            ) : (
-                                <Text className="text-white text-center font-medium text-sm">Remove</Text>
-                            )}
-                        </TouchableOpacity>
+
+                        {!isFreeTier && (
+                            <TouchableOpacity
+                                onPress={handleRemove}
+                                disabled={testingKey || removingKey}
+                                className={`flex-1 py-2 px-3 rounded-lg ${testingKey || removingKey ? 'bg-red-600/50' : 'bg-red-600'}`}
+                            >
+                                {removingKey ? (
+                                    <ActivityIndicator color="white" size="small" />
+                                ) : (
+                                    <Text className="text-white text-center font-medium text-sm">Remove Key</Text>
+                                )}
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : (
                     <TouchableOpacity
                         onPress={() => onAdd(provider.name)}
-                        className="mt-3 bg-green-600 py-2 px-4 rounded-lg"
+                        className="mt-3 bg-green-600 py-2 px-4 rounded-lg w-full"
                     >
-                        <Text className="text-white text-center font-medium">Add Key</Text>
+                        <Text className="text-white text-center font-medium">Add API Key</Text>
                     </TouchableOpacity>
                 )}
             </View>

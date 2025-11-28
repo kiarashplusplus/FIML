@@ -18,13 +18,13 @@ export default function HomeScreen() {
     const [selectedProvider, setSelectedProvider] = useState<{ name: string; displayName: string } | null>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedTier, setSelectedTier] = useState<'all' | 'free' | 'premium' | 'enterprise'>('all');
+    const [showPremium, setShowPremium] = useState(false);
 
     // Usage stats state
     const [usageStats, setUsageStats] = useState<UsageStatsResponse | null>(null);
     const [usageLoading, setUsageLoading] = useState(false);
 
-    // Filter providers based on search and tier
+    // Filter providers based on search
     const filteredProviders = providers.filter(provider => {
         const matchesSearch = (
             provider.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -32,9 +32,7 @@ export default function HomeScreen() {
             (provider.description && provider.description.toLowerCase().includes(searchQuery.toLowerCase()))
         );
 
-        const matchesTier = selectedTier === 'all' || provider.tier === selectedTier;
-
-        return matchesSearch && matchesTier;
+        return matchesSearch;
     });
 
     // Fetch provider status
@@ -182,27 +180,6 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     )}
                 </View>
-
-                {/* Filter Chips */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-                    {(['all', 'free', 'premium', 'enterprise'] as const).map((tier) => (
-                        <TouchableOpacity
-                            key={tier}
-                            onPress={() => setSelectedTier(tier)}
-                            className={`px-4 py-2 rounded-full border ${selectedTier === tier
-                                ? 'bg-blue-600 border-blue-600'
-                                : 'bg-transparent border-gray-700'
-                                }`}
-                        >
-                            <Text
-                                className={`${selectedTier === tier ? 'text-white font-bold' : 'text-gray-400'
-                                    } capitalize`}
-                            >
-                                {tier}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
             </View>
 
             {/* Usage Statistics Card */}
@@ -216,18 +193,66 @@ export default function HomeScreen() {
             <View className="p-4">
                 {loading ? (
                     <Text className="text-gray-400 text-center">Loading providers...</Text>
-                ) : filteredProviders.length === 0 ? (
-                    <Text className="text-gray-400 text-center py-8">No providers found matching your criteria</Text>
                 ) : (
-                    filteredProviders.map((provider) => (
-                        <ProviderKeyCard
-                            key={provider.name}
-                            provider={provider}
-                            onAdd={handleAddKey}
-                            onTest={handleTestKey}
-                            onRemove={handleRemoveKey}
-                        />
-                    ))
+                    <>
+                        {/* Free Providers Section */}
+                        <View className="mb-6">
+                            <Text className="text-white text-xl font-bold mb-4">Free / Public Providers</Text>
+                            {filteredProviders.filter(p => p.tier === 'free').length === 0 ? (
+                                <Text className="text-gray-400 italic">No free providers match your search.</Text>
+                            ) : (
+                                filteredProviders
+                                    .filter(p => p.tier === 'free')
+                                    .map((provider) => (
+                                        <ProviderKeyCard
+                                            key={provider.name}
+                                            provider={provider}
+                                            onAdd={handleAddKey}
+                                            onTest={handleTestKey}
+                                            onRemove={handleRemoveKey}
+                                        />
+                                    ))
+                            )}
+                        </View>
+
+                        {/* Premium Providers Section */}
+                        <View className="mb-6">
+                            <TouchableOpacity
+                                onPress={() => setShowPremium(!showPremium)}
+                                className="flex-row items-center justify-between bg-gray-800 p-4 rounded-xl mb-4"
+                            >
+                                <View>
+                                    <Text className="text-white text-lg font-bold">Premium Providers</Text>
+                                    <Text className="text-gray-400 text-sm">
+                                        {filteredProviders.filter(p => p.tier !== 'free').length} available
+                                    </Text>
+                                </View>
+                                <Text className="text-blue-400 font-bold">
+                                    {showPremium ? 'Hide' : 'Show'}
+                                </Text>
+                            </TouchableOpacity>
+
+                            {showPremium && (
+                                <View>
+                                    {filteredProviders.filter(p => p.tier !== 'free').length === 0 ? (
+                                        <Text className="text-gray-400 italic">No premium providers match your search.</Text>
+                                    ) : (
+                                        filteredProviders
+                                            .filter(p => p.tier !== 'free')
+                                            .map((provider) => (
+                                                <ProviderKeyCard
+                                                    key={provider.name}
+                                                    provider={provider}
+                                                    onAdd={handleAddKey}
+                                                    onTest={handleTestKey}
+                                                    onRemove={handleRemoveKey}
+                                                />
+                                            ))
+                                    )}
+                                </View>
+                            )}
+                        </View>
+                    </>
                 )}
             </View>
 
