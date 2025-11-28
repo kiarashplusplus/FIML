@@ -589,10 +589,13 @@ def mock_ccxt_network_calls(request):
 @pytest.fixture(autouse=True)
 def mock_aiohttp_for_providers(request):
     """
-    Mock aiohttp.ClientSession.get for provider API calls to external services.
+    Mock aiohttp.ClientSession for provider API calls to external services.
 
     This prevents tests from making real HTTP requests to third-party APIs
-    like CoinGecko, NewsAPI, Polygon, Finnhub, etc.
+    like CoinGecko, NewsAPI, Polygon, Finnhub, and cryptocurrency exchanges.
+
+    The fixture mocks all HTTP methods (GET, POST, etc.) used by aiohttp
+    to ensure CCXT and other libraries can't make real network calls.
 
     Note: This only mocks specific financial data API domains, not all HTTP calls.
     Tests that need real API calls should use the @pytest.mark.live marker.
@@ -626,115 +629,126 @@ def mock_aiohttp_for_providers(request):
         "query1.finance.yahoo.com",
         "query2.finance.yahoo.com",
         "finance.yahoo.com",
-        # Cryptocurrency exchanges
+        # Cryptocurrency exchanges (CCXT uses these)
         "api.binance.com",
         "api.coinbase.com",
         "api.kraken.com",
         "api.bybit.com",
         "api.huobi.pro",
         "www.okx.com",
-        # Additional CCXT exchanges
         "api.kucoin.com",
         "api.gateio.ws",
         "api.bitget.com",
+        # Additional exchange domains that CCXT may use
+        "api.exchange.coinbase.com",
+        "api-pub.bitfinex.com",
+        "api.gemini.com",
+        "ftx.com",
+        "api.pro.coinbase.com",
     ]
 
-    # Create a mock response
-    mock_response = MagicMock()
-    mock_response.status = 200
-    mock_response.json = AsyncMock(return_value={"status": "ok", "data": {}})
-    mock_response.text = AsyncMock(return_value='{"status": "ok"}')
-    mock_response.__aenter__ = AsyncMock(return_value=mock_response)
-    mock_response.__aexit__ = AsyncMock(return_value=None)
+    def create_mock_response():
+        """Create a fresh mock response for each call."""
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.json = AsyncMock(return_value={"status": "ok", "data": {}})
+        mock_resp.text = AsyncMock(return_value='{"status": "ok"}')
+        mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
+        mock_resp.__aexit__ = AsyncMock(return_value=None)
+        return mock_resp
 
-    original_get = None
-
-    def selective_mock_get(self, url, *args, **kwargs):
-        """Only mock calls to financial data provider domains"""
-        url_str = str(url)
-
-        # Check if this is a call to a provider domain
+    def should_mock_url(url_str):
+        """Check if URL should be mocked based on domain."""
         for domain in provider_domains:
             if domain in url_str:
-                # Return provider-specific mock data
-                if "polygon.io" in url_str:
-                    mock_response.json.return_value = {
-                        "status": "OK",
-                        "results": [
-                            {
-                                "c": 150.0,
-                                "h": 155.0,
-                                "l": 145.0,
-                                "o": 148.0,
-                                "v": 1000000,
-                                "t": 1630000000000,
-                            }
-                        ],
-                    }
-                elif "alphavantage.co" in url_str:
-                    mock_response.json.return_value = {
-                        "Global Quote": {
-                            "01. symbol": "TSLA",
-                            "05. price": "150.00",
-                            "09. change": "2.00",
-                            "10. change percent": "1.5%",
-                        }
-                    }
-                elif "finnhub.io" in url_str:
-                    mock_response.json.return_value = {
+                return True
+        return False
+
+    def get_mock_data_for_url(url_str):
+        """Get provider-specific mock data based on URL."""
+        if "polygon.io" in url_str:
+            return {
+                "status": "OK",
+                "results": [
+                    {
                         "c": 150.0,
-                        "d": 2.0,
-                        "dp": 1.5,
                         "h": 155.0,
                         "l": 145.0,
                         "o": 148.0,
-                        "pc": 148.0,
-                        "t": 1630000000,
+                        "v": 1000000,
+                        "t": 1630000000000,
                     }
-                elif "financialmodelingprep.com" in url_str:
-                    mock_response.json.return_value = [
-                        {
-                            "symbol": "TSLA",
-                            "price": 150.0,
-                            "changesPercentage": 1.5,
-                            "change": 2.0,
-                            "dayLow": 145.0,
-                            "dayHigh": 155.0,
-                            "yearHigh": 200.0,
-                            "yearLow": 100.0,
-                            "marketCap": 500000000000,
-                            "priceAvg50": 145.0,
-                            "priceAvg200": 140.0,
-                            "volume": 1000000,
-                            "avgVolume": 1000000,
-                            "exchange": "NASDAQ",
-                            "open": 148.0,
-                            "previousClose": 148.0,
-                            "eps": 5.0,
-                            "pe": 30.0,
-                            "earningsAnnouncement": "2023-01-01",
-                            "sharesOutstanding": 1000000000,
-                            "timestamp": 1630000000,
-                        }
-                    ]
-                else:
-                    # Default generic response
-                    mock_response.json.return_value = {"status": "ok", "data": {}}
-
-                return mock_response
-
-        # For all other calls, use the original method
-        if original_get is not None:
-            return original_get(self, url, *args, **kwargs)
-
-        # Fallback: return mock response to be safe
-        return mock_response
+                ],
+            }
+        elif "alphavantage.co" in url_str:
+            return {
+                "Global Quote": {
+                    "01. symbol": "TSLA",
+                    "05. price": "150.00",
+                    "09. change": "2.00",
+                    "10. change percent": "1.5%",
+                }
+            }
+        elif "finnhub.io" in url_str:
+            return {
+                "c": 150.0,
+                "d": 2.0,
+                "dp": 1.5,
+                "h": 155.0,
+                "l": 145.0,
+                "o": 148.0,
+                "pc": 148.0,
+                "t": 1630000000,
+            }
+        elif "financialmodelingprep.com" in url_str:
+            return [
+                {
+                    "symbol": "TSLA",
+                    "price": 150.0,
+                    "changesPercentage": 1.5,
+                    "change": 2.0,
+                    "dayLow": 145.0,
+                    "dayHigh": 155.0,
+                    "yearHigh": 200.0,
+                    "yearLow": 100.0,
+                    "marketCap": 500000000000,
+                    "priceAvg50": 145.0,
+                    "priceAvg200": 140.0,
+                    "volume": 1000000,
+                    "avgVolume": 1000000,
+                    "exchange": "NASDAQ",
+                    "open": 148.0,
+                    "previousClose": 148.0,
+                    "eps": 5.0,
+                    "pe": 30.0,
+                    "earningsAnnouncement": "2023-01-01",
+                    "sharesOutstanding": 1000000000,
+                    "timestamp": 1630000000,
+                }
+            ]
+        # Default response for cryptocurrency exchanges
+        return {"status": "ok", "data": {}}
 
     import aiohttp
 
-    original_get = aiohttp.ClientSession.get
+    # Store original methods
+    original_request = aiohttp.ClientSession._request
 
-    with patch.object(aiohttp.ClientSession, "get", selective_mock_get):
+    async def mock_request(self, method, url, *args, **kwargs):
+        """Mock _request method which is the base for all HTTP methods."""
+        url_str = str(url)
+
+        if should_mock_url(url_str):
+            mock_resp = create_mock_response()
+            mock_data = get_mock_data_for_url(url_str)
+            mock_resp.json = AsyncMock(return_value=mock_data)
+            mock_resp.text = AsyncMock(return_value='{"status": "ok"}')
+            return mock_resp
+
+        # For non-mocked URLs, use the original method
+        return await original_request(self, method, url, *args, **kwargs)
+
+    with patch.object(aiohttp.ClientSession, "_request", mock_request):
         yield
 
 
