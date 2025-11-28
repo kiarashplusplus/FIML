@@ -11,7 +11,7 @@
   
 **Project Codename**: FIML (Financial Intelligence Meta-Layer)  
   
-**Current Status**: ✅ **PRODUCTION READY** - Phase 1 Complete + Phase 2 Active (60%) (Version 0.4.0)  
+**Current Status**: ✅ **PRODUCTION READY** - Phase 1 Complete + Phase 2 Active (75%) (Version 0.4.1)  
   
 **Vision**: Build the world's first AI-native financial operating system—a meta-provider abstraction layer that intelligently orchestrates data from dozens of sources, provides stateful multi-step analysis, and serves as the universal financial intelligence interface for AI agents across all platforms.  
   
@@ -19,7 +19,7 @@
   
 **Core Value Proposition**: Every AI agent gets the best possible financial answer through intelligent data arbitration, multi-source fusion, and context-aware analysis—without managing individual provider APIs.  
   
-**What's Working Today**: FIML is a production-ready MCP server with intelligent data arbitration, multi-provider support (Yahoo Finance, Alpha Vantage, FMP, CCXT), real-time WebSocket streaming, L1/L2 caching infrastructure, FK-DSL query language, comprehensive test coverage (140/169 tests passing), and a streamlined, user-friendly documentation site (v0.4.0). See [README.md](../index.md) for quick start and usage examples.  
+**What's Working Today**: FIML is a production-ready MCP server with intelligent data arbitration, multi-provider support (Yahoo Finance, Alpha Vantage, FMP, CCXT), real-time WebSocket streaming, L1/L2 caching infrastructure, FK-DSL query language, comprehensive test coverage (140/169 tests passing), and a streamlined, user-friendly documentation site (v0.4.1). See [README.md](../index.md) for quick start and usage examples.  
   
 ---  
   

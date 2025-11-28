@@ -207,7 +207,7 @@ echo ""
 echo -e "${BOLD}${WHITE}╔════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BOLD}${WHITE}║          🚀 ${CYAN}FIML LIVE SYSTEM DEMONSTRATION${WHITE} 🚀                  ║${NC}"
 echo -e "${BOLD}${WHITE}║                                                                ║${NC}"
-echo -e "${BOLD}${WHITE}║  ${DIM}Financial Intelligence Meta-Layer v0.4.0${WHITE}                     ║${NC}"
+echo -e "${BOLD}${WHITE}║  ${DIM}Financial Intelligence Meta-Layer v0.4.1${WHITE}                     ║${NC}"
 if [ "$QUICK_MODE" = true ]; then
 echo -e "${BOLD}${WHITE}║  ${YELLOW}Running in QUICK mode${WHITE}                                        ║${NC}"
 fi

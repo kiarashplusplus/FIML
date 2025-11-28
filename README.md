@@ -18,9 +18,9 @@
 
 > 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Changelog](CHANGELOG.md))
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 Active Development 🚧 | **Version**: 0.4.0 | **Codebase**: 32,000+ LOC | **Tests**: 🎉 **1,403 COLLECTED** (100% pass rate on core suite) |
+> **Current State**: Phase 1 Complete ✅ | Phase 2 Active Development 🚧 | **Version**: 0.4.1 | **Codebase**: 32,000+ LOC | **Tests**: 🎉 **1,403 COLLECTED** (100% pass rate on core suite) |
 > 
-> 🌍 **NEW in v0.4.0**: FIML Mobile App (Expo), Usage Analytics & Quota Management, Multilingual Compliance Guardrail
+> 🌍 **NEW in v0.4.1**: FIML Mobile App (Expo), Usage Analytics & Quota Management, Multilingual Compliance Guardrail
 > 
 > ✅ **Production Ready**: Zero CodeQL security alerts, comprehensive test coverage, CI/CD validated
 > 
@@ -28,7 +28,7 @@
 
 
 > 📊 **Quick Links**:
-> - 🎉 [v0.4.0 Release Notes](CHANGELOG.md) - Mobile App, Usage Analytics, and Compliance Guardrail Layer
+> - 🎉 [v0.4.1 Release Notes](CHANGELOG.md) - Mobile App, Usage Analytics, and Compliance Guardrail Layer
 > - 📘 [Technical & Strategic Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
 > - 📚 [Full Documentation](https://kiarashplusplus.github.io/FIML/)
 
@@ -46,9 +46,9 @@
 
 FIML is an MCP (Model Context Protocol) server that provides intelligent financial data access through a unified interface. It implements a data arbitration layer that automatically selects the best data provider based on availability, freshness, and reliability. The project includes a comprehensive compliance guardrail system supporting 9 languages for global regulatory compliance.
 
-The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](docs/project/blueprint.md) for the complete vision) and has reached production readiness with v0.4.0's mobile and analytics capabilities.
+The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](docs/project/blueprint.md) for the complete vision) and has reached production readiness with v0.4.1's mobile and analytics capabilities.
 
-## 🌟 What's Actually Working (Phase 1 Complete + v0.4.0 Enhancements)
+## 🌟 What's Actually Working (Phase 1 Complete + v0.4.1 Enhancements)
 
 ### ✅ Core Infrastructure (100%)
 - **🔀 Data Arbitration Engine**: Multi-provider scoring (5 factors), automatic fallback, conflict resolution
@@ -74,7 +74,7 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
 - **🛡️ Compliance Framework**: Regional checks (8 regions), disclaimers, investment advice detection
 - **📈 Monitoring Hooks**: Prometheus metrics endpoints, health checks
 
-### 🎉 v0.4.0 Mobile & Analytics (NEW!)
+### 🎉 v0.4.1 Mobile & Analytics (NEW!)
 - **📱 FIML Mobile App (Expo)**:
   - **Cross-Platform**: iOS, Android, and Web support via Expo/React Native
   - **Chat Interface**: Interactive AI financial assistant (Maya, Theo, Zara)
@@ -113,8 +113,8 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
 - **🤖 Advanced Multi-Agent Orchestration**: ✅ **FRAMEWORK COMPLETE** - Ray-based system with 8 specialized agents
 - **⚡ Performance Optimization**: ✅ **SHIPPED** - Cache warming, intelligent eviction, load testing suite
 - **🌍 Multilingual Compliance**: ✅ **SHIPPED** - 9 languages with auto-detection (v0.3.0)
-- **📱 Mobile App**: ✅ **SHIPPED** - Expo/React Native app with chat and key management (v0.4.0)
-- **📊 Usage Analytics**: ✅ **SHIPPED** - Provider usage tracking and quotas (v0.4.0)
+- **📱 Mobile App**: ✅ **SHIPPED** - Expo/React Native app with chat and key management (v0.4.1)
+- **📊 Usage Analytics**: ✅ **SHIPPED** - Provider usage tracking and quotas (v0.4.1)
 - [x] Educational Bot: ✅ **BETA** - Telegram integration with lesson system (MVP Implemented)
 - **🔌 Platform Integrations**: 🔜 **PLANNED** - ChatGPT MCP plugin, Claude integration
 - **🔐 Security Hardening**: 🔜 **PLANNED** - Penetration testing, rate limiting enhancements

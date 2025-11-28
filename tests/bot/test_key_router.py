@@ -26,6 +26,13 @@ def mock_key_service():
         return_value={"valid": True, "message": "Key is valid", "tier": "premium"}
     )
     service.validate_key_format = MagicMock(return_value=True)
+    service.list_supported_providers = MagicMock(
+        return_value=[
+            {"id": "binance", "name": "Binance", "asset_types": ["crypto"]},
+            {"id": "alphavantage", "name": "Alpha Vantage", "asset_types": ["stocks"]},
+            {"id": "coinbase", "name": "Coinbase", "asset_types": ["crypto"]},
+        ]
+    )
     service._service = MagicMock()
     service._service.KEY_PATTERNS = {
         "binance": "64 character hexadecimal",
