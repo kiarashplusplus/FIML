@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
+import { Platform } from 'react-native';
 
 const ONBOARDING_KEY = 'has_completed_onboarding';
 
@@ -15,7 +16,12 @@ export const useOnboarding = () => {
 
     const checkOnboardingStatus = async () => {
         try {
-            const value = await SecureStore.getItemAsync(ONBOARDING_KEY);
+            let value: string | null = null;
+            if (Platform.OS === 'web') {
+                value = localStorage.getItem(ONBOARDING_KEY);
+            } else {
+                value = await SecureStore.getItemAsync(ONBOARDING_KEY);
+            }
             setHasCompletedOnboarding(value === 'true');
         } catch (error) {
             console.error('Error checking onboarding status:', error);
@@ -26,7 +32,11 @@ export const useOnboarding = () => {
 
     const completeOnboarding = async () => {
         try {
-            await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
+            if (Platform.OS === 'web') {
+                localStorage.setItem(ONBOARDING_KEY, 'true');
+            } else {
+                await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
+            }
             setHasCompletedOnboarding(true);
             router.replace('/(tabs)/chat');
         } catch (error) {
@@ -36,7 +46,11 @@ export const useOnboarding = () => {
 
     const resetOnboarding = async () => {
         try {
-            await SecureStore.deleteItemAsync(ONBOARDING_KEY);
+            if (Platform.OS === 'web') {
+                localStorage.removeItem(ONBOARDING_KEY);
+            } else {
+                await SecureStore.deleteItemAsync(ONBOARDING_KEY);
+            }
             setHasCompletedOnboarding(false);
         } catch (error) {
             console.error('Error resetting onboarding:', error);
