@@ -150,6 +150,13 @@ class UserKeyOnboardingService:
             # Encrypt key
             encrypted_key = self.cipher.encrypt(api_key.encode()).decode()
 
+            # Handle API secret in metadata (security fix)
+            if metadata and "api_secret" in metadata:
+                secret = metadata.pop("api_secret")
+                if secret:
+                    encrypted_secret = self.cipher.encrypt(secret.encode()).decode()
+                    metadata["encrypted_secret"] = encrypted_secret
+
             # Store via backend
             success = await self.storage.store(user_id, provider, encrypted_key, metadata)
 

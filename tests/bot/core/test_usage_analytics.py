@@ -24,6 +24,13 @@ def mock_redis():
     redis.expire = AsyncMock()
     redis.get = AsyncMock(return_value=b"45")
     redis.delete = AsyncMock()
+    
+    # Mock pipeline
+    pipeline = AsyncMock()
+    redis.pipeline.return_value = pipeline
+    pipeline.__aenter__.return_value = pipeline
+    pipeline.__aexit__.return_value = None
+    
     return redis
 
 
@@ -93,9 +100,11 @@ class TestTrackCall:
         assert result["daily_count"] == 46
         assert result["monthly_count"] == 321
         
-        # Verify Redis calls
-        assert mock_redis.incr.call_count == 2  # daily + monthly
-        assert mock_redis.expire.call_count == 2
+        # Verify Redis calls (via pipeline)
+        pipeline = mock_redis.pipeline.return_value
+        assert pipeline.incr.call_count == 2  # daily + monthly
+        assert pipeline.expire.call_count == 2
+        assert pipeline.execute.call_count == 1
 
     async def test_track_call_without_redis(self, usage_analytics_no_redis):
         """Test tracking API call with in-memory fallback"""
@@ -111,7 +120,8 @@ class TestTrackCall:
 
     async def test_track_call_redis_error(self, usage_analytics, mock_redis):
         """Test tracking when Redis fails"""
-        mock_redis.incr.side_effect = Exception("Redis connection error")
+        pipeline = mock_redis.pipeline.return_value
+        pipeline.execute.side_effect = Exception("Redis connection error")
         
         result = await usage_analytics.track_call("user123", "binance")
         

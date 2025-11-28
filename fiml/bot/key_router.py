@@ -233,11 +233,17 @@ async def add_key(
                 detail=f"Unknown provider: {request.provider}"
             )
 
+        # Prepare metadata with secret if provided
+        metadata = {}
+        if request.api_secret:
+            metadata["api_secret"] = request.api_secret
+
         # Add the key
         await service.add_key(
             user_id=user_id,
             provider=request.provider,
             api_key=request.api_key,
+            metadata=metadata if metadata else None
         )
 
         logger.info("API key added successfully", user_id=user_id, provider=request.provider)

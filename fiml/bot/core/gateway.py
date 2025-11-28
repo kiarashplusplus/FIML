@@ -1228,7 +1228,7 @@ class UnifiedBotGateway:
                         output.append(f"\n📊 **{symbol}**")
                         if isinstance(metrics, dict):
                             for key, value in metrics.items():
-                                output.append(f"  • {key}: {self._format_value(value)}")
+                                output.append(f"  • {key}: {self._format_value(value, key=key)}")
                 elif "comparison" in data:
                     # Comparison result
                     output.append("\n📈 Comparison:")
@@ -1242,24 +1242,33 @@ class UnifiedBotGateway:
                 else:
                     # Generic dict result
                     for key, value in data.items():
-                        output.append(f"• {key}: {self._format_value(value)}")
+                        output.append(f"• {key}: {self._format_value(value, key=key)}")
             else:
                 output.append(f"\n{data}")
 
         output.append("\n_Educational purposes only - not financial advice_")
         return "\n".join(output)
 
-    def _format_value(self, value: Any) -> str:
+    def _format_value(self, value: Any, key: Optional[str] = None) -> str:
         """Format a value for display"""
+        # Determine if value is currency based on key
+        is_currency = False
+        if key:
+            currency_keys = ["PRICE", "MARKET_CAP", "VOLUME", "NAV", "DIVIDEND"]
+            if any(k in key.upper() for k in currency_keys):
+                is_currency = True
+
         if isinstance(value, float):
+            prefix = "$" if is_currency else ""
+
             if abs(value) >= 1_000_000_000:
-                return f"${value/1_000_000_000:.2f}B"
+                return f"{prefix}{value/1_000_000_000:.2f}B"
             elif abs(value) >= 1_000_000:
-                return f"${value/1_000_000:.2f}M"
+                return f"{prefix}{value/1_000_000:.2f}M"
             elif abs(value) < 0.01:
-                return f"{value:.6f}"
+                return f"{prefix}{value:.6f}"
             else:
-                return f"{value:.2f}"
+                return f"{prefix}{value:.2f}"
         elif isinstance(value, int):
             return f"{value:,}"
         else:

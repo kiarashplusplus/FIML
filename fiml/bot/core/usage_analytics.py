@@ -106,12 +106,13 @@ class UsageAnalytics:
             monthly_key = self._get_redis_key(user_id, provider, "monthly")
 
             if self._redis:
-                # Increment Redis counters with 30-day expiry
-                await self._redis.incr(daily_key)
-                await self._redis.expire(daily_key, 86400 * 30)  # 30 days
-
-                await self._redis.incr(monthly_key)
-                await self._redis.expire(monthly_key, 86400 * 90)  # 90 days
+                # Use pipeline for atomic increment and expiry
+                async with self._redis.pipeline() as pipe:
+                    await pipe.incr(daily_key)
+                    await pipe.expire(daily_key, 86400 * 30)  # 30 days
+                    await pipe.incr(monthly_key)
+                    await pipe.expire(monthly_key, 86400 * 90)  # 90 days
+                    await pipe.execute()
 
                 daily_count = int(await self._redis.get(daily_key) or 0)
                 monthly_count = int(await self._redis.get(monthly_key) or 0)
