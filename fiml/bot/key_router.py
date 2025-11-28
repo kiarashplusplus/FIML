@@ -158,31 +158,55 @@ async def test_key(
     authorization: Optional[str] = Header(None)
 ) -> KeyResponse:
     """
-    Test if an API key is valid by making a test request.
+    Test if an API key is valid by making a test request to the provider's API.
     """
     service = get_key_service()
     
     try:
-        # Get the key
-        keys = await service.get_key(user_id, provider)
+        # Get the decrypted API key
+        api_key = await service.get_key(user_id, provider)
         
-        if not keys:
+        if not api_key:
             return KeyResponse(
                 success=False,
                 error=f"No API key found for {provider}"
             )
         
-        # TODO: Implement actual provider testing
-        # For now, just verify the key exists
-        logger.info("API key test requested", user_id=user_id, provider=provider)
+        # Test the key with actual provider API
+        test_result = await service.test_provider_key(provider, api_key)
         
-        return KeyResponse(
-            success=True,
-            message=f"{provider.capitalize()} API key is configured"
-        )
+        if test_result["valid"]:
+            logger.info(
+                "API key test passed", 
+                user_id=user_id, 
+                provider=provider, 
+                tier=test_result.get("tier")
+            )
+            
+            return KeyResponse(
+                success=True,
+                message=f"{provider.capitalize()}: {test_result['message']}"
+            )
+        else:
+            logger.warning(
+                "API key test failed",
+                user_id=user_id,
+                provider=provider,
+                reason=test_result.get("message")
+            )
+            
+            return KeyResponse(
+                success=False,
+                error=f"Key validation failed: {test_result['message']}"
+            )
         
     except Exception as e:
-        logger.error("Error testing API key", user_id=user_id, provider=provider, error=str(e))
+        logger.error(
+            "Error testing API key", 
+            user_id=user_id, 
+            provider=provider, 
+            error=str(e)
+        )
         return KeyResponse(
             success=False,
             error=f"Failed to test API key: {str(e)}"

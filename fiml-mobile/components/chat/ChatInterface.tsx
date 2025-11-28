@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useBotInteraction, Message } from '../../hooks/useBotInteraction';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function ChatInterface() {
     const { user } = useAuth();
+    const router = useRouter();
     const { messages, sendMessage, sendAction, isLoading, error } = useBotInteraction();
     const [inputText, setInputText] = useState('');
     const flatListRef = useRef<FlatList>(null);
@@ -17,6 +19,14 @@ export default function ChatInterface() {
     };
 
     const handleAction = (action: string, label: string) => {
+        // Handle navigation actions client-side
+        if (action.startsWith('navigate:')) {
+            const target = action.split(':')[1];
+            router.push(`/(tabs)/${target}`);
+            return;
+        }
+
+        // Send other actions to backend
         if (user) {
             sendAction(action, user.id, label);
         }
