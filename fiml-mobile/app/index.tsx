@@ -56,7 +56,7 @@ export default function OnboardingScreen() {
     };
 
     const completeOnboarding = () => {
-        router.replace('/(tabs)/home');
+        router.replace('/(tabs)/chat');
     };
 
     const handleLinkPress = async (url: string) => {

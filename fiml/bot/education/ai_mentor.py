@@ -286,7 +286,12 @@ class AIMentorService:
             client = self.narrative_generator.azure_client
             if client:
                 response = await client.generate_chat_response(messages=messages)
-                return response
+                # Check if response is empty or None
+                if response and response.strip():
+                    return response
+                else:
+                    logger.warning("Azure client returned empty response, using template")
+                    return self._generate_template_response(question, persona, None)
             else:
                 logger.warning("Azure client not available for general response")
                 return self._generate_template_response(question, persona, None)
@@ -339,48 +344,74 @@ class AIMentorService:
         mentor = self.MENTORS[persona]
         question_lower = question.lower()
 
+        # P/E Ratio specific response (most common question)
+        if "p/e" in question_lower or "pe ratio" in question_lower or "price to earnings" in question_lower or "price-to-earnings" in question_lower:
+            if persona == MentorPersona.MAYA:
+                return (
+                    "Great question! The P/E ratio (Price-to-Earnings ratio) is like a price tag for a company's earnings.\n\n"
+                    "Think of it this way: If a stock costs $100 and the company earns $10 per share annually, "
+                    "the P/E ratio is 10. This means you're paying $10 for every $1 of earnings.\n\n"
+                    "**What it tells you:**\n"
+                    "• Low P/E (< 15): Stock might be undervalued or facing challenges\n"
+                    "• Medium P/E (15-25): Fairly valued\n"
+                    "• High P/E (> 25): Investors expect strong growth\n\n"
+                    "Example: If AAPL has a P/E of 28, investors are willing to pay $28 for each $1 of earnings, "
+                    "betting on Apple's future growth.\n\n"
+                    "💡 Tip: Always compare P/E ratios within the same industry!"
+                )
+
         # Common question patterns
         if any(word in question_lower for word in ["what is", "explain", "how does"]):
             if persona == MentorPersona.MAYA:
+                # Extract topic from question for more personalized response
+                topic = "this concept"
+                if "risk" in question_lower:
+                    topic = "risk management"
+                elif "stock" in question_lower:
+                    topic = "stocks"
+                elif "volatility" in question_lower:
+                    topic = "volatility"
+                
                 return (
-                    f"{mentor['icon']} Maya here!\n\n"
-                    f"Great question! Let me explain this in a simple way.\n\n"
-                    f"Think of it like this: [concept explanation would go here]\n\n"
-                    f"Want to see a real example? Try the relevant lesson!\n\n"
-                    f"_Note: This is educational information only._"
+                    f"Great question about {topic}! While I'm still learning to provide detailed explanations, "
+                    f"I can tell you that this is an important concept in trading and finance.\n\n"
+                    f"📚 To learn more, I recommend:\n"
+                    f"• Checking out our lessons with /lesson\n"
+                    f"• Exploring specific stocks with market data\n"
+                    f"• Asking me more specific questions\n\n"
+                    f"Try asking: 'What is a P/E ratio?' or 'Show me AAPL price'"
                 )
 
             elif persona == MentorPersona.THEO:
                 return (
-                    f"{mentor['icon']} Theo here.\n\n"
-                    f"Let's look at the data.\n\n"
-                    f"[Analytical explanation with numbers would go here]\n\n"
-                    f"The key metrics to watch are: [list]\n\n"
-                    f"_Educational purposes only - not advice._"
+                    "Let's approach this analytically.\n\n"
+                    "While my AI capabilities are being enhanced with FIML's narrative engine, "
+                    "I can already help you with market data and analysis.\n\n"
+                    "Try:\n"
+                    "• /market - View live market data\n"
+                    "• Asking about specific stocks (e.g., 'AAPL price')\n"
+                    "• /lesson - Learn fundamental concepts"
                 )
 
             else:  # ZARA
                 return (
-                    f"{mentor['icon']} Zara here.\n\n"
-                    f"That's an important question about mindset.\n\n"
-                    f"From a psychological perspective: [insight would go here]\n\n"
-                    f"Remember: discipline beats emotion in trading.\n\n"
-                    f"_Not financial advice - for learning only._"
+                    "I appreciate your curiosity about trading concepts.\n\n"
+                    "Understanding is the first step to confident trading. "
+                    "While I'm being integrated with advanced AI capabilities, "
+                    "I can already guide you through our structured learning path.\n\n"
+                    "Remember: Knowledge reduces anxiety. Start with /lesson to build a solid foundation."
                 )
 
         # Default response
         return (
             f"{mentor['icon']} {mentor['name']} here!\n\n"
             f"I understand you're asking about: _{question}_\n\n"
-            f"This is a great topic! The AI mentor system is being integrated with "
-            f"FIML's narrative generation engine. Soon I'll be able to:\n"
-            f"• Answer questions with real market examples\n"
-            f"• Explain concepts in my unique style\n"
-            f"• Guide you through lessons interactively\n\n"
-            f"For now, check out:\n"
-            f"/lesson - Browse available lessons\n"
-            f"/help - See what I can help with\n\n"
-            f"_Educational purposes only - not financial advice_"
+            f"I'm here to help you learn! While my AI capabilities are being enhanced, "
+            f"you can already:\n"
+            f"• Browse lessons with /lesson\n"
+            f"• Check live market data\n"
+            f"• Ask about specific trading concepts\n\n"
+            f"Try asking: 'What is a P/E ratio?' or 'Show me AAPL price'"
         )
 
     def _suggest_lessons(self, question: str) -> List[str]:
