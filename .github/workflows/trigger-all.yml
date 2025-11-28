@@ -1,0 +1,32 @@
+name: Trigger All Workflows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-all:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Workflows
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering all workflows..."
+          gh workflow run ci.yml || echo "Failed to trigger ci.yml"
+          gh workflow run docs.yml || echo "Failed to trigger docs.yml"
+          gh workflow run test-agents.yml || echo "Failed to trigger test-agents.yml"
+          gh workflow run test-arbitration.yml || echo "Failed to trigger test-arbitration.yml"
+          gh workflow run test-bot.yml || echo "Failed to trigger test-bot.yml"
+          gh workflow run test-core.yml || echo "Failed to trigger test-core.yml"
+          gh workflow run test-dsl.yml || echo "Failed to trigger test-dsl.yml"
+          gh workflow run test-infrastructure.yml || echo "Failed to trigger test-infrastructure.yml"
+          gh workflow run test-integration.yml || echo "Failed to trigger test-integration.yml"
+          gh workflow run test-mcp.yml || echo "Failed to trigger test-mcp.yml"
+          gh workflow run test-mobile.yml || echo "Failed to trigger test-mobile.yml"
+          gh workflow run test-providers.yml || echo "Failed to trigger test-providers.yml"
+          echo "All trigger commands executed."

@@ -9,10 +9,16 @@
 [![Core Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-core.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-core.yml)
 [![FIML CI/CD Pipeline (Core Only)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/ci.yml)
 [![Deploy Documentation](https://github.com/kiarashplusplus/FIML/actions/workflows/docs.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/docs.yml)
+[![Provider Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-providers.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-providers.yml)
+[![DSL Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-dsl.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-dsl.yml)
+[![MCP Server Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mcp.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mcp.yml)
+[![Mobile Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mobile.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mobile.yml)
 
-> 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | 🚀 **v0.4.0 RELEASED** | [Changelog](CHANGELOG.md) | [Technical Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
+[![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
+
+> 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Changelog](CHANGELOG.md))
 > 
-> **Current State**: Phase 1 Complete ✅ | Phase 2 Active Development 🚧 | **Version**: 0.4.0 | **Codebase**: 32,000+ LOC | **Tests**: 🎉 **1,403 COLLECTED** (100% pass rate on core suite) | **Coverage**: [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
+> **Current State**: Phase 1 Complete ✅ | Phase 2 Active Development 🚧 | **Version**: 0.4.0 | **Codebase**: 32,000+ LOC | **Tests**: 🎉 **1,403 COLLECTED** (100% pass rate on core suite) |
 > 
 > 🌍 **NEW in v0.4.0**: FIML Mobile App (Expo), Usage Analytics & Quota Management, Multilingual Compliance Guardrail
 > 
@@ -23,12 +29,8 @@
 
 > 📊 **Quick Links**:
 > - 🎉 [v0.4.0 Release Notes](CHANGELOG.md) - Mobile App, Usage Analytics, and Compliance Guardrail Layer
-> - 🎯 [Phase Evaluation Report](docs/project/PHASE_EVALUATION_REPORT.md) - Visual summary and verification
-> - 📘 [Technical & Strategic Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md) - Comprehensive 21KB analysis
-> - ⚡ [Current State Summary](docs/implementation-summaries/CURRENT_STATE_SUMMARY.md) - TL;DR quick reference
-> - 🔧 [CI Workflow Structure](docs/development/CI_WORKFLOW_STRUCTURE.md) - Component-based testing strategy
-> - 📚 [Full Documentation](https://kiarashplusplus.github.io/FIML/) - Complete MkDocs site
-> - 🌍 [Multilingual Compliance Guide](docs/features/) - 9-language compliance implementation
+> - 📘 [Technical & Strategic Evaluation](docs/development/TECHNICAL_STRATEGIC_EVALUATION.md)
+> - 📚 [Full Documentation](https://kiarashplusplus.github.io/FIML/)
 
 ---
 
