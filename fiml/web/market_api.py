@@ -152,6 +152,10 @@ async def search_assets(
 
     This is a simple search endpoint for the mobile app autocomplete.
 
+    Note: Currently uses a static list of common assets for fast search.
+    Future enhancement: Integrate with a provider that supports symbol search
+    (e.g., Alpha Vantage SYMBOL_SEARCH or FMP search endpoint).
+
     Args:
         q: Search query
         asset_type: Optional filter (stock or crypto)
@@ -159,7 +163,9 @@ async def search_assets(
     Returns:
         List of matching assets
     """
-    # Common assets for search suggestions
+    # Static list of common assets for fast autocomplete
+    # TODO: Consider externalizing to config or integrating with symbol search API
+    # For now, this provides instant results without API latency
     all_assets = [
         {"symbol": "AAPL", "name": "Apple Inc.", "type": "stock"},
         {"symbol": "GOOGL", "name": "Alphabet Inc.", "type": "stock"},

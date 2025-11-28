@@ -108,8 +108,10 @@ class FIMLEducationalDataAdapter:
                         "explanation": self.explain_price_movement(cached.change_percent),
                     },
                     "volume": {
+                        # For crypto, 24h volume is the standard metric
+                        # Average volume comparison not typically available for crypto
                         "current": response.crypto_metrics.get("volume24h", 0),
-                        "average": response.crypto_metrics.get("volume24h", 0),
+                        "average": None,  # Not available for crypto
                         "interpretation": "24-hour trading volume across exchanges",
                     },
                     "crypto_metrics": {
@@ -154,11 +156,14 @@ class FIMLEducationalDataAdapter:
                         "explanation": self.explain_price_movement(cached.change_percent),
                     },
                     "volume": {
+                        # Note: FIML's StructuralData only provides avg_volume
+                        # For real-time volume, a separate provider call would be needed
                         "current": structural.avg_volume if structural else 0,
                         "average": structural.avg_volume if structural else 0,
-                        "interpretation": self.explain_volume(
-                            structural.avg_volume if structural else 0,
-                            structural.avg_volume if structural else 1
+                        "interpretation": (
+                            "Average daily trading volume"
+                            if structural and structural.avg_volume
+                            else "Volume data not available"
                         ),
                     },
                     "fundamentals": {
@@ -493,7 +498,8 @@ class FIMLEducationalDataAdapter:
         tasks = [self.get_quick_price(symbol) for symbol in symbols]
         prices = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for symbol, price_data in zip(symbols, prices, strict=False):
+        # Use strict=True to catch any unexpected length mismatches
+        for symbol, price_data in zip(symbols, prices, strict=True):
             if isinstance(price_data, Exception):
                 results[symbol.upper()] = {
                     "symbol": symbol.upper(),
