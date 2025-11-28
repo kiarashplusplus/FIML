@@ -662,7 +662,7 @@ def mock_aiohttp_for_providers(request):
     def get_url_host(url_str: str) -> str:
         """Extract host from URL safely."""
         try:
-            parsed = urlparse(str(url_str))
+            parsed = urlparse(url_str)
             return parsed.netloc.lower() if parsed.netloc else ""
         except Exception:
             return ""
