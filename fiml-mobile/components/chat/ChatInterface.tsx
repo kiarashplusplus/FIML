@@ -3,7 +3,7 @@ import { View, TextInput, FlatList, Text, TouchableOpacity, ActivityIndicator } 
 import { useMutation } from '@tanstack/react-query';
 import { sendMessage, BotMessageRequest } from '../../services/api';
 import { useStore } from '../../store';
-import Markdown from 'react-native-markdown-display';
+import { MarkdownRenderer } from '../ui/MarkdownRenderer';
 
 interface Message {
     id: string;
@@ -68,7 +68,7 @@ export const ChatInterface = () => {
             {item.sender === 'user' ? (
                 <Text className="text-white">{item.text}</Text>
             ) : (
-                <Markdown style={{ body: { color: 'black' } }}>{item.text}</Markdown>
+                <MarkdownRenderer>{item.text}</MarkdownRenderer>
             )}
         </View>
     );
