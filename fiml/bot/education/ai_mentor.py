@@ -206,7 +206,7 @@ class AIMentorService:
                     market="US",
                     price_data=context.get("price_data", {}) if context else {},
                     preferences=NarrativePreferences(
-                        expertise_level=mentor["expertise_level"],
+                        expertise_level=ExpertiseLevel(mentor["expertise_level"]),
                         language=Language.ENGLISH,
                         include_disclaimers=True,
                     ),

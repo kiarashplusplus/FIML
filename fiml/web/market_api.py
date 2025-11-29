@@ -6,14 +6,19 @@ This router exposes FIML's market data capabilities via REST API,
 using the same underlying MCP tools that power the bot.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from fiml.bot.education.fiml_adapter import get_fiml_data_adapter
 from fiml.core.logging import get_logger
-from fiml.core.models import AnalysisDepth, Market
+from fiml.core.models import (
+    AnalysisDepth,
+    Market,
+    SearchByCoinResponse,
+    SearchBySymbolResponse,
+)
 
 logger = get_logger(__name__)
 
@@ -97,7 +102,7 @@ async def search_symbol_via_mcp(query: str) -> List[Dict[str, Any]]:
 
         if is_crypto:
             # Use search_by_coin for crypto (via arbitration engine)
-            response = await search_by_coin(
+            response: Union[SearchByCoinResponse, SearchBySymbolResponse] = await search_by_coin(
                 symbol=symbol.split("/")[0],
                 exchange="binance",
                 pair="USDT",

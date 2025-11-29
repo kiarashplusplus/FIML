@@ -1,9 +1,10 @@
+
 """
 Session analytics and metrics tracking
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, cast
 
 if TYPE_CHECKING:
     from fiml.sessions.store import SessionStore
@@ -143,7 +144,7 @@ class SessionAnalytics:
                 cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
                 # Try to query session metrics (may not exist if tables not created)
-                metrics = []
+                metrics: Sequence[SessionMetrics] = []
                 try:
                     # Build query for session metrics
                     query = select(SessionMetrics).where(SessionMetrics.created_at >= cutoff_date)
@@ -294,9 +295,12 @@ class SessionAnalytics:
 
                 # Calculate statistics
                 total_sessions = len(metrics)
-                total_queries = sum(m.total_queries for m in metrics)
-                total_duration = sum(m.duration_seconds for m in metrics)
-                abandoned_count = sum(1 for m in metrics if m.abandoned)
+                total_queries = sum(int(cast(int, m.total_queries)) for m in metrics)
+                total_duration = sum(int(cast(int, m.duration_seconds)) for m in metrics)
+                abandoned_count = 0
+                for m in metrics:
+                    if bool(getattr(m, "abandoned", False)):
+                        abandoned_count += 1
 
                 avg_duration = total_duration / total_sessions if total_sessions > 0 else 0
                 avg_queries = total_queries / total_sessions if total_sessions > 0 else 0
@@ -305,7 +309,7 @@ class SessionAnalytics:
                 # Most analyzed assets
                 all_assets: Dict[str, int] = {}
                 for m in metrics:
-                    for asset in m.assets_analyzed:
+                    for asset in getattr(m, "assets_analyzed", []):
                         all_assets[asset] = all_assets.get(asset, 0) + 1
 
                 top_assets = sorted(all_assets.items(), key=lambda x: x[1], reverse=True)[:10]
@@ -319,8 +323,8 @@ class SessionAnalytics:
                 # Session type breakdown
                 session_type_counts: Dict[str, int] = {}
                 for m in metrics:
-                    session_type_counts[m.session_type] = (
-                        session_type_counts.get(m.session_type, 0) + 1
+                    session_type_counts[str(m.session_type)] = (
+                        session_type_counts.get(str(m.session_type), 0) + 1
                     )
 
                 # Get popular tags from archived sessions

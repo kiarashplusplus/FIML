@@ -95,7 +95,7 @@ class L1Cache:
     async def shutdown(self) -> None:
         """Close Redis connections"""
         if self._redis:
-            await self._redis.aclose()
+            await self._redis.close()
             self._initialized = False
             logger.info("L1 cache shutdown")
 

@@ -554,7 +554,7 @@ class UserKeyOnboardingService:
         """Test FRED API key"""
         # Use GDP series as a test, requesting only 1 observation to be lightweight
         url = "https://api.stlouisfed.org/fred/series/observations"
-        params = {
+        params: Dict[str, str | int] = {
             "series_id": "GDP",
             "api_key": api_key,
             "file_type": "json",

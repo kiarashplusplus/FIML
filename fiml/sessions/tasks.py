@@ -63,6 +63,7 @@ async def delete_old_archived_sessions() -> dict:
         logger.info("Starting old session deletion task")
 
         from sqlalchemy import delete
+        from sqlalchemy.engine import CursorResult
 
         from fiml.sessions.db import SessionRecord
 
@@ -84,7 +85,8 @@ async def delete_old_archived_sessions() -> dict:
             result = await db_session.execute(stmt)
             await db_session.commit()
 
-            deleted_count = result.rowcount
+            from typing import cast
+            deleted_count = cast(CursorResult, result).rowcount
 
         logger.info(f"Deleted {deleted_count} old archived sessions")
 

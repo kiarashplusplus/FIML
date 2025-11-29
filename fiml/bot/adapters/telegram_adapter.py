@@ -194,6 +194,8 @@ class TelegramBotAdapter:
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command"""
         user = update.effective_user
+        if not user:
+            return
 
         welcome_text = f"""
 👋 Welcome to Trading Educational Bot, {user.first_name}!
@@ -214,6 +216,8 @@ Choose your path:
 💡 New to this? Start learning with the free tier by clicking on /lesson !
 """
 
+        if not update.message:
+            return
         await update.message.reply_text(welcome_text, parse_mode="Markdown")
 
     async def cmd_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -244,6 +248,8 @@ Help:
 💡 Tip: Start by adding your API keys with /addkey!
 """
 
+        if not update.message:
+            return
         await update.message.reply_text(help_text, parse_mode="Markdown")
 
     async def cmd_add_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -278,6 +284,8 @@ Choose which data provider you want to add:
 Need help finding keys? [Read our Guide](https://kiarashplusplus.github.io/FIML/user-guide/api-keys/)
 """
 
+        if not update.message:
+            return ConversationHandler.END
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
         return PROVIDER_SELECT
@@ -285,11 +293,16 @@ Need help finding keys? [Read our Guide](https://kiarashplusplus.github.io/FIML/
     async def select_provider(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Handle provider selection"""
         query = update.callback_query
+        if not query:
+            return ConversationHandler.END
         await query.answer()
 
         # Extract provider from callback data
+        if not query.data:
+            return ConversationHandler.END
         provider_id = query.data.split(":")[1]
-        context.user_data["selected_provider"] = provider_id
+        if context.user_data is not None:
+            context.user_data["selected_provider"] = provider_id
 
         # Get provider info
         provider_info = self.key_manager.get_provider_info(provider_id)
@@ -326,8 +339,14 @@ Need help? [View our API Key Guide](https://kiarashplusplus.github.io/FIML/user-
 
     async def receive_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Receive and validate API key"""
+        if not update.effective_user:
+            return KEY_ENTRY
         str(update.effective_user.id)
-        provider_id = context.user_data.get("selected_provider")
+        provider_id = context.user_data.get("selected_provider") if context.user_data else None
+        if not provider_id:
+            return KEY_ENTRY
+        if not update.message or not update.message.text:
+            return KEY_ENTRY
         api_key = update.message.text.strip()
 
         # Validate format
@@ -351,8 +370,9 @@ Need help? [View our API Key Guide](https://kiarashplusplus.github.io/FIML/user-
             return KEY_ENTRY
 
         # Store in context for confirmation
-        context.user_data["api_key"] = api_key
-        context.user_data["test_result"] = test_result
+        if context.user_data is not None:
+            context.user_data["api_key"] = api_key
+            context.user_data["test_result"] = test_result
 
         # Ask for confirmation
         keyboard = [
@@ -382,8 +402,12 @@ Save this key?
     async def confirm_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Confirm and store API key"""
         query = update.callback_query
+        if not query:
+            return int(ConversationHandler.END)
         await query.answer()
 
+        if not query.data:
+            return int(ConversationHandler.END)
         confirmation = query.data.split(":")[1]
 
         if confirmation == "no":
@@ -391,10 +415,15 @@ Save this key?
             return int(ConversationHandler.END)
 
         # Store the key
+        if not update.effective_user:
+            return int(ConversationHandler.END)
         user_id = str(update.effective_user.id)
-        provider_id = context.user_data.get("selected_provider")
-        api_key = context.user_data.get("api_key")
-        test_result = context.user_data.get("test_result", {})
+        provider_id = context.user_data.get("selected_provider") if context.user_data else None
+        api_key = context.user_data.get("api_key") if context.user_data else None
+        test_result = context.user_data.get("test_result", {}) if context.user_data else {}
+
+        if not provider_id or not api_key:
+            return int(ConversationHandler.END)
 
         metadata = {
             "tier": test_result.get("tier", "unknown"),
@@ -421,18 +450,23 @@ What's next:
             await query.edit_message_text("❌ Failed to save key. Please try again with /addkey")
 
         # Clear context
-        context.user_data.clear()
+        if context.user_data:
+            context.user_data.clear()
 
         return int(ConversationHandler.END)
 
     async def cmd_cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Cancel current operation"""
-        context.user_data.clear()
-        await update.message.reply_text("❌ Operation cancelled.")
+        if context.user_data:
+            context.user_data.clear()
+        if update.message:
+            await update.message.reply_text("❌ Operation cancelled.")
         return int(ConversationHandler.END)
 
     async def cmd_list_keys(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """List user's connected providers"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         providers = await self.key_manager.list_user_providers(user_id)
@@ -464,13 +498,19 @@ Add one with /addkey to unlock premium data providers!
             text += "/removekey - Remove a provider\n"
             text += "/status - Check usage"
 
-        await update.message.reply_text(text, parse_mode="Markdown")
+        if update.message:
+            await update.message.reply_text(text, parse_mode="Markdown")
 
     async def cmd_remove_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Remove a provider key"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         providers = await self.key_manager.list_user_providers(user_id)
+
+        if not update.message:
+            return
 
         if not providers:
             await update.message.reply_text("You don't have any keys to remove.")
@@ -497,9 +537,15 @@ Add one with /addkey to unlock premium data providers!
     async def handle_remove_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle key removal callback"""
         query = update.callback_query
+        if not query:
+            return
         await query.answer()
 
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
+        if not query.data:
+            return
         provider_id = query.data.split(":")[1]
 
         # Remove the key
@@ -518,9 +564,14 @@ Add one with /addkey to unlock premium data providers!
 
     async def cmd_test_key(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Test all user's keys"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         keys = await self.key_manager.get_user_keys(user_id)
+
+        if not update.message:
+            return
 
         if not keys:
             await update.message.reply_text("You don't have any keys to test.")
@@ -544,6 +595,8 @@ Add one with /addkey to unlock premium data providers!
 
     async def cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Show provider status and usage"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         status_list = await self.provider_configurator.get_provider_status(user_id)
@@ -569,7 +622,8 @@ No providers connected yet.
                 text += f"   Usage today: {usage} requests\n"
                 text += f"   Status: {status['status']}\n\n"
 
-        await update.message.reply_text(text, parse_mode="Markdown")
+        if update.message:
+            await update.message.reply_text(text, parse_mode="Markdown")
 
     def _get_available_lessons(self) -> List[Tuple[str, str, str]]:
         """
@@ -645,6 +699,8 @@ No providers connected yet.
 
     async def cmd_lesson(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Show available lessons or continue current lesson"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         # Get user's progress
@@ -675,14 +731,21 @@ No providers connected yet.
         text += "\n\n🟢 Beginner | 🟡 Intermediate | 🔴 Advanced"
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        if update.message:
+            await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
     async def select_lesson(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle lesson selection"""
         query = update.callback_query
+        if not query:
+            return
         await query.answer()
 
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
+        if not query.data:
+            return
         lesson_id = query.data.split(":")[1]
 
         # Try to load lesson from file path mapping first
@@ -731,6 +794,8 @@ No providers connected yet.
 
     async def cmd_quiz(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Start a quiz for current lesson"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         # Sample quiz questions
@@ -759,10 +824,14 @@ No providers connected yet.
 
         # Create quiz session
         session_id = self.quiz_system.create_session(user_id, "stock_basics", questions)
-        context.user_data["quiz_session_id"] = session_id
+        if context.user_data is not None:
+            context.user_data["quiz_session_id"] = session_id
 
         # Get first question
         session = self.quiz_system.get_session(session_id)
+        if not update.message:
+            return
+
         if not session or not session.get("questions"):
             await update.message.reply_text("❌ Failed to start quiz.")
             return
@@ -800,11 +869,17 @@ No providers connected yet.
     async def handle_quiz_answer(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle quiz answer submission"""
         query = update.callback_query
+        if not query:
+            return
         await query.answer()
 
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         # Parse callback data: quiz_answer:session_id:question_index:answer_index_or_text
+        if not query.data:
+            return
         parts = query.data.split(":")
         session_id = parts[1]
         question_idx = int(parts[2])
@@ -918,11 +993,15 @@ No providers connected yet.
 
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle general text messages (non-command)"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
+        if not update.message or not update.message.text:
+            return
         message = update.message.text
 
         # Check if user has an active mentor session FIRST
-        mentor_persona = context.user_data.get("mentor_persona")
+        mentor_persona = context.user_data.get("mentor_persona") if context.user_data else None
 
         if mentor_persona:
             # User is chatting with a mentor - route to mentor service
@@ -1009,13 +1088,18 @@ Trading discipline and mindset
         ]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        if update.message:
+            await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
     async def select_mentor(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle mentor selection"""
         query = update.callback_query
+        if not query:
+            return
         await query.answer()
 
+        if not query.data:
+            return
         mentor_name = query.data.split(":")[1]
 
         # Map to persona
@@ -1027,7 +1111,8 @@ Trading discipline and mindset
         persona = persona_map.get(mentor_name, MentorPersona.MAYA)
 
         # Store mentor preference
-        context.user_data["mentor_persona"] = persona
+        if context.user_data is not None:
+            context.user_data["mentor_persona"] = persona
 
         mentor_info = self.mentor_service.get_mentor_info(persona)
 
@@ -1049,6 +1134,8 @@ _Type your question below, or use /help for commands._
 
     async def cmd_progress(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Show user's learning progress"""
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
 
         # Get gamification summary
@@ -1088,7 +1175,8 @@ Badges:
             text += f"\nNext Level: {progress.get('xp_needed', 0)} XP needed\n"
             text += f"[{progress_bar}] {percent:.0f}%"
 
-        await update.message.reply_text(text, parse_mode="Markdown")
+        if update.message:
+            await update.message.reply_text(text, parse_mode="Markdown")
 
     async def cmd_fkdsl(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /fkdsl command - FK-DSL query interface"""
@@ -1119,14 +1207,21 @@ Choose a template to get started:
             )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        if update.message:
+            await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
     async def handle_dsl_template(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle DSL template selection"""
         query = update.callback_query
+        if not query:
+            return
         await query.answer()
 
+        if not update.effective_user:
+            return
         user_id = str(update.effective_user.id)
+        if not query.data:
+            return
         template_id = query.data.split(":")[1]
 
         template = DSL_TEMPLATES.get(template_id)
@@ -1158,7 +1253,8 @@ Send your query as a message. Examples:
 Type your query below or /cancel to abort.
 """
             await query.edit_message_text(text, parse_mode="Markdown")
-            context.user_data["awaiting_dsl_query"] = True
+            if context.user_data is not None:
+                context.user_data["awaiting_dsl_query"] = True
             return
 
         # Show template with option to execute
@@ -1209,17 +1305,22 @@ Example: {template['example']}
             if from_callback:
                 # Edit the existing message
                 try:
-                    await update.callback_query.message.reply_text(
-                        formatted_message, parse_mode="Markdown"
-                    )
+                    if update.callback_query and update.callback_query.message:
+                        from telegram import Message
+                        if isinstance(update.callback_query.message, Message):
+                            await update.callback_query.message.reply_text(
+                                formatted_message, parse_mode="Markdown"
+                            )
                 except Exception as e:
                     logger.warning("Failed to send as reply, sending new message", error=str(e))
-                    await update.callback_query.message.chat.send_message(
-                        formatted_message, parse_mode="Markdown"
-                    )
+                    if update.callback_query and update.callback_query.message:
+                        await update.callback_query.message.chat.send_message(
+                            formatted_message, parse_mode="Markdown"
+                        )
             else:
                 # Send new message
-                await update.message.reply_text(formatted_message, parse_mode="Markdown")
+                if update.message:
+                    await update.message.reply_text(formatted_message, parse_mode="Markdown")
 
             # Award XP for successful query
             if result.get("status") == "completed":
@@ -1249,9 +1350,11 @@ Try /fkdsl again to see examples!
 """
             logger.error("DSL query execution failed", user_id=user_id, query=query, error=str(e))
 
-            if from_callback:
-                await update.callback_query.message.reply_text(error_message, parse_mode="Markdown")
-            else:
+            if from_callback and update.callback_query and update.callback_query.message:
+                from telegram import Message
+                if isinstance(update.callback_query.message, Message):
+                    await update.callback_query.message.reply_text(error_message, parse_mode="Markdown")
+            elif update.message:
                 await update.message.reply_text(error_message, parse_mode="Markdown")
 
     async def format_dsl_result(self, result: Dict[str, Any], query: str) -> str:
@@ -1369,13 +1472,15 @@ Use /status to check progress (coming soon).
         logger.info("Starting Telegram bot...")
         await self.application.initialize()
         await self.application.start()
-        await self.application.updater.start_polling()
+        if self.application.updater:
+            await self.application.updater.start_polling()
         logger.info("Telegram bot started")
 
     async def stop(self) -> None:
         """Stop the bot"""
         logger.info("Stopping Telegram bot...")
-        await self.application.updater.stop()
+        if self.application.updater:
+            await self.application.updater.stop()
         await self.application.stop()
         await self.application.shutdown()
         logger.info("Telegram bot stopped")

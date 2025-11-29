@@ -117,7 +117,7 @@ async def get_provider_status(
                 )
             )
 
-        return {"providers": [p.model_dump() for p in providers]}
+        return {"providers": providers}
 
     except Exception as e:
         logger.error("Error fetching provider status", user_id=user_id, error=str(e))

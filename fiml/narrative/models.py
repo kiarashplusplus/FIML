@@ -144,8 +144,8 @@ class NarrativePreferences(BaseModel):
     include_fundamental: bool = True
     include_sentiment: bool = True
     include_risk: bool = True
-    max_length_chars: int = Field(2000, ge=500, le=10000)
-    min_confidence: float = Field(0.7, ge=0.0, le=1.0)
+    max_length_chars: int = Field(default=2000, ge=500, le=10000)
+    min_confidence: float = Field(default=0.7, ge=0.0, le=1.0)
     include_disclaimers: bool = True
     focus_areas: List[str] = Field(default_factory=list)
 

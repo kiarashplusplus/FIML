@@ -4,7 +4,7 @@ Session store with Redis (active) and PostgreSQL (archived) backends
 
 import json
 from datetime import UTC, datetime, timedelta
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 import redis.asyncio as redis
@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import (
 from fiml.core.config import settings
 from fiml.core.exceptions import CacheError
 from fiml.core.logging import get_logger
-from fiml.sessions.db import SessionRecord
+from fiml.sessions.db import SessionMetrics, SessionRecord
 from fiml.sessions.models import AnalysisHistory, QueryRecord, Session, SessionSummary, SessionType
 
 logger = get_logger(__name__)
@@ -367,8 +367,8 @@ class SessionStore:
             # Create PostgreSQL record
             async with self._session_maker() as db_session:
                 record = self._record_from_session(session)
-                record.is_archived = True
-                record.archived_at = datetime.now(UTC)
+                record.is_archived = True  # type: ignore
+                record.archived_at = datetime.now(UTC)  # type: ignore
 
                 db_session.add(record)
                 await db_session.commit()
@@ -452,25 +452,30 @@ class SessionStore:
     def _session_from_record(self, record: SessionRecord) -> Session:
         """Convert SessionRecord to Session"""
         # Reconstruct history
-        queries = [QueryRecord(**q) for q in record.history_queries]
+        queries = [QueryRecord(**q) for q in getattr(record, "history_queries", [])]
         history = AnalysisHistory(
             queries=queries,
-            total_queries=record.total_queries,
-            first_query_at=record.first_query_at,
-            last_query_at=record.last_query_at,
-            cache_hit_rate=float(record.cache_hit_rate),
+            total_queries=cast(int, record.total_queries),
+            first_query_at=cast(Optional[datetime], record.first_query_at),
+            last_query_at=cast(Optional[datetime], record.last_query_at),
+            cache_hit_rate=float(cast(float, record.cache_hit_rate)),
         )
 
         from fiml.sessions.models import SessionState
 
         state = SessionState(
-            context=record.context,
-            preferences=record.preferences,
-            intermediate_results=record.intermediate_results,
-            metadata=record.session_metadata,
+            context=cast(Dict[str, Any], record.context),
+            preferences=cast(Dict[str, Any], record.preferences),
+            intermediate_results=cast(Dict[str, Any], record.intermediate_results),
+            metadata=cast(Dict[str, Any], record.session_metadata),
             history=history,
         )
 
+        # Reconstruct metrics if available
+        metrics_list: List[SessionMetrics] = getattr(record, "metrics", [])
+        for m in metrics_list:
+            # Add metrics to history if needed
+            pass
         return Session(
             id=record.id,
             user_id=record.user_id,

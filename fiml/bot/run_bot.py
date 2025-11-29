@@ -113,7 +113,8 @@ async def run_async(
         # Use run_polling() which works in existing async context
         await telegram_bot.application.initialize()
         await telegram_bot.application.start()
-        await telegram_bot.application.updater.start_polling()
+        if telegram_bot.application.updater:
+            await telegram_bot.application.updater.start_polling()
 
         # Keep running until interrupted
         try:
@@ -127,7 +128,8 @@ async def run_async(
     finally:
         # Cleanup bot
         try:
-            await telegram_bot.application.updater.stop()
+            if telegram_bot.application.updater:
+                await telegram_bot.application.updater.stop()
             await telegram_bot.application.stop()
             await telegram_bot.application.shutdown()
         except:

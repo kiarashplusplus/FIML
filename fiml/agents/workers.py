@@ -612,13 +612,13 @@ class MacroWorker(BaseWorker):
                 "unemployment": {"symbol": "UNEMPLOYMENT", "default": 3.8},
             }
 
-            factors = {}
+            factors: Dict[str, float] = {}
 
             for key, info in macro_indicators.items():
                 try:
                     # Create asset for macro indicator
                     macro_asset = Asset(
-                        symbol=info["symbol"],
+                        symbol=str(info["symbol"]),
                         asset_type=AssetType.INDEX,
                         name=key.replace("_", " ").title()
                     )
@@ -638,11 +638,11 @@ class MacroWorker(BaseWorker):
                             self.logger.debug(f"Provider {provider.name} failed for {key}: {e}")
                             continue
 
-                    factors[key] = float(fetched_value) if fetched_value is not None else info["default"]
+                    factors[key] = float(fetched_value) if fetched_value is not None else float(str(info["default"]))
 
                 except Exception as e:
                     self.logger.warning(f"Failed to fetch {key}", error=str(e))
-                    factors[key] = info["default"]
+                    factors[key] = float(str(info["default"]))
 
             # Fetch asset price data to analyze correlation
             correlation_impact = "neutral"
@@ -1134,8 +1134,8 @@ class CorrelationWorker(BaseWorker):
 
             # Calculate diversification score (lower correlation = better diversification)
             if correlations:
-                avg_correlation = np.mean(list(correlations.values()))
-                diversification_score = 1.0 - abs(avg_correlation)
+                avg_correlation = float(np.mean(list(correlations.values())))
+                diversification_score: float = 1.0 - abs(avg_correlation)
             else:
                 diversification_score = 0.5
 

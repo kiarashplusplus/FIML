@@ -8,7 +8,7 @@ from uuid import uuid4
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, relationship
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -53,6 +53,8 @@ class SessionRecord(Base):
     first_query_at = Column(DateTime(timezone=True), nullable=True)
     last_query_at = Column(DateTime(timezone=True), nullable=True)
     cache_hit_rate = Column(String(50), nullable=False, default="0.0")
+
+    metrics = relationship("SessionMetrics", backref="session", lazy="selectin")
 
     def __repr__(self) -> str:
         return f"<SessionRecord(id={self.id}, type={self.type}, user_id={self.user_id})>"

@@ -7,11 +7,17 @@ through FIML's MCP tools and arbitration engine, with educational context.
 It is designed to be reusable across both Telegram bot and mobile app.
 """
 
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional, Union, cast
 
 import structlog
 
-from fiml.core.models import AnalysisDepth, AssetType, Market
+from fiml.core.models import (
+    AnalysisDepth,
+    AssetType,
+    Market,
+    SearchByCoinResponse,
+    SearchBySymbolResponse,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -98,7 +104,7 @@ class FIMLEducationalDataAdapter:
 
             if asset_type == AssetType.CRYPTO:
                 # Use search_by_coin for crypto
-                response = await search_by_coin(
+                response: Union[SearchByCoinResponse, SearchBySymbolResponse] = await search_by_coin(
                     symbol=symbol.upper().split("/")[0],  # Extract base symbol
                     exchange="binance",
                     pair="USDT",
@@ -123,17 +129,17 @@ class FIMLEducationalDataAdapter:
                     "volume": {
                         # For crypto, 24h volume is the standard metric
                         # Average volume comparison not typically available for crypto
-                        "current": response.crypto_metrics.get("volume24h", 0),
+                        "current": cast(SearchByCoinResponse, response).crypto_metrics.get("volume24h", 0),
                         "average": None,  # Not available for crypto
                         "interpretation": "24-hour trading volume across exchanges",
                     },
                     "crypto_metrics": {
-                        "high_24h": response.crypto_metrics.get("high_24h", 0),
-                        "low_24h": response.crypto_metrics.get("low_24h", 0),
-                        "ath": response.crypto_metrics.get("ath", 0),
+                        "high_24h": cast(SearchByCoinResponse, response).crypto_metrics.get("high_24h", 0),
+                        "low_24h": cast(SearchByCoinResponse, response).crypto_metrics.get("low_24h", 0),
+                        "ath": cast(SearchByCoinResponse, response).crypto_metrics.get("ath", 0),
                     },
                     "fundamentals": {
-                        "market_dominance": response.crypto_metrics.get("dominance", "N/A"),
+                        "market_dominance": cast(SearchByCoinResponse, response).crypto_metrics.get("dominance", "N/A"),
                         "explanation": "Market dominance shows this coin's share of total crypto market cap",
                     },
                     "narrative": response.narrative.summary if response.narrative else None,
@@ -156,7 +162,7 @@ class FIMLEducationalDataAdapter:
 
                 # Build educational data from stock response
                 cached = response.cached
-                structural = response.structural_data
+                structural = cast(SearchBySymbolResponse, response).structural_data
 
                 educational_data = {
                     "symbol": response.symbol,
@@ -440,6 +446,7 @@ class FIMLEducationalDataAdapter:
             asset_type = self._detect_asset_type(symbol)
 
             if asset_type == AssetType.CRYPTO:
+                response: Union[SearchByCoinResponse, SearchBySymbolResponse]
                 response = await search_by_coin(
                     symbol=symbol.upper().split("/")[0],
                     exchange="binance",
