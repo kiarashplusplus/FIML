@@ -95,7 +95,6 @@ jobs:
           POSTGRES_DB: fiml_test
           POSTGRES_USER: fiml_test
           POSTGRES_PASSWORD: fiml_test_password
-          REDIS_HOST: localhost
           REDIS_PORT: 6379
           AZURE_OPENAI_ENDPOINT: https://mock-azure-openai.openai.azure.com/
           AZURE_OPENAI_API_KEY: mock-api-key-for-testing
