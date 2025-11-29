@@ -95,9 +95,12 @@ jobs:
           FIML_ENV: test
           REDIS_HOST: localhost
           POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
           POSTGRES_DB: fiml_test
           POSTGRES_USER: fiml_test
           POSTGRES_PASSWORD: fiml_test_password
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
           AZURE_OPENAI_ENDPOINT: https://mock-azure-openai.openai.azure.com/
           AZURE_OPENAI_API_KEY: mock-api-key-for-testing
           AZURE_OPENAI_DEPLOYMENT_NAME: gpt-4

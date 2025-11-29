@@ -121,8 +121,12 @@ class TestHealthEndpoints:
         # May return 200 (healthy) or 503 (unhealthy) depending on Redis availability
         assert response.status_code in [200, 503]
         data = response.json()
-        assert "status" in data
-        assert "service" in data or "error" in data
+        if response.status_code == 200:
+            assert "status" in data
+            assert "service" in data
+        else:
+            # 503 returns HTTPException detail
+            assert "detail" in data
 
     def test_health_providers_endpoint_exists(self, client):
         """Test that /health/providers endpoint exists"""

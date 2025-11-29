@@ -19,13 +19,21 @@ load_dotenv()
 from fiml.core.config import Settings  # noqa: E402
 
 # Set environment variables BEFORE any imports happen
-os.environ["POSTGRES_HOST"] = "localhost"
-os.environ["POSTGRES_PORT"] = "5433"
-os.environ["POSTGRES_DB"] = "fiml_test"
-os.environ["POSTGRES_USER"] = "fiml_test"
-os.environ["POSTGRES_PASSWORD"] = "fiml_test_password"
-os.environ["REDIS_HOST"] = "localhost"
-os.environ["REDIS_PORT"] = "6381"
+# Set environment variables BEFORE any imports happen
+if "POSTGRES_HOST" not in os.environ:
+    os.environ["POSTGRES_HOST"] = "localhost"
+if "POSTGRES_PORT" not in os.environ:
+    os.environ["POSTGRES_PORT"] = "5433"
+if "POSTGRES_DB" not in os.environ:
+    os.environ["POSTGRES_DB"] = "fiml_test"
+if "POSTGRES_USER" not in os.environ:
+    os.environ["POSTGRES_USER"] = "fiml_test"
+if "POSTGRES_PASSWORD" not in os.environ:
+    os.environ["POSTGRES_PASSWORD"] = "fiml_test_password"
+if "REDIS_HOST" not in os.environ:
+    os.environ["REDIS_HOST"] = "localhost"
+if "REDIS_PORT" not in os.environ:
+    os.environ["REDIS_PORT"] = "6381"
 os.environ["FIML_ENV"] = "test"
 
 # Mock Azure OpenAI configuration for tests (unless already set in .env)
