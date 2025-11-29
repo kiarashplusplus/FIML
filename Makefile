@@ -112,7 +112,7 @@ clean:
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
-	rm -rf build/ dist/ .pytest_cache/ .coverage htmlcov/
+	rm -rf build/ dist/ .pytest_cache/ .coverage htmlcov/ .mypy_cache/ .ruff_cache/
 
 shell:
 	docker compose exec fiml-server /bin/bash

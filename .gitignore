@@ -45,6 +45,9 @@ ENV/
 # Logs
 logs/
 *.log
+debug_output.txt
+docs_stats.txt
+mypy_errors.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
