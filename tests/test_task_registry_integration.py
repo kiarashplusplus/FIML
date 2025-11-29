@@ -9,18 +9,17 @@ import redis
 
 from fiml.core.models import TaskInfo, TaskStatus
 from fiml.monitoring.task_registry import TaskRegistry
-from fiml.core.config import settings
 
 
 @pytest.fixture
 def redis_client():
-    """Connect to the real Docker Redis on port 6381"""
-    client = redis.Redis(host="localhost", port=6381, db=0, decode_responses=False)
+    """Connect to the real Docker Redis on port 6380"""
+    client = redis.Redis(host="localhost", port=6380, db=0, decode_responses=False)
     # Test connection
     try:
         client.ping()
     except redis.ConnectionError:
-        pytest.skip(f"Redis not available on port 6381")
+        pytest.skip("Redis not available on port 6380")
 
     yield client
 
@@ -124,7 +123,7 @@ class TestTaskRegistryIntegration:
         assert len(active) >= 3  # At least our 3 tasks
 
         # Verify our tasks are in there
-        task_ids = [t.id for t in active.values()]
+        task_ids = [t.id for t in active]
         for task in tasks:
             assert task.id in task_ids
 
@@ -139,6 +138,7 @@ class TestTaskRegistryIntegration:
             estimated_completion=None,
             progress=0.0,
             created_at=datetime.now(timezone.utc),
+            updated_at=None,
             result=None,
             error=None,
         )
@@ -151,6 +151,7 @@ class TestTaskRegistryIntegration:
             estimated_completion=None,
             progress=0.5,
             created_at=datetime.now(timezone.utc),
+            updated_at=None,
             result=None,
             error=None,
         )
@@ -175,20 +176,20 @@ class TestTaskRegistryIntegration:
         stats = task_registry.get_stats()
 
         # Verify stats structure
-        assert "tasks_by_type" in stats
-        assert "tasks_by_status" in stats
+        assert "by_type" in stats
+        assert "by_status" in stats
         assert "total_tasks" in stats
 
         # Should have at least 3 tasks (might have more from other tests)
         assert stats["total_tasks"] >= 3
 
         # Check our specific tasks are counted
-        assert stats["tasks_by_status"].get(TaskStatus.PENDING.value, 0) >= 1
-        assert stats["tasks_by_status"].get(TaskStatus.RUNNING.value, 0) >= 1
-        assert stats["tasks_by_status"].get(TaskStatus.COMPLETED.value, 0) >= 1
+        assert stats["by_status"].get(TaskStatus.PENDING.value, 0) >= 1
+        assert stats["by_status"].get(TaskStatus.RUNNING.value, 0) >= 1
+        assert stats["by_status"].get(TaskStatus.COMPLETED.value, 0) >= 1
 
-        assert stats["tasks_by_type"].get("equity_analysis", 0) >= 2
-        assert stats["tasks_by_type"].get("crypto_analysis", 0) >= 1
+        assert stats["by_type"].get("equity_analysis", 0) >= 2
+        assert stats["by_type"].get("crypto_analysis", 0) >= 1
 
     def test_ttl_preservation_on_update(self, task_registry, sample_task, redis_client):
         """Test that update preserves remaining TTL"""
