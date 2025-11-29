@@ -172,9 +172,9 @@ def docker_services(request):
         # Assume services are already running or not needed for unit tests
         # We don't exit here to allow unit tests that mock Redis to run
         if not is_redis_ready(max_retries=1):
-            print("⚠️ Redis is not available, but continuing since --no-docker was specified.")
+            pytest.skip("Redis is not available and --no-docker was specified.")
         if not is_postgres_ready(max_retries=1):
-            print("⚠️ PostgreSQL is not available, but continuing since --no-docker was specified.")
+            pytest.skip("PostgreSQL is not available and --no-docker was specified.")
         yield
         return
 
