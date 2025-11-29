@@ -20,12 +20,12 @@ from fiml.core.config import Settings  # noqa: E402
 
 # Set environment variables BEFORE any imports happen
 os.environ["POSTGRES_HOST"] = "localhost"
-os.environ["POSTGRES_PORT"] = "5432"
+os.environ["POSTGRES_PORT"] = "5433"
 os.environ["POSTGRES_DB"] = "fiml_test"
 os.environ["POSTGRES_USER"] = "fiml_test"
 os.environ["POSTGRES_PASSWORD"] = "fiml_test_password"
 os.environ["REDIS_HOST"] = "localhost"
-os.environ["REDIS_PORT"] = "6379"
+os.environ["REDIS_PORT"] = "6381"
 os.environ["FIML_ENV"] = "test"
 
 # Mock Azure OpenAI configuration for tests (unless already set in .env)
@@ -85,7 +85,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_live)
 
 
-def is_redis_ready(host="localhost", port=6379, max_retries=30):
+def is_redis_ready(host="localhost", port=6381, max_retries=30):
     """Check if Redis is ready"""
     for i in range(max_retries):
         try:
@@ -98,7 +98,7 @@ def is_redis_ready(host="localhost", port=6379, max_retries=30):
     return False
 
 
-def is_postgres_ready(host="localhost", port=5432, max_retries=30):
+def is_postgres_ready(host="localhost", port=5433, max_retries=30):
     """Check if PostgreSQL is ready"""
     for i in range(max_retries):
         try:
@@ -213,9 +213,9 @@ def test_settings():
     return Settings(
         fiml_env="test",
         redis_host="localhost",
-        redis_port=6379,
+        redis_port=6381,
         postgres_host="localhost",
-        postgres_port=5432,
+        postgres_port=5433,
         postgres_db="fiml_test",
         postgres_user="fiml_test",
         postgres_password="fiml_test_password",

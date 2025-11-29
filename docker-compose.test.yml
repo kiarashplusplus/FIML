@@ -4,7 +4,7 @@ services:
     image: redis:7-alpine
     container_name: fiml-redis-test
     ports:
-      - "6379:6379"
+      - "6381:6379"
     command: redis-server --appendonly no --save ""
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -19,7 +19,7 @@ services:
     image: postgres:16-alpine
     container_name: fiml-postgres-test
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_DB=fiml_test
       - POSTGRES_USER=fiml_test
