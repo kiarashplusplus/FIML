@@ -1117,7 +1117,7 @@ class TestCacheIntegration:
         mock_redis.exists = AsyncMock(return_value=True)
         mock_redis.ttl = AsyncMock(return_value=60)
         mock_redis.info = AsyncMock(return_value={"keyspace_hits": 100, "keyspace_misses": 10})
-        mock_redis.aclose = AsyncMock()
+        mock_redis.close = AsyncMock()
 
         with patch("redis.asyncio.Redis", return_value=mock_redis):
             await cache.initialize()
