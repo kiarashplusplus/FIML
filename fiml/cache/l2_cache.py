@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from fiml.core.config import settings
+from fiml.core import config
 from fiml.core.exceptions import CacheError
 from fiml.core.logging import get_logger
 
@@ -46,10 +46,10 @@ class L2Cache:
         try:
             # Create async engine
             self._engine = create_async_engine(
-                settings.database_url,
-                pool_size=settings.postgres_pool_size,
-                max_overflow=settings.postgres_max_overflow,
-                echo=settings.is_development,
+                config.settings.database_url,
+                pool_size=config.settings.postgres_pool_size,
+                max_overflow=config.settings.postgres_max_overflow,
+                echo=config.settings.is_development,
             )
 
             # Create session maker
@@ -63,7 +63,7 @@ class L2Cache:
                 await conn.execute(text("SELECT 1"))
 
             self._initialized = True
-            logger.info("L2 cache initialized", url=settings.database_url.split("@")[-1])
+            logger.info("L2 cache initialized", url=config.settings.database_url.split("@")[-1])
 
         except Exception as e:
             logger.error(f"Failed to initialize L2 cache: {e}")

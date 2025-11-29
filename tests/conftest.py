@@ -13,15 +13,20 @@ import pytest
 import redis
 from dotenv import load_dotenv
 
+# Capture env vars before load_dotenv to distinguish between CLI/CI and .env
+redis_host_cli = os.environ.get("REDIS_HOST")
+postgres_host_cli = os.environ.get("POSTGRES_HOST")
+
 # Load .env file first to get real configuration
 load_dotenv()
 
-from fiml.core.config import Settings  # noqa: E402
-
 # Set environment variables BEFORE any imports happen
-# Set environment variables BEFORE any imports happen
-if "POSTGRES_HOST" not in os.environ:
+# Force localhost if not explicitly set in CLI/CI (ignoring .env which might have 'redis'/'postgres')
+if redis_host_cli is None:
+    os.environ["REDIS_HOST"] = "localhost"
+if postgres_host_cli is None:
     os.environ["POSTGRES_HOST"] = "localhost"
+
 if "POSTGRES_PORT" not in os.environ:
     os.environ["POSTGRES_PORT"] = "5433"
 if "POSTGRES_DB" not in os.environ:
@@ -30,11 +35,11 @@ if "POSTGRES_USER" not in os.environ:
     os.environ["POSTGRES_USER"] = "fiml_test"
 if "POSTGRES_PASSWORD" not in os.environ:
     os.environ["POSTGRES_PASSWORD"] = "fiml_test_password"
-if "REDIS_HOST" not in os.environ:
-    os.environ["REDIS_HOST"] = "localhost"
 if "REDIS_PORT" not in os.environ:
     os.environ["REDIS_PORT"] = "6381"
 os.environ["FIML_ENV"] = "test"
+
+from fiml.core.config import Settings  # noqa: E402
 
 # Mock Azure OpenAI configuration for tests (unless already set in .env)
 # When using mock endpoint, httpx calls are automatically mocked by the
@@ -58,7 +63,6 @@ def pytest_configure(config):
         config_module.get_settings.cache_clear()
         # Reload global settings
         config_module.settings = config_module.get_settings()
-        print(f"DEBUG: pytest_configure reloaded settings. Redis port: {config_module.settings.redis_port}, Postgres port: {config_module.settings.postgres_port}")
 
 
 def pytest_addoption(parser):
@@ -94,8 +98,11 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_live)
 
 
-def is_redis_ready(host="localhost", port=6381, max_retries=30):
+def is_redis_ready(host=None, port=None, max_retries=30):
     """Check if Redis is ready"""
+    host = host or os.environ.get("REDIS_HOST", "localhost")
+    port = port or int(os.environ.get("REDIS_PORT", 6381))
+    
     for i in range(max_retries):
         try:
             r = redis.Redis(host=host, port=port, socket_connect_timeout=1)
@@ -107,8 +114,11 @@ def is_redis_ready(host="localhost", port=6381, max_retries=30):
     return False
 
 
-def is_postgres_ready(host="localhost", port=5433, max_retries=30):
+def is_postgres_ready(host=None, port=None, max_retries=30):
     """Check if PostgreSQL is ready"""
+    host = host or os.environ.get("POSTGRES_HOST", "localhost")
+    port = port or int(os.environ.get("POSTGRES_PORT", 5433))
+    
     for i in range(max_retries):
         try:
             conn = psycopg2.connect(

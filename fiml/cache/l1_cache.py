@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Set
 import redis.asyncio as redis
 
 from fiml.cache.eviction import EvictionPolicy
-from fiml.core.config import settings
+from fiml.core import config
 from fiml.core.exceptions import CacheError
 from fiml.core.logging import get_logger
 
@@ -62,13 +62,13 @@ class L1Cache:
             maxmemory_policy = self._get_redis_eviction_policy()
 
             self._redis = redis.Redis(
-                host=settings.redis_host,
-                port=settings.redis_port,
-                db=settings.redis_db,
-                password=settings.redis_password,
+                host=config.settings.redis_host,
+                port=config.settings.redis_port,
+                db=config.settings.redis_db,
+                password=config.settings.redis_password,
                 decode_responses=True,
-                max_connections=settings.redis_max_connections,
-                socket_timeout=settings.redis_socket_timeout,
+                max_connections=config.settings.redis_max_connections,
+                socket_timeout=config.settings.redis_socket_timeout,
             )
 
             # Test connection
@@ -82,8 +82,8 @@ class L1Cache:
             self._initialized = True
             logger.info(
                 "L1 cache initialized",
-                host=settings.redis_host,
-                port=settings.redis_port,
+                host=config.settings.redis_host,
+                port=config.settings.redis_port,
                 eviction_policy=self.eviction_policy.value,
                 redis_policy=maxmemory_policy,
             )

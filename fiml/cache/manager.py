@@ -11,7 +11,7 @@ from fiml.cache.analytics import cache_analytics
 from fiml.cache.l1_cache import l1_cache
 from fiml.cache.l2_cache import l2_cache
 from fiml.cache.utils import calculate_percentile
-from fiml.core.config import settings
+from fiml.core import config
 from fiml.core.logging import get_logger
 from fiml.core.models import Asset, DataType
 
@@ -356,11 +356,11 @@ class CacheManager:
         """
         # Base TTL from settings
         ttl_map = {
-            DataType.PRICE: settings.cache_ttl_price,
-            DataType.FUNDAMENTALS: settings.cache_ttl_fundamentals,
-            DataType.TECHNICAL: settings.cache_ttl_technical,
-            DataType.NEWS: settings.cache_ttl_news,
-            DataType.MACRO: settings.cache_ttl_macro,
+            DataType.PRICE: config.settings.cache_ttl_price,
+            DataType.FUNDAMENTALS: config.settings.cache_ttl_fundamentals,
+            DataType.TECHNICAL: config.settings.cache_ttl_technical,
+            DataType.NEWS: config.settings.cache_ttl_news,
+            DataType.MACRO: config.settings.cache_ttl_macro,
         }
         base_ttl = ttl_map.get(data_type, 300)
 
