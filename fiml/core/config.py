@@ -232,6 +232,13 @@ class Settings(BaseSettings):
             raise ValueError("fiml_env must be development, staging, production, or test")
         return v
 
+    @field_validator("redis_password", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v: str | None) -> str | None:
+        if v == "":
+            return None
+        return v
+
     @property
     def database_url(self) -> str:
         """Construct PostgreSQL database URL"""
