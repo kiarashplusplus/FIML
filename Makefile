@@ -43,7 +43,7 @@ test-integration:
 	pytest -v --cov=fiml --cov-report=html --cov-report=term -m integration
 
 test-all:
-	pytest -v --cov=fiml --cov-report=html --cov-report=term
+	pytest -v --cov=fiml --cov-report=html --cov-report=term -m ""
 
 benchmark:
 	pytest benchmarks/ --benchmark-only --benchmark-verbose

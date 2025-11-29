@@ -32,7 +32,15 @@ Currently includes:
 
 ### Component-Specific Fast Workflows
 
-All component workflows **skip integration tests** to maintain fast feedback (<5 min):
+All component workflows **skip integration tests by default** via `pyproject.toml` configuration:
+
+```toml
+# pyproject.toml
+[tool.pytest.ini_options]
+addopts = "--strict-markers --run-cache-tests -m 'not integration'"
+```
+
+This ensures fast feedback across all workflows:
 
 | Workflow | Coverage | Test Filter |
 |----------|----------|-------------|
@@ -58,6 +66,12 @@ All component workflows **skip integration tests** to maintain fast feedback (<5
     pytest -v --cov=fiml --cov-report=xml --cov-report=term --no-docker \
       -m integration \
       tests/
+```
+
+For running ALL tests (unit + integration), use:
+
+```bash
+make test-all  # Uses -m "" to override default exclusion
 ```
 
 **Triggers:**
