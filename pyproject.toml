@@ -143,4 +143,4 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
 ]
-addopts = "--strict-markers --run-cache-tests -m 'not integration'"
+addopts = "--strict-markers --run-cache-tests"
