@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
-import yaml
+import yaml  # type: ignore[import-untyped]
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
@@ -285,7 +285,7 @@ Need help finding keys? [Read our Guide](https://kiarashplusplus.github.io/FIML/
 """
 
         if not update.message:
-            return ConversationHandler.END
+            return int(ConversationHandler.END)
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
         return PROVIDER_SELECT
@@ -294,12 +294,12 @@ Need help finding keys? [Read our Guide](https://kiarashplusplus.github.io/FIML/
         """Handle provider selection"""
         query = update.callback_query
         if not query:
-            return ConversationHandler.END
+            return int(ConversationHandler.END)
         await query.answer()
 
         # Extract provider from callback data
         if not query.data:
-            return ConversationHandler.END
+            return int(ConversationHandler.END)
         provider_id = query.data.split(":")[1]
         if context.user_data is not None:
             context.user_data["selected_provider"] = provider_id

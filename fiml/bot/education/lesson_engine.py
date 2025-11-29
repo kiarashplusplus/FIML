@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
 
 import structlog
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 logger = structlog.get_logger(__name__)
 
