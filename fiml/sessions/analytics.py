@@ -83,6 +83,27 @@ class SessionAnalytics:
         """
         try:
             async with self._session_maker() as db_session:
+                # First, ensure session exists in PostgreSQL (upsert)
+                # This is necessary because metrics table has a foreign key constraint
+                from fiml.sessions.db import SessionRecord
+                
+                # Check if session exists
+                existing = await db_session.execute(
+                    select(SessionRecord).where(SessionRecord.id == session.id)
+                )
+                session_record = existing.scalar_one_or_none()
+                
+                if not session_record:
+                    # Create session record
+                    from fiml.sessions.store import SessionStore
+                    
+                    # Create temporary store instance to use its converter method
+                    temp_store = SessionStore()
+                    temp_store._session_maker = self._session_maker
+                    session_record = temp_store._record_from_session(session)
+                    db_session.add(session_record)
+                    await db_session.flush()  # Flush to make the session record available for FK check
+                
                 # Calculate metrics
                 duration_seconds = int(session.duration.total_seconds())
                 avg_query_time = None

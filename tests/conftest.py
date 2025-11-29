@@ -50,6 +50,7 @@ def pytest_configure(config):
         config_module.get_settings.cache_clear()
         # Reload global settings
         config_module.settings = config_module.get_settings()
+        print(f"DEBUG: pytest_configure reloaded settings. Redis port: {config_module.settings.redis_port}, Postgres port: {config_module.settings.postgres_port}")
 
 
 def pytest_addoption(parser):
@@ -337,10 +338,11 @@ async def init_session_db():
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import create_async_engine
 
-    from fiml.core.config import settings
+    from fiml.core.config import get_settings
     from fiml.sessions.db import CREATE_TABLES_SQL
 
-    # Create engine
+    # Create engine with fresh settings
+    settings = get_settings()
     engine = create_async_engine(settings.database_url, echo=False)
 
     try:

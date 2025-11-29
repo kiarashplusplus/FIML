@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from fiml.core.config import settings
+from fiml.core import config
 from fiml.core.exceptions import CacheError
 from fiml.core.logging import get_logger
 from fiml.sessions.db import SessionMetrics, SessionRecord
@@ -50,14 +50,15 @@ class SessionStore:
 
         try:
             # Initialize Redis for active sessions
+            print(f"DEBUG: SessionStore initializing with Redis port: {config.settings.redis_port}, Postgres port: {config.settings.postgres_port}")
             self._redis = redis.Redis(
-                host=settings.redis_host,
-                port=settings.redis_port,
-                db=settings.redis_db,
-                password=settings.redis_password,
+                host=config.settings.redis_host,
+                port=config.settings.redis_port,
+                db=config.settings.redis_db,
+                password=config.settings.redis_password,
                 decode_responses=True,
-                max_connections=settings.redis_max_connections,
-                socket_timeout=settings.redis_socket_timeout,
+                max_connections=config.settings.redis_max_connections,
+                socket_timeout=config.settings.redis_socket_timeout,
             )
 
             # Test Redis connection
@@ -67,10 +68,10 @@ class SessionStore:
 
             # Initialize PostgreSQL for archived sessions
             self._engine = create_async_engine(
-                settings.database_url,
-                pool_size=settings.postgres_pool_size,
-                max_overflow=settings.postgres_max_overflow,
-                echo=settings.is_development,
+                config.settings.database_url,
+                pool_size=config.settings.postgres_pool_size,
+                max_overflow=config.settings.postgres_max_overflow,
+                echo=config.settings.is_development,
             )
 
             self._session_maker = async_sessionmaker(

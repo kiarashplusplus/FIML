@@ -5,7 +5,7 @@ SQLAlchemy models for session persistence in PostgreSQL
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -70,7 +70,7 @@ class SessionMetrics(Base):
     __tablename__ = "session_metrics"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    session_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=False, index=True)
     user_id = Column(String(255), index=True, nullable=True)
     session_type = Column(String(50), nullable=False, index=True)
 
@@ -141,7 +141,8 @@ CREATE TABLE IF NOT EXISTS session_metrics (
     assets_analyzed JSONB NOT NULL DEFAULT '[]',
     query_type_summary JSONB NOT NULL DEFAULT '{}',
     completed_normally BOOLEAN NOT NULL DEFAULT FALSE,
-    abandoned BOOLEAN NOT NULL DEFAULT FALSE
+    abandoned BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_session_metrics_session_id ON session_metrics(session_id);
