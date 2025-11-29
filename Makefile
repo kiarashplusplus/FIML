@@ -37,6 +37,12 @@ logs:
 	docker compose logs -f
 
 test:
+	pytest -v --cov=fiml --cov-report=html --cov-report=term -m "not integration"
+
+test-integration:
+	pytest -v --cov=fiml --cov-report=html --cov-report=term -m integration
+
+test-all:
 	pytest -v --cov=fiml --cov-report=html --cov-report=term
 
 benchmark:

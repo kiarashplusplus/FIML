@@ -91,12 +91,11 @@ jobs:
           AZURE_OPENAI_DEPLOYMENT_NAME: gpt-4
           AZURE_OPENAI_API_VERSION: 2024-02-15-preview
         run: |
+          # Run tests marked with @pytest.mark.integration
+          # This includes agent workflow integration tests and other full-stack tests
           pytest -v --cov=fiml --cov-report=xml --cov-report=term --no-docker \
-            tests/test_integration.py \
-            tests/test_e2e_api.py \
-            tests/test_dashboard.py \
-            tests/test_azure_openai.py \
-            tests/test_deployment_verification.py
+            -m integration \
+            tests/
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
