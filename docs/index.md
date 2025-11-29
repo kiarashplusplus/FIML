@@ -17,7 +17,7 @@ FIML is an MCP (Model Context Protocol) server that provides intelligent financi
 ### ✅ Core Infrastructure (100%)
 
 - **🔀 Data Arbitration Engine**: Multi-provider scoring (5 factors), automatic fallback, conflict resolution
-- **🏗️ Provider System**: 17 working providers across stocks, crypto, forex, and news
+- **🏗️ Provider System**: 17 working providers across stocks, crypto, forex, economics, and news
 - **⚡ Cache Architecture**: L1 (Redis 10-100ms) and L2 (PostgreSQL 300-700ms) with intelligent optimizations
     - Cache warming for popular symbols
     - Intelligent eviction policies (LRU/LFU)

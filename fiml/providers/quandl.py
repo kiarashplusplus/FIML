@@ -216,6 +216,57 @@ class QuandlProvider(BaseProvider):
             logger.error(f"Error fetching OHLCV from Quandl for {asset.symbol}: {e}")
             raise ProviderError(f"Quandl OHLCV fetch failed: {e}")
 
+    async def fetch_macro(self, asset: Asset) -> ProviderResponse:
+        """Fetch macro economic data from Quandl"""
+        logger.info(f"Fetching macro data for {asset.symbol} from Quandl")
+
+        try:
+            # Map common macro symbols to Quandl datasets
+            # Example: FRED data via Quandl (free)
+            # GDP -> FRED/GDP
+            dataset_code = f"FRED/{asset.symbol}"
+            
+            endpoint = f"/datasets/{dataset_code}.json"
+            params = {"rows": "1"}
+
+            response_data = await self._make_request(endpoint, params)
+            
+            dataset = response_data.get("dataset", {})
+            data_points = dataset.get("data", [])
+
+            if not data_points:
+                raise ProviderError(f"No macro data available for {asset.symbol}")
+
+            latest = data_points[0]
+            
+            data = {
+                "value": float(latest[1]) if latest[1] is not None else 0.0,
+                "date": latest[0],
+                "dataset": dataset_code,
+            }
+
+            return ProviderResponse(
+                provider=self.name,
+                asset=asset,
+                data_type=DataType.MACRO,
+                data=data,
+                timestamp=datetime.now(timezone.utc),
+                is_valid=True,
+                is_fresh=True,
+                confidence=0.90,
+                metadata={
+                    "source": "quandl",
+                    "dataset": dataset_code,
+                },
+            )
+
+        except (ProviderError, ProviderTimeoutError, ProviderRateLimitError):
+            raise
+        except Exception as e:
+            self._record_error()
+            logger.error(f"Error fetching macro data from Quandl for {asset.symbol}: {e}")
+            raise ProviderError(f"Quandl macro fetch failed: {e}")
+
     async def fetch_fundamentals(self, asset: Asset) -> ProviderResponse:
         """Fetch fundamental data from Quandl"""
         # Quandl doesn't have a standard fundamentals endpoint

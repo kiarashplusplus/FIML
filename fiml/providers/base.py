@@ -86,6 +86,18 @@ class BaseProvider(ABC):
         """Fetch news articles"""
         pass
 
+    async def fetch_macro(self, asset: Asset) -> ProviderResponse:
+        """Fetch macro economic data"""
+        return ProviderResponse(
+            provider=self.name,
+            asset=asset,
+            data_type=DataType.MACRO,
+            data={},
+            timestamp=datetime.now(timezone.utc),
+            is_valid=False,
+            metadata={"error": "Not implemented"},
+        )
+
     async def fetch_technical(self, asset: Asset) -> ProviderResponse:
         """Fetch technical indicators"""
         raise NotImplementedError("Provider does not support technical analysis")

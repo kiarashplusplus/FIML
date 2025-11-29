@@ -70,6 +70,7 @@ class Settings(BaseSettings):
     marketstack_api_key: str | None = None
     coinmarketcap_api_key: str | None = None
     quandl_api_key: str | None = None
+    fred_api_key: str | None = None
 
     # NewsAPI Provider Settings
     newsapi_rate_limit_per_minute: int = 20  # Conservative for free tier

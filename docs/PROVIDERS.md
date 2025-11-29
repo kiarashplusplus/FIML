@@ -19,7 +19,8 @@ FIML supports 17 data providers across multiple asset classes and data types. Th
 | **Marketstack** | Stocks, Indices, ETF | ✅ | ✅ | Limited | ❌ | ✅ |
 | **CoinGecko** | Crypto | ✅ | ✅ | ✅ | ❌ | ❌ |
 | **CoinMarketCap** | Crypto | ✅ | Limited | ✅ | ❌ | ✅ |
-| **Quandl** | Stocks, Commodities, Economics | ❌ | ✅ | Limited | ❌ | ✅ |
+| **Quandl** | Stocks, Macro, Economics, Alternative Data | ❌ | ✅ | Limited | ❌ | ✅ |
+| **FRED** | Macro, Economics | ✅ | ✅ | ❌ | ❌ | ✅ |
 | **Mock Provider** | All | ✅ | ✅ | ✅ | ✅ | ❌ |
 | **DefiLlama** | Crypto, DeFi | ✅ | ✅ | ✅ | ❌ | ❌ |
 
@@ -139,7 +140,7 @@ FIML supports 17 data providers across multiple asset classes and data types. Th
 
 ### 14. Quandl (NASDAQ Data Link) ⭐ NEW
 - **Type**: Freemium (API key required)
-- **Coverage**: Historical data, alternative data, economics
+- **Coverage**: Alternative data, economics, and macro indicators
 - **Best for**: Quantitative research, historical analysis
 - **Rate Limits**: 50 calls/day (free tier)
 - **Data Quality**: Curated datasets, academic-grade
@@ -147,7 +148,16 @@ FIML supports 17 data providers across multiple asset classes and data types. Th
 - **Priority**: 6
 - **Note**: Primarily historical data, not real-time
 
-### 15. Mock Provider
+### 15. FRED (Federal Reserve Economic Data) ⭐ NEW
+- **Type**: Free (API key required)
+- **Coverage**: 800,000+ US and international economic time series
+- **Best for**: Macroeconomic analysis (GDP, CPI, Unemployment, Interest Rates)
+- **Rate Limits**: 120 requests/minute
+- **Data Quality**: Official government data
+- **Config**: `FRED_API_KEY`
+- **Priority**: 8 (for Macro data)
+
+### 16. Mock Provider
 - **Type**: Testing/development
 - **Coverage**: All asset types (simulated)
 - **Best for**: Development, testing, CI/CD
@@ -183,6 +193,7 @@ INTRINIO_API_KEY=your_key_here
 MARKETSTACK_API_KEY=your_key_here
 COINMARKETCAP_API_KEY=your_key_here
 QUANDL_API_KEY=your_key_here
+FRED_API_KEY=your_key_here
 
 # Optional: Crypto exchange API keys
 BINANCE_API_KEY=your_key_here
@@ -212,6 +223,7 @@ FIML's arbitration engine automatically selects the best provider based on:
 - **Marketstack**: https://marketstack.com/product
 - **CoinMarketCap**: https://coinmarketcap.com/api/
 - **Quandl**: https://data.nasdaq.com/sign-up
+- **FRED**: https://fred.stlouisfed.org/docs/api/api_key.html
 
 ### Premium Only
 - **Intrinio**: https://intrinio.com/

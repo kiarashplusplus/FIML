@@ -51,6 +51,7 @@ class UserKeyOnboardingService:
         "polygon": r"^[A-Za-z0-9_-]{32}$",
         "finnhub": r"^[a-z0-9]{20}$",
         "fmp": r"^[a-z0-9]{32}$",
+        "fred": r"^[a-f0-9]{32}$",
     }
 
     # Provider information
@@ -184,6 +185,13 @@ class UserKeyOnboardingService:
             "free_limit": "100 requests/day (dev only)",
             "signup_url": "https://newsapi.org/pricing",
         },
+        "fred": {
+            "name": "FRED",
+            "asset_types": ["macro", "economic"],
+            "free_tier": True,
+            "free_limit": "120 requests/minute",
+            "signup_url": "https://fred.stlouisfed.org/docs/api/api_key.html",
+        },
         # Enterprise Providers
         "intrinio": {
             "name": "Intrinio",
@@ -194,7 +202,7 @@ class UserKeyOnboardingService:
         },
         "quandl": {
             "name": "Quandl",
-            "asset_types": ["financials", "economic"],
+            "asset_types": ["financials", "economic", "macro"],
             "free_tier": True,
             "free_limit": "Varies by dataset",
             "signup_url": "https://data.nasdaq.com/",
@@ -443,6 +451,8 @@ class UserKeyOnboardingService:
                 return await self._test_finnhub(api_key)
             elif provider == "fmp":
                 return await self._test_fmp(api_key)
+            elif provider == "fred":
+                return await self._test_fred(api_key)
             else:
                 return {
                     "valid": False,
@@ -539,6 +549,45 @@ class UserKeyOnboardingService:
                 return {"valid": True, "tier": "free", "message": "Free tier (250 requests/day)"}
             else:
                 return {"valid": False, "tier": "unknown", "message": "Unexpected response"}
+
+    async def _test_fred(self, api_key: str) -> Dict[str, Any]:
+        """Test FRED API key"""
+        # Use GDP series as a test, requesting only 1 observation to be lightweight
+        url = "https://api.stlouisfed.org/fred/series/observations"
+        params = {
+            "series_id": "GDP",
+            "api_key": api_key,
+            "file_type": "json",
+            "limit": 1,
+        }
+
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(url, params=params, timeout=timeout) as resp,
+        ):
+            if resp.status == 200:
+                return {
+                    "valid": True,
+                    "tier": "free",
+                    "message": "FRED key validated (120 req/min)",
+                }
+            elif resp.status == 400:
+                # FRED returns 400 for invalid key usually
+                return {"valid": False, "tier": "unknown", "message": "Invalid API key"}
+            else:
+                # Try to parse error message
+                try:
+                    data = await resp.json()
+                    error_msg = data.get("error_message", f"Status {resp.status}")
+                except:
+                    error_msg = f"Status {resp.status}"
+                
+                return {
+                    "valid": False,
+                    "tier": "unknown",
+                    "message": f"Validation failed: {error_msg}",
+                }
 
     # ======================================================================
     # Provider Information

@@ -604,15 +604,45 @@ class MacroWorker(BaseWorker):
             except Exception as e:
                 self.logger.debug(f"Failed to fetch macro data: {e}")
 
-            # Set defaults for macro indicators
-            factors = {
-                "interest_rate": macro_data.get(
-                    "interest_rate", 5.25
-                ),  # Current fed funds rate proxy
-                "inflation": 3.2,  # CPI estimate
-                "gdp_growth": 2.1,  # Annual GDP growth estimate
-                "unemployment": 3.8,  # Unemployment rate estimate
+            # Fetch real macro data from providers
+            macro_indicators = {
+                "interest_rate": {"symbol": "INTEREST_RATE", "default": 5.25},
+                "inflation": {"symbol": "INFLATION", "default": 3.2},
+                "gdp_growth": {"symbol": "GDP", "default": 2.1},
+                "unemployment": {"symbol": "UNEMPLOYMENT", "default": 3.8},
             }
+
+            factors = {}
+            
+            for key, info in macro_indicators.items():
+                try:
+                    # Create asset for macro indicator
+                    macro_asset = Asset(
+                        symbol=info["symbol"],
+                        asset_type=AssetType.INDEX,
+                        name=key.replace("_", " ").title()
+                    )
+                    
+                    # Fetch from registry
+                    providers = await provider_registry.get_providers_for_asset(macro_asset, DataType.MACRO)
+                    
+                    fetched_value = None
+                    for provider in providers:
+                        try:
+                            response = await provider.fetch_macro(macro_asset)
+                            if response.is_valid:
+                                fetched_value = response.data.get("value")
+                                self.logger.info(f"Fetched {key}", value=fetched_value, provider=provider.name)
+                                break
+                        except Exception as e:
+                            self.logger.debug(f"Provider {provider.name} failed for {key}: {e}")
+                            continue
+                            
+                    factors[key] = float(fetched_value) if fetched_value is not None else info["default"]
+                    
+                except Exception as e:
+                    self.logger.warning(f"Failed to fetch {key}", error=str(e))
+                    factors[key] = info["default"]
 
             # Fetch asset price data to analyze correlation
             correlation_impact = "neutral"

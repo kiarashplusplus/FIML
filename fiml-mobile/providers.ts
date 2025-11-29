@@ -162,6 +162,14 @@ export const PROVIDERS: Record<string, ProviderInfo> = {
         tier: 'premium',
     },
 
+    fred: {
+        name: 'fred',
+        displayName: 'FRED',
+        description: 'Federal Reserve Economic Data (Macro Indicators)',
+        needsSecret: false,
+        tier: 'free',
+    },
+
     // ============================================================================
     // Enterprise Tier Providers
     // ============================================================================
@@ -177,7 +185,7 @@ export const PROVIDERS: Record<string, ProviderInfo> = {
     quandl: {
         name: 'quandl',
         displayName: 'Quandl',
-        description: 'Alternative and economic data for financial analysis',
+        description: 'Alternative, economic, and macro data',
         needsSecret: false,
         tier: 'enterprise',
     },

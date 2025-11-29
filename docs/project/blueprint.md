@@ -120,11 +120,11 @@
 │              DATA PROVIDER ABSTRACTION                       │  
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │  
 │  │ Alpha    │ │   FMP    │ │   CCXT   │ │  Yahoo   │      │  
-│  │ Vantage  │ │          │ │  Crypto  │ │ Finance  │      │  
+│  │  Vantage  │ │          │ │  Crypto  │ │ Finance  │      │  
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘      │  
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │  
-│  │  Token   │ │Quant     │ │  Custom  │ │  Public  │      │  
-│  │ Metrics  │ │Connect   │ │ Scrapers │ │   APIs   │      │  
+│  │   FRED   │ │  Quandl  │ │ Polygon  │ │ Finnhub  │      │  
+│  │  (Macro) │ │  (Macro) │ │          │ │          │      │  
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘      │  
 └─────────────────────────────────────────────────────────────┘  
                             │  

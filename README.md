@@ -56,6 +56,7 @@ The system is designed with a 10-year extensibility roadmap (see [BLUEPRINT.md](
   - **Free/Basic Tier**: Yahoo Finance, CoinGecko, Mock Provider
   - **Premium Providers** (API key required):
     - **Stocks & Equities**: Alpha Vantage, FMP, Polygon.io, Finnhub, Twelvedata, Tiingo, Intrinio, Marketstack, Quandl
+    - **Economics & Macro**: FRED (Federal Reserve Economic Data), Quandl
     - **Cryptocurrency**: CCXT (multi-exchange), CoinGecko, CoinMarketCap, DeFiLlama
     - **News**: NewsAPI, Alpha Vantage, Finnhub, Tiingo
     - **Multi-Asset**: Polygon.io, Finnhub, Twelvedata (stocks, forex, crypto, ETFs)
@@ -665,7 +666,12 @@ For complete analysis, see **[TECHNICAL_STRATEGIC_EVALUATION.md](docs/developmen
 - **Tiingo** ✅ Premium - EOD data, news, fundamentals
 - **Intrinio** ✅ Premium - Institutional-grade financial data
 - **Marketstack** ✅ Premium - Historical and intraday stock data
-- **Quandl** ✅ Premium - Alternative data, economics
+- **Marketstack** ✅ Premium - Historical and intraday stock data
+- **Quandl** ✅ Premium - Alternative data, economics (Macro support added)
+
+**Economics & Macro** (2 providers):
+- **FRED** ✅ Free (Key Required) - Official US economic data (GDP, CPI, Unemployment)
+- **Quandl** ✅ Premium - Access to FRED and other economic datasets
 
 **Cryptocurrency** (4 providers):
 - **CCXT** ✅ Multi-exchange - 6 exchanges (Kraken, KuCoin, OKX, Bybit, Gate.io, Bitget)

@@ -128,6 +128,14 @@ except ImportError:
     DEFILLAMA_AVAILABLE = False
     logger.warning("DefiLlama provider not available")
 
+try:
+    from fiml.providers.fred import FredProvider
+
+    FRED_AVAILABLE = True
+except ImportError:
+    FRED_AVAILABLE = False
+    logger.warning("FRED provider not available")
+
 
 class ProviderRegistry:
     """
@@ -266,6 +274,14 @@ class ProviderRegistry:
                 logger.info("DefiLlama provider will be registered")
             except Exception as e:
                 logger.warning(f"Could not create DefiLlama provider: {e}")
+
+        # Register FRED if API key is configured
+        if FRED_AVAILABLE and settings.fred_api_key:
+            try:
+                providers_to_register.append(FredProvider(settings.fred_api_key))
+                logger.info("FRED provider will be registered")
+            except Exception as e:
+                logger.warning(f"Could not create FRED provider: {e}")
 
         # Register CoinMarketCap if API key is configured
         if COINMARKETCAP_AVAILABLE and settings.coinmarketcap_api_key:
