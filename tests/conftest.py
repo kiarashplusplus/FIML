@@ -200,6 +200,18 @@ def docker_services(request):
         capture_output=True,
     )
 
+    # Update environment variables to match test containers
+    os.environ["REDIS_PORT"] = "6381"
+    os.environ["POSTGRES_PORT"] = "5433"
+    os.environ["POSTGRES_USER"] = "fiml_test"
+    os.environ["POSTGRES_PASSWORD"] = "fiml_test_password"
+    os.environ["POSTGRES_DB"] = "fiml_test"
+    
+    # Reload settings to pick up new ports and credentials
+    import fiml.core.config
+    fiml.core.config.get_settings.cache_clear()
+    fiml.core.config.settings = fiml.core.config.get_settings()
+
     # Wait for services to be ready
     print("⏳ Waiting for Redis to be ready...")
     if not is_redis_ready():
