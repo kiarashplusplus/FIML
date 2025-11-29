@@ -171,14 +171,29 @@ async def test_ccxt_provider_error_handling(crypto_asset):
         mock_ccxt.binance.return_value = mock_exchange
 
         # Define mock exception classes
-        class MockNetworkError(Exception): pass
-        class MockExchangeError(Exception): pass
-        class MockRateLimitExceeded(Exception): pass
-        class MockDDoSProtection(Exception): pass
-        class MockOnMaintenance(Exception): pass
-        class MockExchangeNotAvailable(Exception): pass
-        class MockAuthenticationError(Exception): pass
-        class MockRequestTimeout(Exception): pass
+        class MockNetworkError(Exception):
+            pass
+
+        class MockExchangeError(Exception):
+            pass
+
+        class MockRateLimitExceeded(Exception):
+            pass
+
+        class MockDDoSProtection(Exception):
+            pass
+
+        class MockOnMaintenance(Exception):
+            pass
+
+        class MockExchangeNotAvailable(Exception):
+            pass
+
+        class MockAuthenticationError(Exception):
+            pass
+
+        class MockRequestTimeout(Exception):
+            pass
 
         mock_ccxt.NetworkError = MockNetworkError
         mock_ccxt.ExchangeError = MockExchangeError
@@ -211,7 +226,7 @@ async def test_ccxt_provider_error_handling(crypto_asset):
 async def test_ccxt_multi_exchange_provider(crypto_asset):
     """Test multi-exchange provider manager"""
 
-    with patch("fiml.providers.ccxt_provider.CCXTProvider") as MockProvider:
+    with patch("fiml.providers.ccxt_provider.CCXTProvider") as mock_provider_cls:
         # Setup mock providers
         mock_binance = AsyncMock()
         mock_coinbase = AsyncMock()
@@ -221,7 +236,7 @@ async def test_ccxt_multi_exchange_provider(crypto_asset):
                 return mock_binance
             return mock_coinbase
 
-        MockProvider.side_effect = side_effect
+        mock_provider_cls.side_effect = side_effect
 
         multi_provider = CCXTMultiExchangeProvider(exchanges=["binance", "coinbase"])
 

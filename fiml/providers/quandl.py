@@ -225,12 +225,12 @@ class QuandlProvider(BaseProvider):
             # Example: FRED data via Quandl (free)
             # GDP -> FRED/GDP
             dataset_code = f"FRED/{asset.symbol}"
-            
+
             endpoint = f"/datasets/{dataset_code}.json"
             params = {"rows": "1"}
 
             response_data = await self._make_request(endpoint, params)
-            
+
             dataset = response_data.get("dataset", {})
             data_points = dataset.get("data", [])
 
@@ -238,7 +238,7 @@ class QuandlProvider(BaseProvider):
                 raise ProviderError(f"No macro data available for {asset.symbol}")
 
             latest = data_points[0]
-            
+
             data = {
                 "value": float(latest[1]) if latest[1] is not None else 0.0,
                 "date": latest[0],

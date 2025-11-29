@@ -1,10 +1,11 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timezone
+from unittest.mock import AsyncMock, patch
 
+import pytest
+
+from fiml.core.exceptions import ProviderError
 from fiml.core.models import Asset, AssetType, DataType
 from fiml.providers.fred import FredProvider
-from fiml.core.exceptions import ProviderError
+
 
 @pytest.fixture
 def fred_provider():
@@ -21,9 +22,9 @@ async def test_fred_initialization(fred_provider):
 @pytest.mark.asyncio
 async def test_fetch_macro_success(fred_provider):
     await fred_provider.initialize()
-    
+
     asset = Asset(symbol="GDP", asset_type=AssetType.INDEX)
-    
+
     mock_response = {
         "observations": [
             {
@@ -32,17 +33,17 @@ async def test_fetch_macro_success(fred_provider):
             }
         ]
     }
-    
+
     with patch.object(fred_provider, '_make_request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
-        
+
         response = await fred_provider.fetch_macro(asset)
-        
+
         assert response.is_valid
         assert response.data_type == DataType.MACRO
         assert response.data["value"] == 26185.21
         assert response.metadata["source"] == "fred"
-        
+
         mock_request.assert_called_once()
         args, kwargs = mock_request.call_args
         # params is the second positional argument
@@ -51,18 +52,18 @@ async def test_fetch_macro_success(fred_provider):
 @pytest.mark.asyncio
 async def test_fetch_macro_mapped_symbol(fred_provider):
     await fred_provider.initialize()
-    
+
     # UNEMPLOYMENT maps to UNRATE
     asset = Asset(symbol="UNEMPLOYMENT", asset_type=AssetType.INDEX)
-    
+
     mock_response = {
         "observations": [{"date": "2023-10-01", "value": "3.9"}]
     }
-    
+
     with patch.object(fred_provider, '_make_request', new_callable=AsyncMock) as mock_request:
         mock_request.return_value = mock_response
         await fred_provider.fetch_macro(asset)
-        
+
         args, kwargs = mock_request.call_args
         assert args[1]["series_id"] == "UNRATE"
 
@@ -70,7 +71,9 @@ async def test_fetch_macro_mapped_symbol(fred_provider):
 async def test_fetch_macro_failure(fred_provider):
     await fred_provider.initialize()
     asset = Asset(symbol="INVALID", asset_type=AssetType.INDEX)
-    
-    with patch.object(fred_provider, '_make_request', side_effect=ProviderError("API Error")):
-        with pytest.raises(ProviderError):
-            await fred_provider.fetch_macro(asset)
+
+    with (
+        patch.object(fred_provider, '_make_request', side_effect=ProviderError("API Error")),
+        pytest.raises(ProviderError)
+    ):
+        await fred_provider.fetch_macro(asset)

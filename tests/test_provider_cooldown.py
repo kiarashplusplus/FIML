@@ -102,10 +102,9 @@ async def test_arbitration_triggers_cooldown(mock_provider, mock_asset):
     plan.primary_provider = "test_provider"
     plan.fallback_providers = []
 
-    try:
+    import contextlib
+    with contextlib.suppress(Exception):
         await engine.execute_with_fallback(plan, mock_asset, DataType.PRICE)
-    except Exception:
-        pass # Expected to fail as we have no fallbacks
 
     # Verify cooldown was set
     assert mock_provider.is_in_cooldown()

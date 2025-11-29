@@ -55,8 +55,8 @@ async def test_yahoo_provider_fetch_price(equity_asset):
     await provider.initialize()
 
     # Mock yfinance Ticker
-    with patch("fiml.providers.yahoo_finance.yf.Ticker") as MockTicker:
-        mock_instance = MockTicker.return_value
+    with patch("fiml.providers.yahoo_finance.yf.Ticker") as mock_ticker:
+        mock_instance = mock_ticker.return_value
         mock_instance.info = {
             "currentPrice": 150.0,
             "regularMarketChange": 2.5,
@@ -75,7 +75,7 @@ async def test_yahoo_provider_fetch_price(equity_asset):
         assert response.data["change"] == 2.5
         assert response.is_valid is True
 
-        MockTicker.assert_called_with("AAPL")
+        mock_ticker.assert_called_with("AAPL")
 
 
 @pytest.mark.asyncio
@@ -85,8 +85,8 @@ async def test_yahoo_provider_fetch_ohlcv(equity_asset):
     await provider.initialize()
 
     # Mock yfinance Ticker
-    with patch("fiml.providers.yahoo_finance.yf.Ticker") as MockTicker:
-        mock_instance = MockTicker.return_value
+    with patch("fiml.providers.yahoo_finance.yf.Ticker") as mock_ticker:
+        mock_instance = mock_ticker.return_value
 
         # Create mock history DataFrame
         dates = pd.date_range(start="2023-01-01", periods=2)
@@ -118,8 +118,8 @@ async def test_yahoo_provider_fetch_fundamentals(equity_asset):
     await provider.initialize()
 
     # Mock yfinance Ticker
-    with patch("fiml.providers.yahoo_finance.yf.Ticker") as MockTicker:
-        mock_instance = MockTicker.return_value
+    with patch("fiml.providers.yahoo_finance.yf.Ticker") as mock_ticker:
+        mock_instance = mock_ticker.return_value
         mock_instance.info = {
             "marketCap": 2000000000000,
             "trailingPE": 25.5,
@@ -143,8 +143,8 @@ async def test_yahoo_provider_fetch_news(equity_asset):
     await provider.initialize()
 
     # Mock yfinance Ticker
-    with patch("fiml.providers.yahoo_finance.yf.Ticker") as MockTicker:
-        mock_instance = MockTicker.return_value
+    with patch("fiml.providers.yahoo_finance.yf.Ticker") as mock_ticker:
+        mock_instance = mock_ticker.return_value
         mock_instance.news = [
             {
                 "title": "Apple releases new iPhone",

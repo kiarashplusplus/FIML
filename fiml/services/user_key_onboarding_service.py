@@ -582,7 +582,7 @@ class UserKeyOnboardingService:
                     error_msg = data.get("error_message", f"Status {resp.status}")
                 except:
                     error_msg = f"Status {resp.status}"
-                
+
                 return {
                     "valid": False,
                     "tier": "unknown",

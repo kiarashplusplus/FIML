@@ -82,7 +82,7 @@ class FredProvider(BaseProvider):
 
         if self.config.api_key:
             params["api_key"] = self.config.api_key
-        
+
         params["file_type"] = "json"
 
         try:
@@ -134,7 +134,7 @@ class FredProvider(BaseProvider):
                 raise ProviderError(f"No macro data available for {asset.symbol}")
 
             latest = observations[0]
-            
+
             # Parse value (handle "." which FRED uses for missing data)
             value_str = latest.get("value", ".")
             try:
@@ -176,12 +176,12 @@ class FredProvider(BaseProvider):
         # For macro assets, price is the value
         try:
             macro_response = await self.fetch_macro(asset)
-            
+
             data = {
                 "price": macro_response.data.get("value", 0.0),
                 "date": macro_response.data.get("date"),
             }
-            
+
             return ProviderResponse(
                 provider=self.name,
                 asset=asset,
@@ -223,7 +223,7 @@ class FredProvider(BaseProvider):
                     val = float(obs.get("value", "."))
                 except ValueError:
                     continue
-                
+
                 ohlcv_data.append({
                     "timestamp": obs.get("date"),
                     "open": val,

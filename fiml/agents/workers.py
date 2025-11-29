@@ -613,7 +613,7 @@ class MacroWorker(BaseWorker):
             }
 
             factors = {}
-            
+
             for key, info in macro_indicators.items():
                 try:
                     # Create asset for macro indicator
@@ -622,10 +622,10 @@ class MacroWorker(BaseWorker):
                         asset_type=AssetType.INDEX,
                         name=key.replace("_", " ").title()
                     )
-                    
+
                     # Fetch from registry
                     providers = await provider_registry.get_providers_for_asset(macro_asset, DataType.MACRO)
-                    
+
                     fetched_value = None
                     for provider in providers:
                         try:
@@ -637,9 +637,9 @@ class MacroWorker(BaseWorker):
                         except Exception as e:
                             self.logger.debug(f"Provider {provider.name} failed for {key}: {e}")
                             continue
-                            
+
                     factors[key] = float(fetched_value) if fetched_value is not None else info["default"]
-                    
+
                 except Exception as e:
                     self.logger.warning(f"Failed to fetch {key}", error=str(e))
                     factors[key] = info["default"]
