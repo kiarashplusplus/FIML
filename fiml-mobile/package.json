@@ -55,6 +55,19 @@
   },
   "private": true,
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "collectCoverageFrom": [
+      "**/*.{ts,tsx}",
+      "!**/coverage/**",
+      "!**/node_modules/**",
+      "!**/babel.config.js",
+      "!**/metro.config.js",
+      "!**/tailwind.config.js",
+      "app/**/*.{ts,tsx}",
+      "components/**/*.{ts,tsx}",
+      "hooks/**/*.{ts,tsx}",
+      "services/**/*.{ts,tsx}",
+      "store/**/*.{ts,tsx}"
+    ]
   }
 }
