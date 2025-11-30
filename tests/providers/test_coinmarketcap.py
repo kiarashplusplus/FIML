@@ -19,6 +19,7 @@ def crypto_asset():
         name="Bitcoin",
         asset_type=AssetType.CRYPTO,
     )
+from fiml.core.config import settings
 
 
 @pytest.fixture
@@ -49,7 +50,7 @@ async def test_coinmarketcap_initialization():
     assert provider._is_initialized is False
 
     # Test without API key (should raise error if not in settings)
-    with patch("fiml.core.config.settings.coinmarketcap_api_key", None):
+    with patch.object(settings, "coinmarketcap_api_key", None):
         provider = CoinMarketCapProvider(api_key=None)
         with pytest.raises(ProviderError):
             await provider.initialize()

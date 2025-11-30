@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from fiml.core.config import settings
 from fiml.core.exceptions import ProviderError, ProviderRateLimitError
 from fiml.core.models import Asset, AssetType, DataType, Market
 from fiml.providers.alpha_vantage import AlphaVantageProvider
@@ -49,7 +50,7 @@ async def test_alpha_vantage_initialization():
     assert provider._is_initialized is False
 
     # Test without API key (should raise error if not in settings)
-    with patch("fiml.core.config.settings.alpha_vantage_api_key", None):
+    with patch.object(settings, "alpha_vantage_api_key", None):
         provider = AlphaVantageProvider(api_key=None)
         with pytest.raises(ProviderError):
             await provider.initialize()
