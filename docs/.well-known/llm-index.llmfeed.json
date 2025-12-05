@@ -1,0 +1,276 @@
+{
+    "_comment": "LLMFeed Index Declaration - https://github.com/kiarashplusplus/webmcp-tooling-suite",
+    "version": "1.0.0",
+    "feedType": "llm-index",
+    "meta": {
+        "name": "FIML Documentation Index",
+        "description": "Semantic sitemap for FIML documentation - optimized for LLM navigation",
+        "homepage": "https://kiarashplusplus.github.io/FIML/",
+        "updated": "2025-12-05T00:00:00Z"
+    },
+    "sections": [
+        {
+            "id": "getting-started",
+            "title": "Getting Started",
+            "description": "Installation, configuration, and quickstart guides",
+            "priority": 1.0,
+            "pages": [
+                {
+                    "path": "/getting-started/installation/",
+                    "title": "Installation Guide",
+                    "description": "Prerequisites, Docker setup, and manual installation instructions",
+                    "keywords": [
+                        "install",
+                        "docker",
+                        "setup",
+                        "prerequisites"
+                    ]
+                },
+                {
+                    "path": "/getting-started/quickstart/",
+                    "title": "Quick Start",
+                    "description": "Run your first FIML query in under 5 minutes",
+                    "keywords": [
+                        "quickstart",
+                        "tutorial",
+                        "first-query"
+                    ]
+                },
+                {
+                    "path": "/getting-started/configuration/",
+                    "title": "Configuration",
+                    "description": "Environment variables, API keys, and service configuration",
+                    "keywords": [
+                        "config",
+                        "environment",
+                        "api-keys"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "user-guide",
+            "title": "User Guide",
+            "description": "How to use FIML's features and tools",
+            "priority": 0.9,
+            "pages": [
+                {
+                    "path": "/user-guide/mcp-tools/",
+                    "title": "MCP Tools Reference",
+                    "description": "Complete reference for all 10 MCP tools with examples",
+                    "keywords": [
+                        "mcp",
+                        "tools",
+                        "api",
+                        "search-by-symbol",
+                        "search-by-coin"
+                    ]
+                },
+                {
+                    "path": "/user-guide/fk-dsl/",
+                    "title": "FK-DSL Query Language",
+                    "description": "Financial Knowledge DSL grammar, commands, and query examples",
+                    "keywords": [
+                        "fk-dsl",
+                        "query",
+                        "evaluate",
+                        "compare",
+                        "scan"
+                    ]
+                },
+                {
+                    "path": "/user-guide/websocket/",
+                    "title": "WebSocket Streaming",
+                    "description": "Real-time price and OHLCV data streaming via WebSocket",
+                    "keywords": [
+                        "websocket",
+                        "streaming",
+                        "real-time",
+                        "prices"
+                    ]
+                },
+                {
+                    "path": "/user-guide/agent-workflows/",
+                    "title": "Agent Workflows",
+                    "description": "Multi-agent analysis workflows for deep equity and crypto analysis",
+                    "keywords": [
+                        "agents",
+                        "workflows",
+                        "deep-analysis",
+                        "ray"
+                    ]
+                },
+                {
+                    "path": "/user-guide/session-management/",
+                    "title": "Session Management",
+                    "description": "Multi-query sessions, context tracking, and analytics",
+                    "keywords": [
+                        "sessions",
+                        "context",
+                        "analytics",
+                        "workflow"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "architecture",
+            "title": "Architecture",
+            "description": "System design and internal components",
+            "priority": 0.7,
+            "pages": [
+                {
+                    "path": "/architecture/overview/",
+                    "title": "System Design Overview",
+                    "description": "High-level architecture, data flow, and component relationships",
+                    "keywords": [
+                        "architecture",
+                        "design",
+                        "components",
+                        "data-flow"
+                    ]
+                },
+                {
+                    "path": "/architecture/arbitration/",
+                    "title": "Data Arbitration Engine",
+                    "description": "5-factor provider scoring, fallback logic, and conflict resolution",
+                    "keywords": [
+                        "arbitration",
+                        "scoring",
+                        "fallback",
+                        "providers"
+                    ]
+                },
+                {
+                    "path": "/architecture/caching/",
+                    "title": "Caching Strategy",
+                    "description": "L1 Redis and L2 PostgreSQL caching with warming and eviction",
+                    "keywords": [
+                        "cache",
+                        "redis",
+                        "postgresql",
+                        "l1",
+                        "l2",
+                        "warming"
+                    ]
+                },
+                {
+                    "path": "/architecture/providers/",
+                    "title": "Provider System",
+                    "description": "Data provider abstraction, health monitoring, and extensibility",
+                    "keywords": [
+                        "providers",
+                        "yahoo-finance",
+                        "alpha-vantage",
+                        "ccxt"
+                    ]
+                },
+                {
+                    "path": "/architecture/agents/",
+                    "title": "Multi-Agent Framework",
+                    "description": "Ray-based agent orchestration with 8 specialized agents",
+                    "keywords": [
+                        "agents",
+                        "ray",
+                        "orchestration",
+                        "multi-agent"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "api",
+            "title": "API Reference",
+            "description": "Technical API documentation",
+            "priority": 0.8,
+            "pages": [
+                {
+                    "path": "/api/rest/",
+                    "title": "REST API",
+                    "description": "HTTP endpoints, request/response formats, and authentication",
+                    "keywords": [
+                        "rest",
+                        "http",
+                        "endpoints",
+                        "api"
+                    ]
+                },
+                {
+                    "path": "/api/websocket/",
+                    "title": "WebSocket API",
+                    "description": "WebSocket connection, subscription, and message formats",
+                    "keywords": [
+                        "websocket",
+                        "ws",
+                        "subscribe",
+                        "stream"
+                    ]
+                },
+                {
+                    "path": "/api/mcp/",
+                    "title": "MCP Protocol",
+                    "description": "Model Context Protocol implementation details",
+                    "keywords": [
+                        "mcp",
+                        "protocol",
+                        "tools",
+                        "call"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "development",
+            "title": "Development",
+            "description": "Contributing, testing, and deployment",
+            "priority": 0.5,
+            "pages": [
+                {
+                    "path": "/development/contributing/",
+                    "title": "Contributing Guide",
+                    "description": "Code style, PR process, and development workflow",
+                    "keywords": [
+                        "contributing",
+                        "pr",
+                        "code-style",
+                        "development"
+                    ]
+                },
+                {
+                    "path": "/development/testing/",
+                    "title": "Testing Guide",
+                    "description": "Test suite structure, fixtures, and running tests",
+                    "keywords": [
+                        "testing",
+                        "pytest",
+                        "fixtures",
+                        "coverage"
+                    ]
+                },
+                {
+                    "path": "/development/deployment/",
+                    "title": "Deployment Guide",
+                    "description": "Production deployment, Docker, and infrastructure",
+                    "keywords": [
+                        "deployment",
+                        "docker",
+                        "production",
+                        "infrastructure"
+                    ]
+                }
+            ]
+        }
+    ],
+    "quickPaths": {
+        "installation": "/getting-started/installation/",
+        "quickstart": "/getting-started/quickstart/",
+        "mcpTools": "/user-guide/mcp-tools/",
+        "fkDsl": "/user-guide/fk-dsl/",
+        "api": "/api/rest/",
+        "architecture": "/architecture/overview/"
+    },
+    "relatedFeeds": {
+        "mcp": "/.well-known/mcp.llmfeed.json",
+        "llmsTxt": "/llms.txt"
+    }
+}

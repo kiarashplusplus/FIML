@@ -1,0 +1,532 @@
+# FIML - Financial Intelligence Meta-Layer
+
+> AI-native financial data MCP server with intelligent provider orchestration. Bloomberg's intelligence, API simplicity, AI-native design. $15/month.
+
+FIML is the intelligent data router for AI-native finance. We give ChatGPT and Claude the same data quality as Bloomberg, at 2% of the cost, with zero integration effort. Our arbitration engine automatically picks the best data source for every query, falling back seamlessly when providers fail. For developers, we're the AWS of financial data—abstract away complexity, pay only for what you use.
+
+## Table of Contents
+
+1. [Core Capabilities](#core-capabilities)
+2. [MCP Tools Reference](#mcp-tools-reference)
+3. [FK-DSL Query Language](#fk-dsl-query-language)
+4. [Data Providers](#data-providers)
+5. [Architecture](#architecture)
+6. [Quick Start](#quick-start)
+7. [API Reference](#api-reference)
+8. [WebSocket Streaming](#websocket-streaming)
+9. [Compliance & Security](#compliance--security)
+10. [Documentation Links](#documentation-links)
+
+---
+
+## Core Capabilities
+
+### Data Arbitration Engine
+FIML's arbitration engine scores providers on 5 factors:
+- **Freshness (30%)**: Data recency vs. staleness threshold
+- **Latency (25%)**: P95 response time for user region  
+- **Uptime (20%)**: Provider health and availability
+- **Completeness (15%)**: Required fields present
+- **Reliability (10%)**: Historical error rate
+
+The engine automatically selects the best provider and falls back to alternatives on failure.
+
+### Multi-Layer Caching
+- **L1 (Redis)**: 10-100ms latency, 5-60min TTL based on market hours
+- **L2 (PostgreSQL+TimescaleDB)**: 300-700ms latency, longer retention
+- **Cache Warming**: Pre-populates cache for popular symbols
+- **Intelligent Eviction**: LRU/LFU policies based on usage patterns
+
+### Ray Multi-Agent System
+8 specialized agents for comprehensive analysis:
+- Fundamentals Agent: P/E, EPS, ROE, valuation metrics
+- Technical Agent: RSI, MACD, trends, support/resistance
+- Sentiment Agent: News and social media analysis
+- Macro Agent: Economic indicators and correlations
+- Risk Agent: Volatility, beta, VaR calculations
+- News Agent: Real-time financial news aggregation
+- Crypto Agent: On-chain metrics and exchange data
+- Narrative Agent: LLM-powered synthesis and recommendations
+
+### Multilingual Compliance
+9 languages supported with auto-detection:
+- English (en), Spanish (es), French (fr), German (de)
+- Italian (it), Portuguese (pt), Japanese (ja), Chinese (zh), Farsi (fa)
+
+Features include:
+- Prescriptive verb detection and blocking
+- Advice-like language removal with context-aware replacements
+- Automatic disclaimer insertion (region and asset-class appropriate)
+- Investment advice detection with 95%+ accuracy
+
+---
+
+## MCP Tools Reference
+
+### Data Query Tools
+
+#### search-by-symbol
+Search for a stock by symbol with instant cached data and async deep analysis.
+
+**Input Schema:**
+```json
+{
+  "symbol": "TSLA",       // Required: Stock ticker
+  "market": "US",         // Optional: Market (US, UK, JP, etc.)
+  "depth": "standard",    // Optional: quick | standard | deep
+  "language": "en",       // Optional: Response language
+  "sessionId": "uuid"     // Optional: Session tracking
+}
+```
+
+**Example:**
+```json
+{"name": "search-by-symbol", "arguments": {"symbol": "AAPL", "depth": "deep"}}
+```
+
+#### search-by-coin
+Search for cryptocurrency with instant cached data and async deep analysis.
+
+**Input Schema:**
+```json
+{
+  "symbol": "BTC",        // Required: Crypto symbol
+  "exchange": "binance",  // Optional: Preferred exchange
+  "pair": "USDT",         // Optional: Trading pair
+  "depth": "standard",    // Optional: Analysis depth
+  "language": "en",       // Optional: Response language
+  "sessionId": "uuid"     // Optional: Session tracking
+}
+```
+
+**Example:**
+```json
+{"name": "search-by-coin", "arguments": {"symbol": "ETH", "exchange": "coinbase", "pair": "USD"}}
+```
+
+#### get-task-status
+Poll or stream updates for an async analysis task.
+
+**Input Schema:**
+```json
+{
+  "taskId": "uuid",   // Required: Task ID from search-by-* 
+  "stream": false     // Optional: Stream via SSE
+}
+```
+
+#### execute-fk-dsl
+Execute a Financial Knowledge DSL query for complex multi-step analysis.
+
+**Input Schema:**
+```json
+{
+  "query": "EVALUATE TSLA: PRICE, VOLATILITY(30d)",  // Required: FK-DSL query
+  "async": true                                        // Optional: Async execution
+}
+```
+
+### Session Management Tools
+
+#### create-analysis-session
+Create a new analysis session for tracking multi-query workflows.
+
+**Input Schema:**
+```json
+{
+  "assets": ["AAPL", "MSFT"],     // Required: Asset list
+  "sessionType": "portfolio",     // Required: equity | crypto | portfolio | comparative | macro
+  "userId": "user-123",           // Optional: User ID
+  "ttlHours": 24,                 // Optional: Time-to-live
+  "tags": ["tech-stocks"]         // Optional: Tags
+}
+```
+
+#### get-session-info
+Get information about an existing session.
+
+**Input Schema:**
+```json
+{
+  "sessionId": "uuid"   // Required: Session UUID
+}
+```
+
+#### list-sessions
+List sessions for a user.
+
+**Input Schema:**
+```json
+{
+  "userId": "user-123",       // Required: User ID
+  "includeArchived": false,   // Optional: Include archived
+  "limit": 50                 // Optional: Max results
+}
+```
+
+#### extend-session
+Extend session expiration time.
+
+**Input Schema:**
+```json
+{
+  "sessionId": "uuid",   // Required: Session UUID
+  "hours": 24            // Optional: Hours to extend
+}
+```
+
+#### get-session-analytics
+Get session analytics and statistics.
+
+**Input Schema:**
+```json
+{
+  "userId": "user-123",      // Optional: Filter by user
+  "sessionType": "equity",   // Optional: Filter by type
+  "days": 30                 // Optional: Analysis period
+}
+```
+
+### Cache Management Tools
+
+#### warm-cache
+Trigger cache warming for specific assets.
+
+**Input Schema:**
+```json
+{
+  "symbols": ["AAPL", "TSLA", "BTC"],   // Required: Symbols to warm
+  "concurrency": 5                        // Optional: Parallel requests
+}
+```
+
+---
+
+## FK-DSL Query Language
+
+Financial Knowledge DSL is a domain-specific language for complex financial analysis queries.
+
+### Syntax Overview
+
+```fkdsl
+# EVALUATE - Single asset analysis
+EVALUATE <SYMBOL>: <METRIC1>, <METRIC2>, ...
+
+# COMPARE - Multi-asset comparison  
+COMPARE <SYMBOL1> vs <SYMBOL2> vs ... ON: <METRIC1>, <METRIC2>, ...
+
+# SCAN - Market screening
+SCAN <MARKET> WHERE <CONDITION1> AND <CONDITION2> ...
+
+# MACRO - Economic analysis
+MACRO: <INDICATOR1>, <INDICATOR2>, ... → REGRESSION ON <TARGET>
+```
+
+### Available Metrics
+
+**Price & Volume:**
+- `PRICE` - Current price
+- `VOLUME` - Trading volume
+- `VOLUME(Nd)` - N-day average volume
+- `OHLCV` - Open, High, Low, Close, Volume
+
+**Technical Indicators:**
+- `TECHNICAL(RSI)` - Relative Strength Index
+- `TECHNICAL(MACD)` - Moving Average Convergence Divergence
+- `TECHNICAL(SMA_20)` - 20-day Simple Moving Average
+- `TECHNICAL(EMA_50)` - 50-day Exponential Moving Average
+- `TECHNICAL(BB)` - Bollinger Bands
+- `MOMENTUM(Nd)` - N-day momentum
+
+**Volatility & Risk:**
+- `VOLATILITY(Nd)` - N-day volatility
+- `BETA` - Market beta
+- `VAR` - Value at Risk
+- `SHARPE` - Sharpe ratio
+
+**Fundamentals:**
+- `PE_RATIO` - Price to Earnings
+- `PB_RATIO` - Price to Book
+- `EPS` - Earnings Per Share
+- `REVENUE` - Revenue
+- `PROFIT_MARGIN` - Profit margin
+- `DIVIDEND_YIELD` - Dividend yield
+
+**Correlations:**
+- `CORRELATE(SYMBOL1, SYMBOL2, ...)` - Correlation analysis
+
+**Crypto-Specific:**
+- `NETWORK_HEALTH` - On-chain metrics
+- `LIQUIDITY` - Liquidity depth
+- `TVL` - Total Value Locked (DeFi)
+
+### Example Queries
+
+```fkdsl
+# Comprehensive equity analysis
+EVALUATE TSLA: PRICE, VOLATILITY(30d), CORRELATE(BTC, SPY), TECHNICAL(RSI, MACD)
+
+# Compare cryptocurrencies
+COMPARE BTC vs ETH vs SOL ON: VOLUME(7d), LIQUIDITY, MOMENTUM(14d), NETWORK_HEALTH
+
+# Macro analysis with regression
+MACRO: US10Y, CPI, VIX, DXY → REGRESSION ON SPY
+
+# Market scan for momentum stocks
+SCAN NASDAQ WHERE VOLUME > AVG_VOLUME(30d) * 2 AND PRICE_CHANGE(1d) > 5%
+
+# Tech sector screening
+SCAN SP500 WHERE SECTOR = "Technology" AND PE_RATIO < 30 AND RSI < 70
+
+# Crypto liquidity scan
+SCAN CRYPTO WHERE VOLUME(24h) > 1000000 AND LIQUIDITY > 0.8
+```
+
+---
+
+## Data Providers
+
+### Free Tier (No API Key Required)
+| Provider | Assets | Features |
+|----------|--------|----------|
+| Yahoo Finance | Equities, ETFs, Indices | Real-time quotes, historical data, fundamentals |
+| CoinGecko | Cryptocurrency | Market cap, volume, price data |
+| DeFiLlama | DeFi Protocols | TVL, protocol analytics |
+
+### Premium Providers (API Key Required)
+
+**Stocks & Equities:**
+| Provider | Features |
+|----------|----------|
+| Alpha Vantage | Comprehensive fundamentals, intraday data, news |
+| FMP (Financial Modeling Prep) | Financial statements, valuation metrics |
+| Polygon.io | Real-time market data, aggregates |
+| Finnhub | Stock data, news, earnings calendars |
+| Twelvedata | Multi-asset (stocks, forex, crypto) |
+| Tiingo | EOD data, news, fundamentals |
+| Intrinio | Institutional-grade financial data |
+| Marketstack | Historical and intraday stock data |
+
+**Cryptocurrency:**
+| Provider | Features |
+|----------|----------|
+| CCXT | Multi-exchange (Kraken, KuCoin, OKX, Bybit, Gate.io, Bitget) |
+| CoinMarketCap | Comprehensive crypto metrics |
+
+**Economics & Macro:**
+| Provider | Features |
+|----------|----------|
+| FRED | Official US economic data (GDP, CPI, Unemployment) |
+| Quandl | Alternative data, economics, commodities |
+
+**News & Sentiment:**
+| Provider | Features |
+|----------|----------|
+| NewsAPI | Financial news aggregation |
+| Alpha Vantage News | Market news and sentiment |
+| Finnhub News | Real-time news feed |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  CLIENT LAYER                            │
+│  ChatGPT | Claude Desktop | Custom Apps | Telegram      │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│              UNIFIED MCP API GATEWAY                     │
+│  Request Router | Auth | Rate Limiter | Compliance      │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│           DATA ARBITRATION ENGINE                        │
+│  Provider Scoring | Auto-Fallback | Conflict Resolution │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│         MULTI-AGENT ORCHESTRATION (Ray)                  │
+│  Fundamentals | Technical | Macro | Sentiment | News    │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│        DATA PROVIDER ABSTRACTION                         │
+│  Alpha Vantage | FMP | CCXT | Yahoo Finance | Custom    │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+1. **Client Request** → MCP API Gateway receives tool call
+2. **Compliance Check** → Request validated against regional rules
+3. **Cache Lookup** → L1 (Redis) → L2 (PostgreSQL) check
+4. **Arbitration** → If cache miss, score providers and select best
+5. **Provider Fetch** → Retrieve data with automatic fallback
+6. **Cache Population** → Store in L1, persist to L2
+7. **Response** → Return data with compliance disclaimers
+
+---
+
+## Quick Start
+
+### One-Command Installation
+```bash
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML
+./quickstart.sh
+```
+
+### Docker Installation
+```bash
+# Clone repository
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys
+
+# Start services
+make build
+make up
+
+# Verify installation
+curl http://localhost:8000/health
+```
+
+### Development Setup
+```bash
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+make dev
+
+# Run tests
+make test
+
+# Format code
+make format
+```
+
+---
+
+## API Reference
+
+### REST Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Service health check |
+| `/health/db` | GET | Database health |
+| `/health/cache` | GET | Cache health |
+| `/health/providers` | GET | Provider health status |
+| `/mcp/tools` | GET | List available MCP tools |
+| `/mcp/tools/call` | POST | Execute an MCP tool |
+| `/docs` | GET | Swagger UI documentation |
+| `/redoc` | GET | ReDoc documentation |
+
+### Metrics Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/metrics` | Prometheus metrics |
+| `/api/metrics/cache` | Cache hit rates and latencies |
+| `/api/metrics/watchdog` | Watchdog system metrics |
+| `/api/metrics/performance` | Performance metrics |
+| `/api/metrics/tasks` | Task queue metrics |
+
+---
+
+## WebSocket Streaming
+
+### Simple Price Stream
+```python
+import asyncio
+import websockets
+import json
+
+async def stream_prices():
+    uri = "ws://localhost:8000/ws/prices/AAPL,GOOGL,MSFT"
+    
+    async with websockets.connect(uri) as websocket:
+        while True:
+            message = await websocket.recv()
+            data = json.loads(message)
+            
+            if data["type"] == "data":
+                for update in data["data"]:
+                    print(f"{update['symbol']}: ${update['price']:.2f}")
+
+asyncio.run(stream_prices())
+```
+
+### Advanced Stream with Subscription
+```python
+async def advanced_streaming():
+    uri = "ws://localhost:8000/ws/stream"
+    
+    async with websockets.connect(uri) as websocket:
+        subscription = {
+            "type": "subscribe",
+            "stream_type": "price",
+            "symbols": ["AAPL", "TSLA"],
+            "asset_type": "equity",
+            "market": "US",
+            "interval_ms": 1000,
+            "data_type": "price"
+        }
+        
+        await websocket.send(json.dumps(subscription))
+        
+        while True:
+            message = await websocket.recv()
+            data = json.loads(message)
+            print(data)
+```
+
+### Features
+- Real-time price updates (100ms - 60s intervals)
+- OHLCV candlestick streaming
+- Up to 50 symbols per connection
+- Auto-reconnection with heartbeat
+- Provider fallback integration
+
+---
+
+## Compliance & Security
+
+### Regional Compliance
+8 regions supported: US, EU, UK, JP, CN, AU, SG, CA
+
+### Security Features
+- Rate limiting (per-user and per-provider)
+- API key management via environment variables
+- Error sanitization (no sensitive data exposure)
+- Health checks and availability monitoring
+- Audit logging with Sentry integration
+
+### Disclaimer
+FIML provides financial data for informational purposes only. This is NOT financial advice. Always do your own research and consult with qualified financial advisors before making investment decisions.
+
+---
+
+## Documentation Links
+
+- [Full Documentation](https://kiarashplusplus.github.io/FIML/)
+- [Installation Guide](https://kiarashplusplus.github.io/FIML/getting-started/installation/)
+- [Quick Start](https://kiarashplusplus.github.io/FIML/getting-started/quickstart/)
+- [API Reference](https://kiarashplusplus.github.io/FIML/api/rest/)
+- [MCP Tools Reference](https://kiarashplusplus.github.io/FIML/user-guide/mcp-tools/)
+- [FK-DSL Guide](https://kiarashplusplus.github.io/FIML/user-guide/fk-dsl/)
+- [Architecture Overview](https://kiarashplusplus.github.io/FIML/architecture/overview/)
+- [Provider System](https://kiarashplusplus.github.io/FIML/architecture/providers/)
+- [Agent Workflows](https://kiarashplusplus.github.io/FIML/user-guide/agent-workflows/)
+
+## Machine-Readable Feeds
+
+- [MCP Capabilities](/.well-known/mcp.llmfeed.json) - Full MCP tool schemas
+- [Documentation Index](/.well-known/llm-index.llmfeed.json) - Semantic sitemap

@@ -1,0 +1,91 @@
+# FIML - Financial Intelligence Meta-Layer
+
+> AI-native financial data MCP server with intelligent provider orchestration. Bloomberg's intelligence, API simplicity, AI-native design. $15/month.
+
+FIML is the intelligent data router for AI-native finance. We give ChatGPT and Claude the same data quality as Bloomberg, at 2% of the cost, with zero integration effort. Our arbitration engine automatically picks the best data source for every query, falling back seamlessly when providers fail.
+
+## Core Capabilities
+
+- **MCP Protocol Server**: 10 fully operational tools for ChatGPT, Claude Desktop, and AI agents
+- **17 Data Providers**: Stocks, crypto, forex, economics, news from Yahoo Finance, Alpha Vantage, CCXT, and more
+- **Data Arbitration Engine**: 5-factor scoring (freshness, latency, uptime, completeness, reliability)
+- **L1/L2 Cache**: Redis (10-100ms) + PostgreSQL (300-700ms) with intelligent eviction
+- **Real-time Streaming**: WebSocket endpoints for live price and OHLCV data
+- **Multilingual Compliance**: 9 languages (EN, ES, FR, DE, IT, PT, JA, ZH, FA)
+- **Ray Multi-Agent System**: 8 specialized agents for deep analysis
+
+## MCP Tools
+
+### Data Query Tools
+- `search-by-symbol`: Stock lookup with instant cached data and async deep analysis
+- `search-by-coin`: Cryptocurrency search with multi-exchange support  
+- `get-task-status`: Poll or stream async analysis task updates
+- `execute-fk-dsl`: Execute Financial Knowledge DSL queries
+
+### Session Management
+- `create-analysis-session`: Create multi-query workflow sessions
+- `get-session-info`: Retrieve session information
+- `list-sessions`: List user sessions
+- `extend-session`: Extend session expiration
+- `get-session-analytics`: Session statistics and metrics
+
+### Cache Management
+- `warm-cache`: Pre-warm cache for specific symbols
+
+## FK-DSL Query Examples
+
+```fkdsl
+# Comprehensive equity analysis
+EVALUATE TSLA: PRICE, VOLATILITY(30d), CORRELATE(BTC, SPY), TECHNICAL(RSI, MACD)
+
+# Compare cryptocurrencies  
+COMPARE BTC vs ETH vs SOL ON: VOLUME(7d), LIQUIDITY, MOMENTUM(14d)
+
+# Macro analysis
+MACRO: US10Y, CPI, VIX, DXY → REGRESSION ON SPY
+
+# Market scan
+SCAN NASDAQ WHERE VOLUME > AVG_VOLUME(30d) * 2 AND PRICE_CHANGE(1d) > 5%
+```
+
+## Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/kiarashplusplus/FIML.git
+cd FIML && ./quickstart.sh
+
+# Or with Docker
+make build && make up
+curl http://localhost:8000/health
+```
+
+## API Endpoints
+
+- REST API: `http://localhost:8000/docs` (Swagger UI)
+- MCP Tools: `http://localhost:8000/mcp/tools`
+- WebSocket: `ws://localhost:8000/ws/prices/{symbols}`
+- Health: `http://localhost:8000/health`
+
+## Supported Assets
+
+| Category | Examples | Providers |
+|----------|----------|-----------|
+| US Equities | AAPL, TSLA, MSFT | Yahoo Finance, Alpha Vantage, Polygon |
+| Crypto | BTC, ETH, SOL | CCXT (6 exchanges), CoinGecko |
+| Economics | GDP, CPI, Fed Funds | FRED, Quandl |
+| Forex | EUR/USD, GBP/JPY | Twelvedata, Polygon |
+
+## Documentation
+
+- [Full Documentation](https://kiarashplusplus.github.io/FIML/)
+- [API Reference](https://kiarashplusplus.github.io/FIML/api/rest/)
+- [Architecture Guide](https://kiarashplusplus.github.io/FIML/architecture/overview/)
+- [Installation Guide](https://kiarashplusplus.github.io/FIML/getting-started/installation/)
+- [MCP Tools Reference](https://kiarashplusplus.github.io/FIML/user-guide/mcp-tools/)
+- [FK-DSL Guide](https://kiarashplusplus.github.io/FIML/user-guide/fk-dsl/)
+
+## Optional
+
+- [llms-full.txt](/llms-full.txt) - Extended documentation
+- [.well-known/mcp.llmfeed.json](/.well-known/mcp.llmfeed.json) - Machine-readable MCP capabilities

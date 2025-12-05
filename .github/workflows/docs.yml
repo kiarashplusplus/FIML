@@ -15,6 +15,9 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'docs/llms.txt'
+      - 'docs/llms-full.txt'
+      - 'docs/.well-known/**'
       - 'mkdocs.yml'
       - 'CONTRIBUTING.md'
       - 'DEPLOYMENT.md'
@@ -64,6 +67,19 @@ jobs:
       - name: Build documentation
         run: |
           mkdocs build --strict --verbose
+
+      - name: Copy LLM feed files
+        run: |
+          # Copy llms.txt files to site root
+          cp docs/llms.txt site/llms.txt
+          cp docs/llms-full.txt site/llms-full.txt
+          
+          # Copy .well-known directory for LLMFeed discovery
+          mkdir -p site/.well-known
+          cp docs/.well-known/*.json site/.well-known/
+          
+          echo "LLM feed files copied successfully:"
+          ls -la site/llms*.txt site/.well-known/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
