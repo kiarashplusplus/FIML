@@ -2,6 +2,7 @@ name: Validate LLMFeed
 
 on:
   push:
+    branches: [main]
     paths:
       - 'docs/llms.txt'
       - 'docs/llms-full.txt'
@@ -14,120 +15,81 @@ on:
       - 'docs/.well-known/*.llmfeed.json'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
-  validate-feeds:
+  validate:
     name: Validate LLMFeed Files
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install LLMFeed Validator
-        run: npm install -g @25xcodes/llmfeed-validator
-
       - name: Validate MCP Feed
         id: validate-mcp
-        run: |
-          echo "## MCP Feed Validation" >> $GITHUB_STEP_SUMMARY
-          if llmfeed-validate docs/.well-known/mcp.llmfeed.json --skip-signature --verbose --json > mcp-result.json 2>&1; then
-            echo "✅ MCP feed is valid" >> $GITHUB_STEP_SUMMARY
-            echo "mcp_valid=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌ MCP feed validation failed" >> $GITHUB_STEP_SUMMARY
-            cat mcp-result.json >> $GITHUB_STEP_SUMMARY
-            echo "mcp_valid=false" >> $GITHUB_OUTPUT
-          fi
-        continue-on-error: true
+        uses: kiarashplusplus/webmcp-tooling-suite/packages/github-action@v1
+        with:
+          feed: 'docs/.well-known/mcp.llmfeed.json'
+          skip-signature: 'true'
+          create-badge: 'true'
+          badge-path: '.github/badges/llmfeed-mcp.svg'
 
       - name: Validate LLM Index Feed
-        id: validate-index
-        run: |
-          echo "## LLM Index Feed Validation" >> $GITHUB_STEP_SUMMARY
-          if llmfeed-validate docs/.well-known/llm-index.llmfeed.json --skip-signature --verbose --json > index-result.json 2>&1; then
-            echo "✅ LLM Index feed is valid" >> $GITHUB_STEP_SUMMARY
-            echo "index_valid=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌ LLM Index feed validation failed" >> $GITHUB_STEP_SUMMARY
-            cat index-result.json >> $GITHUB_STEP_SUMMARY
-            echo "index_valid=false" >> $GITHUB_OUTPUT
-          fi
-        continue-on-error: true
+        uses: kiarashplusplus/webmcp-tooling-suite/packages/github-action@v1
+        with:
+          feed: 'docs/.well-known/llm-index.llmfeed.json'
+          skip-signature: 'true'
 
       - name: Validate llms.txt Structure
-        id: validate-llms-txt
         run: |
           echo "## llms.txt Validation" >> $GITHUB_STEP_SUMMARY
           
-          # Check required sections
-          if grep -q "^# FIML" docs/llms.txt && \
+          # Check required sections per llms.txt spec
+          if grep -q "^# " docs/llms.txt && \
              grep -q "^>" docs/llms.txt && \
-             grep -q "## " docs/llms.txt; then
+             grep -q "^## " docs/llms.txt; then
             echo "✅ llms.txt structure is valid" >> $GITHUB_STEP_SUMMARY
             echo "  - Has H1 heading" >> $GITHUB_STEP_SUMMARY
             echo "  - Has blockquote summary" >> $GITHUB_STEP_SUMMARY
             echo "  - Has H2 sections" >> $GITHUB_STEP_SUMMARY
-            echo "llms_valid=true" >> $GITHUB_OUTPUT
           else
             echo "❌ llms.txt is missing required sections" >> $GITHUB_STEP_SUMMARY
-            echo "llms_valid=false" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
-      - name: Check Feed Consistency
+      - name: Commit badge files
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          echo "## Feed Consistency Check" >> $GITHUB_STEP_SUMMARY
-          
-          # Check that tool count matches
-          TOOL_COUNT=$(jq '.mcp.tools | length' docs/.well-known/mcp.llmfeed.json)
-          echo "- MCP tools defined: $TOOL_COUNT" >> $GITHUB_STEP_SUMMARY
-          
-          # Check version consistency
-          VERSION=$(jq -r '.meta.version' docs/.well-known/mcp.llmfeed.json)
-          echo "- FIML version in feed: $VERSION" >> $GITHUB_STEP_SUMMARY
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/badges/
+          git diff --staged --quiet || git commit -m "chore: update LLMFeed validation badge [skip ci]"
+          git push
 
-      - name: Summary
+      - name: Feed Summary
         if: always()
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
+          echo "## Feed Details" >> $GITHUB_STEP_SUMMARY
           
-          if [[ "${{ steps.validate-mcp.outputs.mcp_valid }}" == "true" && \
-                "${{ steps.validate-index.outputs.index_valid }}" == "true" && \
-                "${{ steps.validate-llms-txt.outputs.llms_valid }}" == "true" ]]; then
-            echo "✅ All LLMFeed files are valid and ready for AI agent discovery" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ Some validations failed - please review the details above" >> $GITHUB_STEP_SUMMARY
+          TOOL_COUNT=$(jq '.mcp.tools | length' docs/.well-known/mcp.llmfeed.json)
+          VERSION=$(jq -r '.meta.version' docs/.well-known/mcp.llmfeed.json)
+          SECTION_COUNT=$(jq '.sections | length' docs/.well-known/llm-index.llmfeed.json)
+          
+          echo "- **MCP tools**: $TOOL_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **FIML version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Doc sections**: $SECTION_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Score**: ${{ steps.validate-mcp.outputs.security-score }}/100" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 [View MCP Feed](https://kiarashplusplus.github.io/FIML/.well-known/mcp.llmfeed.json)" >> $GITHUB_STEP_SUMMARY
+          
+          # Show badge URL for README
+          if [ -n "${{ steps.validate-mcp.outputs.badge-url }}" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📛 Badge" >> $GITHUB_STEP_SUMMARY
+            echo '```markdown' >> $GITHUB_STEP_SUMMARY
+            echo '[![LLMFeed](${{ steps.validate-mcp.outputs.badge-url }})](https://kiarashplusplus.github.io/FIML/.well-known/mcp.llmfeed.json)' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
           fi
-
-  # Optional: Run the official GitHub Action for comprehensive validation
-  validate-with-action:
-    name: Validate with LLMFeed Action
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate MCP Feed with Action
-        uses: kiarashplusplus/webmcp-tooling-suite/packages/github-action@v1
-        with:
-          feed: 'docs/.well-known/mcp.llmfeed.json'
-          create-badge: 'false'
-        continue-on-error: true
-
-      - name: Validate Index Feed with Action
-        uses: kiarashplusplus/webmcp-tooling-suite/packages/github-action@v1
-        with:
-          feed: 'docs/.well-known/llm-index.llmfeed.json'
-          create-badge: 'false'
-        continue-on-error: true

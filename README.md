@@ -13,8 +13,10 @@
 [![DSL Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-dsl.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-dsl.yml)
 [![MCP Server Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mcp.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mcp.yml)
 [![Mobile Tests](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mobile.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/test-mobile.yml)
+[![LLMFeed Validation](https://github.com/kiarashplusplus/FIML/actions/workflows/validate-llmfeed.yml/badge.svg)](https://github.com/kiarashplusplus/FIML/actions/workflows/validate-llmfeed.yml)
 
 [![codecov](https://codecov.io/gh/kiarashplusplus/FIML/graph/badge.svg)](https://codecov.io/gh/kiarashplusplus/FIML)
+[![LLMFeed](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/kiarashplusplus/FIML/main/.github/badges/llmfeed-mcp.json)](https://kiarashplusplus.github.io/FIML/.well-known/mcp.llmfeed.json)
 
 > 📋 **Project Status**: ✅ **PHASE 1 COMPLETE** | [Changelog](CHANGELOG.md))
 > 
