@@ -1,1 +1,7 @@
-{"schemaVersion":1,"label":"LLMFeed","message":"pending","color":"gray"}
+{
+  "schemaVersion": 1,
+  "label": "LLMFeed",
+  "message": "65/100",
+  "color": "green",
+  "cacheSeconds": 300
+}
