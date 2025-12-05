@@ -74,8 +74,8 @@ jobs:
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "## Feed Details" >> $GITHUB_STEP_SUMMARY
           
-          TOOL_COUNT=$(jq '.mcp.tools | length' docs/.well-known/mcp.llmfeed.json)
-          VERSION=$(jq -r '.meta.version' docs/.well-known/mcp.llmfeed.json)
+          TOOL_COUNT=$(jq '.capabilities | length' docs/.well-known/mcp.llmfeed.json)
+          VERSION=$(jq -r '.metadata.version' docs/.well-known/mcp.llmfeed.json)
           SECTION_COUNT=$(jq '.sections | length' docs/.well-known/llm-index.llmfeed.json)
           
           echo "- **MCP tools**: $TOOL_COUNT" >> $GITHUB_STEP_SUMMARY
