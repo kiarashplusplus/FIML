@@ -1,17 +1,15 @@
 {
     "_comment": "LLMFeed MCP Declaration - https://github.com/kiarashplusplus/webmcp-tooling-suite",
-    "version": "1.0.0",
-    "feedType": "mcp",
-    "meta": {
-        "name": "FIML - Financial Intelligence Meta-Layer",
+    "feed_type": "mcp",
+    "metadata": {
+        "title": "FIML - Financial Intelligence Meta-Layer",
+        "origin": "https://kiarashplusplus.github.io/FIML/",
         "description": "AI-native financial data MCP server with intelligent provider orchestration. Bloomberg's intelligence, API simplicity, AI-native design.",
-        "tagline": "The intelligent data router for AI-native finance",
         "version": "0.4.1",
         "author": {
             "name": "Kiarash Adl",
             "url": "https://github.com/kiarashplusplus"
         },
-        "homepage": "https://kiarashplusplus.github.io/FIML/",
         "repository": "https://github.com/kiarashplusplus/FIML",
         "license": "MIT",
         "keywords": [
@@ -27,6 +25,259 @@
         "created": "2024-01-01T00:00:00Z",
         "updated": "2025-12-05T00:00:00Z"
     },
+    "capabilities": [
+        {
+            "name": "search-by-symbol",
+            "type": "tool",
+            "description": "Search for a stock by symbol with instant cached data and async deep analysis",
+            "category": "data-query",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "symbol": {
+                        "type": "string",
+                        "description": "Stock ticker symbol (e.g., TSLA, AAPL)"
+                    },
+                    "market": {
+                        "type": "string",
+                        "description": "Market/exchange (US, UK, JP, etc.)",
+                        "default": "US"
+                    },
+                    "depth": {
+                        "type": "string",
+                        "enum": [
+                            "quick",
+                            "standard",
+                            "deep"
+                        ],
+                        "description": "Analysis depth",
+                        "default": "standard"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Response language (en, ja, zh, es, fr, de)",
+                        "default": "en"
+                    }
+                },
+                "required": [
+                    "symbol"
+                ]
+            }
+        },
+        {
+            "name": "search-by-coin",
+            "type": "tool",
+            "description": "Search for cryptocurrency with instant cached data and async deep analysis",
+            "category": "data-query",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "symbol": {
+                        "type": "string",
+                        "description": "Crypto symbol (e.g., BTC, ETH, SOL)"
+                    },
+                    "exchange": {
+                        "type": "string",
+                        "description": "Preferred exchange (binance, coinbase, kraken)",
+                        "default": "binance"
+                    },
+                    "pair": {
+                        "type": "string",
+                        "description": "Trading pair (e.g., USDT, USD, EUR)",
+                        "default": "USDT"
+                    }
+                },
+                "required": [
+                    "symbol"
+                ]
+            }
+        },
+        {
+            "name": "get-task-status",
+            "type": "tool",
+            "description": "Poll or stream updates for an async analysis task",
+            "category": "data-query",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "taskId": {
+                        "type": "string",
+                        "description": "Task ID returned from search-by-symbol or search-by-coin"
+                    },
+                    "stream": {
+                        "type": "boolean",
+                        "description": "Stream updates via SSE instead of polling",
+                        "default": false
+                    }
+                },
+                "required": [
+                    "taskId"
+                ]
+            }
+        },
+        {
+            "name": "execute-fk-dsl",
+            "type": "tool",
+            "description": "Execute a Financial Knowledge DSL query for complex multi-step analysis",
+            "category": "data-query",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "FK-DSL query string (e.g., 'EVALUATE TSLA: PRICE, VOLATILITY(30d)')"
+                    },
+                    "async": {
+                        "type": "boolean",
+                        "description": "Execute asynchronously and return task ID",
+                        "default": true
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            }
+        },
+        {
+            "name": "create-analysis-session",
+            "type": "tool",
+            "description": "Create a new analysis session for tracking multi-query workflows",
+            "category": "session-management",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "assets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of asset symbols to analyze"
+                    },
+                    "sessionType": {
+                        "type": "string",
+                        "enum": [
+                            "equity",
+                            "crypto",
+                            "portfolio",
+                            "comparative",
+                            "macro"
+                        ],
+                        "description": "Type of analysis session"
+                    }
+                },
+                "required": [
+                    "assets",
+                    "sessionType"
+                ]
+            }
+        },
+        {
+            "name": "get-session-info",
+            "type": "tool",
+            "description": "Get information about an existing session",
+            "category": "session-management",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "description": "Session UUID"
+                    }
+                },
+                "required": [
+                    "sessionId"
+                ]
+            }
+        },
+        {
+            "name": "list-sessions",
+            "type": "tool",
+            "description": "List sessions for a user",
+            "category": "session-management",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string",
+                        "description": "User identifier"
+                    },
+                    "limit": {
+                        "type": "number",
+                        "default": 50
+                    }
+                },
+                "required": [
+                    "userId"
+                ]
+            }
+        },
+        {
+            "name": "extend-session",
+            "type": "tool",
+            "description": "Extend session expiration time",
+            "category": "session-management",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "description": "Session UUID"
+                    },
+                    "hours": {
+                        "type": "number",
+                        "default": 24
+                    }
+                },
+                "required": [
+                    "sessionId"
+                ]
+            }
+        },
+        {
+            "name": "get-session-analytics",
+            "type": "tool",
+            "description": "Get session analytics and statistics",
+            "category": "session-management",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string",
+                        "description": "Filter by user (optional)"
+                    },
+                    "days": {
+                        "type": "number",
+                        "default": 30
+                    }
+                }
+            }
+        },
+        {
+            "name": "warm-cache",
+            "type": "tool",
+            "description": "Trigger cache warming for specific assets",
+            "category": "cache-management",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "symbols": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of symbols to warm up"
+                    },
+                    "concurrency": {
+                        "type": "number",
+                        "default": 5
+                    }
+                },
+                "required": [
+                    "symbols"
+                ]
+            }
+        }
+    ],
     "mcp": {
         "protocol": "mcp-v1",
         "transport": [
@@ -39,333 +290,9 @@
             "call": "/mcp/tools/call",
             "health": "/health",
             "docs": "/docs"
-        },
-        "tools": [
-            {
-                "name": "search-by-symbol",
-                "description": "Search for a stock by symbol with instant cached data and async deep analysis",
-                "category": "data-query",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "symbol": {
-                            "type": "string",
-                            "description": "Stock ticker symbol (e.g., TSLA, AAPL)"
-                        },
-                        "market": {
-                            "type": "string",
-                            "description": "Market/exchange (US, UK, JP, etc.)",
-                            "default": "US"
-                        },
-                        "depth": {
-                            "type": "string",
-                            "enum": [
-                                "quick",
-                                "standard",
-                                "deep"
-                            ],
-                            "description": "Analysis depth",
-                            "default": "standard"
-                        },
-                        "language": {
-                            "type": "string",
-                            "description": "Response language (en, ja, zh, es, fr, de)",
-                            "default": "en"
-                        },
-                        "sessionId": {
-                            "type": "string",
-                            "description": "Optional session ID to track query context"
-                        }
-                    },
-                    "required": [
-                        "symbol"
-                    ]
-                },
-                "examples": [
-                    {
-                        "symbol": "TSLA",
-                        "market": "US",
-                        "depth": "standard"
-                    },
-                    {
-                        "symbol": "AAPL",
-                        "depth": "deep",
-                        "language": "en"
-                    }
-                ]
-            },
-            {
-                "name": "search-by-coin",
-                "description": "Search for cryptocurrency with instant cached data and async deep analysis",
-                "category": "data-query",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "symbol": {
-                            "type": "string",
-                            "description": "Crypto symbol (e.g., BTC, ETH, SOL)"
-                        },
-                        "exchange": {
-                            "type": "string",
-                            "description": "Preferred exchange (binance, coinbase, kraken, etc.)",
-                            "default": "binance"
-                        },
-                        "pair": {
-                            "type": "string",
-                            "description": "Trading pair (e.g., USDT, USD, EUR)",
-                            "default": "USDT"
-                        },
-                        "depth": {
-                            "type": "string",
-                            "enum": [
-                                "quick",
-                                "standard",
-                                "deep"
-                            ],
-                            "default": "standard"
-                        },
-                        "language": {
-                            "type": "string",
-                            "default": "en"
-                        },
-                        "sessionId": {
-                            "type": "string",
-                            "description": "Optional session ID to track query context"
-                        }
-                    },
-                    "required": [
-                        "symbol"
-                    ]
-                },
-                "examples": [
-                    {
-                        "symbol": "BTC",
-                        "exchange": "binance",
-                        "pair": "USDT"
-                    },
-                    {
-                        "symbol": "ETH",
-                        "depth": "deep"
-                    }
-                ]
-            },
-            {
-                "name": "get-task-status",
-                "description": "Poll or stream updates for an async analysis task",
-                "category": "data-query",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "taskId": {
-                            "type": "string",
-                            "description": "Task ID returned from search-by-symbol or search-by-coin"
-                        },
-                        "stream": {
-                            "type": "boolean",
-                            "description": "Stream updates via SSE instead of polling",
-                            "default": false
-                        }
-                    },
-                    "required": [
-                        "taskId"
-                    ]
-                }
-            },
-            {
-                "name": "execute-fk-dsl",
-                "description": "Execute a Financial Knowledge DSL query for complex multi-step analysis",
-                "category": "data-query",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "FK-DSL query string"
-                        },
-                        "async": {
-                            "type": "boolean",
-                            "description": "Execute asynchronously and return task ID",
-                            "default": true
-                        }
-                    },
-                    "required": [
-                        "query"
-                    ]
-                },
-                "examples": [
-                    {
-                        "query": "EVALUATE TSLA: PRICE, VOLATILITY(30d), TECHNICAL(RSI, MACD)"
-                    },
-                    {
-                        "query": "COMPARE BTC vs ETH ON: VOLUME(7d), LIQUIDITY"
-                    }
-                ]
-            },
-            {
-                "name": "create-analysis-session",
-                "description": "Create a new analysis session for tracking multi-query workflows",
-                "category": "session-management",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "assets": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "description": "List of asset symbols to analyze in this session"
-                        },
-                        "sessionType": {
-                            "type": "string",
-                            "enum": [
-                                "equity",
-                                "crypto",
-                                "portfolio",
-                                "comparative",
-                                "macro"
-                            ],
-                            "description": "Type of analysis session"
-                        },
-                        "userId": {
-                            "type": "string",
-                            "description": "Optional user identifier"
-                        },
-                        "ttlHours": {
-                            "type": "number",
-                            "description": "Session time-to-live in hours (default 24)",
-                            "default": 24
-                        },
-                        "tags": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "description": "Optional tags for categorizing the session"
-                        }
-                    },
-                    "required": [
-                        "assets",
-                        "sessionType"
-                    ]
-                }
-            },
-            {
-                "name": "get-session-info",
-                "description": "Get information about an existing session",
-                "category": "session-management",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "sessionId": {
-                            "type": "string",
-                            "description": "Session UUID"
-                        }
-                    },
-                    "required": [
-                        "sessionId"
-                    ]
-                }
-            },
-            {
-                "name": "list-sessions",
-                "description": "List sessions for a user",
-                "category": "session-management",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "userId": {
-                            "type": "string",
-                            "description": "User identifier"
-                        },
-                        "includeArchived": {
-                            "type": "boolean",
-                            "description": "Include archived sessions",
-                            "default": false
-                        },
-                        "limit": {
-                            "type": "number",
-                            "description": "Maximum number of sessions to return",
-                            "default": 50
-                        }
-                    },
-                    "required": [
-                        "userId"
-                    ]
-                }
-            },
-            {
-                "name": "extend-session",
-                "description": "Extend session expiration time",
-                "category": "session-management",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "sessionId": {
-                            "type": "string",
-                            "description": "Session UUID"
-                        },
-                        "hours": {
-                            "type": "number",
-                            "description": "Hours to extend by (default 24)",
-                            "default": 24
-                        }
-                    },
-                    "required": [
-                        "sessionId"
-                    ]
-                }
-            },
-            {
-                "name": "get-session-analytics",
-                "description": "Get session analytics and statistics",
-                "category": "session-management",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "userId": {
-                            "type": "string",
-                            "description": "Filter by user (optional)"
-                        },
-                        "sessionType": {
-                            "type": "string",
-                            "description": "Filter by session type (optional)"
-                        },
-                        "days": {
-                            "type": "number",
-                            "description": "Number of days to analyze (default 30)",
-                            "default": 30
-                        }
-                    }
-                }
-            },
-            {
-                "name": "warm-cache",
-                "description": "Trigger cache warming for specific assets",
-                "category": "cache-management",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "symbols": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            },
-                            "description": "List of symbols to warm up"
-                        },
-                        "concurrency": {
-                            "type": "number",
-                            "description": "Concurrency level (default 5)",
-                            "default": 5
-                        }
-                    },
-                    "required": [
-                        "symbols"
-                    ]
-                }
-            }
-        ]
+        }
     },
-    "capabilities": {
+    "extensions": {
         "dataProviders": {
             "count": 17,
             "categories": [
